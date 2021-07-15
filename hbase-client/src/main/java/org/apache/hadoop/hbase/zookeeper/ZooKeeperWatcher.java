@@ -190,7 +190,7 @@ public class ZooKeeperWatcher implements Watcher, Abortable, Closeable {
    * @throws IOException
    * @throws ZooKeeperConnectionException
    */
-  public ZooKeeperWatcher(Configuration conf, String identifier,
+   public ZooKeeperWatcher(Configuration conf, String identifier,
       Abortable abortable) throws ZooKeeperConnectionException, IOException {
     this(conf, identifier, abortable, false);
   }
