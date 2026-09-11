@@ -536,6 +536,96 @@ Copyright 2010 FasterXML.com
   </supplement>
 
   <supplement>
+    <project> <!-- hbase-newshell jline3-backend -->
+      <groupId>org.jline</groupId>
+      <artifactId>jline-terminal</artifactId>
+      <version>3.30.17</version>
+      <licenses>
+        <license>
+          <name>BSD license</name>
+          <url>https://opensource.org/licenses/BSD-3-Clause</url>
+          <distribution>repo</distribution>
+          <comments>
+            Copyright (c) 2002-2018, the original author or authors.
+          </comments>
+        </license>
+      </licenses>
+    </project>
+  </supplement>
+
+  <supplement>
+    <project> <!-- hbase-newshell jline3-backend -->
+      <groupId>org.jline</groupId>
+      <artifactId>jline-reader</artifactId>
+      <version>3.30.17</version>
+      <licenses>
+        <license>
+          <name>BSD license</name>
+          <url>https://opensource.org/licenses/BSD-3-Clause</url>
+          <distribution>repo</distribution>
+          <comments>
+            Copyright (c) 2002-2018, the original author or authors.
+          </comments>
+        </license>
+      </licenses>
+    </project>
+  </supplement>
+
+  <supplement>
+    <project> <!-- hbase-newshell jline4-backend -->
+      <groupId>org.jline</groupId>
+      <artifactId>jline-terminal</artifactId>
+      <version>4.4.3</version>
+      <licenses>
+        <license>
+          <name>BSD license</name>
+          <url>https://opensource.org/licenses/BSD-3-Clause</url>
+          <distribution>repo</distribution>
+          <comments>
+            Copyright (c) 2002-2018, the original author or authors.
+          </comments>
+        </license>
+      </licenses>
+    </project>
+  </supplement>
+
+  <supplement>
+    <project> <!-- hbase-newshell jline4-backend -->
+      <groupId>org.jline</groupId>
+      <artifactId>jline-reader</artifactId>
+      <version>4.4.3</version>
+      <licenses>
+        <license>
+          <name>BSD license</name>
+          <url>https://opensource.org/licenses/BSD-3-Clause</url>
+          <distribution>repo</distribution>
+          <comments>
+            Copyright (c) 2002-2018, the original author or authors.
+          </comments>
+        </license>
+      </licenses>
+    </project>
+  </supplement>
+
+  <supplement>
+    <project> <!-- hbase-newshell jline4-backend, transitive dependency of jline-terminal -->
+      <groupId>org.jline</groupId>
+      <artifactId>jline-native</artifactId>
+      <version>4.4.3</version>
+      <licenses>
+        <license>
+          <name>BSD license</name>
+          <url>https://opensource.org/licenses/BSD-3-Clause</url>
+          <distribution>repo</distribution>
+          <comments>
+            Copyright (c) 2002-2018, the original author or authors.
+          </comments>
+        </license>
+      </licenses>
+    </project>
+  </supplement>
+
+  <supplement>
     <project> <!-- hadoop.profile=3.0 from hadoop-3.3.0 -->
       <groupId>net.java.dev.jna</groupId>
       <artifactId>jna</artifactId>

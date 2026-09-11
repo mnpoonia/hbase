@@ -795,6 +795,7 @@
     <module>hbase-server</module>
     <module>hbase-thrift</module>
     <module>hbase-shell</module>
+    <module>hbase-newshell</module>
     <module>hbase-protocol-shaded</module>
     <module>hbase-client</module>
     <module>hbase-hadoop-compat</module>
@@ -932,6 +933,10 @@
     <thrift.version>0.23.0</thrift.version>
     <zookeeper.version>3.8.6</zookeeper.version>
     <jline.version>2.11</jline.version>
+    <!-- Used only by hbase-newshell's jline3-backend/jline4-backend profiles - unrelated to
+         the legacy jline:jline:${jline.version} dependency above (used by zkcli). -->
+    <jline3.version>3.30.17</jline3.version>
+    <jline4.version>4.4.3</jline4.version>
     <slf4j.version>1.7.30</slf4j.version>
     <clover.version>4.0.3</clover.version>
     <jettison.version>1.5.4</jettison.version>
@@ -1260,6 +1265,18 @@
       <dependency>
         <groupId>org.apache.hbase</groupId>
         <artifactId>hbase-shell</artifactId>
+        <version>${project.version}</version>
+        <type>test-jar</type>
+        <scope>test</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.hbase</groupId>
+        <artifactId>hbase-newshell</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.hbase</groupId>
+        <artifactId>hbase-newshell</artifactId>
         <version>${project.version}</version>
         <type>test-jar</type>
         <scope>test</scope>

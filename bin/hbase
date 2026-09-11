@@ -77,6 +77,7 @@ show_usage() {
   echo "Commands:"
   echo "Some commands take arguments. Pass no args or -h for usage."
   echo "  shell            Run the HBase shell"
+  echo "  newshell         Run the new JLine-based HBase shell (preview)"
   echo "  hbck             Run the HBase 'fsck' tool. Defaults read-only hbck1."
   echo "                   Pass '-j /path/to/HBCK2.jar' to run hbase-2.x HBCK2."
   echo "  snapshot         Tool for managing snapshots"
@@ -255,7 +256,7 @@ if [ "${INTERNAL_CLASSPATH}" != "true" ]; then
   done
 
   # If command can use our shaded client, use it
-  declare -a commands_in_client_jar=("classpath" "version" "hbtop")
+  declare -a commands_in_client_jar=("classpath" "version" "hbtop" "newshell")
   for c in "${commands_in_client_jar[@]}"; do
     if [ "${COMMAND}" = "${c}" ]; then
       if [ -n "${HADOOP_IN_PATH}" ] && [ -f "${HADOOP_IN_PATH}" ]; then
@@ -791,6 +792,21 @@ elif [ "$COMMAND" = "hbtop" ] ; then
     HBASE_HBTOP_OPTS="${HBASE_HBTOP_OPTS} -Dlog4j2.configurationFile=file:${HBASE_HOME}/conf/log4j2-hbtop.properties"
   fi
   HBASE_OPTS="${HBASE_OPTS} ${HBASE_HBTOP_OPTS}"
+elif [ "$COMMAND" = "newshell" ] ; then
+  CLASS='org.apache.hadoop.hbase.newshell.NewShellMain'
+  if [ -n "${shaded_jar}" ] ; then
+    for f in "${HBASE_HOME}"/lib/hbase-newshell*.jar; do
+      if [ -f "${f}" ]; then
+        CLASSPATH="${CLASSPATH}:${f}"
+        break
+      fi
+    done
+    for f in "${HBASE_HOME}"/lib/jline-reader*.jar "${HBASE_HOME}"/lib/jline-terminal*.jar "${HBASE_HOME}"/lib/jline-native*.jar; do
+      if [ -f "${f}" ]; then
+        CLASSPATH="${CLASSPATH}:${f}"
+      fi
+    done
+  fi
 elif [ "$COMMAND" = "credential" ] ; then
   CLASS='org.apache.hadoop.security.alias.CredentialShell'
 elif [ "$COMMAND" = "copyreppeers" ] ; then
