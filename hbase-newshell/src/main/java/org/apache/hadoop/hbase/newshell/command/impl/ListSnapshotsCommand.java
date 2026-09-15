@@ -18,6 +18,9 @@
 package org.apache.hadoop.hbase.newshell.command.impl;
 
 import java.io.IOException;
+import java.time.Instant;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import org.apache.hadoop.hbase.newshell.command.CommandResult;
@@ -36,6 +39,9 @@ import org.apache.yetus.audience.InterfaceAudience;
  */
 @InterfaceAudience.Private
 public final class ListSnapshotsCommand implements ShellCommand {
+  private static final DateTimeFormatter CREATION_TIME_FORMAT =
+    DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss 'UTC'");
+
   @Override
   public String name() {
     return "list_snapshots";
@@ -55,9 +61,12 @@ public final class ListSnapshotsCommand implements ShellCommand {
     List<SnapshotInfo> snapshots = context.admin().listSnapshots(regex);
     List<List<String>> rows = new ArrayList<>();
     for (SnapshotInfo snapshot : snapshots) {
-      rows.add(List.of(snapshot.name(), snapshot.tableName(),
-        String.valueOf(snapshot.creationTime()), String.valueOf(snapshot.ttl())));
+      String creationTime = CREATION_TIME_FORMAT
+        .format(Instant.ofEpochMilli(snapshot.creationTime()).atZone(ZoneOffset.UTC));
+      String ttlInfo = snapshot.ttl() == 0 ? "FOREVER" : String.valueOf(snapshot.ttl());
+      String info = snapshot.tableName() + " (" + creationTime + ") " + ttlInfo;
+      rows.add(List.of(snapshot.name(), info));
     }
-    return new TabularResult(List.of("SNAPSHOT", "TABLE", "CREATION_TIME", "TTL"), rows);
+    return new TabularResult(List.of("SNAPSHOT", "TABLE + CREATION TIME + TTL(Sec)"), rows);
   }
 }

@@ -50,6 +50,6 @@ public final class EnableCommand implements ShellCommand {
     }
     String tableName = String.valueOf(command.positionalArgs().get(0));
     context.admin().enableTable(tableName);
-    return TextResult.of(tableName + " enabled");
+    return TextResult.of();
   }
 }

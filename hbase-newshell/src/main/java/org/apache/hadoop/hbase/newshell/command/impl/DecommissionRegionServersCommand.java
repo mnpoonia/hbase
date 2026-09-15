@@ -58,7 +58,7 @@ public final class DecommissionRegionServersCommand implements ShellCommand {
     List<String> hostOrServers = toStringList(positionals.get(0));
     boolean offload = positionals.size() > 1 && parseBoolean(positionals.get(1));
     context.admin().decommissionRegionServers(hostOrServers, offload);
-    return TextResult.of(hostOrServers.size() + " region server(s) decommissioned");
+    return TextResult.of();
   }
 
   @SuppressWarnings("unchecked")

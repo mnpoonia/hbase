@@ -59,7 +59,7 @@ public class SnapshotCommandTest {
 
     assertEquals("t1", admin.lastTableName);
     assertEquals("snap1", admin.lastSnapshotName);
-    assertEquals(List.of("snap1 snapshot of table t1 created"), result.lines());
+    assertEquals(List.of(), result.lines());
   }
 
   @Test

@@ -52,6 +52,6 @@ public final class SnapshotCommand implements ShellCommand {
     String tableName = String.valueOf(command.positionalArgs().get(0));
     String snapshotName = String.valueOf(command.positionalArgs().get(1));
     context.admin().snapshot(tableName, snapshotName);
-    return TextResult.of(snapshotName + " snapshot of table " + tableName + " created");
+    return TextResult.of();
   }
 }

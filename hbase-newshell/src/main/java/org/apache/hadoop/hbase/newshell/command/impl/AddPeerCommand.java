@@ -53,6 +53,6 @@ public final class AddPeerCommand implements ShellCommand {
     }
     String peerId = String.valueOf(command.positionalArgs().get(0));
     context.admin().addPeer(peerId, command.options());
-    return TextResult.of(peerId + " peer added");
+    return TextResult.of();
   }
 }

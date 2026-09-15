@@ -60,7 +60,7 @@ public class AddPeerCommandTest {
 
     assertEquals("1", admin.lastPeerId);
     assertEquals("zk1,zk2:2181:/hbase", admin.lastPeerConfigSpec.get("CLUSTER_KEY"));
-    assertEquals(List.of("1 peer added"), result.lines());
+    assertEquals(List.of(), result.lines());
   }
 
   @Test

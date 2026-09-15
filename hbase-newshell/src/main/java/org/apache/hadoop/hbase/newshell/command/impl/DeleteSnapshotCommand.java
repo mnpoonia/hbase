@@ -49,6 +49,6 @@ public final class DeleteSnapshotCommand implements ShellCommand {
     }
     String snapshotName = String.valueOf(command.positionalArgs().get(0));
     context.admin().deleteSnapshot(snapshotName);
-    return TextResult.of(snapshotName + " snapshot deleted");
+    return TextResult.of();
   }
 }

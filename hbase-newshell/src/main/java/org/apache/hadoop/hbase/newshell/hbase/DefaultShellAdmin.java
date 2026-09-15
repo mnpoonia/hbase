@@ -39,6 +39,7 @@ import org.apache.hadoop.hbase.client.CompactType;
 import org.apache.hadoop.hbase.client.SnapshotDescription;
 import org.apache.hadoop.hbase.client.TableDescriptor;
 import org.apache.hadoop.hbase.client.TableDescriptorBuilder;
+import org.apache.hadoop.hbase.client.replication.ReplicationPeerConfigUtil;
 import org.apache.hadoop.hbase.replication.ReplicationPeerConfig;
 import org.apache.hadoop.hbase.replication.ReplicationPeerConfigBuilder;
 import org.apache.hadoop.hbase.replication.ReplicationPeerDescription;
@@ -339,11 +340,34 @@ public final class DefaultShellAdmin implements ShellAdmin {
     List<PeerDescription> descriptions = new ArrayList<>();
     for (ReplicationPeerDescription peer : admin.listReplicationPeers()) {
       ReplicationPeerConfig config = peer.getPeerConfig();
-      descriptions.add(new PeerDescription(peer.getPeerId(), config.getClusterKey(),
-        config.getReplicationEndpointImpl(), peer.isEnabled(),
-        String.valueOf(config.getTableCFsMap()), String.valueOf(config.getNamespaces())));
+      boolean replicateAll = config.replicateAllUserTables();
+      String namespaces;
+      String tableCfs;
+      if (replicateAll) {
+        String excludeNamespaces =
+          ReplicationPeerConfigUtil.convertToString(config.getExcludeNamespaces());
+        namespaces = excludeNamespaces == null ? "" : "!" + excludeNamespaces;
+        String excludeTableCfs =
+          ReplicationPeerConfigUtil.convertToString(config.getExcludeTableCFsMap());
+        tableCfs = excludeTableCfs == null ? "" : "!" + excludeTableCfs;
+      } else {
+        namespaces = orEmpty(ReplicationPeerConfigUtil.convertToString(config.getNamespaces()));
+        tableCfs = orEmpty(ReplicationPeerConfigUtil.convertToString(config.getTableCFsMap()));
+      }
+      descriptions.add(new PeerDescription(peer.getPeerId(), orNil(config.getClusterKey()),
+        orNil(config.getReplicationEndpointImpl()), orNil(config.getRemoteWALDir()),
+        peer.getSyncReplicationState().toString(), peer.isEnabled(), replicateAll, namespaces,
+        tableCfs, config.getBandwidth(), config.isSerial()));
     }
     return descriptions;
+  }
+
+  private static String orNil(String value) {
+    return value == null ? "nil" : value;
+  }
+
+  private static String orEmpty(String value) {
+    return value == null ? "" : value;
   }
 
   @Override

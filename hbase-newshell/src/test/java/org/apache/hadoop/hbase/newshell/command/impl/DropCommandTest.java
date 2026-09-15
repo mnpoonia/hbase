@@ -56,7 +56,7 @@ public class DropCommandTest {
     TextResult result = (TextResult) command.execute(parsed, context);
 
     assertEquals("t1", admin.lastDroppedTable);
-    assertEquals(List.of("t1 dropped"), result.lines());
+    assertEquals(List.of(), result.lines());
   }
 
   @Test

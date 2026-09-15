@@ -56,7 +56,7 @@ public class EnableCommandTest {
     TextResult result = (TextResult) command.execute(parsed, context);
 
     assertEquals("t1", admin.lastEnabledTable);
-    assertEquals(List.of("t1 enabled"), result.lines());
+    assertEquals(List.of(), result.lines());
   }
 
   @Test

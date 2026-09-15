@@ -61,7 +61,7 @@ public class AlterCommandTest {
     assertEquals("t1", admin.lastAlteredTable);
     assertEquals(1, admin.lastFamilySpecs.size());
     assertEquals(Map.of("NAME", "f1", "TTL", 100L), admin.lastFamilySpecs.get(0));
-    assertEquals(List.of("t1 altered"), result.lines());
+    assertEquals(List.of("Updating all regions with the new schema..."), result.lines());
   }
 
   @Test

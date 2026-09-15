@@ -45,11 +45,29 @@ public final class DefaultFormatter implements Formatter {
     out.flush();
   }
 
+  /**
+   * Mirrors hbase-shell's {@code shell/formatter.rb#row} column layout for a non-tty output
+   * stream (where {@code @max_width} is 0 and no column padding is applied): a single-column
+   * result prints its value bare; a two-column result separates the header with two spaces and
+   * each row with a leading space plus one separating space; three-or-more columns lead every
+   * line (header and rows alike) with a space and join the remaining columns with single spaces.
+   */
   private void formatTabular(TabularResult result, PrintWriter out) {
-    out.println(String.join("\t", result.header()));
+    out.println(formatRow(result.header(), true));
     for (List<String> row : result.rows()) {
-      out.println(String.join("\t", row));
+      out.println(formatRow(row, false));
     }
     out.println(result.rows().size() + " row(s)");
+  }
+
+  private String formatRow(List<String> columns, boolean isHeader) {
+    if (columns.size() == 1) {
+      return columns.get(0);
+    }
+    if (columns.size() == 2) {
+      return isHeader ? columns.get(0) + "  " + columns.get(1)
+        : " " + columns.get(0) + " " + columns.get(1);
+    }
+    return " " + String.join(" ", columns);
   }
 }

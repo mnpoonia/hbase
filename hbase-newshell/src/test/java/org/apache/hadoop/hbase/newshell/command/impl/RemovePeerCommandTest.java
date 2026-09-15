@@ -56,7 +56,7 @@ public class RemovePeerCommandTest {
     TextResult result = (TextResult) command.execute(parsed, context);
 
     assertEquals("1", admin.lastPeerId);
-    assertEquals(List.of("1 peer removed"), result.lines());
+    assertEquals(List.of(), result.lines());
   }
 
   @Test

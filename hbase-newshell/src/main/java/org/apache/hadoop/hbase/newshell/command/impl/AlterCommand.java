@@ -61,6 +61,6 @@ public final class AlterCommand implements ShellCommand {
         "alter requires at least one column family spec, e.g. {NAME => 'f1', TTL => 100}");
     }
     context.admin().alterTable(tableName, familySpecs);
-    return TextResult.of(tableName + " altered");
+    return TextResult.of("Updating all regions with the new schema...");
   }
 }

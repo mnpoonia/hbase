@@ -18,6 +18,9 @@
 package org.apache.hadoop.hbase.newshell.command.impl;
 
 import java.io.IOException;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 import org.apache.hadoop.hbase.newshell.command.CommandResult;
@@ -62,7 +65,10 @@ public final class GetCommand implements ShellCommand {
     List<List<String>> rows = new ArrayList<>();
     for (CellView cell : result.cells()) {
       String column = cell.family() + ":" + cell.qualifier();
-      String cellText = "timestamp=" + cell.timestamp() + ", value=" + cell.value();
+      String timestamp =
+        LocalDateTime.ofInstant(Instant.ofEpochMilli(cell.timestamp()), ZoneId.systemDefault())
+          .toString();
+      String cellText = "timestamp=" + timestamp + ", value=" + cell.value();
       rows.add(List.of(column, cellText));
     }
     return new TabularResult(HEADER, rows);

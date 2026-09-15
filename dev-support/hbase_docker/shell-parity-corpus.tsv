@@ -4,3 +4,12 @@ status 'detailed'	smoke	same summary-format drift as bare status
 list	exact	table listing format is a fixed, simple grid
 describe '_newshell_parity_test'	exact	single-table describe output
 exists '_newshell_parity_test'	exact	simple boolean-style existence check
+create '_newshell_parity_{ENGINE}_create', 'cf'	exact	table creation confirmation message
+create '_newshell_parity_{ENGINE}_disable', 'cf';disable '_newshell_parity_{ENGINE}_disable'	exact	disable confirmation message
+create '_newshell_parity_{ENGINE}_enable', 'cf';disable '_newshell_parity_{ENGINE}_enable';enable '_newshell_parity_{ENGINE}_enable'	exact	enable confirmation message
+create '_newshell_parity_{ENGINE}_drop', 'cf';disable '_newshell_parity_{ENGINE}_drop';drop '_newshell_parity_{ENGINE}_drop'	exact	drop confirmation message
+create '_newshell_parity_{ENGINE}_alter', 'cf';alter '_newshell_parity_{ENGINE}_alter', {NAME => 'cf', TTL => 100}	exact	alter confirmation message
+create '_newshell_parity_{ENGINE}_getput', 'cf';put '_newshell_parity_{ENGINE}_getput', 'r1', 'cf:c1', 'v1';get '_newshell_parity_{ENGINE}_getput', 'r1'	smoke	put/get round trip; cell timestamp is real wall-clock time and differs run to run
+add_peer '{ENGINE}_parity_peer', CLUSTER_KEY => 'zk1,zk2,zk3:2181:/hbase';list_peers;remove_peer '{ENGINE}_parity_peer'	exact	replication peer add/list/remove
+create '_newshell_parity_{ENGINE}_snap', 'cf';snapshot '_newshell_parity_{ENGINE}_snap', '_newshell_parity_{ENGINE}_snap_snap';list_snapshots;delete_snapshot '_newshell_parity_{ENGINE}_snap_snap'	smoke	list_snapshots includes a real creation timestamp that differs run to run
+decommission_regionservers ['{HOST}'];list_decommissioned_regionservers;recommission_regionserver '{HOST}'	exact	decommission/list/recommission round trip

@@ -49,6 +49,6 @@ public final class RemovePeerCommand implements ShellCommand {
     }
     String peerId = String.valueOf(command.positionalArgs().get(0));
     context.admin().removePeer(peerId);
-    return TextResult.of(peerId + " peer removed");
+    return TextResult.of();
   }
 }

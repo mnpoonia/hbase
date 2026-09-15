@@ -50,6 +50,6 @@ public final class DisableCommand implements ShellCommand {
     }
     String tableName = String.valueOf(command.positionalArgs().get(0));
     context.admin().disableTable(tableName);
-    return TextResult.of(tableName + " disabled");
+    return TextResult.of();
   }
 }

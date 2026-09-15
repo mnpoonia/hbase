@@ -30,13 +30,23 @@ set -euo pipefail
 #
 # mode=exact  in the corpus: any stdout diff fails the run (nonzero exit).
 # mode=smoke: a diff is logged but does not fail the run.
+#
+# A command field may hold several ;-separated commands, run as one shell
+# session (e.g. "create 't';put 't','r','cf:c','v';get 't','r'") so a
+# mutating command can set up its own state and be diffed together with it.
+# {ENGINE} and {HOST} placeholders are substituted per run - {ENGINE} to
+# "shell"/"newshell" so the two engines' runs use disjoint table/peer/
+# snapshot names against the same live cluster, {HOST} to the container's
+# hostname for regionserver-targeting commands.
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 IMAGE_NAME="${1:-hbase_local}"
 PLATFORM="linux/amd64"
 SETUP_TABLE="_newshell_parity_test"
 
-docker run --platform "$PLATFORM" --rm -i "$IMAGE_NAME" bash -s -- "$SETUP_TABLE" <<'CONTAINER_SCRIPT'
+docker run --platform "$PLATFORM" --rm -i \
+  -v "${SCRIPT_DIR}:/root/hbase/dev-support/hbase_docker:ro" \
+  "$IMAGE_NAME" bash -s -- "$SETUP_TABLE" <<'CONTAINER_SCRIPT'
 set -euo pipefail
 SETUP_TABLE="$1"
 CORPUS=/root/hbase/dev-support/hbase_docker/shell-parity-corpus.tsv
@@ -63,24 +73,43 @@ filter_shell_noise() {
 }
 
 filter_newshell_noise() {
-  # Async logger output can land on the same line as the "newshell> " prompt
-  # (e.g. "newshell> 2026-...T...INFO..."), so the prompt must be stripped
-  # before log4j lines (ISO-8601 timestamp prefix) can be recognized and
-  # dropped.
-  sed -E 's/^newshell> ?//' \
+  # JLine doesn't always echo a newline after the "newshell> " prompt in
+  # piped/non-interactive mode, so the prompt can end up glued to the front
+  # of the command's own first output line (e.g. "newshell> DECOMMISSIONED
+  # REGION SERVERS") or to an async logger line that lands on the same
+  # physical line (e.g. "newshell> 2026-...T...INFO..."). Strip every
+  # occurrence unanchored - not just a leading one - before log4j lines
+  # (ISO-8601 timestamp prefix) can be recognized and dropped.
+  sed -E 's/\r//g; s/newshell> ?//g' \
     | grep -Ev '^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9:,.]+ (INFO|WARN|ERROR|DEBUG) '
 }
 
+HOST="$(hostname)"
 exact_failures=0
 smoke_divergences=0
 
 while IFS=$'\t' read -r command mode note; do
   [[ -z "${command}" || "${command}" == \#* ]] && continue
 
-  shell_out="$(echo "${command}" | bin/hbase shell -n 2>&1 | filter_shell_noise)"
-  newshell_out="$(echo "${command}" | bin/hbase newshell -n 2>&1 | filter_newshell_noise)"
+  shell_cmd="${command//\{ENGINE\}/shell}"
+  shell_cmd="${shell_cmd//\{HOST\}/${HOST}}"
+  newshell_cmd="${command//\{ENGINE\}/newshell}"
+  newshell_cmd="${newshell_cmd//\{HOST\}/${HOST}}"
 
-  if [ "${shell_out}" = "${newshell_out}" ]; then
+  shell_out="$(echo "${shell_cmd}" | tr ';' '\n' | bin/hbase shell -n 2>&1 | filter_shell_noise)"
+  newshell_out="$(echo "${newshell_cmd}" | tr ';' '\n' | bin/hbase newshell -n 2>&1 | filter_newshell_noise)"
+
+  # {ENGINE} substitutes to "shell"/"newshell" so the two engines' runs use
+  # disjoint resource names against the same live cluster; normalize those
+  # engine-specific names back to a common token before comparing, so a
+  # command that only differs by its {ENGINE}-derived table/peer name isn't
+  # reported as a false diff.
+  shell_cmp="${shell_out//_newshell_parity_shell/_newshell_parity_ENGINE}"
+  shell_cmp="${shell_cmp//shell_parity_peer/ENGINE_parity_peer}"
+  newshell_cmp="${newshell_out//_newshell_parity_newshell/_newshell_parity_ENGINE}"
+  newshell_cmp="${newshell_cmp//newshell_parity_peer/ENGINE_parity_peer}"
+
+  if [ "${shell_cmp}" = "${newshell_cmp}" ]; then
     echo "PASS  [${mode}] ${command}"
     continue
   fi

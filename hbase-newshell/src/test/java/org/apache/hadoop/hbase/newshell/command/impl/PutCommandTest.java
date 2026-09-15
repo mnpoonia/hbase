@@ -90,7 +90,7 @@ public class PutCommandTest {
     assertEquals("r1", table.lastRow);
     assertEquals("f1:c1", table.lastColumn);
     assertEquals("v1", table.lastValue);
-    assertEquals(List.of("1 row(s) put"), result.lines());
+    assertEquals(List.of(), result.lines());
   }
 
   @Test

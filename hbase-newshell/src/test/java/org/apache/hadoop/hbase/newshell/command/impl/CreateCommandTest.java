@@ -64,7 +64,7 @@ public class CreateCommandTest {
 
     assertEquals("t1", admin.lastTableName);
     assertEquals(List.of(Map.of("NAME", "f1", "VERSIONS", 3L)), admin.lastFamilySpecs);
-    assertEquals(List.of("t1 created"), result.lines());
+    assertEquals(List.of("Created table t1"), result.lines());
   }
 
   @Test

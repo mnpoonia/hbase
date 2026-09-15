@@ -59,7 +59,7 @@ public class DecommissionRegionServersCommandTest {
 
     assertEquals(List.of("host1,60020,123"), admin.lastHostOrServers);
     assertEquals(false, admin.lastOffload);
-    assertEquals(List.of("1 region server(s) decommissioned"), result.lines());
+    assertEquals(List.of(), result.lines());
   }
 
   @Test
@@ -69,7 +69,7 @@ public class DecommissionRegionServersCommandTest {
 
     assertEquals(List.of("host1", "host2"), admin.lastHostOrServers);
     assertEquals(true, admin.lastOffload);
-    assertEquals(List.of("2 region server(s) decommissioned"), result.lines());
+    assertEquals(List.of(), result.lines());
   }
 
   @Test

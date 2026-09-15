@@ -56,6 +56,6 @@ public final class PutCommand implements ShellCommand {
     String column = String.valueOf(command.positionalArgs().get(2));
     String value = String.valueOf(command.positionalArgs().get(3));
     context.tables().forTable(tableName).put(row, column, value, command.options());
-    return TextResult.of("1 row(s) put");
+    return TextResult.of();
   }
 }

@@ -21,6 +21,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.time.Instant;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
 import org.apache.hadoop.hbase.newshell.command.TabularResult;
@@ -56,8 +59,12 @@ public class ListSnapshotsCommandTest {
     TabularResult result = (TabularResult) command.execute(parsed, context);
 
     assertEquals(".*", admin.lastRegex);
-    assertEquals(List.of("SNAPSHOT", "TABLE", "CREATION_TIME", "TTL"), result.header());
-    assertEquals(List.of(List.of("snap1", "t1", "1000", "0")), result.rows());
+    assertEquals(List.of("SNAPSHOT", "TABLE + CREATION TIME + TTL(Sec)"), result.header());
+    assertEquals(1, result.rows().size());
+    assertEquals("snap1", result.rows().get(0).get(0));
+    String creationTime = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss 'UTC'")
+      .format(Instant.ofEpochMilli(1000L).atZone(ZoneOffset.UTC));
+    assertEquals("t1 (" + creationTime + ") FOREVER", result.rows().get(0).get(1));
   }
 
   @Test

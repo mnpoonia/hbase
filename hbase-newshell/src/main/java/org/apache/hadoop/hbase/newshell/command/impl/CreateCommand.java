@@ -86,6 +86,6 @@ public final class CreateCommand implements ShellCommand {
         "create requires a column family spec, e.g. 'f1' or {NAME => 'f1'}");
     }
     context.admin().createTable(tableName, familySpecs, tableAttributes);
-    return TextResult.of(tableName + " created");
+    return TextResult.of("Created table " + tableName);
   }
 }

@@ -51,6 +51,6 @@ public final class DropCommand implements ShellCommand {
     }
     String tableName = String.valueOf(command.positionalArgs().get(0));
     context.admin().dropTable(tableName);
-    return TextResult.of(tableName + " dropped");
+    return TextResult.of();
   }
 }

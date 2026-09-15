@@ -56,7 +56,7 @@ public class DeleteSnapshotCommandTest {
     TextResult result = (TextResult) command.execute(parsed, context);
 
     assertEquals("snap1", admin.lastSnapshotName);
-    assertEquals(List.of("snap1 snapshot deleted"), result.lines());
+    assertEquals(List.of(), result.lines());
   }
 
   @Test

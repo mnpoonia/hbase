@@ -21,5 +21,7 @@ import org.apache.yetus.audience.InterfaceAudience;
 
 @InterfaceAudience.Private
 public record PeerDescription(String peerId, String clusterKey, String endpointClassname,
-  boolean enabled, String tableCfs, String namespaces) {
+  String remoteRootDir, String syncReplicationState, boolean enabled,
+  boolean replicateAllUserTables, String namespaces, String tableCfs, long bandwidth,
+  boolean serial) {
 }

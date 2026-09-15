@@ -59,7 +59,7 @@ public final class RecommissionRegionServerCommand implements ShellCommand {
     List<String> encodedRegionNames =
       positionals.size() > 1 ? toStringList(positionals.get(1)) : List.of();
     context.admin().recommissionRegionServer(hostOrServer, encodedRegionNames);
-    return TextResult.of(hostOrServer + " recommissioned");
+    return TextResult.of();
   }
 
   @SuppressWarnings("unchecked")

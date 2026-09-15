@@ -59,7 +59,7 @@ public class RecommissionRegionServerCommandTest {
 
     assertEquals("host1,60020,123", admin.lastHostOrServer);
     assertEquals(List.of(), admin.lastEncodedRegionNames);
-    assertEquals(List.of("host1,60020,123 recommissioned"), result.lines());
+    assertEquals(List.of(), result.lines());
   }
 
   @Test

@@ -53,12 +53,15 @@ public final class ListPeersCommand implements ShellCommand {
     List<PeerDescription> peers = context.admin().listPeers();
     List<List<String>> rows = new ArrayList<>();
     for (PeerDescription peer : peers) {
-      rows.add(List.of(peer.peerId(), String.valueOf(peer.clusterKey()),
-        String.valueOf(peer.endpointClassname()), peer.enabled() ? "ENABLED" : "DISABLED",
-        peer.tableCfs(), peer.namespaces()));
+      rows.add(List.of(peer.peerId(), peer.clusterKey(), peer.endpointClassname(),
+        peer.remoteRootDir(), peer.syncReplicationState(), peer.enabled() ? "ENABLED" : "DISABLED",
+        String.valueOf(peer.replicateAllUserTables()), peer.namespaces(), peer.tableCfs(),
+        String.valueOf(peer.bandwidth()), String.valueOf(peer.serial())));
     }
     return new TabularResult(
-      List.of("PEER_ID", "CLUSTER_KEY", "ENDPOINT_CLASSNAME", "STATE", "TABLE_CFS", "NAMESPACES"),
+      List.of("PEER_ID", "CLUSTER_KEY", "ENDPOINT_CLASSNAME", "REMOTE_ROOT_DIR",
+        "SYNC_REPLICATION_STATE", "STATE", "REPLICATE_ALL", "NAMESPACES", "TABLE_CFS",
+        "BANDWIDTH", "SERIAL"),
       rows);
   }
 }
