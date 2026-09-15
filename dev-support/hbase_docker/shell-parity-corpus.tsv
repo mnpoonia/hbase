@@ -1,0 +1,6 @@
+# command	mode	note
+status	smoke	summary format differs (Important Issue #3); logged, not enforced yet
+status 'detailed'	smoke	same summary-format drift as bare status
+list	exact	table listing format is a fixed, simple grid
+describe '_newshell_parity_test'	exact	single-table describe output
+exists '_newshell_parity_test'	exact	simple boolean-style existence check
