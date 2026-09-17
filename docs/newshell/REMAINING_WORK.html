@@ -58,7 +58,7 @@ footer { text-align: center; color: #666; font-size: 12px; margin-top: 30px; }
     <h1>hbase-newshell: command porting tracker</h1>
     <div class="summary">
       <div class="summary-card"><strong>Total work items (checked = done, unchecked = remaining)</strong><span id="overall-count">0 / 0</span></div>
-      <div class="summary-card"><strong>Commands ported</strong><span>43 / 184</span></div>
+      <div class="summary-card"><strong>Commands ported</strong><span>63 / 184</span></div>
     </div>
     <div class="progress-bar-outer"><div class="progress-bar-inner" id="overall-bar"></div></div>
     <div style="margin-top:14px;"><a href="https://github.com/mnpoonia/hbase/tree/hbase-newshell" target="_blank" style="color:#9cf;">View branch &amp; code on GitHub (mnpoonia/hbase @ hbase-newshell)</a></div>
@@ -92,7 +92,8 @@ const DATA = [
   { id: "scripts", title: "1. Scripts / infrastructure work", badge: null, items: [
     ["repoint-bin-hbase-shell", "Repoint `bin/hbase shell` at `NewShellMain`", "Drop the jruby_cmds/JRuby classpath wiring once command coverage is sufficient — the actual JRuby-removal cutover for HBASE-30250.", false, "bin/hbase"],
     ["preserve-n-mode", "Preserve `-n` / piped-stdin one-shot semantics", "Real ops scripts depend on `hbase shell -n` for piped one-shot commands (see section 3) — newshell must match.", false, "bin/hbase, bin/hbase-jruby"],
-    ["expand-parity-corpus", "Expand `dev-support/hbase_docker/shell-parity-corpus.tsv`", "One entry per newly-ported command so parity is checked automatically, not just unit-tested.", false, "dev-support/hbase_docker/shell-parity-corpus.tsv"],
+    ["expand-parity-corpus", "Expand `dev-support/hbase_docker/shell-parity-corpus.tsv`", "One entry per newly-ported command so parity is checked automatically, not just unit-tested. Completed for all 20 commands ported in this pass. Full-suite run against hbase_newshell_parity: 0 exact failures, 13 smoke divergences across 46 corpus rows (33 exact passes). Uncovered a real harness bug: verify-shell-parity.sh's set -e/pipefail let a crashing engine invocation (e.g. disable_all's unanswered y/n prompt under piped stdin) silently kill the whole script mid-loop with no SUMMARY line and no visible nonzero exit through '| tail' — fixed by appending '|| true' to both capture lines so a crash is diffed like any other divergence instead of aborting the run. Also found and fixed three real command bugs (see the show_filters, describe_namespace, and list_namespace_tables entries below).", true, "dev-support/hbase_docker/shell-parity-corpus.tsv, dev-support/hbase_docker/verify-shell-parity.sh"],
+    ["live-newshell-demo", "Pre-built demo image + `live-newshell-demo.sh`", "New script (this pass), modeled on verify-shell-parity.sh: boots a fresh container from a build-hbase.sh image (tagged hbase_newshell_demo for this pass; rebuild any time via './build-hbase.sh --source ../.. hbase_newshell_demo'), waits for the master, then runs a curated newshell command tour one command at a time (echo + PAUSE_SECONDS pause, default 10s) - status; namespace create/describe/list/alter/drop; table create/list/describe; put/get/scan; disable_all/is_disabled/enable_all/is_enabled; list_regions/get_table/locate_region; balance_switch. Dry-run end to end against hbase_newshell_demo with PAUSE_SECONDS=1: 23 steps, no errors, DEMO COMPLETE printed.", true, "dev-support/hbase_docker/live-newshell-demo.sh"],
     ["descriptor-catalog", "Decide on descriptor-driven command catalog", "Deferred design item; revisit once ported-command count roughly doubles.", false, "hbase-newshell/src/main/java/org/apache/hadoop/hbase/newshell/command/impl/"],
     ["one-shot-invocation", "One-shot / non-REPL invocation story", "`./bin/hbase newshell create --table t1 --name f1`-style one-shot commands.", false, "hbase-newshell/src/main/java/org/apache/hadoop/hbase/newshell/"],
     ["jruby-removal-followthrough", "JRuby removal follow-through", "Drop hbase-shell's JRuby runtime dependency from distribution/assembly; update docs.", false, "hbase-shell/pom.xml"],
@@ -160,7 +161,7 @@ const DATA = [
     ["general-whoami", "`whoami`", null, true, IMPL + "WhoamiCommand.java"],
     ["general-processlist", "`processlist`", "Skipped/N/A — not worth porting (interactive process listing, no scripted callers).", false, RUBY + "processlist.rb"],
   ] },
-  { id: "ddl", title: "TABLES MANAGEMENT COMMANDS — ddl", badge: "14 remaining", items: [
+  { id: "ddl", title: "TABLES MANAGEMENT COMMANDS — ddl", badge: "0 remaining", items: [
     ["ddl-alter","`alter`",null,true, IMPL + "AlterCommand.java"],
     ["ddl-create","`create`",null,true, IMPL + "CreateCommand.java"],
     ["ddl-describe","`describe`",null,true, IMPL + "DescribeCommand.java"],
@@ -169,28 +170,28 @@ const DATA = [
     ["ddl-enable","`enable`",null,true, IMPL + "EnableCommand.java"],
     ["ddl-exists","`exists`",null,true, IMPL + "ExistsCommand.java"],
     ["ddl-list","`list`",null,true, IMPL + "ListCommand.java"],
-    ["ddl-disable-all","`disable_all`",null,false, RUBY + "disable_all.rb"],
-    ["ddl-is-disabled","`is_disabled`",null,false, RUBY + "is_disabled.rb"],
-    ["ddl-drop-all","`drop_all`",null,false, RUBY + "drop_all.rb"],
-    ["ddl-enable-all","`enable_all`",null,false, RUBY + "enable_all.rb"],
-    ["ddl-is-enabled","`is_enabled`",null,false, RUBY + "is_enabled.rb"],
-    ["ddl-show-filters","`show_filters`",null,false, RUBY + "show_filters.rb"],
-    ["ddl-alter-status","`alter_status`",null,false, RUBY + "alter_status.rb"],
-    ["ddl-alter-async","`alter_async`",null,false, RUBY + "alter_async.rb"],
-    ["ddl-get-table","`get_table`",null,false, RUBY + "get_table.rb"],
-    ["ddl-locate-region","`locate_region`",null,false, RUBY + "locate_region.rb"],
-    ["ddl-list-regions","`list_regions`",null,false, RUBY + "list_regions.rb"],
-    ["ddl-clone-table-schema","`clone_table_schema`",null,false, RUBY + "clone_table_schema.rb"],
-    ["ddl-list-enabled-tables","`list_enabled_tables`",null,false, RUBY + "list_enabled_tables.rb"],
-    ["ddl-list-disabled-tables","`list_disabled_tables`",null,false, RUBY + "list_disabled_tables.rb"],
+    ["ddl-disable-all","`disable_all`","Unit-tested and mini-cluster-verified; corpus row added (smoke — legacy shell crashes with NoMethodError reading its y/n confirmation from exhausted piped stdin under -n; newshell's one-shot port intentionally skips the prompt and acts directly).",true, IMPL + "DisableAllCommand.java"],
+    ["ddl-is-disabled","`is_disabled`","Unit-tested and mini-cluster-verified; corpus row added (exact).",true, IMPL + "IsDisabledCommand.java"],
+    ["ddl-drop-all","`drop_all`","Unit-tested; corpus row added (smoke — same y/n-confirmation-vs-piped-stdin divergence as disable_all).",true, IMPL + "DropAllCommand.java"],
+    ["ddl-enable-all","`enable_all`","Unit-tested; corpus row added (smoke — same y/n-confirmation-vs-piped-stdin divergence as disable_all).",true, IMPL + "EnableAllCommand.java"],
+    ["ddl-is-enabled","`is_enabled`","Unit-tested; corpus row added (exact).",true, IMPL + "IsEnabledCommand.java"],
+    ["ddl-show-filters","`show_filters`","Unit-tested; corpus row added (exact). Real bug found and fixed: ShowFiltersCommand rendered its output as a TabularResult, printing a FILTER header and an N row(s) footer the Ruby original never prints — changed to a plain TextResult.",true, IMPL + "ShowFiltersCommand.java"],
+    ["ddl-alter-status","`alter_status`","Unit-tested and mini-cluster-verified; corpus row added (smoke — region-update progress count is timing-sensitive).",true, IMPL + "AlterStatusCommand.java"],
+    ["ddl-alter-async","`alter_async`","Unit-tested; corpus row added (exact).",true, IMPL + "AlterAsyncCommand.java"],
+    ["ddl-get-table","`get_table`","Unit-tested; corpus row added (exact).",true, IMPL + "GetTableCommand.java"],
+    ["ddl-locate-region","`locate_region`","Unit-tested and mini-cluster-verified; corpus row added (smoke — encoded region-name hash differs run to run). Real bug found and fixed: DefaultShellAdmin.locateRegion returned RegionInfo.toString() (the descriptive dict) instead of the bare region name — changed to getRegionNameAsString().",true, IMPL + "LocateRegionCommand.java"],
+    ["ddl-list-regions","`list_regions`","Unit-tested and mini-cluster-verified; corpus row added (smoke — region name/size/req/locality embed live metrics).",true, IMPL + "ListRegionsCommand.java"],
+    ["ddl-clone-table-schema","`clone_table_schema`","Unit-tested and mini-cluster-verified; corpus row added (exact).",true, IMPL + "CloneTableSchemaCommand.java"],
+    ["ddl-list-enabled-tables","`list_enabled_tables`","Unit-tested; corpus row added (smoke — cluster-wide table listing, not scoped to this script).",true, IMPL + "ListEnabledTablesCommand.java"],
+    ["ddl-list-disabled-tables","`list_disabled_tables`","Unit-tested; corpus row added (smoke — same reasoning).",true, IMPL + "ListDisabledTablesCommand.java"],
   ] },
-  { id: "namespace", title: "NAMESPACE MANAGEMENT COMMANDS", badge: "6 remaining", items: [
-    ["ns-create","`create_namespace`",null,false, RUBY + "create_namespace.rb"],
-    ["ns-drop","`drop_namespace`",null,false, RUBY + "drop_namespace.rb"],
-    ["ns-alter","`alter_namespace`",null,false, RUBY + "alter_namespace.rb"],
-    ["ns-describe","`describe_namespace`",null,false, RUBY + "describe_namespace.rb"],
-    ["ns-list","`list_namespace`",null,false, RUBY + "list_namespace.rb"],
-    ["ns-list-tables","`list_namespace_tables`",null,false, RUBY + "list_namespace_tables.rb"],
+  { id: "namespace", title: "NAMESPACE MANAGEMENT COMMANDS", badge: "0 remaining", items: [
+    ["ns-create","`create_namespace`","Unit-tested and mini-cluster-verified; corpus row added (exact).",true, IMPL + "CreateNamespaceCommand.java"],
+    ["ns-drop","`drop_namespace`","Unit-tested and mini-cluster-verified; corpus row added (exact).",true, IMPL + "DropNamespaceCommand.java"],
+    ["ns-alter","`alter_namespace`","Unit-tested and mini-cluster-verified; corpus row added (exact).",true, IMPL + "AlterNamespaceCommand.java"],
+    ["ns-describe","`describe_namespace`","Unit-tested and mini-cluster-verified; corpus row added (exact). Real bug found and fixed: DescribeNamespaceCommand rendered its output as a TabularResult, printing a 1 row(s) footer where the Ruby original (quotas disabled) prints Quota is disabled instead — changed to a plain TextResult.",true, IMPL + "DescribeNamespaceCommand.java"],
+    ["ns-list","`list_namespace`","Unit-tested and mini-cluster-verified; corpus row added (exact, filtered to a specific created namespace name).",true, IMPL + "ListNamespaceCommand.java"],
+    ["ns-list-tables","`list_namespace_tables`","Unit-tested and mini-cluster-verified; corpus row added (exact). Real bug found and fixed: DefaultShellAdmin.listNamespaceTables returned TableName.getNameAsString() (full namespace:table name) instead of getQualifierAsString() (bare table name) — table names showed the namespace prefix twice.",true, IMPL + "ListNamespaceTablesCommand.java"],
   ]},
   { id: "dml", title: "DATA MANIPULATION COMMANDS — dml", badge: "0 remaining", items: [
     ["dml-get","`get`",null,true, IMPL + "GetCommand.java"],

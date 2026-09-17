@@ -1,6 +1,6 @@
 # hbase-newshell: remaining work
 
-Status snapshot as of 2026-09-17. `hbase-newshell` currently ports **43 of 184**
+Status snapshot as of 2026-09-18. `hbase-newshell` currently ports **63 of 184**
 hbase-shell Ruby commands (`hbase-shell/src/main/ruby/shell/commands/*.rb`).
 Groups below follow the same grouping hbase-shell itself uses
 (`hbase-shell/src/main/ruby/shell.rb`). Every command/script entry also lists
@@ -31,11 +31,30 @@ for the JRuby shell.
   `bin/rolling-restart.sh`, both piping `balance_switch`). `bin/hbase
   newshell -n` must behave identically for these to keep working after the
   cutover.
-- [ ] **Expand `dev-support/hbase_docker/shell-parity-corpus.tsv`** with one
+- [x] **Expand `dev-support/hbase_docker/shell-parity-corpus.tsv`** with one
   entry per newly-ported command (see
   `dev-support/hbase_docker/verify-shell-parity.sh`), so every command lands
   with an automated shell-vs-newshell parity check before being considered
-  "done," not just unit-tested in isolation.
+  "done," not just unit-tested in isolation. — completed: true. All 20
+  commands ported in this pass (14 ddl stragglers + 6 namespace commands) now
+  have a corpus row. Full-suite run (`./verify-shell-parity.sh
+  hbase_newshell_parity`, built via `./build-hbase.sh --source ../..
+  hbase_newshell_parity`): **0 exact failures, 13 smoke divergences** across
+  all 46 corpus rows (33 exact passes). Fixing this uncovered a real bug in
+  the harness itself (see below) plus three real command bugs — see the
+  `describe_namespace`, `list_namespace_tables`, and `show_filters` entries in
+  section 8 below.
+  - **Harness bug found and fixed**: `verify-shell-parity.sh` ran under
+    `set -euo pipefail`, and captured each engine's output via
+    `x="$(... | bin/hbase ... -n | filter)"`. If either engine's invocation
+    exited nonzero — e.g. the legacy shell crashing on an unanswered `y/n`
+    confirmation prompt for `disable_all`/`drop_all`/`enable_all` when piped
+    non-interactively — `pipefail` propagated that exit code straight through
+    `set -e`, silently killing the whole script mid-loop: no FAIL/DIVERGE
+    line, no SUMMARY line, no nonzero exit visible to a caller piping through
+    `| tail`. Fixed by appending `|| true` to both capture lines so a crash's
+    output is captured and diffed like any other divergence, instead of
+    aborting the run.
 - [ ] **Decide on the descriptor-driven command catalog** (deferred design
   item from the original HBASE-30250 design doc): today every `ShellCommand`
   is a hand-written class re-implementing its own arg validation
@@ -86,6 +105,39 @@ for the JRuby shell.
   original HBASE-30250 spec doc is checked in anywhere in this worktree,
   keep it in sync with actual scope decisions made along the way (e.g. the
   deferred descriptor-catalog item above).
+
+### Pre-built demo Docker image
+
+For a live walkthrough of `newshell` (standalone HBase, no cluster setup):
+
+```
+cd dev-support/hbase_docker
+./build-hbase.sh --source ../.. hbase_newshell_demo   # ~15-20 min, one-time
+./live-newshell-demo.sh hbase_newshell_demo           # boots + runs the tour
+```
+
+`build-hbase.sh --source ../.. <tag>` compiles this worktree (including
+`hbase-newshell`) into a standalone-HBase Docker image tagged `<tag>`; the
+image used for this pass was tagged `hbase_newshell_demo`. Rebuild with the
+same command any time the source changes — there's no separate "publish"
+step, the tag is purely local.
+
+`dev-support/hbase_docker/live-newshell-demo.sh <image>` (new script, this
+pass) boots a fresh container from that image, runs `start-hbase.sh`, waits
+for the master, then walks a curated `newshell` command tour one command at
+a time — echoing each command and pausing (`PAUSE_SECONDS`, default 10s)
+between steps so an audience can read the output as it streams by: `status`;
+namespace create/describe/list/alter/drop; table create/list/describe;
+put/get/scan; `disable_all`/`is_disabled`/`enable_all`/`is_enabled`;
+`list_regions`/`get_table`/`locate_region`; `balance_switch`. It was dry-run
+end to end against `hbase_newshell_demo` with `PAUSE_SECONDS=1` and completed
+cleanly (23 steps, no errors, `DEMO COMPLETE` printed) — see the corpus-fix
+section above for the two real command bugs this and the parity run
+surfaced, both already fixed before this dry run.
+
+If you don't have `hbase_newshell_demo` built locally (e.g. a fresh
+checkout), run the two commands above in order — the build step is the only
+prerequisite.
 
 ## 2. Standalone JRuby scripts in `bin/` (1 remaining, separate from shell commands)
 
@@ -340,7 +392,7 @@ either standard public API — already reachable from any `.jsh`/`.java`
 driver via classpath, no newshell change required — or Salesforce-internal
 tooling that's explicitly out of scope.
 
-## 8. Commands still to port (135 remaining, plus 2 skipped)
+## 8. Commands still to port (115 remaining, plus 2 skipped)
 
 Grouped exactly as `shell.rb`'s `load_command_group` calls group them, so
 porting can proceed group-by-group with a natural test boundary per group.
@@ -359,34 +411,34 @@ at
 > Already ported: <span style="color:#4caf50">`status`</span>, <span style="color:#4caf50">`version`</span>, <span style="color:#4caf50">`whoami`</span> —
 > `.../command/impl/{Status,Version,Whoami}Command.java`.
 
-### TABLES MANAGEMENT COMMANDS — ddl (14 remaining)
+### TABLES MANAGEMENT COMMANDS — ddl (0 remaining)
 
-- [ ] <span style="color:#a5d6a7">`disable_all`</span> — `hbase-shell/src/main/ruby/shell/commands/disable_all.rb`
-- [ ] <span style="color:#a5d6a7">`is_disabled`</span> — `hbase-shell/src/main/ruby/shell/commands/is_disabled.rb`
-- [ ] <span style="color:#a5d6a7">`drop_all`</span> — `hbase-shell/src/main/ruby/shell/commands/drop_all.rb`
-- [ ] <span style="color:#a5d6a7">`enable_all`</span> — `hbase-shell/src/main/ruby/shell/commands/enable_all.rb`
-- [ ] <span style="color:#a5d6a7">`is_enabled`</span> — `hbase-shell/src/main/ruby/shell/commands/is_enabled.rb`
-- [ ] <span style="color:#a5d6a7">`show_filters`</span> — `hbase-shell/src/main/ruby/shell/commands/show_filters.rb`
-- [ ] <span style="color:#a5d6a7">`alter_status`</span> — `hbase-shell/src/main/ruby/shell/commands/alter_status.rb`
-- [ ] <span style="color:#a5d6a7">`alter_async`</span> — `hbase-shell/src/main/ruby/shell/commands/alter_async.rb`
-- [ ] <span style="color:#a5d6a7">`get_table`</span> — `hbase-shell/src/main/ruby/shell/commands/get_table.rb`
-- [ ] <span style="color:#a5d6a7">`locate_region`</span> — `hbase-shell/src/main/ruby/shell/commands/locate_region.rb`
-- [ ] <span style="color:#a5d6a7">`list_regions`</span> — `hbase-shell/src/main/ruby/shell/commands/list_regions.rb`
-- [ ] <span style="color:#a5d6a7">`clone_table_schema`</span> — `hbase-shell/src/main/ruby/shell/commands/clone_table_schema.rb`
-- [ ] <span style="color:#a5d6a7">`list_enabled_tables`</span> — `hbase-shell/src/main/ruby/shell/commands/list_enabled_tables.rb`
-- [ ] <span style="color:#a5d6a7">`list_disabled_tables`</span> — `hbase-shell/src/main/ruby/shell/commands/list_disabled_tables.rb`
+- [x] <span style="color:#a5d6a7">`disable_all`</span> — `hbase-shell/src/main/ruby/shell/commands/disable_all.rb` — completed: true. Unit-tested (`DisableAllCommandTest`) and mini-cluster-verified; corpus row added (`smoke` — the legacy shell crashes with `NoMethodError` reading its `y/n` confirmation from exhausted piped stdin under `-n`; newshell's one-shot port intentionally skips the prompt and acts directly).
+- [x] <span style="color:#a5d6a7">`is_disabled`</span> — `hbase-shell/src/main/ruby/shell/commands/is_disabled.rb` — completed: true. Unit-tested (`IsDisabledCommandTest`) and mini-cluster-verified; corpus row added (`exact`).
+- [x] <span style="color:#a5d6a7">`drop_all`</span> — `hbase-shell/src/main/ruby/shell/commands/drop_all.rb` — completed: true. Unit-tested (`DropAllCommandTest`); corpus row added (`smoke` — same `y/n`-confirmation-vs-piped-stdin divergence as `disable_all`).
+- [x] <span style="color:#a5d6a7">`enable_all`</span> — `hbase-shell/src/main/ruby/shell/commands/enable_all.rb` — completed: true. Unit-tested (`EnableAllCommandTest`); corpus row added (`smoke` — same `y/n`-confirmation-vs-piped-stdin divergence as `disable_all`).
+- [x] <span style="color:#a5d6a7">`is_enabled`</span> — `hbase-shell/src/main/ruby/shell/commands/is_enabled.rb` — completed: true. Unit-tested (`IsEnabledCommandTest`); corpus row added (`exact`).
+- [x] <span style="color:#a5d6a7">`show_filters`</span> — `hbase-shell/src/main/ruby/shell/commands/show_filters.rb` — completed: true. Unit-tested (`ShowFiltersCommandTest`); corpus row added (`exact`). **Real bug found and fixed**: `ShowFiltersCommand` rendered its output as a `TabularResult`, which prints a `FILTER` header and an `N row(s)` footer the Ruby original never prints (it just calls `formatter.row` per filter, no header/footer) — changed to a plain `TextResult`.
+- [x] <span style="color:#a5d6a7">`alter_status`</span> — `hbase-shell/src/main/ruby/shell/commands/alter_status.rb` — completed: true. Unit-tested (`AlterStatusCommandTest`) and mini-cluster-verified; corpus row added (`smoke` — region-update progress count is timing-sensitive).
+- [x] <span style="color:#a5d6a7">`alter_async`</span> — `hbase-shell/src/main/ruby/shell/commands/alter_async.rb` — completed: true. Unit-tested (`AlterAsyncCommandTest`); corpus row added (`exact`).
+- [x] <span style="color:#a5d6a7">`get_table`</span> — `hbase-shell/src/main/ruby/shell/commands/get_table.rb` — completed: true. Unit-tested (`GetTableCommandTest`); corpus row added (`exact`).
+- [x] <span style="color:#a5d6a7">`locate_region`</span> — `hbase-shell/src/main/ruby/shell/commands/locate_region.rb` — completed: true. Unit-tested (`LocateRegionCommandTest`) and mini-cluster-verified (`locateRegionReturnsHostAndRegionForRowKey`); corpus row added (`smoke` — encoded region-name hash differs run to run). **Real bug found and fixed**: `DefaultShellAdmin.locateRegion` returned `RegionInfo.toString()` (the descriptive `{ENCODED => ..., NAME => ...}` dict) instead of the bare region name — changed to `getRegionNameAsString()`.
+- [x] <span style="color:#a5d6a7">`list_regions`</span> — `hbase-shell/src/main/ruby/shell/commands/list_regions.rb` — completed: true. Unit-tested (`ListRegionsCommandTest`) and mini-cluster-verified; corpus row added (`smoke` — region name/size/req/locality embed live metrics).
+- [x] <span style="color:#a5d6a7">`clone_table_schema`</span> — `hbase-shell/src/main/ruby/shell/commands/clone_table_schema.rb` — completed: true. Unit-tested (`CloneTableSchemaCommandTest`) and mini-cluster-verified; corpus row added (`exact`).
+- [x] <span style="color:#a5d6a7">`list_enabled_tables`</span> — `hbase-shell/src/main/ruby/shell/commands/list_enabled_tables.rb` — completed: true. Unit-tested (`ListEnabledTablesCommandTest`); corpus row added (`smoke` — cluster-wide table listing, not scoped to this script).
+- [x] <span style="color:#a5d6a7">`list_disabled_tables`</span> — `hbase-shell/src/main/ruby/shell/commands/list_disabled_tables.rb` — completed: true. Unit-tested (`ListDisabledTablesCommandTest`); corpus row added (`smoke` — same reasoning).
 
 > Already ported: <span style="color:#0b6623">`alter`</span>, <span style="color:#0b6623">`create`</span>, <span style="color:#0b6623">`describe`</span>, <span style="color:#0b6623">`disable`</span>, <span style="color:#0b6623">`drop`</span>, <span style="color:#0b6623">`enable`</span>,
 > `exists`, `list` — `.../command/impl/{Alter,Create,Describe,Disable,Drop,Enable,Exists,List}Command.java`.
 
-### NAMESPACE MANAGEMENT COMMANDS (6 remaining — none ported yet)
+### NAMESPACE MANAGEMENT COMMANDS (0 remaining)
 
-- [ ] <span style="color:#a5d6a7">`create_namespace`</span> — `hbase-shell/src/main/ruby/shell/commands/create_namespace.rb`
-- [ ] <span style="color:#a5d6a7">`drop_namespace`</span> — `hbase-shell/src/main/ruby/shell/commands/drop_namespace.rb`
-- [ ] <span style="color:#a5d6a7">`alter_namespace`</span> — `hbase-shell/src/main/ruby/shell/commands/alter_namespace.rb`
-- [ ] <span style="color:#a5d6a7">`describe_namespace`</span> — `hbase-shell/src/main/ruby/shell/commands/describe_namespace.rb`
-- [ ] <span style="color:#a5d6a7">`list_namespace`</span> — `hbase-shell/src/main/ruby/shell/commands/list_namespace.rb`
-- [ ] <span style="color:#a5d6a7">`list_namespace_tables`</span> — `hbase-shell/src/main/ruby/shell/commands/list_namespace_tables.rb`
+- [x] <span style="color:#a5d6a7">`create_namespace`</span> — `hbase-shell/src/main/ruby/shell/commands/create_namespace.rb` — completed: true. Unit-tested (`CreateNamespaceCommandTest`) and mini-cluster-verified (`TestNamespaceCommandsAgainstMiniCluster`); corpus row added (`exact`).
+- [x] <span style="color:#a5d6a7">`drop_namespace`</span> — `hbase-shell/src/main/ruby/shell/commands/drop_namespace.rb` — completed: true. Unit-tested (`DropNamespaceCommandTest`) and mini-cluster-verified; corpus row added (`exact`).
+- [x] <span style="color:#a5d6a7">`alter_namespace`</span> — `hbase-shell/src/main/ruby/shell/commands/alter_namespace.rb` — completed: true. Unit-tested (`AlterNamespaceCommandTest`) and mini-cluster-verified; corpus row added (`exact`).
+- [x] <span style="color:#a5d6a7">`describe_namespace`</span> — `hbase-shell/src/main/ruby/shell/commands/describe_namespace.rb` — completed: true. Unit-tested (`DescribeNamespaceCommandTest`) and mini-cluster-verified; corpus row added (`exact`). **Real bug found and fixed**: `DescribeNamespaceCommand` rendered its output as a `TabularResult`, printing a `1 row(s)` footer where the Ruby original (quotas disabled, the normal case) prints `Quota is disabled` instead — changed to a plain `TextResult` with the `DESCRIPTION` header, the descriptor row, and the `Quota is disabled` line.
+- [x] <span style="color:#a5d6a7">`list_namespace`</span> — `hbase-shell/src/main/ruby/shell/commands/list_namespace.rb` — completed: true. Unit-tested (`ListNamespaceCommandTest`) and mini-cluster-verified; corpus row added (`exact`, filtered to a specific created namespace name).
+- [x] <span style="color:#a5d6a7">`list_namespace_tables`</span> — `hbase-shell/src/main/ruby/shell/commands/list_namespace_tables.rb` — completed: true. Unit-tested (`ListNamespaceTablesCommandTest`) and mini-cluster-verified; corpus row added (`exact`). **Real bug found and fixed**: `DefaultShellAdmin.listNamespaceTables` returned `TableName.getNameAsString()` (the full `namespace:table` name) instead of `getQualifierAsString()` (the bare table name the Ruby `admin.rb` wrapper returns) — table names were showing the namespace prefix twice.
 
 ### DATA MANIPULATION COMMANDS — dml (0 remaining — fully ported)
 
