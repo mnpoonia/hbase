@@ -811,6 +811,50 @@ elif [ "$COMMAND" = "credential" ] ; then
   CLASS='org.apache.hadoop.security.alias.CredentialShell'
 elif [ "$COMMAND" = "copyreppeers" ] ; then
   CLASS='org.apache.hadoop.hbase.replication.CopyReplicationPeers'
+elif [[ "$COMMAND" == *.jsh ]] ; then
+  if [[ "$COMMAND" == */* ]]; then
+    JSH_SCRIPT="$COMMAND"
+  else
+    JSH_SCRIPT="${HBASE_HOME}/bin/${COMMAND}"
+  fi
+  if [ ! -f "$JSH_SCRIPT" ]; then
+    echo "jshell script not found: $JSH_SCRIPT"
+    exit 1
+  fi
+  # pass positional args to the script via env vars: jshell script mode has no
+  # String[] args equivalent, and re-joining/re-splitting args into one string
+  # breaks on embedded spaces, so each arg gets its own env var instead.
+  i=0
+  for a in "$@"; do
+    export HBASE_JSH_ARG_$i="$a"
+    i=$((i+1))
+  done
+  export HBASE_JSH_ARG_COUNT=$i
+  set --
+  CLASS='jdk.internal.jshell.tool.JShellToolProvider'
+  read -r -a JSHELL_ARGS <<< "${HBASE_JSHELL_ARGS:-"--startup DEFAULT --startup PRINTING --startup ${HBASE_HOME}/bin/hbase_startup.jsh"}"
+  # --execution local runs snippets in-process instead of forking a JDI remote VM;
+  # without it, System.exit() inside the script only kills the (forked) remote VM,
+  # so the local jshell process's own exit code stays 0 regardless of what the
+  # script tried to exit with, and a "State engine terminated." notice can
+  # interleave with the script's own buffered stdout.
+  JSHELL_ARGS+=("--execution" "local" "-q" "$JSH_SCRIPT")
+  HBASE_OPTS="$HBASE_OPTS $HBASE_JSHELL_OPTS"
+  # run the script and exit rather than dropping into an interactive REPL
+  HBASE_JSH_SCRIPT_MODE=true
+elif [[ "$COMMAND" == *.java ]] ; then
+  # JEP 330 single-file source launch: java forwards the remaining args
+  # directly to main(String[] args), so no env-var passthrough is needed here
+  # (unlike the .jsh case above).
+  if [[ "$COMMAND" == */* ]]; then
+    CLASS="$COMMAND"
+  else
+    CLASS="${HBASE_HOME}/bin/${COMMAND}"
+  fi
+  if [ ! -f "$CLASS" ]; then
+    echo "java source script not found: $CLASS"
+    exit 1
+  fi
 else
   CLASS=$COMMAND
 fi
@@ -872,8 +916,16 @@ if [ "${#JSHELL_ARGS[@]}" -gt 0 ] ; then
 fi
 
 if [ "${HBASE_NOEXEC}" != "" ]; then
-  "$JAVA" -Dproc_$COMMAND -XX:OnOutOfMemoryError="kill -9 %p" $HEAP_SETTINGS $HBASE_OPTS $CLASS "${CMD_ARGS[@]}"
+  if [ "${HBASE_JSH_SCRIPT_MODE}" = "true" ]; then
+    "$JAVA" -Dproc_$COMMAND -XX:OnOutOfMemoryError="kill -9 %p" $HEAP_SETTINGS $HBASE_OPTS $CLASS "${CMD_ARGS[@]}" < /dev/null
+  else
+    "$JAVA" -Dproc_$COMMAND -XX:OnOutOfMemoryError="kill -9 %p" $HEAP_SETTINGS $HBASE_OPTS $CLASS "${CMD_ARGS[@]}"
+  fi
 else
   export JVM_PID="$$"
-  exec "$JAVA" -Dproc_$COMMAND -XX:OnOutOfMemoryError="kill -9 %p" $HEAP_SETTINGS $HBASE_OPTS $CLASS "${CMD_ARGS[@]}"
+  if [ "${HBASE_JSH_SCRIPT_MODE}" = "true" ]; then
+    exec "$JAVA" -Dproc_$COMMAND -XX:OnOutOfMemoryError="kill -9 %p" $HEAP_SETTINGS $HBASE_OPTS $CLASS "${CMD_ARGS[@]}" < /dev/null
+  else
+    exec "$JAVA" -Dproc_$COMMAND -XX:OnOutOfMemoryError="kill -9 %p" $HEAP_SETTINGS $HBASE_OPTS $CLASS "${CMD_ARGS[@]}"
+  fi
 fi
