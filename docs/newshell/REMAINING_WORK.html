@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>hbase-newshell: command porting tracker</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background: #1a1a1a;
+  color: #e0e0e0;
+  padding: 20px;
+  line-height: 1.6;
+}
+.container { max-width: 1100px; margin: 0 auto; }
+header {
+  background: linear-gradient(135deg, #2d5f8f 0%, #1a3a5a 100%);
+  padding: 24px 30px;
+  border-radius: 12px;
+  margin-bottom: 24px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+}
+h1 { font-size: 24px; color: #fff; margin-bottom: 12px; }
+.summary { display: flex; gap: 24px; flex-wrap: wrap; }
+.summary-card { background: rgba(255,255,255,0.1); padding: 10px 16px; border-radius: 8px; border-left: 4px solid #4a9eff; min-width: 140px; }
+.summary-card strong { display: block; font-size: 11px; text-transform: uppercase; color: #bcd; margin-bottom: 4px; }
+.summary-card span { font-size: 18px; color: #fff; font-weight: 600; }
+.progress-bar-outer { background: rgba(255,255,255,0.15); border-radius: 6px; height: 8px; margin-top: 14px; overflow: hidden; }
+.progress-bar-inner { background: #4ade80; height: 100%; width: 0%; transition: width .2s; }
+.toolbar { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+button {
+  background: #2d5f8f; color: #fff; border: none; padding: 8px 16px;
+  border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 600;
+}
+button:hover { background: #3a76ad; }
+button.danger { background: #7d2a2a; }
+button.danger:hover { background: #a03636; }
+.section { background: #252525; border-radius: 12px; padding: 20px 24px; margin-bottom: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.2); }
+.section-header { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; padding-bottom: 12px; border-bottom: 2px solid #333; }
+.section-header h2 { font-size: 17px; color: #4a9eff; flex: 1; }
+.badge { background: #333; color: #fff; padding: 3px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; white-space: nowrap; }
+.note { color: #999; font-size: 13px; margin: 8px 0 14px; }
+ul.items { list-style: none; }
+ul.items li { display: flex; align-items: baseline; gap: 10px; padding: 5px 0; }
+ul.items li input[type=checkbox] { width: 16px; height: 16px; cursor: pointer; margin-top: 3px; flex-shrink: 0; }
+ul.items li label { cursor: pointer; }
+ul.items li label.done { color: #6a6; text-decoration: line-through; }
+code { background: #333; padding: 1px 5px; border-radius: 4px; font-size: 12px; }
+.desc { color: #999; font-size: 12px; }
+.path { color: #7aa; font-size: 11px; font-family: "SF Mono", Menlo, monospace; margin-top: 1px; }
+footer { text-align: center; color: #666; font-size: 12px; margin-top: 30px; }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>hbase-newshell: command porting tracker</h1>
+    <div class="summary">
+      <div class="summary-card"><strong>Total work items (checked = done, unchecked = remaining)</strong><span id="overall-count">0 / 0</span></div>
+      <div class="summary-card"><strong>Commands ported</strong><span>43 / 184</span></div>
+    </div>
+    <div class="progress-bar-outer"><div class="progress-bar-inner" id="overall-bar"></div></div>
+    <div style="margin-top:14px;"><a href="https://github.com/mnpoonia/hbase/tree/hbase-newshell" target="_blank" style="color:#9cf;">View branch &amp; code on GitHub (mnpoonia/hbase @ hbase-newshell)</a></div>
+  </header>
+
+  <div class="toolbar">
+    <button onclick="exportChecked()">Export checked list</button>
+    <button class="danger" onclick="resetAll()">Reset all</button>
+  </div>
+
+  <div class="note" style="margin-bottom:16px;">
+    <strong>Priority key</strong> (section 8's command list):
+    <span style="color:#0b6623">&#9632; dark green</span> = used directly by
+    k8s_hbase or Ambari scripts &middot;
+    <span style="color:#4caf50">&#9632; green</span> = second-most-important
+    (general + dml) &middot;
+    <span style="color:#a5d6a7">&#9632; light green</span> = rare for us.
+  </div>
+
+  <div id="sections"></div>
+
+  <footer>This is the full command list, not just what's remaining — checked items are already ported/done, unchecked items are the remaining work. State is saved to this browser's localStorage (key <code>newshell-remaining-work</code>). Use "Export checked list" to snapshot progress.</footer>
+</div>
+
+<script>
+const IMPL = "hbase-newshell/src/main/java/org/apache/hadoop/hbase/newshell/command/impl/";
+const RUBY = "hbase-shell/src/main/ruby/shell/commands/";
+
+// item tuple: [id, label, desc, completed, path]
+const DATA = [
+  { id: "scripts", title: "1. Scripts / infrastructure work", badge: null, items: [
+    ["repoint-bin-hbase-shell", "Repoint `bin/hbase shell` at `NewShellMain`", "Drop the jruby_cmds/JRuby classpath wiring once command coverage is sufficient — the actual JRuby-removal cutover for HBASE-30250.", false, "bin/hbase"],
+    ["preserve-n-mode", "Preserve `-n` / piped-stdin one-shot semantics", "Real ops scripts depend on `hbase shell -n` for piped one-shot commands (see section 3) — newshell must match.", false, "bin/hbase, bin/hbase-jruby"],
+    ["expand-parity-corpus", "Expand `dev-support/hbase_docker/shell-parity-corpus.tsv`", "One entry per newly-ported command so parity is checked automatically, not just unit-tested.", false, "dev-support/hbase_docker/shell-parity-corpus.tsv"],
+    ["descriptor-catalog", "Decide on descriptor-driven command catalog", "Deferred design item; revisit once ported-command count roughly doubles.", false, "hbase-newshell/src/main/java/org/apache/hadoop/hbase/newshell/command/impl/"],
+    ["one-shot-invocation", "One-shot / non-REPL invocation story", "`./bin/hbase newshell create --table t1 --name f1`-style one-shot commands.", false, "hbase-newshell/src/main/java/org/apache/hadoop/hbase/newshell/"],
+    ["jruby-removal-followthrough", "JRuby removal follow-through", "Drop hbase-shell's JRuby runtime dependency from distribution/assembly; update docs.", false, "hbase-shell/pom.xml"],
+    ["jsh-dispatch", "`bin/hbase &lt;script&gt;.jsh`/`.java` dispatch", "Implemented in bin/hbase: .jsh resolves the script path, passes positional args via HBASE_JSH_ARG_0..N + HBASE_JSH_ARG_COUNT env vars (no String[] args equivalent in jshell script mode), execs JShellToolProvider with --execution local -q &lt;script&gt;.jsh. --execution local is required for correct exit codes — without it jshell forks a remote VM to run snippets, so System.exit() only kills that remote VM and the local process (whose exit status bin/hbase's exec returns) exits 0 via EOF regardless, with a stray 'State engine terminated.' interleaving into stdout. .java resolves the path the same way and execs java &lt;script&gt;.java directly (JEP 330 forwards args natively to main(String[] args), no env-var passthrough needed). Mirrors today's .rb -&gt; org.jruby.Main dispatch; no new class gets added to hbase-newshell for any consumer. Watch for one jshell script-loader quirk: multi-line string literals via leading + continuation get mis-split into separate snippets and silently break (non-fatal error, broken value) — keep such literals on one physical line.", true, "bin/hbase"],
+    ["spec-doc-reconciliation", "Design doc reconciliation", "Keep HBASE-30250 spec doc (if checked in) in sync with scope decisions.", false, "docs/superpowers/specs/"],
+  ]},
+  { id: "bin-scripts", title: "2. Standalone JRuby scripts in bin/", badge: "1 remaining", items: [
+    ["draining-servers", "`draining_servers.rb`", "Ported to bin/draining_servers.jsh. Deprecated since 2.0 in favor of decommission_regionservers/list_decommissioned_regionservers/recommission_regionserver, but kept as a real port. Verified in Docker: add/list/remove ZK round trip byte-identical to ruby; exit codes correct after the --execution local fix (section 1).", true, "bin/draining_servers.jsh"],
+    ["get-active-master", "`get-active-master.rb`", "Ported to bin/get-active-master.jsh. Prints active master hostname via MasterAddressTracker/ZKWatcher. Referenced by k8s_hbase's get_active_hmaster.sh. Verified in Docker: output byte-identical to the ruby version.", true, "bin/get-active-master.jsh"],
+    ["region-mover", "`region_mover.rb`", "Ported to bin/region_mover.jsh — a one-line forward of HBASE_JSH_ARG_* into the already-pure-Java RegionMover.main(args). Verified in Docker: missing-required-option errors propagate as EXIT=1 via AbstractHBaseTool's System.exit(ret), confirming the --execution local fix matters for delegating scripts too. Live region-unload not exercised (would drain the only test regionserver).", true, "bin/region_mover.jsh"],
+    ["region-status", "`region_status.rb`", "Ported to bin/region_status.jsh. Polls META for online region count, with a wait mode and --table filter. Two API-drift fixes vs. the ruby original: Scan(byte[]) constructor removed (-> new Scan().withStartRow(...)); MetaTableAccessor.getTableRegions rejects hbase:meta itself (-> TableName.isMetaTableName(...) branch using admin.getRegions(...)). Verified in Docker across no-table, --table hbase:meta, and --table &lt;nonexistent&gt;.", true, "bin/region_status.jsh"],
+    ["shutdown-regionserver", "`shutdown_regionserver.rb`", "Ported to bin/shutdown_regionserver.jsh. RPC stop command (admin.stopRegionServer) to regionservers, for no-SSH environments. Verified in Docker: usage and invalid-host:port validation paths (EXIT=1); live RPC stop not exercised against the test cluster (would kill its only regionserver).", true, "bin/shutdown_regionserver.jsh"],
+    ["hirb", "`hirb.rb`", "JRuby shell's own legacy bootstrap/entrypoint; retire alongside the bin/hbase shell cutover.", false, "bin/hirb.rb"],
+    ["copy-tables-desc", "`copy_tables_desc.rb`", "Ported to bin/replication/copy_tables_desc.jsh (invoked as bin/hbase replication/copy_tables_desc.jsh &lt;src-zk&gt; &lt;dst-zk&gt; [tables]). Recreates table descriptors from one cluster on another via direct Java interop. Originally planned as .java for compile-time checking, converted to .jsh once draining_servers.jsh proved jshell handles multi-method scripts fine (the one real jshell bug — multi-line string concatenation — is easy to avoid). The .java dispatch mechanism (section 1) stays as a documented option for future scripts wanting native String[] args; unused in this batch. Verified in Docker: usage/EXIT=1 on bad args, self-copy smoke test exercises both namespace-exists and table-exists skip paths.", true, "bin/replication/copy_tables_desc.jsh"],
+  ], portedNote: "Same principles as sections 5-6 — see EXTERNAL_CONSUMER_HANDLING_PLAN.md: no new hbase-newshell class for any of these. Each .rb file is rewritten in place as a .jsh (default) or .java (when compile-checking is worth it) driver against the public HBase API, at the same bin/&lt;name&gt;.jsh/.java path." },
+  { id: "sh-scripts", title: "3. Shell scripts (.sh) that invoke Ruby-based shell commands", badge: "2 remaining", items: [
+    ["graceful-stop", "`graceful_stop.sh`", "Pipes `balance_switch false` into `hbase --config \"${HBASE_CONF_DIR}\" shell -n` (line 118), and `balance_switch <state>` into plain `... shell` with no `-n` (line 199). balance_switch is already ported; script still hardcodes legacy `shell` and depends on newshell's piped-stdin mode once repointed.", false, "bin/graceful_stop.sh"],
+    ["rolling-restart", "`rolling-restart.sh`", "Same `balance_switch` piped-into-`shell -n` pattern as graceful_stop.sh (lines 205, 225).", false, "bin/rolling-restart.sh"],
+    ["verify-shell-parity", "`verify-shell-parity.sh`", "Already newshell-aware — runs commands through both `bin/hbase shell -n` and `bin/hbase newshell -n` and diffs the output.", true, "dev-support/hbase_docker/verify-shell-parity.sh"],
+  ]},
+  { id: "thrift-examples", title: "4. Thrift Ruby examples (hbase-examples)", badge: "3 remaining", items: [
+    ["thrift-demo-client", "`DemoClient.rb`", "Plain Ruby (not JRuby) Thrift client example; needs the standalone thrift gem + gen-rb bindings, not bin/hbase. Marked TODO/broken (HBASE-3630) independent of newshell.", false, "hbase-examples/src/main/ruby/DemoClient.rb"],
+    ["thrift-gen-rb", "`gen-rb/hbase.rb`, `hbase_constants.rb`, `hbase_types.rb`", "Thrift-generated bindings consumed by DemoClient.rb. Regenerate from the Thrift IDL rather than porting.", false, "hbase-examples/src/main/ruby/gen-rb/"],
+    ["thrift-index-builder-setup", "`index-builder-setup.rb`", "Not JRuby — a batch of shell commands (create, put) meant to be fed into an hbase shell session to seed IndexBuilder sample data. Both commands are already ported; should work once one-shot script-file invocation is supported.", false, "hbase-examples/src/main/ruby/index-builder-setup.rb"],
+  ]},
+  { id: "k8s-hbase-scripts", title: "5. External consumer: k8s_hbase JRuby scripts", badge: "12 remaining", sourceLink: "EXTERNAL_CONSUMER_HANDLING_PLAN.md#k8s_hbase", items: [
+    ["k8s-migration-validation", "`migration_validation.rb`", "Validates an EKS→FKP migration (table size comparison) for a given migration command id.", false, "k8s_hbase: docker/scripts/bigdata-custom-managed-ops-scripts/eks_fkp_migration/migration_validation.rb"],
+    ["k8s-open-region-parity", "`open_region_parity.rb`", "Compares open-region parity between source/target clusters during migration.", false, "k8s_hbase: docker/scripts/bigdata-custom-managed-ops-scripts/eks_fkp_migration/open_region_parity.rb"],
+    ["k8s-raw-scan-rows", "`raw_scan_rows.rb`", "Raw-scans a row-key range on a target cluster/DC for migration verification.", false, "k8s_hbase: docker/scripts/bigdata-custom-managed-ops-scripts/eks_fkp_migration/raw_scan_rows.rb"],
+    ["k8s-update-global-backup-ttl", "`update_global_backup_ttl.rb`", "Gets/sets the global backup TTL value.", false, "k8s_hbase: docker/scripts/bigdata-custom-managed-ops-scripts/eks_fkp_migration/update_global_backup_ttl.rb"],
+    ["k8s-migration-impact-row-counter", "`migration_impact_analysis_row_counter.rb`", "Row-counts tables from an input CSV to size a migration's impact.", false, "k8s_hbase: docker/scripts/bigdata-custom-managed-ops-scripts/hgrate_scripts/migration_impact_analysis/migration_impact_analysis_row_counter.rb"],
+    ["k8s-fkp-oordr", "`fkp-oordr.rb`", "Sets up FKP OORDR (out-of-region disaster recovery) replication peer cloned from an existing peer.", false, "k8s_hbase: docker/scripts/bigdata-custom-managed-ops-scripts/hgrate_scripts/new_oorb_customer_onboarding/fkp-oordr-setup/fkp-oordr.rb"],
+    ["k8s-check-orgstore-connectivity", "`check_orgstore_connectivity.rb`", "Checks org-store connectivity as a migration pre-check.", false, "k8s_hbase: docker/scripts/bigdata-custom-managed-ops-scripts/hgrate_scripts/orgstore_connectivity_check/check_orgstore_connectivity.rb"],
+    ["k8s-tenant-count-analyzer", "`tenant_count_analyzer.rb`", "Estimates tenant counts via Phoenix distinct-value queries.", false, "k8s_hbase: docker/scripts/bigdata-custom-managed-ops-scripts/hgrate_scripts/tenant_count_via_distinct_query_analyzer/tenant_count_analyzer.rb"],
+    ["k8s-tenant-delete-dedup", "`tenant_delete_deduplication.rb`", "Deduplicates tenant-delete markers/records.", false, "k8s_hbase: docker/scripts/bigdata-custom-managed-ops-scripts/hgrate_scripts/tenant_delete_deduplication/tenant_delete_deduplication.rb"],
+    ["k8s-tenant-profiler-validator", "`tenant_profiler_validator.rb`", "Validates tenant profiler output/config.", false, "k8s_hbase: docker/scripts/bigdata-custom-managed-ops-scripts/hgrate_scripts/tenant_profiler_validator/tenant_profiler_validator.rb"],
+    ["k8s-tenant-size-estimation", "`tenant_size_estimation_via_phoenix.rb`", "Estimates per-tenant table size via Phoenix queries.", false, "k8s_hbase: docker/scripts/bigdata-custom-managed-ops-scripts/hgrate_scripts/tenant_size_estimation_via_phoenix/tenant_size_estimation_via_phoenix.rb"],
+    ["k8s-migration-validation-daemon", "`migration_validation_daemon.rb`", "Long-running daemon variant of migration validation; run continuously rather than one-shot.", false, "k8s_hbase: docker/scripts/bigdata-custom-managed-ops-scripts/migration_validation_daemon/migration_validation_daemon.rb"],
+  ], portedNote: "All invoked as `$HBASE_HOME/bin/hbase org.jruby.Main &lt;script&gt;.rb` from the external ~/Code/sfdc/k8s_hbase repo — same JRuby dependency as section 2's bin/*.rb scripts, but nothing in *this* repo needs to change for them; they're external consumers that break only once bin/hbase shell/JRuby is actually removed. Also confirmed: many .sh wrappers under k8s_hbase's hbase/, phoenix/, eks_fkp_migration/ pipe already-ported shell commands into /hbase/bin/hbase shell (some with -n) — same pattern as section 3, not itemized individually." },
+  { id: "ambari-scripts", title: "6. External consumer: Ambari HBASE service management scripts", badge: "9 remaining", sourceLink: "EXTERNAL_CONSUMER_HANDLING_PLAN.md#ambari", items: [
+    ["ambari-draining-servers", "`draining_servers.rb`", "HBase-1-era region drainer, invoked from hbase_decommission.py as org.jruby.Main {region_drainer} add|remove &lt;host&gt;.", false, "ambari: ambari-server/src/main/resources/common-services/HBASE/0.96.0.2.0/package/files/draining_servers.rb"],
+    ["ambari-draining-servers2", "`draining_servers2.rb`", "HBase-2 fallback region drainer, used when the HBase-1 draining_servers.rb invocation fails.", false, "ambari: ambari-server/src/main/resources/common-services/HBASE/0.96.0.2.0/package/files/draining_servers2.rb"],
+    ["ambari-region-mover", "`region_mover.rb`", "Referenced but not vendored in Ambari's package/files/ — expected at {stack_root}/current/hbase-client/bin/region_mover.rb, i.e. this repo's bin/region_mover.rb (already tracked in section 2). Not a separate file to port.", false, "bin/region_mover.rb (this repo, section 2)"],
+    ["ambari-hbase-replication", "`hbase_replication.rb`", "Manages replication peers during Ambari-driven start/stop via deprecated ReplicationAdmin (addPeer/removePeer/listPeerConfigs) — maps 1:1 onto already-ported add_peer/remove_peer/list_peers. Retire in favor of ported command, not a new driver.", false, "ambari: ambari-server/src/main/resources/common-services/HBASE/0.96.0.2.0/package/files/hbase_replication.rb"],
+    ["ambari-schema-upgrade", "`hbase_upgrade_schema.rb`", "Runs HBase schema upgrade during an Ambari stack upgrade; requires HBaseUtil, phoenixUtil, clusterInfoUtil from the same directory.", false, "ambari: ambari-server/src/main/resources/common-services/HBASE/0.96.0.2.0/package/files/hbase_upgrade_schema.rb"],
+    ["ambari-schema-upgrade-no-prescript", "`hbase_upgrade_schema_no_prescript.rb`", "Same schema-upgrade entrypoint, skipping the prescript-generation step.", false, "ambari: ambari-server/src/main/resources/common-services/HBASE/0.96.0.2.0/package/files/hbase_upgrade_schema_no_prescript.rb"],
+    ["ambari-hbase-util", "`HBaseUtil.rb`", "Shared library required by both schema-upgrade scripts above; not run standalone.", false, "ambari: ambari-server/src/main/resources/common-services/HBASE/0.96.0.2.0/package/files/HBaseUtil.rb"],
+    ["ambari-phoenix-util", "`phoenixUtil.rb`", "Shared library required by both schema-upgrade scripts above; not run standalone.", false, "ambari: ambari-server/src/main/resources/common-services/HBASE/0.96.0.2.0/package/files/phoenixUtil.rb"],
+    ["ambari-cluster-info-util", "`clusterInfoUtil.rb`", "Shared library required by both schema-upgrade scripts above; not run standalone.", false, "ambari: ambari-server/src/main/resources/common-services/HBASE/0.96.0.2.0/package/files/clusterInfoUtil.rb"],
+  ], portedNote: "All invoked as `{hbase_cmd} --config {hbase_conf_dir} org.jruby.Main &lt;script&gt;.rb ...` (plus a `cmd /c ... org.jruby.Main ...` Windows variant) from Ambari's Python HBASE service scripts (hbase_master.py, hbase_regionserver.py, hbase_decommission.py) in the external ~/Code/sfdc/ambari repo — same JRuby dependency and one-directional relationship as section 5's k8s_hbase scripts." },
+  { id: "consumer-needs", title: "7. What external consumers actually need from newshell", badge: null, items: [
+    ["needs-balance-switch", "Shell commands actually invoked: exactly one — `balance_switch`", "Piped via `shell -n` in bin/graceful_stop.sh and bin/rolling-restart.sh (section 3). Already ported (BalanceSwitchCommand.java); fully covered by section 1's preserve-n-mode item. Nothing in k8s_hbase or Ambari pipes a single shell command.", true, IMPL + "BalanceSwitchCommand.java"],
+    ["needs-standard-api", "Standard Admin/Table/ConnectionFactory/Scan/ClusterMetrics/TableDescriptorBuilder", "Used by k8s_hbase's open_region_parity.rb, raw_scan_rows.rb, tenant_size_estimation_via_phoenix.rb, migration_validation_daemon.rb; this repo's region_status.rb, shutdown_regionserver.rb, draining_servers.rb. Standard public API, no newshell change needed.", true, null],
+    ["needs-zk-tracker", "ZKWatcher/ZKUtil/MasterAddressTracker", "This repo's draining_servers.rb, get-active-master.rb; Ambari's draining_servers.rb/draining_servers2.rb (legacy HBaseAdmin/ZooKeeperWatcher). Standard public API, no newshell change needed.", true, null],
+    ["needs-replication-admin", "Deprecated ReplicationAdmin (addPeer/removePeer/listPeerConfigs/getPeerState)", "Ambari's hbase_replication.rb. Maps 1:1 onto already-ported add_peer/remove_peer/list_peers — reclassified from \"rewrite as driver\" to \"retire in favor of ported command\".", true, null],
+    ["needs-hadoop-fs", "Hadoop FileSystem/Path/CommonFSUtils/UserGroupInformation", "k8s_hbase's check_orgstore_connectivity.rb, tenant_size_estimation_via_phoenix.rb, migration_validation_daemon.rb. Standard public API, no newshell change needed.", true, null],
+    ["needs-phoenix-jdbc", "Phoenix JDBC (DriverManager, PreparedStatement, QueryUtil)", "k8s_hbase's tenant-analysis scripts, migration_validation.rb; Ambari's phoenixUtil.rb/hbase_upgrade_schema*.rb. Standard public API, no newshell change needed.", true, null],
+    ["needs-mr-tools", "MR tool submission (RowCounter, PhoenixSyncTableTool, VerifyReplication via ToolRunner)", "k8s_hbase only. Standard public API, no newshell change needed.", true, null],
+    ["needs-sfdc-proprietary", "Salesforce-proprietary (hgrate.*, com.salesforce.hbase.*, UpgradeTool, OrgStore credentials)", "Pervasive in k8s_hbase and Ambari's schema-upgrade scripts; zero relevance to newshell's generic surface — out of scope per EXTERNAL_CONSUMER_HANDLING_PLAN.md's Principles (no consumer-specific logic in this repo).", true, null],
+  ], portedNote: "Net conclusion: newshell's generic API surface needs essentially no expansion for these consumers. The entire \"shell commands used\" list is one already-ported command, handled by -n parity. Everything else is either standard public API — already reachable from any .jsh/.java driver via classpath — or Salesforce-internal tooling explicitly out of scope. (These items are reference findings, not porting work — all marked done.)" },
+  { id: "general", title: "GENERAL HBASE SHELL COMMANDS", badge: "2 remaining (skipped)", items: [
+    ["general-status", "`status`", null, true, IMPL + "StatusCommand.java"],
+    ["general-version", "`version`", null, true, IMPL + "VersionCommand.java"],
+    ["general-table-help", "`table_help`", "Skipped/N/A — not worth porting (interactive per-table help text, no scripted callers).", false, RUBY + "table_help.rb"],
+    ["general-whoami", "`whoami`", null, true, IMPL + "WhoamiCommand.java"],
+    ["general-processlist", "`processlist`", "Skipped/N/A — not worth porting (interactive process listing, no scripted callers).", false, RUBY + "processlist.rb"],
+  ] },
+  { id: "ddl", title: "TABLES MANAGEMENT COMMANDS — ddl", badge: "14 remaining", items: [
+    ["ddl-alter","`alter`",null,true, IMPL + "AlterCommand.java"],
+    ["ddl-create","`create`",null,true, IMPL + "CreateCommand.java"],
+    ["ddl-describe","`describe`",null,true, IMPL + "DescribeCommand.java"],
+    ["ddl-disable","`disable`",null,true, IMPL + "DisableCommand.java"],
+    ["ddl-drop","`drop`",null,true, IMPL + "DropCommand.java"],
+    ["ddl-enable","`enable`",null,true, IMPL + "EnableCommand.java"],
+    ["ddl-exists","`exists`",null,true, IMPL + "ExistsCommand.java"],
+    ["ddl-list","`list`",null,true, IMPL + "ListCommand.java"],
+    ["ddl-disable-all","`disable_all`",null,false, RUBY + "disable_all.rb"],
+    ["ddl-is-disabled","`is_disabled`",null,false, RUBY + "is_disabled.rb"],
+    ["ddl-drop-all","`drop_all`",null,false, RUBY + "drop_all.rb"],
+    ["ddl-enable-all","`enable_all`",null,false, RUBY + "enable_all.rb"],
+    ["ddl-is-enabled","`is_enabled`",null,false, RUBY + "is_enabled.rb"],
+    ["ddl-show-filters","`show_filters`",null,false, RUBY + "show_filters.rb"],
+    ["ddl-alter-status","`alter_status`",null,false, RUBY + "alter_status.rb"],
+    ["ddl-alter-async","`alter_async`",null,false, RUBY + "alter_async.rb"],
+    ["ddl-get-table","`get_table`",null,false, RUBY + "get_table.rb"],
+    ["ddl-locate-region","`locate_region`",null,false, RUBY + "locate_region.rb"],
+    ["ddl-list-regions","`list_regions`",null,false, RUBY + "list_regions.rb"],
+    ["ddl-clone-table-schema","`clone_table_schema`",null,false, RUBY + "clone_table_schema.rb"],
+    ["ddl-list-enabled-tables","`list_enabled_tables`",null,false, RUBY + "list_enabled_tables.rb"],
+    ["ddl-list-disabled-tables","`list_disabled_tables`",null,false, RUBY + "list_disabled_tables.rb"],
+  ] },
+  { id: "namespace", title: "NAMESPACE MANAGEMENT COMMANDS", badge: "6 remaining", items: [
+    ["ns-create","`create_namespace`",null,false, RUBY + "create_namespace.rb"],
+    ["ns-drop","`drop_namespace`",null,false, RUBY + "drop_namespace.rb"],
+    ["ns-alter","`alter_namespace`",null,false, RUBY + "alter_namespace.rb"],
+    ["ns-describe","`describe_namespace`",null,false, RUBY + "describe_namespace.rb"],
+    ["ns-list","`list_namespace`",null,false, RUBY + "list_namespace.rb"],
+    ["ns-list-tables","`list_namespace_tables`",null,false, RUBY + "list_namespace_tables.rb"],
+  ]},
+  { id: "dml", title: "DATA MANIPULATION COMMANDS — dml", badge: "0 remaining", items: [
+    ["dml-get","`get`",null,true, IMPL + "GetCommand.java"],
+    ["dml-put","`put`",null,true, IMPL + "PutCommand.java"],
+    ["dml-count","`count`",null,true, IMPL + "CountCommand.java"],
+    ["dml-delete","`delete`",null,true, IMPL + "DeleteCommand.java"],
+    ["dml-deleteall","`deleteall`",null,true, IMPL + "DeleteallCommand.java"],
+    ["dml-get-counter","`get_counter`",null,true, IMPL + "GetCounterCommand.java"],
+    ["dml-incr","`incr`",null,true, IMPL + "IncrCommand.java"],
+    ["dml-scan","`scan`",null,true, RUBY + "scan.rb"],
+    ["dml-truncate","`truncate`",null,true, IMPL + "TruncateCommand.java"],
+    ["dml-truncate-preserve","`truncate_preserve`",null,true, IMPL + "TruncatePreserveCommand.java"],
+    ["dml-append","`append`",null,true, IMPL + "AppendCommand.java"],
+    ["dml-get-splits","`get_splits`",null,true, IMPL + "GetSplitsCommand.java"],
+  ] },
+  { id: "tools", title: "HBASE SURGERY TOOLS — tools", badge: "42 remaining", items: [
+    ["tools-assign","`assign`",null,false, RUBY + "assign.rb"],
+    ["tools-balancer","`balancer`",null,false, RUBY + "balancer.rb"],
+    ["tools-normalize","`normalize`",null,false, RUBY + "normalize.rb"],
+    ["tools-maint-mode","`is_in_maintenance_mode`",null,false, RUBY + "is_in_maintenance_mode.rb"],
+    ["tools-clear-slowlog","`clear_slowlog_responses`",null,false, RUBY + "clear_slowlog_responses.rb"],
+    ["tools-reopen-regions","`reopen_regions`",null,false, RUBY + "reopen_regions.rb"],
+    ["tools-close-region","`close_region`",null,false, RUBY + "close_region.rb"],
+    ["tools-flush","`flush`",null,false, RUBY + "flush.rb"],
+    ["tools-flush-master-store","`flush_master_store`",null,false, RUBY + "flush_master_store.rb"],
+    ["tools-balancer-decisions","`get_balancer_decisions`",null,false, RUBY + "get_balancer_decisions.rb"],
+    ["tools-balancer-rejections","`get_balancer_rejections`",null,false, RUBY + "get_balancer_rejections.rb"],
+    ["tools-slowlog-responses","`get_slowlog_responses`",null,false, RUBY + "get_slowlog_responses.rb"],
+    ["tools-largelog-responses","`get_largelog_responses`",null,false, RUBY + "get_largelog_responses.rb"],
+    ["tools-move","`move`",null,false, RUBY + "move.rb"],
+    ["tools-merge-region","`merge_region`",null,false, RUBY + "merge_region.rb"],
+    ["tools-unassign","`unassign`",null,false, RUBY + "unassign.rb"],
+    ["tools-zk-dump","`zk_dump`",null,false, RUBY + "zk_dump.rb"],
+    ["tools-wal-roll","`wal_roll`",null,false, RUBY + "wal_roll.rb"],
+    ["tools-wal-roll-all","`wal_roll_all`",null,false, RUBY + "wal_roll_all.rb"],
+    ["tools-hbck-chore-run","`hbck_chore_run`",null,false, RUBY + "hbck_chore_run.rb"],
+    ["tools-catalogjanitor-run","`catalogjanitor_run`",null,false, RUBY + "catalogjanitor_run.rb"],
+    ["tools-cleaner-chore-run","`cleaner_chore_run`",null,false, RUBY + "cleaner_chore_run.rb"],
+    ["tools-cleaner-chore-switch","`cleaner_chore_switch`",null,false, RUBY + "cleaner_chore_switch.rb"],
+    ["tools-cleaner-chore-enabled","`cleaner_chore_enabled`",null,false, RUBY + "cleaner_chore_enabled.rb"],
+    ["tools-compact-rs","`compact_rs`",null,false, RUBY + "compact_rs.rb"],
+    ["tools-compaction-state","`compaction_state`",null,false, RUBY + "compaction_state.rb"],
+    ["tools-trace","`trace`",null,false, RUBY + "trace.rb"],
+    ["tools-snapshot-cleanup-switch","`snapshot_cleanup_switch`",null,false, RUBY + "snapshot_cleanup_switch.rb"],
+    ["tools-snapshot-cleanup-enabled","`snapshot_cleanup_enabled`",null,false, RUBY + "snapshot_cleanup_enabled.rb"],
+    ["tools-clear-compaction-queues","`clear_compaction_queues`",null,false, RUBY + "clear_compaction_queues.rb"],
+    ["tools-list-deadservers","`list_deadservers`",null,false, RUBY + "list_deadservers.rb"],
+    ["tools-list-liveservers","`list_liveservers`",null,false, RUBY + "list_liveservers.rb"],
+    ["tools-list-unknownservers","`list_unknownservers`",null,false, RUBY + "list_unknownservers.rb"],
+    ["tools-clear-deadservers","`clear_deadservers`",null,false, RUBY + "clear_deadservers.rb"],
+    ["tools-clear-block-cache","`clear_block_cache`",null,false, RUBY + "clear_block_cache.rb"],
+    ["tools-stop-master","`stop_master`",null,false, RUBY + "stop_master.rb"],
+    ["tools-stop-regionserver","`stop_regionserver`",null,false, RUBY + "stop_regionserver.rb"],
+    ["tools-regioninfo","`regioninfo`",null,false, RUBY + "regioninfo.rb"],
+    ["tools-rit","`rit`",null,false, RUBY + "rit.rb"],
+    ["tools-truncate-region","`truncate_region`",null,false, RUBY + "truncate_region.rb"],
+    ["tools-refresh-meta","`refresh_meta`",null,false, RUBY + "refresh_meta.rb"],
+    ["tools-refresh-hfiles","`refresh_hfiles`",null,false, RUBY + "refresh_hfiles.rb"],
+    ["tools-balance-switch","`balance_switch`",null,true, IMPL + "BalanceSwitchCommand.java"],
+    ["tools-balancer-enabled","`balancer_enabled`",null,true, IMPL + "BalancerEnabledCommand.java"],
+    ["tools-normalizer-switch","`normalizer_switch`",null,true, IMPL + "NormalizerSwitchCommand.java"],
+    ["tools-normalizer-enabled","`normalizer_enabled`",null,true, IMPL + "NormalizerEnabledCommand.java"],
+    ["tools-compact","`compact`",null,true, IMPL + "CompactCommand.java"],
+    ["tools-compaction-switch","`compaction_switch`",null,true, IMPL + "CompactionSwitchCommand.java"],
+    ["tools-major-compact","`major_compact`",null,true, IMPL + "MajorCompactCommand.java"],
+    ["tools-split","`split`",null,true, IMPL + "SplitCommand.java"],
+    ["tools-catalogjanitor-switch","`catalogjanitor_switch`",null,true, IMPL + "CatalogjanitorSwitchCommand.java"],
+    ["tools-catalogjanitor-enabled","`catalogjanitor_enabled`",null,true, IMPL + "CatalogjanitorEnabledCommand.java"],
+    ["tools-splitormerge-switch","`splitormerge_switch`",null,true, IMPL + "SplitormergeSwitchCommand.java"],
+    ["tools-splitormerge-enabled","`splitormerge_enabled`",null,true, IMPL + "SplitormergeEnabledCommand.java"],
+    ["tools-list-decommissioned","`list_decommissioned_regionservers`",null,true, IMPL + "ListDecommissionedRegionServersCommand.java"],
+    ["tools-decommission","`decommission_regionservers`",null,true, IMPL + "DecommissionRegionServersCommand.java"],
+    ["tools-recommission","`recommission_regionserver`",null,true, IMPL + "RecommissionRegionServerCommand.java"],
+  ] },
+  { id: "replication", title: "CLUSTER REPLICATION TOOLS — replication", badge: "27 remaining", items: [
+    ["rep-enable-peer","`enable_peer`",null,false, RUBY + "enable_peer.rb"],
+    ["rep-disable-peer","`disable_peer`",null,false, RUBY + "disable_peer.rb"],
+    ["rep-set-replicate-all","`set_peer_replicate_all`",null,false, RUBY + "set_peer_replicate_all.rb"],
+    ["rep-set-serial","`set_peer_serial`",null,false, RUBY + "set_peer_serial.rb"],
+    ["rep-set-namespaces","`set_peer_namespaces`",null,false, RUBY + "set_peer_namespaces.rb"],
+    ["rep-append-namespaces","`append_peer_namespaces`",null,false, RUBY + "append_peer_namespaces.rb"],
+    ["rep-remove-namespaces","`remove_peer_namespaces`",null,false, RUBY + "remove_peer_namespaces.rb"],
+    ["rep-set-exclude-ns","`set_peer_exclude_namespaces`",null,false, RUBY + "set_peer_exclude_namespaces.rb"],
+    ["rep-append-exclude-ns","`append_peer_exclude_namespaces`",null,false, RUBY + "append_peer_exclude_namespaces.rb"],
+    ["rep-remove-exclude-ns","`remove_peer_exclude_namespaces`",null,false, RUBY + "remove_peer_exclude_namespaces.rb"],
+    ["rep-show-tablecfs","`show_peer_tableCFs`",null,false, RUBY + "show_peer_tableCFs.rb"],
+    ["rep-set-tablecfs","`set_peer_tableCFs`",null,false, RUBY + "set_peer_tableCFs.rb"],
+    ["rep-set-exclude-tablecfs","`set_peer_exclude_tableCFs`",null,false, RUBY + "set_peer_exclude_tableCFs.rb"],
+    ["rep-append-exclude-tablecfs","`append_peer_exclude_tableCFs`",null,false, RUBY + "append_peer_exclude_tableCFs.rb"],
+    ["rep-remove-exclude-tablecfs","`remove_peer_exclude_tableCFs`",null,false, RUBY + "remove_peer_exclude_tableCFs.rb"],
+    ["rep-set-bandwidth","`set_peer_bandwidth`",null,false, RUBY + "set_peer_bandwidth.rb"],
+    ["rep-list-replicated-tables","`list_replicated_tables`",null,false, RUBY + "list_replicated_tables.rb"],
+    ["rep-append-tablecfs","`append_peer_tableCFs`",null,false, RUBY + "append_peer_tableCFs.rb"],
+    ["rep-remove-tablecfs","`remove_peer_tableCFs`",null,false, RUBY + "remove_peer_tableCFs.rb"],
+    ["rep-enable-table-rep","`enable_table_replication`",null,false, RUBY + "enable_table_replication.rb"],
+    ["rep-disable-table-rep","`disable_table_replication`",null,false, RUBY + "disable_table_replication.rb"],
+    ["rep-get-peer-config","`get_peer_config`",null,false, RUBY + "get_peer_config.rb"],
+    ["rep-list-peer-configs","`list_peer_configs`",null,false, RUBY + "list_peer_configs.rb"],
+    ["rep-update-peer-config","`update_peer_config`",null,false, RUBY + "update_peer_config.rb"],
+    ["rep-transit-sync-state","`transit_peer_sync_replication_state`",null,false, RUBY + "transit_peer_sync_replication_state.rb"],
+    ["rep-mod-enabled","`peer_modification_enabled`",null,false, RUBY + "peer_modification_enabled.rb"],
+    ["rep-mod-switch","`peer_modification_switch`",null,false, RUBY + "peer_modification_switch.rb"],
+    ["rep-add-peer","`add_peer`",null,true, IMPL + "AddPeerCommand.java"],
+    ["rep-remove-peer","`remove_peer`",null,true, IMPL + "RemovePeerCommand.java"],
+    ["rep-list-peers","`list_peers`",null,true, IMPL + "ListPeersCommand.java"],
+  ] },
+  { id: "snapshots", title: "CLUSTER SNAPSHOT TOOLS — snapshots", badge: "5 remaining", items: [
+    ["snap-clone","`clone_snapshot`",null,false, RUBY + "clone_snapshot.rb"],
+    ["snap-restore","`restore_snapshot`",null,false, RUBY + "restore_snapshot.rb"],
+    ["snap-delete-all","`delete_all_snapshot`",null,false, RUBY + "delete_all_snapshot.rb"],
+    ["snap-delete-table","`delete_table_snapshots`",null,false, RUBY + "delete_table_snapshots.rb"],
+    ["snap-list-table","`list_table_snapshots`",null,false, RUBY + "list_table_snapshots.rb"],
+    ["snap-snapshot","`snapshot`",null,true, IMPL + "SnapshotCommand.java"],
+    ["snap-delete-snapshot","`delete_snapshot`",null,true, IMPL + "DeleteSnapshotCommand.java"],
+    ["snap-list-snapshots","`list_snapshots`",null,true, IMPL + "ListSnapshotsCommand.java"],
+  ] },
+  { id: "configuration", title: "ONLINE CONFIGURATION TOOLS — configuration", badge: "3 remaining", items: [
+    ["cfg-update","`update_config`",null,false, RUBY + "update_config.rb"],
+    ["cfg-update-all","`update_all_config`",null,false, RUBY + "update_all_config.rb"],
+    ["cfg-update-rsgroup","`update_rsgroup_config`",null,false, RUBY + "update_rsgroup_config.rb"],
+  ]},
+  { id: "quotas", title: "CLUSTER QUOTAS TOOLS — quotas", badge: "10 remaining", items: [
+    ["quota-set","`set_quota`",null,false, RUBY + "set_quota.rb"],
+    ["quota-list","`list_quotas`",null,false, RUBY + "list_quotas.rb"],
+    ["quota-list-table-sizes","`list_quota_table_sizes`",null,false, RUBY + "list_quota_table_sizes.rb"],
+    ["quota-list-snapshots","`list_quota_snapshots`",null,false, RUBY + "list_quota_snapshots.rb"],
+    ["quota-list-snapshot-sizes","`list_snapshot_sizes`",null,false, RUBY + "list_snapshot_sizes.rb"],
+    ["quota-enable-rpc-throttle","`enable_rpc_throttle`",null,false, RUBY + "enable_rpc_throttle.rb"],
+    ["quota-disable-rpc-throttle","`disable_rpc_throttle`",null,false, RUBY + "disable_rpc_throttle.rb"],
+    ["quota-rpc-throttle-enabled","`rpc_throttle_enabled`",null,false, RUBY + "rpc_throttle_enabled.rb"],
+    ["quota-enable-exceed-throttle","`enable_exceed_throttle_quota`",null,false, RUBY + "enable_exceed_throttle_quota.rb"],
+    ["quota-disable-exceed-throttle","`disable_exceed_throttle_quota`",null,false, RUBY + "disable_exceed_throttle_quota.rb"],
+  ]},
+  { id: "security", title: "SECURITY TOOLS — security", badge: "4 remaining", items: [
+    ["sec-list-capabilities","`list_security_capabilities`",null,false, RUBY + "list_security_capabilities.rb"],
+    ["sec-grant","`grant`",null,true, RUBY + "grant.rb"],
+    ["sec-revoke","`revoke`",null,false, RUBY + "revoke.rb"],
+    ["sec-user-permission","`user_permission`",null,false, RUBY + "user_permission.rb"],
+  ], portedNote: "Only applicable with the AccessController coprocessor." },
+  { id: "procedures", title: "PROCEDURES & LOCKS MANAGEMENT — procedures", badge: "2 remaining", items: [
+    ["proc-list-procedures","`list_procedures`",null,false, RUBY + "list_procedures.rb"],
+    ["proc-list-locks","`list_locks`",null,false, RUBY + "list_locks.rb"],
+  ]},
+  { id: "visibility-labels", title: "VISIBILITY LABEL TOOLS — visibility labels", badge: "6 remaining", items: [
+    ["vis-add-labels","`add_labels`",null,false, RUBY + "add_labels.rb"],
+    ["vis-list-labels","`list_labels`",null,false, RUBY + "list_labels.rb"],
+    ["vis-set-auths","`set_auths`",null,false, RUBY + "set_auths.rb"],
+    ["vis-get-auths","`get_auths`",null,false, RUBY + "get_auths.rb"],
+    ["vis-clear-auths","`clear_auths`",null,false, RUBY + "clear_auths.rb"],
+    ["vis-set-visibility","`set_visibility`",null,false, RUBY + "set_visibility.rb"],
+  ], portedNote: "Only applicable with the VisibilityController coprocessor." },
+  { id: "rsgroup", title: "RSGroups — rsgroup", badge: "17 remaining", items: [
+    ["rsg-list","`list_rsgroups`",null,false, RUBY + "list_rsgroups.rb"],
+    ["rsg-get","`get_rsgroup`",null,true, RUBY + "get_rsgroup.rb"],
+    ["rsg-add","`add_rsgroup`",null,false, RUBY + "add_rsgroup.rb"],
+    ["rsg-remove","`remove_rsgroup`",null,false, RUBY + "remove_rsgroup.rb"],
+    ["rsg-balance","`balance_rsgroup`",null,false, RUBY + "balance_rsgroup.rb"],
+    ["rsg-move-servers","`move_servers_rsgroup`",null,true, RUBY + "move_servers_rsgroup.rb"],
+    ["rsg-move-tables","`move_tables_rsgroup`",null,false, RUBY + "move_tables_rsgroup.rb"],
+    ["rsg-move-namespaces","`move_namespaces_rsgroup`",null,false, RUBY + "move_namespaces_rsgroup.rb"],
+    ["rsg-move-servers-tables","`move_servers_tables_rsgroup`",null,false, RUBY + "move_servers_tables_rsgroup.rb"],
+    ["rsg-move-servers-namespaces","`move_servers_namespaces_rsgroup`",null,false, RUBY + "move_servers_namespaces_rsgroup.rb"],
+    ["rsg-get-server","`get_server_rsgroup`",null,false, RUBY + "get_server_rsgroup.rb"],
+    ["rsg-get-table","`get_table_rsgroup`",null,false, RUBY + "get_table_rsgroup.rb"],
+    ["rsg-remove-servers","`remove_servers_rsgroup`",null,false, RUBY + "remove_servers_rsgroup.rb"],
+    ["rsg-rename","`rename_rsgroup`",null,false, RUBY + "rename_rsgroup.rb"],
+    ["rsg-alter-config","`alter_rsgroup_config`",null,false, RUBY + "alter_rsgroup_config.rb"],
+    ["rsg-show-config","`show_rsgroup_config`",null,false, RUBY + "show_rsgroup_config.rb"],
+    ["rsg-get-namespace","`get_namespace_rsgroup`",null,false, RUBY + "get_namespace_rsgroup.rb"],
+  ]},
+  { id: "storefiletracker", title: "StoreFileTracker", badge: "2 remaining", items: [
+    ["sft-change","`change_sft`",null,false, RUBY + "change_sft.rb"],
+    ["sft-change-all","`change_sft_all`",null,false, RUBY + "change_sft_all.rb"],
+  ]},
+];
+
+// Priority tiers for section 8's command list only (id set below).
+// dark = used directly by k8s_hbase/Ambari scripts (section 7 inventory);
+// green = second-most-important (general + dml, high-traffic commands);
+// light = rare for us. Derived from the command name in each item's label.
+const TIERED_SECTIONS = new Set([
+  "general", "ddl", "namespace", "dml", "tools", "replication",
+  "snapshots", "configuration", "quotas", "security", "procedures",
+  "visibility-labels", "rsgroup", "storefiletracker",
+]);
+const TIER_COLOR = { dark: "#0b6623", green: "#4caf50", light: "#a5d6a7" };
+const DARK_TIER_CMDS = new Set([
+  "alter", "create", "describe", "disable", "drop", "enable",
+  "put", "scan",
+  "balance_switch", "compact", "major_compact", "split",
+  "list_decommissioned_regionservers", "decommission_regionservers",
+  "recommission_regionserver",
+  "add_peer", "remove_peer", "list_peers",
+  "delete_snapshot", "list_snapshots",
+  "grant",
+  "get_rsgroup", "move_servers_rsgroup",
+]);
+const GREEN_TIER_CMDS = new Set([
+  "status", "version", "table_help", "whoami", "processlist",
+  "get", "count", "delete", "deleteall", "get_counter", "incr",
+  "truncate", "truncate_preserve", "append", "get_splits",
+]);
+function cmdTier(name) {
+  if (DARK_TIER_CMDS.has(name)) return "dark";
+  if (GREEN_TIER_CMDS.has(name)) return "green";
+  return "light";
+}
+function colorizeLabel(sectionId, label) {
+  if (!TIERED_SECTIONS.has(sectionId)) return label;
+  return label.replace(/`([a-zA-Z_]+)`/g, (m, name) => {
+    const tier = cmdTier(name);
+    return `<span style="color:${TIER_COLOR[tier]}">\`${name}\`</span>`;
+  });
+}
+
+const STORAGE_KEY = "newshell-remaining-work";
+let state = {};
+try { state = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {}; } catch (e) { state = {}; }
+
+function save() { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+
+// Checked state: explicit user toggle in localStorage wins; otherwise
+// pre-ported commands (item[3] === true) default to checked.
+function isChecked(item) {
+  const id = item[0];
+  return state[id] !== undefined ? !!state[id] : !!item[3];
+}
+
+function render() {
+  const container = document.getElementById("sections");
+  container.innerHTML = "";
+  let totalDone = 0, totalItems = 0;
+
+  DATA.forEach(section => {
+    totalItems += section.items.length;
+    const doneInSection = section.items.filter(item => isChecked(item)).length;
+    totalDone += doneInSection;
+
+    const sec = document.createElement("div");
+    sec.className = "section";
+    const badgeHtml = section.badge
+      ? `<span class="badge" id="badge-${section.id}">${doneInSection} / ${section.items.length} done</span>`
+      : "";
+    const sourceLinkHtml = section.sourceLink
+      ? `<a href="${section.sourceLink}" style="color:#9cf; font-size:12px; white-space:nowrap;">View handling plan</a>`
+      : "";
+    sec.innerHTML = `
+      <div class="section-header">
+        <h2>${section.title}</h2>
+        ${sourceLinkHtml}
+        ${badgeHtml}
+      </div>
+      ${section.portedNote ? `<div class="note">${section.portedNote}</div>` : ""}
+      <ul class="items">
+        ${section.items.map(item => {
+          const [id, label, desc, , path] = item;
+          const checked = isChecked(item);
+          const displayLabel = colorizeLabel(section.id, label);
+          return `
+          <li>
+            <input type="checkbox" id="cb-${id}" ${checked ? "checked" : ""} onchange="toggle('${id}', '${section.id}')">
+            <label for="cb-${id}" class="${checked ? "done" : ""}" id="label-${id}">${displayLabel}${desc ? `<div class="desc">${desc}</div>` : ""}${path ? `<div class="path">${path}</div>` : ""}</label>
+          </li>
+        `;
+        }).join("")}
+      </ul>
+    `;
+    container.appendChild(sec);
+  });
+
+  document.getElementById("overall-count").textContent = `${totalDone} / ${totalItems}`;
+  document.getElementById("overall-bar").style.width = totalItems ? `${(totalDone / totalItems) * 100}%` : "0%";
+}
+
+function toggle(id, sectionId) {
+  const section = DATA.find(s => s.id === sectionId);
+  const item = section.items.find(i => i[0] === id);
+  state[id] = !isChecked(item);
+  save();
+  const label = document.getElementById(`label-${id}`);
+  label.classList.toggle("done", !!state[id]);
+  const doneInSection = section.items.filter(i => isChecked(i)).length;
+  const badge = document.getElementById(`badge-${sectionId}`);
+  if (badge) badge.textContent = `${doneInSection} / ${section.items.length} done`;
+  const totalDone = DATA.reduce((acc, s) => acc + s.items.filter(i => isChecked(i)).length, 0);
+  const totalItems = DATA.reduce((acc, s) => acc + s.items.length, 0);
+  document.getElementById("overall-count").textContent = `${totalDone} / ${totalItems}`;
+  document.getElementById("overall-bar").style.width = `${(totalDone / totalItems) * 100}%`;
+}
+
+function resetAll() {
+  if (!confirm("Reset all checked items?")) return;
+  state = {};
+  save();
+  render();
+}
+
+function exportChecked() {
+  const checked = [];
+  DATA.forEach(section => {
+    section.items.forEach(item => {
+      if (isChecked(item)) checked.push({ section: section.title, item: item[1].replace(/`/g, ""), path: item[4] || null });
+    });
+  });
+  const blob = new Blob([JSON.stringify({ exported_at: new Date().toISOString(), checked }, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "newshell-remaining-work-checked.json";
+  a.click();
+}
+
+render();
+</script>
+</body>
+</html>
