@@ -18,15 +18,13 @@
 package org.apache.hadoop.hbase.newshell.command.impl;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.util.List;
-import java.util.Map;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
 import org.apache.hadoop.hbase.newshell.command.ShellCommandException;
-import org.apache.hadoop.hbase.newshell.command.TextResult;
 import org.apache.hadoop.hbase.newshell.hbase.ShellTable;
 import org.apache.hadoop.hbase.newshell.hbase.ShellTableFactory;
 import org.apache.hadoop.hbase.newshell.hbase.StubShellAdmin;
@@ -37,29 +35,26 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 @Tag(SmallTests.TAG)
-public class PutCommandTest {
+public class DeleteCommandTest {
 
-  /** Captures the put it was called with instead of talking to a real Table. */
   private static final class RecordingShellTable extends StubShellTable {
     private String lastRow;
     private String lastColumn;
-    private String lastValue;
-    private Map<String, Object> lastOptions;
+    private Long lastTimestamp;
 
     @Override
-    public void put(String row, String column, String value, Map<String, Object> options) {
+    public void delete(String row, String column, Long timestamp) {
       this.lastRow = row;
       this.lastColumn = column;
-      this.lastValue = value;
-      this.lastOptions = options;
+      this.lastTimestamp = timestamp;
     }
   }
 
   private static final class RecordingShellTableFactory implements ShellTableFactory {
-    private final RecordingShellTable table;
+    private final ShellTable table;
     private String lastTableName;
 
-    RecordingShellTableFactory(RecordingShellTable table) {
+    RecordingShellTableFactory(ShellTable table) {
       this.table = table;
     }
 
@@ -70,35 +65,34 @@ public class PutCommandTest {
     }
   }
 
-  private final PutCommand command = new PutCommand();
+  private final DeleteCommand command = new DeleteCommand();
   private final RecordingShellTable table = new RecordingShellTable();
   private final RecordingShellTableFactory tables = new RecordingShellTableFactory(table);
   private final ExecutionContext context =
     new ExecutionContext(new StubShellAdmin(), tables, new PrintWriter(new StringWriter()));
 
   @Test
-  public void putsSingleCell() throws Exception {
-    var parsed = ShellLineParser.parse("put 't1', 'r1', 'f1:c1', 'v1'");
-    TextResult result = (TextResult) command.execute(parsed, context);
+  public void deletesSingleCellVersion() throws Exception {
+    var parsed = ShellLineParser.parse("delete 't1', 'r1', 'f1:c1'");
+    command.execute(parsed, context);
 
     assertEquals("t1", tables.lastTableName);
     assertEquals("r1", table.lastRow);
     assertEquals("f1:c1", table.lastColumn);
-    assertEquals("v1", table.lastValue);
-    assertEquals(List.of(), result.lines());
+    assertNull(table.lastTimestamp);
   }
 
   @Test
-  public void putsSingleCellWithTimestamp() throws Exception {
-    var parsed = ShellLineParser.parse("put 't1', 'r1', 'f1:c1', 'v1', {TIMESTAMP => 123}");
+  public void deletesWithExplicitTimestamp() throws Exception {
+    var parsed = ShellLineParser.parse("delete 't1', 'r1', 'f1:c1', 123");
     command.execute(parsed, context);
 
-    assertEquals(123L, table.lastOptions.get("TIMESTAMP"));
+    assertEquals(123L, table.lastTimestamp);
   }
 
   @Test
-  public void throwsWhenValueMissing() throws Exception {
-    var parsed = ShellLineParser.parse("put 't1', 'r1', 'f1:c1'");
+  public void throwsWhenColumnMissing() throws Exception {
+    var parsed = ShellLineParser.parse("delete 't1', 'r1'");
     assertThrows(ShellCommandException.class, () -> command.execute(parsed, context));
   }
 }

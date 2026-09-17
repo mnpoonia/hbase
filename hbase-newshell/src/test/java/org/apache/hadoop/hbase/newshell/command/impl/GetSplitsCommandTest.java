@@ -23,7 +23,6 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.List;
-import java.util.Map;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
 import org.apache.hadoop.hbase.newshell.command.ShellCommandException;
 import org.apache.hadoop.hbase.newshell.command.TextResult;
@@ -37,29 +36,20 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 @Tag(SmallTests.TAG)
-public class PutCommandTest {
+public class GetSplitsCommandTest {
 
-  /** Captures the put it was called with instead of talking to a real Table. */
   private static final class RecordingShellTable extends StubShellTable {
-    private String lastRow;
-    private String lastColumn;
-    private String lastValue;
-    private Map<String, Object> lastOptions;
-
     @Override
-    public void put(String row, String column, String value, Map<String, Object> options) {
-      this.lastRow = row;
-      this.lastColumn = column;
-      this.lastValue = value;
-      this.lastOptions = options;
+    public List<String> getSplits() {
+      return List.of("1000", "2000");
     }
   }
 
   private static final class RecordingShellTableFactory implements ShellTableFactory {
-    private final RecordingShellTable table;
+    private final ShellTable table;
     private String lastTableName;
 
-    RecordingShellTableFactory(RecordingShellTable table) {
+    RecordingShellTableFactory(ShellTable table) {
       this.table = table;
     }
 
@@ -70,35 +60,24 @@ public class PutCommandTest {
     }
   }
 
-  private final PutCommand command = new PutCommand();
+  private final GetSplitsCommand command = new GetSplitsCommand();
   private final RecordingShellTable table = new RecordingShellTable();
   private final RecordingShellTableFactory tables = new RecordingShellTableFactory(table);
   private final ExecutionContext context =
     new ExecutionContext(new StubShellAdmin(), tables, new PrintWriter(new StringWriter()));
 
   @Test
-  public void putsSingleCell() throws Exception {
-    var parsed = ShellLineParser.parse("put 't1', 'r1', 'f1:c1', 'v1'");
+  public void printsTotalSplitsAndPoints() throws Exception {
+    var parsed = ShellLineParser.parse("get_splits 't1'");
     TextResult result = (TextResult) command.execute(parsed, context);
 
     assertEquals("t1", tables.lastTableName);
-    assertEquals("r1", table.lastRow);
-    assertEquals("f1:c1", table.lastColumn);
-    assertEquals("v1", table.lastValue);
-    assertEquals(List.of(), result.lines());
+    assertEquals(List.of("Total number of splits = 3", "1000", "2000"), result.lines());
   }
 
   @Test
-  public void putsSingleCellWithTimestamp() throws Exception {
-    var parsed = ShellLineParser.parse("put 't1', 'r1', 'f1:c1', 'v1', {TIMESTAMP => 123}");
-    command.execute(parsed, context);
-
-    assertEquals(123L, table.lastOptions.get("TIMESTAMP"));
-  }
-
-  @Test
-  public void throwsWhenValueMissing() throws Exception {
-    var parsed = ShellLineParser.parse("put 't1', 'r1', 'f1:c1'");
+  public void throwsWhenTableNameMissing() throws Exception {
+    var parsed = ShellLineParser.parse("get_splits");
     assertThrows(ShellCommandException.class, () -> command.execute(parsed, context));
   }
 }

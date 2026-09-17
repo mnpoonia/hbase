@@ -23,7 +23,6 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.List;
-import java.util.Map;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
 import org.apache.hadoop.hbase.newshell.command.ShellCommandException;
 import org.apache.hadoop.hbase.newshell.command.TextResult;
@@ -37,68 +36,56 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 @Tag(SmallTests.TAG)
-public class PutCommandTest {
+public class IncrCommandTest {
 
-  /** Captures the put it was called with instead of talking to a real Table. */
   private static final class RecordingShellTable extends StubShellTable {
-    private String lastRow;
-    private String lastColumn;
-    private String lastValue;
-    private Map<String, Object> lastOptions;
+    private long lastAmount;
 
     @Override
-    public void put(String row, String column, String value, Map<String, Object> options) {
-      this.lastRow = row;
-      this.lastColumn = column;
-      this.lastValue = value;
-      this.lastOptions = options;
+    public Long increment(String row, String column, long amount) {
+      this.lastAmount = amount;
+      return amount;
     }
   }
 
   private static final class RecordingShellTableFactory implements ShellTableFactory {
-    private final RecordingShellTable table;
-    private String lastTableName;
+    private final ShellTable table;
 
-    RecordingShellTableFactory(RecordingShellTable table) {
+    RecordingShellTableFactory(ShellTable table) {
       this.table = table;
     }
 
     @Override
     public ShellTable forTable(String tableName) {
-      this.lastTableName = tableName;
       return table;
     }
   }
 
-  private final PutCommand command = new PutCommand();
+  private final IncrCommand command = new IncrCommand();
   private final RecordingShellTable table = new RecordingShellTable();
-  private final RecordingShellTableFactory tables = new RecordingShellTableFactory(table);
-  private final ExecutionContext context =
-    new ExecutionContext(new StubShellAdmin(), tables, new PrintWriter(new StringWriter()));
+  private final ExecutionContext context = new ExecutionContext(new StubShellAdmin(),
+    new RecordingShellTableFactory(table), new PrintWriter(new StringWriter()));
 
   @Test
-  public void putsSingleCell() throws Exception {
-    var parsed = ShellLineParser.parse("put 't1', 'r1', 'f1:c1', 'v1'");
+  public void defaultsToIncrementingByOne() throws Exception {
+    var parsed = ShellLineParser.parse("incr 't1', 'r1', 'f1:c1'");
     TextResult result = (TextResult) command.execute(parsed, context);
 
-    assertEquals("t1", tables.lastTableName);
-    assertEquals("r1", table.lastRow);
-    assertEquals("f1:c1", table.lastColumn);
-    assertEquals("v1", table.lastValue);
-    assertEquals(List.of(), result.lines());
+    assertEquals(1L, table.lastAmount);
+    assertEquals(List.of("COUNTER VALUE = 1"), result.lines());
   }
 
   @Test
-  public void putsSingleCellWithTimestamp() throws Exception {
-    var parsed = ShellLineParser.parse("put 't1', 'r1', 'f1:c1', 'v1', {TIMESTAMP => 123}");
+  public void incrementsByExplicitAmount() throws Exception {
+    var parsed = ShellLineParser.parse("incr 't1', 'r1', 'f1:c1', 5");
     command.execute(parsed, context);
 
-    assertEquals(123L, table.lastOptions.get("TIMESTAMP"));
+    assertEquals(5L, table.lastAmount);
   }
 
   @Test
-  public void throwsWhenValueMissing() throws Exception {
-    var parsed = ShellLineParser.parse("put 't1', 'r1', 'f1:c1'");
+  public void throwsWhenColumnMissing() throws Exception {
+    var parsed = ShellLineParser.parse("incr 't1', 'r1'");
     assertThrows(ShellCommandException.class, () -> command.execute(parsed, context));
   }
 }

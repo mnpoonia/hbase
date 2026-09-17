@@ -23,7 +23,6 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.List;
-import java.util.Map;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
 import org.apache.hadoop.hbase.newshell.command.ShellCommandException;
 import org.apache.hadoop.hbase.newshell.command.TextResult;
@@ -37,68 +36,59 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 @Tag(SmallTests.TAG)
-public class PutCommandTest {
+public class AppendCommandTest {
 
-  /** Captures the put it was called with instead of talking to a real Table. */
   private static final class RecordingShellTable extends StubShellTable {
-    private String lastRow;
-    private String lastColumn;
     private String lastValue;
-    private Map<String, Object> lastOptions;
+    private String result;
 
     @Override
-    public void put(String row, String column, String value, Map<String, Object> options) {
-      this.lastRow = row;
-      this.lastColumn = column;
+    public String append(String row, String column, String value) {
       this.lastValue = value;
-      this.lastOptions = options;
+      return result;
     }
   }
 
   private static final class RecordingShellTableFactory implements ShellTableFactory {
-    private final RecordingShellTable table;
-    private String lastTableName;
+    private final ShellTable table;
 
-    RecordingShellTableFactory(RecordingShellTable table) {
+    RecordingShellTableFactory(ShellTable table) {
       this.table = table;
     }
 
     @Override
     public ShellTable forTable(String tableName) {
-      this.lastTableName = tableName;
       return table;
     }
   }
 
-  private final PutCommand command = new PutCommand();
+  private final AppendCommand command = new AppendCommand();
   private final RecordingShellTable table = new RecordingShellTable();
-  private final RecordingShellTableFactory tables = new RecordingShellTableFactory(table);
-  private final ExecutionContext context =
-    new ExecutionContext(new StubShellAdmin(), tables, new PrintWriter(new StringWriter()));
+  private final ExecutionContext context = new ExecutionContext(new StubShellAdmin(),
+    new RecordingShellTableFactory(table), new PrintWriter(new StringWriter()));
 
   @Test
-  public void putsSingleCell() throws Exception {
-    var parsed = ShellLineParser.parse("put 't1', 'r1', 'f1:c1', 'v1'");
+  public void printsCurrentValueAfterAppend() throws Exception {
+    table.result = "ab";
+    var parsed = ShellLineParser.parse("append 't1', 'r1', 'f1:c1', 'b'");
     TextResult result = (TextResult) command.execute(parsed, context);
 
-    assertEquals("t1", tables.lastTableName);
-    assertEquals("r1", table.lastRow);
-    assertEquals("f1:c1", table.lastColumn);
-    assertEquals("v1", table.lastValue);
+    assertEquals("b", table.lastValue);
+    assertEquals(List.of("CURRENT VALUE = ab"), result.lines());
+  }
+
+  @Test
+  public void printsNothingWhenResultEmpty() throws Exception {
+    table.result = null;
+    var parsed = ShellLineParser.parse("append 't1', 'r1', 'f1:c1', 'b'");
+    TextResult result = (TextResult) command.execute(parsed, context);
+
     assertEquals(List.of(), result.lines());
   }
 
   @Test
-  public void putsSingleCellWithTimestamp() throws Exception {
-    var parsed = ShellLineParser.parse("put 't1', 'r1', 'f1:c1', 'v1', {TIMESTAMP => 123}");
-    command.execute(parsed, context);
-
-    assertEquals(123L, table.lastOptions.get("TIMESTAMP"));
-  }
-
-  @Test
   public void throwsWhenValueMissing() throws Exception {
-    var parsed = ShellLineParser.parse("put 't1', 'r1', 'f1:c1'");
+    var parsed = ShellLineParser.parse("append 't1', 'r1', 'f1:c1'");
     assertThrows(ShellCommandException.class, () -> command.execute(parsed, context));
   }
 }
