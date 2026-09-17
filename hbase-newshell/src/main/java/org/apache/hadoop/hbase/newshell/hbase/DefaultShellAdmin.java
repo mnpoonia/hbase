@@ -40,12 +40,17 @@ import org.apache.hadoop.hbase.client.SnapshotDescription;
 import org.apache.hadoop.hbase.client.TableDescriptor;
 import org.apache.hadoop.hbase.client.TableDescriptorBuilder;
 import org.apache.hadoop.hbase.client.replication.ReplicationPeerConfigUtil;
+import org.apache.hadoop.hbase.net.Address;
 import org.apache.hadoop.hbase.replication.ReplicationPeerConfig;
 import org.apache.hadoop.hbase.replication.ReplicationPeerConfigBuilder;
 import org.apache.hadoop.hbase.replication.ReplicationPeerDescription;
+import org.apache.hadoop.hbase.rsgroup.RSGroupInfo;
+import org.apache.hadoop.hbase.security.access.AccessControlClient;
+import org.apache.hadoop.hbase.security.access.Permission;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.FutureUtils;
 import org.apache.yetus.audience.InterfaceAudience;
+import java.util.Set;
 
 /**
  * Wraps a real {@link Admin}. Ported, for the pilot commands only, from hbase-shell's
@@ -476,5 +481,219 @@ public final class DefaultShellAdmin implements ShellAdmin {
       .filter(sn -> parts[0].equals(sn.getHostname())
         && (parts.length < 2 || parts[1].equals(String.valueOf(sn.getPort()))))
       .findFirst();
+  }
+
+  @Override
+  public RsGroupView getRsGroup(String groupName) throws IOException {
+    RSGroupInfo groupInfo = admin.getRSGroup(groupName);
+    if (groupInfo == null) {
+      throw new IOException("RSGroup '" + groupName + "' does not exist");
+    }
+    List<String> servers =
+      groupInfo.getServers().stream().map(Address::toString).collect(Collectors.toList());
+    List<String> tables =
+      groupInfo.getTables().stream().map(TableName::getNameAsString).collect(Collectors.toList());
+    return new RsGroupView(servers, tables);
+  }
+
+  @Override
+  public void moveServersToRsGroup(List<String> hostPorts, String groupName) throws IOException {
+    Set<Address> addresses =
+      hostPorts.stream().map(Address::fromString).collect(Collectors.toSet());
+    admin.moveServersToRSGroup(addresses, groupName);
+  }
+
+  @Override
+  public void grant(String userOrGroup, String actions, String tableName, String family,
+    String qualifier, String namespace) throws IOException {
+    Permission.Action[] permActions = parseActions(actions);
+    try {
+      if (namespace != null) {
+        AccessControlClient.grant(admin.getConnection(), namespace, userOrGroup, permActions);
+      } else if (tableName != null) {
+        byte[] familyBytes = family == null ? null : Bytes.toBytes(family);
+        byte[] qualifierBytes = qualifier == null ? null : Bytes.toBytes(qualifier);
+        AccessControlClient.grant(admin.getConnection(), TableName.valueOf(tableName),
+          userOrGroup, familyBytes, qualifierBytes, permActions);
+      } else {
+        AccessControlClient.grant(admin.getConnection(), userOrGroup, permActions);
+      }
+    } catch (Throwable t) {
+      if (t instanceof IOException) {
+        throw (IOException) t;
+      }
+      throw new IOException(t);
+    }
+  }
+
+  private static Permission.Action[] parseActions(String actions) throws IOException {
+    Permission.Action[] result = new Permission.Action[actions.length()];
+    for (int i = 0; i < actions.length(); i++) {
+      result[i] = charToAction(actions.charAt(i));
+    }
+    return result;
+  }
+
+  @Override
+  public void truncateTable(String tableName, boolean preserveSplits) throws IOException {
+    TableName name = TableName.valueOf(tableName);
+    if (admin.isTableEnabled(name)) {
+      admin.disableTable(name);
+    }
+    admin.truncateTable(name, preserveSplits);
+  }
+
+  @Override
+  public boolean isTableDisabled(String tableName) throws IOException {
+    return admin.isTableDisabled(TableName.valueOf(tableName));
+  }
+
+  @Override
+  public boolean isTableEnabled(String tableName) throws IOException {
+    return admin.isTableEnabled(TableName.valueOf(tableName));
+  }
+
+  @Override
+  public List<String> listTablesByState(boolean enabled) throws IOException {
+    List<String> result = new ArrayList<>();
+    for (TableName table : admin.listTableNames()) {
+      if (admin.isTableEnabled(table) == enabled) {
+        result.add(table.getNameAsString());
+      }
+    }
+    return result;
+  }
+
+  @Override
+  public AlterStatusView alterStatus(String tableName) throws IOException {
+    TableName table = TableName.valueOf(tableName);
+    if (!admin.tableExists(table)) {
+      throw new IOException("Table '" + tableName + "' does not exist");
+    }
+    var regionStatus = admin.getClusterMetrics().getTableRegionStatesCount().get(table);
+    if (regionStatus == null || regionStatus.getTotalRegions() == 0) {
+      return new AlterStatusView(0, 0);
+    }
+    int updated = regionStatus.getTotalRegions() - regionStatus.getRegionsInTransition()
+      - regionStatus.getClosedRegions();
+    return new AlterStatusView(regionStatus.getTotalRegions() - updated,
+      regionStatus.getTotalRegions());
+  }
+
+  @Override
+  public void cloneTableSchema(String tableName, String newTableName, boolean preserveSplits)
+    throws IOException {
+    admin.cloneTableSchema(TableName.valueOf(tableName), TableName.valueOf(newTableName),
+      preserveSplits);
+  }
+
+  @Override
+  public RegionLocationView locateRegion(String tableName, String rowKey) throws IOException {
+    var location = admin.getConnection().getRegionLocator(TableName.valueOf(tableName))
+      .getRegionLocation(Bytes.toBytes(rowKey));
+    return new RegionLocationView(location.getHostnamePort(),
+      location.getRegion().getRegionNameAsString());
+  }
+
+  @Override
+  public List<List<String>> listRegions(String tableName) throws IOException {
+    TableName table = TableName.valueOf(tableName);
+    if (!admin.isTableEnabled(table)) {
+      throw new IOException("Table " + tableName + " must be enabled.");
+    }
+    ClusterMetrics clusterMetrics = admin.getClusterMetrics();
+    List<List<String>> rows = new ArrayList<>();
+    for (var location : admin.getConnection().getRegionLocator(table).getAllRegionLocations()) {
+      var regionInfo = location.getRegion();
+      ServerName serverName = location.getServerName();
+      var serverMetrics = clusterMetrics.getLiveServerMetrics().get(serverName);
+      var regionMetrics =
+        serverMetrics == null ? null : serverMetrics.getRegionMetrics().get(regionInfo.getRegionName());
+      String size = regionMetrics == null ? "" : String.valueOf(regionMetrics.getStoreFileSize());
+      String req = regionMetrics == null ? "" : String.valueOf(regionMetrics.getRequestCount());
+      String locality = regionMetrics == null ? "" : String.valueOf(regionMetrics.getDataLocality());
+      rows.add(List.of(serverName == null ? "" : serverName.toString(),
+        regionInfo.getRegionNameAsString(), Bytes.toStringBinary(regionInfo.getStartKey()),
+        Bytes.toStringBinary(regionInfo.getEndKey()), size, req, locality));
+    }
+    return rows;
+  }
+
+  @Override
+  public void createNamespace(String namespace, Map<String, Object> properties)
+    throws IOException {
+    var builder = org.apache.hadoop.hbase.NamespaceDescriptor.create(namespace);
+    for (Map.Entry<String, Object> entry : properties.entrySet()) {
+      builder.addConfiguration(entry.getKey(), String.valueOf(entry.getValue()));
+    }
+    admin.createNamespace(builder.build());
+  }
+
+  @Override
+  public void dropNamespace(String namespace) throws IOException {
+    admin.deleteNamespace(namespace);
+  }
+
+  @Override
+  public void alterNamespace(String namespace, Map<String, Object> properties)
+    throws IOException {
+    var existing = admin.getNamespaceDescriptor(namespace);
+    var builder = org.apache.hadoop.hbase.NamespaceDescriptor.create(existing);
+    String method = String.valueOf(properties.get("METHOD"));
+    if ("unset".equalsIgnoreCase(method)) {
+      Object name = properties.get("NAME");
+      if (name == null) {
+        throw new IOException("alter_namespace unset requires NAME");
+      }
+      builder.removeConfiguration(String.valueOf(name));
+    } else {
+      for (Map.Entry<String, Object> entry : properties.entrySet()) {
+        if ("METHOD".equals(entry.getKey())) {
+          continue;
+        }
+        builder.addConfiguration(entry.getKey(), String.valueOf(entry.getValue()));
+      }
+    }
+    admin.modifyNamespace(builder.build());
+  }
+
+  @Override
+  public String describeNamespace(String namespace) throws IOException {
+    return admin.getNamespaceDescriptor(namespace).toString();
+  }
+
+  @Override
+  public List<String> listNamespaces(String regex) throws IOException {
+    Pattern pattern = Pattern.compile(regex);
+    List<String> result = new ArrayList<>();
+    for (var descriptor : admin.listNamespaceDescriptors()) {
+      if (pattern.matcher(descriptor.getName()).matches()) {
+        result.add(descriptor.getName());
+      }
+    }
+    return result;
+  }
+
+  @Override
+  public List<String> listNamespaceTables(String namespace) throws IOException {
+    return Arrays.stream(admin.listTableNamesByNamespace(namespace))
+      .map(TableName::getQualifierAsString).collect(Collectors.toList());
+  }
+
+  private static Permission.Action charToAction(char c) throws IOException {
+    switch (Character.toUpperCase(c)) {
+      case 'R':
+        return Permission.Action.READ;
+      case 'W':
+        return Permission.Action.WRITE;
+      case 'X':
+        return Permission.Action.EXEC;
+      case 'C':
+        return Permission.Action.CREATE;
+      case 'A':
+        return Permission.Action.ADMIN;
+      default:
+        throw new IOException("Unknown permission action: " + c);
+    }
   }
 }

@@ -93,4 +93,40 @@ public interface ShellAdmin {
   boolean catalogJanitorEnabled() throws IOException;
 
   boolean splitOrMergeEnabled(String switchType) throws IOException;
+
+  RsGroupView getRsGroup(String groupName) throws IOException;
+
+  void moveServersToRsGroup(List<String> hostPorts, String groupName) throws IOException;
+
+  void grant(String userOrGroup, String actions, String tableName, String family,
+    String qualifier, String namespace) throws IOException;
+
+  void truncateTable(String tableName, boolean preserveSplits) throws IOException;
+
+  boolean isTableDisabled(String tableName) throws IOException;
+
+  boolean isTableEnabled(String tableName) throws IOException;
+
+  List<String> listTablesByState(boolean enabled) throws IOException;
+
+  AlterStatusView alterStatus(String tableName) throws IOException;
+
+  void cloneTableSchema(String tableName, String newTableName, boolean preserveSplits)
+    throws IOException;
+
+  RegionLocationView locateRegion(String tableName, String rowKey) throws IOException;
+
+  List<List<String>> listRegions(String tableName) throws IOException;
+
+  void createNamespace(String namespace, Map<String, Object> properties) throws IOException;
+
+  void dropNamespace(String namespace) throws IOException;
+
+  void alterNamespace(String namespace, Map<String, Object> properties) throws IOException;
+
+  String describeNamespace(String namespace) throws IOException;
+
+  List<String> listNamespaces(String regex) throws IOException;
+
+  List<String> listNamespaceTables(String namespace) throws IOException;
 }

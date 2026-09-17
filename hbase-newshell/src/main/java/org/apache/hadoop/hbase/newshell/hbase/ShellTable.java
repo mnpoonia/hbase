@@ -18,6 +18,7 @@
 package org.apache.hadoop.hbase.newshell.hbase;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 import org.apache.yetus.audience.InterfaceAudience;
 
@@ -32,4 +33,21 @@ public interface ShellTable {
   GetResult get(String row, Map<String, Object> options) throws IOException;
 
   void put(String row, String column, String value, Map<String, Object> options) throws IOException;
+
+  ScanResult scan(Map<String, Object> options) throws IOException;
+
+  long count(Map<String, Object> options) throws IOException;
+
+  void delete(String row, String column, Long timestamp) throws IOException;
+
+  void deleteAll(String row, String column, Long timestamp, Map<String, Object> options)
+    throws IOException;
+
+  Long getCounter(String row, String column) throws IOException;
+
+  Long increment(String row, String column, long amount) throws IOException;
+
+  String append(String row, String column, String value) throws IOException;
+
+  List<String> getSplits() throws IOException;
 }

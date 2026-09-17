@@ -181,4 +181,90 @@ public class StubShellAdmin implements ShellAdmin {
   public boolean splitOrMergeEnabled(String switchType) {
     throw notNeeded();
   }
+
+  @Override
+  public RsGroupView getRsGroup(String groupName) {
+    throw notNeeded();
+  }
+
+  @Override
+  public void moveServersToRsGroup(List<String> hostPorts, String groupName) {
+    throw notNeeded();
+  }
+
+  @Override
+  public void grant(String userOrGroup, String actions, String tableName, String family,
+    String qualifier, String namespace) {
+    throw notNeeded();
+  }
+
+  @Override
+  public void truncateTable(String tableName, boolean preserveSplits) {
+    throw notNeeded();
+  }
+
+  @Override
+  public boolean isTableDisabled(String tableName) {
+    throw notNeeded();
+  }
+
+  @Override
+  public boolean isTableEnabled(String tableName) {
+    throw notNeeded();
+  }
+
+  @Override
+  public List<String> listTablesByState(boolean enabled) {
+    throw notNeeded();
+  }
+
+  @Override
+  public AlterStatusView alterStatus(String tableName) {
+    throw notNeeded();
+  }
+
+  @Override
+  public void cloneTableSchema(String tableName, String newTableName, boolean preserveSplits) {
+    throw notNeeded();
+  }
+
+  @Override
+  public RegionLocationView locateRegion(String tableName, String rowKey) {
+    throw notNeeded();
+  }
+
+  @Override
+  public List<List<String>> listRegions(String tableName) {
+    throw notNeeded();
+  }
+
+  @Override
+  public void createNamespace(String namespace, Map<String, Object> properties) {
+    throw notNeeded();
+  }
+
+  @Override
+  public void dropNamespace(String namespace) {
+    throw notNeeded();
+  }
+
+  @Override
+  public void alterNamespace(String namespace, Map<String, Object> properties) {
+    throw notNeeded();
+  }
+
+  @Override
+  public String describeNamespace(String namespace) {
+    throw notNeeded();
+  }
+
+  @Override
+  public List<String> listNamespaces(String regex) {
+    throw notNeeded();
+  }
+
+  @Override
+  public List<String> listNamespaceTables(String namespace) {
+    throw notNeeded();
+  }
 }
