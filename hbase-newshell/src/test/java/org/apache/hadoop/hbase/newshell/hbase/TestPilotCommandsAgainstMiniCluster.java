@@ -385,4 +385,310 @@ public class TestPilotCommandsAgainstMiniCluster {
     admin.splitOrMergeSwitch("MERGE", previousMerge);
     assertEquals(previousMerge, admin.splitOrMergeEnabled("MERGE"));
   }
+
+  @Test
+  public void scanReturnsAllRowsAcrossFamilies() throws Exception {
+    String tableName = "newshell_scan_test";
+    TEST_UTIL.createTable(TableName.valueOf(tableName), Bytes.toBytes("f1"));
+    try (Table table = connection.getTable(TableName.valueOf(tableName))) {
+      Put put1 = new Put(Bytes.toBytes("r1"));
+      put1.addColumn(Bytes.toBytes("f1"), Bytes.toBytes("c1"), Bytes.toBytes("v1"));
+      Put put2 = new Put(Bytes.toBytes("r2"));
+      put2.addColumn(Bytes.toBytes("f1"), Bytes.toBytes("c1"), Bytes.toBytes("v2"));
+      table.put(List.of(put1, put2));
+    }
+
+    ShellTableFactory factory = new DefaultShellTableFactory(connection);
+    ScanResult result = factory.forTable(tableName).scan(Map.of());
+
+    assertEquals(2, result.rows().size());
+    assertEquals("r1", result.rows().get(0).row());
+    assertEquals("v1", result.rows().get(0).cells().get(0).value());
+    assertEquals("r2", result.rows().get(1).row());
+  }
+
+  @Test
+  public void scanRespectsLimitStartRowAndStopRow() throws Exception {
+    String tableName = "newshell_scan_range_test";
+    TEST_UTIL.createTable(TableName.valueOf(tableName), Bytes.toBytes("f1"));
+    try (Table table = connection.getTable(TableName.valueOf(tableName))) {
+      for (String row : List.of("r1", "r2", "r3", "r4")) {
+        Put put = new Put(Bytes.toBytes(row));
+        put.addColumn(Bytes.toBytes("f1"), Bytes.toBytes("c1"), Bytes.toBytes("v"));
+        table.put(put);
+      }
+    }
+
+    ShellTableFactory factory = new DefaultShellTableFactory(connection);
+    ScanResult limited = factory.forTable(tableName).scan(Map.of("LIMIT", 1L));
+    assertEquals(1, limited.rows().size());
+    assertEquals("r1", limited.rows().get(0).row());
+
+    ScanResult ranged =
+      factory.forTable(tableName).scan(Map.of("STARTROW", "r2", "STOPROW", "r4"));
+    assertEquals(List.of("r2", "r3"),
+      ranged.rows().stream().map(ScanRow::row).toList());
+  }
+
+  @Test
+  public void scanFiltersByColumn() throws Exception {
+    String tableName = "newshell_scan_column_test";
+    TEST_UTIL.createTable(TableName.valueOf(tableName),
+      new byte[][] { Bytes.toBytes("f1"), Bytes.toBytes("f2") });
+    try (Table table = connection.getTable(TableName.valueOf(tableName))) {
+      Put put = new Put(Bytes.toBytes("r1"));
+      put.addColumn(Bytes.toBytes("f1"), Bytes.toBytes("c1"), Bytes.toBytes("v1"));
+      put.addColumn(Bytes.toBytes("f2"), Bytes.toBytes("c1"), Bytes.toBytes("v2"));
+      table.put(put);
+    }
+
+    ShellTableFactory factory = new DefaultShellTableFactory(connection);
+    ScanResult result = factory.forTable(tableName).scan(Map.of("COLUMNS", "f1"));
+
+    assertEquals(1, result.rows().size());
+    assertEquals(1, result.rows().get(0).cells().size());
+    assertEquals("f1", result.rows().get(0).cells().get(0).family());
+  }
+
+  @Test
+  public void countReturnsNumberOfRows() throws Exception {
+    String tableName = "newshell_count_test";
+    TEST_UTIL.createTable(TableName.valueOf(tableName), Bytes.toBytes("f1"));
+    try (Table table = connection.getTable(TableName.valueOf(tableName))) {
+      for (String row : List.of("r1", "r2", "r3")) {
+        Put put = new Put(Bytes.toBytes(row));
+        put.addColumn(Bytes.toBytes("f1"), Bytes.toBytes("c1"), Bytes.toBytes("v"));
+        table.put(put);
+      }
+    }
+
+    ShellTableFactory factory = new DefaultShellTableFactory(connection);
+    assertEquals(3L, factory.forTable(tableName).count(Map.of()));
+  }
+
+  @Test
+  public void deleteRemovesASingleColumn() throws Exception {
+    String tableName = "newshell_delete_test";
+    TEST_UTIL.createTable(TableName.valueOf(tableName), Bytes.toBytes("f1"));
+    try (Table table = connection.getTable(TableName.valueOf(tableName))) {
+      Put put = new Put(Bytes.toBytes("r1"));
+      put.addColumn(Bytes.toBytes("f1"), Bytes.toBytes("c1"), Bytes.toBytes("v1"));
+      put.addColumn(Bytes.toBytes("f1"), Bytes.toBytes("c2"), Bytes.toBytes("v2"));
+      table.put(put);
+    }
+
+    ShellTableFactory factory = new DefaultShellTableFactory(connection);
+    factory.forTable(tableName).delete("r1", "f1:c1", null);
+
+    GetResult result = factory.forTable(tableName).get("r1", Map.of());
+    assertEquals(1, result.cells().size());
+    assertEquals("c2", result.cells().get(0).qualifier());
+  }
+
+  @Test
+  public void deleteallRemovesWholeRow() throws Exception {
+    String tableName = "newshell_deleteall_test";
+    TEST_UTIL.createTable(TableName.valueOf(tableName), Bytes.toBytes("f1"));
+    try (Table table = connection.getTable(TableName.valueOf(tableName))) {
+      Put put = new Put(Bytes.toBytes("r1"));
+      put.addColumn(Bytes.toBytes("f1"), Bytes.toBytes("c1"), Bytes.toBytes("v1"));
+      table.put(put);
+    }
+
+    ShellTableFactory factory = new DefaultShellTableFactory(connection);
+    factory.forTable(tableName).deleteAll("r1", null, null, Map.of());
+
+    GetResult result = factory.forTable(tableName).get("r1", Map.of());
+    assertTrue(result.cells().isEmpty());
+  }
+
+  @Test
+  public void deleteallWithRowPrefixFilterBatchDeletesMatchingRows() throws Exception {
+    String tableName = "newshell_deleteall_prefix_test";
+    TEST_UTIL.createTable(TableName.valueOf(tableName), Bytes.toBytes("f1"));
+    try (Table table = connection.getTable(TableName.valueOf(tableName))) {
+      for (String row : List.of("prefix-1", "prefix-2", "other-1")) {
+        Put put = new Put(Bytes.toBytes(row));
+        put.addColumn(Bytes.toBytes("f1"), Bytes.toBytes("c1"), Bytes.toBytes("v"));
+        table.put(put);
+      }
+    }
+
+    ShellTableFactory factory = new DefaultShellTableFactory(connection);
+    factory.forTable(tableName).deleteAll(null, null, null,
+      Map.of("ROWPREFIXFILTER", "prefix-", "CACHE", 1L));
+
+    ScanResult remaining = factory.forTable(tableName).scan(Map.of());
+    assertEquals(List.of("other-1"), remaining.rows().stream().map(ScanRow::row).toList());
+  }
+
+  @Test
+  public void getCounterReadsAnIncrementedValue() throws Exception {
+    String tableName = "newshell_get_counter_test";
+    TEST_UTIL.createTable(TableName.valueOf(tableName), Bytes.toBytes("f1"));
+
+    ShellTableFactory factory = new DefaultShellTableFactory(connection);
+    assertEquals(3L, factory.forTable(tableName).increment("r1", "f1:c1", 3L));
+    assertEquals(3L, factory.forTable(tableName).getCounter("r1", "f1:c1"));
+  }
+
+  @Test
+  public void getCounterReturnsNullWhenMissing() throws Exception {
+    String tableName = "newshell_get_counter_missing_test";
+    TEST_UTIL.createTable(TableName.valueOf(tableName), Bytes.toBytes("f1"));
+
+    ShellTableFactory factory = new DefaultShellTableFactory(connection);
+    assertEquals(null, factory.forTable(tableName).getCounter("r1", "f1:c1"));
+  }
+
+  @Test
+  public void incrementAccumulatesAcrossCalls() throws Exception {
+    String tableName = "newshell_incr_test";
+    TEST_UTIL.createTable(TableName.valueOf(tableName), Bytes.toBytes("f1"));
+
+    ShellTableFactory factory = new DefaultShellTableFactory(connection);
+    factory.forTable(tableName).increment("r1", "f1:c1", 5L);
+    assertEquals(8L, factory.forTable(tableName).increment("r1", "f1:c1", 3L));
+  }
+
+  @Test
+  public void appendConcatenatesAndReturnsCurrentValue() throws Exception {
+    String tableName = "newshell_append_test";
+    TEST_UTIL.createTable(TableName.valueOf(tableName), Bytes.toBytes("f1"));
+
+    ShellTableFactory factory = new DefaultShellTableFactory(connection);
+    factory.forTable(tableName).append("r1", "f1:c1", "a");
+    assertEquals("ab", factory.forTable(tableName).append("r1", "f1:c1", "b"));
+  }
+
+  @Test
+  public void getSplitsExcludesTheFirstEmptyStartKey() throws Exception {
+    String tableName = "newshell_get_splits_test";
+    ShellAdmin admin = new DefaultShellAdmin(connection.getAdmin());
+    admin.createTable(tableName, List.of(Map.of("NAME", "f1")),
+      Map.of("SPLITS", List.of("1000", "2000")));
+
+    ShellTableFactory factory = new DefaultShellTableFactory(connection);
+    assertEquals(List.of("1000", "2000"), factory.forTable(tableName).getSplits());
+  }
+
+  @Test
+  public void truncateRecreatesAnEmptyTable() throws Exception {
+    String tableName = "newshell_truncate_test";
+    TEST_UTIL.createTable(TableName.valueOf(tableName), Bytes.toBytes("f1"));
+    try (Table table = connection.getTable(TableName.valueOf(tableName))) {
+      Put put = new Put(Bytes.toBytes("r1"));
+      put.addColumn(Bytes.toBytes("f1"), Bytes.toBytes("c1"), Bytes.toBytes("v1"));
+      table.put(put);
+    }
+
+    ShellAdmin admin = new DefaultShellAdmin(connection.getAdmin());
+    admin.truncateTable(tableName, false);
+
+    ShellTableFactory factory = new DefaultShellTableFactory(connection);
+    assertTrue(factory.forTable(tableName).scan(Map.of()).rows().isEmpty());
+  }
+
+  @Test
+  public void truncatePreserveKeepsSplitsAfterTruncate() throws Exception {
+    String tableName = "newshell_truncate_preserve_test";
+    ShellAdmin admin = new DefaultShellAdmin(connection.getAdmin());
+    admin.createTable(tableName, List.of(Map.of("NAME", "f1")),
+      Map.of("SPLITS", List.of("1000", "2000")));
+
+    admin.truncateTable(tableName, true);
+
+    Admin realAdmin = connection.getAdmin();
+    long primaryRegionCount = realAdmin.getRegions(TableName.valueOf(tableName)).stream()
+      .filter(region -> region.getReplicaId() == 0).count();
+    assertEquals(3, primaryRegionCount);
+  }
+
+  @Test
+  public void isTableDisabledAndIsTableEnabledReflectTableState() throws Exception {
+    String tableName = "newshell_is_disabled_test";
+    Admin realAdmin = connection.getAdmin();
+    TEST_UTIL.createTable(TableName.valueOf(tableName), Bytes.toBytes("f1"));
+
+    ShellAdmin admin = new DefaultShellAdmin(realAdmin);
+    assertTrue(admin.isTableEnabled(tableName));
+    assertFalse(admin.isTableDisabled(tableName));
+
+    realAdmin.disableTable(TableName.valueOf(tableName));
+    assertTrue(admin.isTableDisabled(tableName));
+    assertFalse(admin.isTableEnabled(tableName));
+  }
+
+  @Test
+  public void listTablesByStateFiltersOnEnabledFlag() throws Exception {
+    String enabledTable = "newshell_list_by_state_enabled_test";
+    String disabledTable = "newshell_list_by_state_disabled_test";
+    Admin realAdmin = connection.getAdmin();
+    TEST_UTIL.createTable(TableName.valueOf(enabledTable), Bytes.toBytes("f1"));
+    TEST_UTIL.createTable(TableName.valueOf(disabledTable), Bytes.toBytes("f1"));
+    realAdmin.disableTable(TableName.valueOf(disabledTable));
+
+    ShellAdmin admin = new DefaultShellAdmin(realAdmin);
+    assertTrue(admin.listTablesByState(true).contains(enabledTable));
+    assertFalse(admin.listTablesByState(true).contains(disabledTable));
+    assertTrue(admin.listTablesByState(false).contains(disabledTable));
+    assertFalse(admin.listTablesByState(false).contains(enabledTable));
+  }
+
+  @Test
+  public void alterStatusReportsAllRegionsUpdatedAfterAlter() throws Exception {
+    String tableName = "newshell_alter_status_test";
+    TEST_UTIL.createTable(TableName.valueOf(tableName), Bytes.toBytes("f1"));
+
+    ShellAdmin admin = new DefaultShellAdmin(connection.getAdmin());
+    admin.alterTable(tableName, List.of(Map.of("NAME", "f1", "TTL", 100)));
+
+    AlterStatusView status = admin.alterStatus(tableName);
+    assertEquals(status.totalRegions(), status.totalRegions() - status.regionsYetToUpdate());
+  }
+
+  @Test
+  public void cloneTableSchemaCopiesFamiliesWithoutData() throws Exception {
+    String tableName = "newshell_clone_schema_src_test";
+    String newTableName = "newshell_clone_schema_dst_test";
+    TEST_UTIL.createTable(TableName.valueOf(tableName), Bytes.toBytes("f1"));
+    try (Table table = connection.getTable(TableName.valueOf(tableName))) {
+      Put put = new Put(Bytes.toBytes("r1"));
+      put.addColumn(Bytes.toBytes("f1"), Bytes.toBytes("c1"), Bytes.toBytes("v1"));
+      table.put(put);
+    }
+
+    ShellAdmin admin = new DefaultShellAdmin(connection.getAdmin());
+    admin.cloneTableSchema(tableName, newTableName, true);
+
+    Admin realAdmin = connection.getAdmin();
+    assertTrue(realAdmin.tableExists(TableName.valueOf(newTableName)));
+    assertTrue(
+      realAdmin.getDescriptor(TableName.valueOf(newTableName)).hasColumnFamily(Bytes.toBytes("f1")));
+    ShellTableFactory factory = new DefaultShellTableFactory(connection);
+    assertTrue(factory.forTable(newTableName).scan(Map.of()).rows().isEmpty());
+  }
+
+  @Test
+  public void locateRegionReturnsHostAndRegionForRowKey() throws Exception {
+    String tableName = "newshell_locate_region_test";
+    TEST_UTIL.createTable(TableName.valueOf(tableName), Bytes.toBytes("f1"));
+
+    ShellAdmin admin = new DefaultShellAdmin(connection.getAdmin());
+    RegionLocationView location = admin.locateRegion(tableName, "r1");
+    assertNotNull(location.hostnamePort());
+    assertTrue(location.regionName().startsWith(tableName));
+  }
+
+  @Test
+  public void listRegionsReturnsOneRowPerRegion() throws Exception {
+    String tableName = "newshell_list_regions_test";
+    ShellAdmin admin = new DefaultShellAdmin(connection.getAdmin());
+    admin.createTable(tableName, List.of(Map.of("NAME", "f1")),
+      Map.of("SPLITS", List.of("1000", "2000")));
+
+    List<List<String>> rows = admin.listRegions(tableName);
+    assertEquals(3, rows.size());
+    assertTrue(rows.get(0).get(1).startsWith(tableName));
+  }
 }
