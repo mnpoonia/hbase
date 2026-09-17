@@ -96,8 +96,12 @@ while IFS=$'\t' read -r command mode note; do
   newshell_cmd="${command//\{ENGINE\}/newshell}"
   newshell_cmd="${newshell_cmd//\{HOST\}/${HOST}}"
 
-  shell_out="$(echo "${shell_cmd}" | tr ';' '\n' | bin/hbase shell -n 2>&1 | filter_shell_noise)"
-  newshell_out="$(echo "${newshell_cmd}" | tr ';' '\n' | bin/hbase newshell -n 2>&1 | filter_newshell_noise)"
+  # A corpus command may legitimately make either engine exit nonzero (e.g. a
+  # shell command that crashes when a y/n confirmation prompt reads from
+  # already-exhausted piped stdin). That must show up as a diff below, not
+  # silently kill this whole script via set -e/pipefail.
+  shell_out="$(echo "${shell_cmd}" | tr ';' '\n' | bin/hbase shell -n 2>&1 | filter_shell_noise)" || true
+  newshell_out="$(echo "${newshell_cmd}" | tr ';' '\n' | bin/hbase newshell -n 2>&1 | filter_newshell_noise)" || true
 
   # {ENGINE} substitutes to "shell"/"newshell" so the two engines' runs use
   # disjoint resource names against the same live cluster; normalize those
