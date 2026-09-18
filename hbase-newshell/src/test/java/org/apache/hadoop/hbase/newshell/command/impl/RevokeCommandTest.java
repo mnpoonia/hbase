@@ -1,0 +1,95 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.apache.hadoop.hbase.newshell.command.impl;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
+import org.apache.hadoop.hbase.newshell.command.ShellCommandException;
+import org.apache.hadoop.hbase.newshell.hbase.StubShellAdmin;
+import org.apache.hadoop.hbase.newshell.hbase.StubShellTableFactory;
+import org.apache.hadoop.hbase.newshell.parser.ShellLineParser;
+import org.apache.hadoop.hbase.testclassification.SmallTests;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
+
+@Tag(SmallTests.TAG)
+public class RevokeCommandTest {
+
+  private static final class RecordingShellAdmin extends StubShellAdmin {
+    private String lastUserOrGroup;
+    private String lastTableName;
+    private String lastFamily;
+    private String lastQualifier;
+    private String lastNamespace;
+
+    @Override
+    public void revoke(String userOrGroup, String tableName, String family, String qualifier,
+      String namespace) {
+      this.lastUserOrGroup = userOrGroup;
+      this.lastTableName = tableName;
+      this.lastFamily = family;
+      this.lastQualifier = qualifier;
+      this.lastNamespace = namespace;
+    }
+  }
+
+  private final RevokeCommand command = new RevokeCommand();
+  private final RecordingShellAdmin admin = new RecordingShellAdmin();
+  private final ExecutionContext context =
+    new ExecutionContext(admin, new StubShellTableFactory(), new PrintWriter(new StringWriter()));
+
+  @Test
+  public void revokesGlobalPermissions() throws Exception {
+    var parsed = ShellLineParser.parse("revoke 'bobsmith'");
+    command.execute(parsed, context);
+
+    assertEquals("bobsmith", admin.lastUserOrGroup);
+    assertNull(admin.lastTableName);
+    assertNull(admin.lastNamespace);
+  }
+
+  @Test
+  public void revokesNamespacePermissions() throws Exception {
+    var parsed = ShellLineParser.parse("revoke 'bobsmith', '@ns1'");
+    command.execute(parsed, context);
+
+    assertEquals("ns1", admin.lastNamespace);
+    assertNull(admin.lastTableName);
+  }
+
+  @Test
+  public void revokesTableFamilyQualifierPermissions() throws Exception {
+    var parsed = ShellLineParser.parse("revoke 'bobsmith', 't1', 'f1', 'col1'");
+    command.execute(parsed, context);
+
+    assertEquals("t1", admin.lastTableName);
+    assertEquals("f1", admin.lastFamily);
+    assertEquals("col1", admin.lastQualifier);
+  }
+
+  @Test
+  public void throwsWhenUserMissing() throws Exception {
+    var parsed = ShellLineParser.parse("revoke");
+    assertThrows(ShellCommandException.class, () -> command.execute(parsed, context));
+  }
+}
