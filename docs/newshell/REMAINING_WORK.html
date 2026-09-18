@@ -58,7 +58,7 @@ footer { text-align: center; color: #666; font-size: 12px; margin-top: 30px; }
     <h1>hbase-newshell: command porting tracker</h1>
     <div class="summary">
       <div class="summary-card"><strong>Total work items (checked = done, unchecked = remaining)</strong><span id="overall-count">0 / 0</span></div>
-      <div class="summary-card"><strong>Commands ported</strong><span>63 / 184</span></div>
+      <div class="summary-card"><strong>Commands ported</strong><span>83 / 184</span></div>
     </div>
     <div class="progress-bar-outer"><div class="progress-bar-inner" id="overall-bar"></div></div>
     <div style="margin-top:14px;"><a href="https://github.com/mnpoonia/hbase/tree/hbase-newshell" target="_blank" style="color:#9cf;">View branch &amp; code on GitHub (mnpoonia/hbase @ hbase-newshell)</a></div>
@@ -207,15 +207,15 @@ const DATA = [
     ["dml-append","`append`",null,true, IMPL + "AppendCommand.java"],
     ["dml-get-splits","`get_splits`",null,true, IMPL + "GetSplitsCommand.java"],
   ] },
-  { id: "tools", title: "HBASE SURGERY TOOLS — tools", badge: "42 remaining", items: [
-    ["tools-assign","`assign`",null,false, RUBY + "assign.rb"],
+  { id: "tools", title: "HBASE SURGERY TOOLS — tools", badge: "40 remaining", items: [
+    ["tools-assign","`assign`","Unit-tested (AssignCommandTest) and mini-cluster-verified (assignReassignsARegionByEncodedName); no corpus row — no mechanism to script the dynamically-generated encoded region name as literal input, so real correctness verification lives solely in the mini-cluster test.",true, IMPL + "AssignCommand.java"],
     ["tools-balancer","`balancer`",null,false, RUBY + "balancer.rb"],
     ["tools-normalize","`normalize`",null,false, RUBY + "normalize.rb"],
     ["tools-maint-mode","`is_in_maintenance_mode`",null,false, RUBY + "is_in_maintenance_mode.rb"],
     ["tools-clear-slowlog","`clear_slowlog_responses`",null,false, RUBY + "clear_slowlog_responses.rb"],
     ["tools-reopen-regions","`reopen_regions`",null,false, RUBY + "reopen_regions.rb"],
     ["tools-close-region","`close_region`",null,false, RUBY + "close_region.rb"],
-    ["tools-flush","`flush`",null,false, RUBY + "flush.rb"],
+    ["tools-flush","`flush`","Unit-tested (FlushCommandTest) and mini-cluster-verified (flushFlushesATableByName); corpus row added (exact).",true, IMPL + "FlushCommand.java"],
     ["tools-flush-master-store","`flush_master_store`",null,false, RUBY + "flush_master_store.rb"],
     ["tools-balancer-decisions","`get_balancer_decisions`",null,false, RUBY + "get_balancer_decisions.rb"],
     ["tools-balancer-rejections","`get_balancer_rejections`",null,false, RUBY + "get_balancer_rejections.rb"],
@@ -266,9 +266,9 @@ const DATA = [
     ["tools-decommission","`decommission_regionservers`",null,true, IMPL + "DecommissionRegionServersCommand.java"],
     ["tools-recommission","`recommission_regionserver`",null,true, IMPL + "RecommissionRegionServerCommand.java"],
   ] },
-  { id: "replication", title: "CLUSTER REPLICATION TOOLS — replication", badge: "27 remaining", items: [
-    ["rep-enable-peer","`enable_peer`",null,false, RUBY + "enable_peer.rb"],
-    ["rep-disable-peer","`disable_peer`",null,false, RUBY + "disable_peer.rb"],
+  { id: "replication", title: "CLUSTER REPLICATION TOOLS — replication", badge: "25 remaining", items: [
+    ["rep-enable-peer","`enable_peer`","Unit-tested and mini-cluster-verified (enablePeerThenDisablePeerRoundTrips); corpus row added (exact).",true, IMPL + "EnablePeerCommand.java"],
+    ["rep-disable-peer","`disable_peer`","Unit-tested and mini-cluster-verified (enablePeerThenDisablePeerRoundTrips); corpus row added (exact).",true, IMPL + "DisablePeerCommand.java"],
     ["rep-set-replicate-all","`set_peer_replicate_all`",null,false, RUBY + "set_peer_replicate_all.rb"],
     ["rep-set-serial","`set_peer_serial`",null,false, RUBY + "set_peer_serial.rb"],
     ["rep-set-namespaces","`set_peer_namespaces`",null,false, RUBY + "set_peer_namespaces.rb"],
@@ -298,9 +298,9 @@ const DATA = [
     ["rep-remove-peer","`remove_peer`",null,true, IMPL + "RemovePeerCommand.java"],
     ["rep-list-peers","`list_peers`",null,true, IMPL + "ListPeersCommand.java"],
   ] },
-  { id: "snapshots", title: "CLUSTER SNAPSHOT TOOLS — snapshots", badge: "5 remaining", items: [
-    ["snap-clone","`clone_snapshot`",null,false, RUBY + "clone_snapshot.rb"],
-    ["snap-restore","`restore_snapshot`",null,false, RUBY + "restore_snapshot.rb"],
+  { id: "snapshots", title: "CLUSTER SNAPSHOT TOOLS — snapshots", badge: "3 remaining", items: [
+    ["snap-clone","`clone_snapshot`","Unit-tested and mini-cluster-verified (cloneSnapshotThenRestoreSnapshotRoundTrip); corpus row added (exact).",true, IMPL + "CloneSnapshotCommand.java"],
+    ["snap-restore","`restore_snapshot`","Unit-tested and mini-cluster-verified (cloneSnapshotThenRestoreSnapshotRoundTrip); corpus row added (exact).",true, IMPL + "RestoreSnapshotCommand.java"],
     ["snap-delete-all","`delete_all_snapshot`",null,false, RUBY + "delete_all_snapshot.rb"],
     ["snap-delete-table","`delete_table_snapshots`",null,false, RUBY + "delete_table_snapshots.rb"],
     ["snap-list-table","`list_table_snapshots`",null,false, RUBY + "list_table_snapshots.rb"],
@@ -308,14 +308,14 @@ const DATA = [
     ["snap-delete-snapshot","`delete_snapshot`",null,true, IMPL + "DeleteSnapshotCommand.java"],
     ["snap-list-snapshots","`list_snapshots`",null,true, IMPL + "ListSnapshotsCommand.java"],
   ] },
-  { id: "configuration", title: "ONLINE CONFIGURATION TOOLS — configuration", badge: "3 remaining", items: [
-    ["cfg-update","`update_config`",null,false, RUBY + "update_config.rb"],
-    ["cfg-update-all","`update_all_config`",null,false, RUBY + "update_all_config.rb"],
+  { id: "configuration", title: "ONLINE CONFIGURATION TOOLS — configuration", badge: "1 remaining", items: [
+    ["cfg-update","`update_config`","Unit-tested; no corpus row — the target server's host,port,startcode triple embeds a live regionserver startcode the harness has no mechanism to script as literal input.",true, IMPL + "UpdateConfigCommand.java"],
+    ["cfg-update-all","`update_all_config`","Unit-tested; corpus row added (exact).",true, IMPL + "UpdateAllConfigCommand.java"],
     ["cfg-update-rsgroup","`update_rsgroup_config`",null,false, RUBY + "update_rsgroup_config.rb"],
   ]},
-  { id: "quotas", title: "CLUSTER QUOTAS TOOLS — quotas", badge: "10 remaining", items: [
-    ["quota-set","`set_quota`",null,false, RUBY + "set_quota.rb"],
-    ["quota-list","`list_quotas`",null,false, RUBY + "list_quotas.rb"],
+  { id: "quotas", title: "CLUSTER QUOTAS TOOLS — quotas", badge: "8 remaining", items: [
+    ["quota-set","`set_quota`","THROTTLE-only slice (TYPE => SPACE, SCOPE, GLOBAL_BYPASS not ported). Unit-tested and mini-cluster-verified; corpus row added (smoke — hbase.quota.enabled isn't set in this parity image, so both engines reject the command outright; real correctness verified by TestQuotaAgainstMiniCluster).",true, IMPL + "SetQuotaCommand.java"],
+    ["quota-list","`list_quotas`","Unit-tested and mini-cluster-verified; corpus row added (smoke — same quota-disabled parity-image limitation).",true, IMPL + "ListQuotasCommand.java"],
     ["quota-list-table-sizes","`list_quota_table_sizes`",null,false, RUBY + "list_quota_table_sizes.rb"],
     ["quota-list-snapshots","`list_quota_snapshots`",null,false, RUBY + "list_quota_snapshots.rb"],
     ["quota-list-snapshot-sizes","`list_snapshot_sizes`",null,false, RUBY + "list_snapshot_sizes.rb"],
@@ -325,28 +325,28 @@ const DATA = [
     ["quota-enable-exceed-throttle","`enable_exceed_throttle_quota`",null,false, RUBY + "enable_exceed_throttle_quota.rb"],
     ["quota-disable-exceed-throttle","`disable_exceed_throttle_quota`",null,false, RUBY + "disable_exceed_throttle_quota.rb"],
   ]},
-  { id: "security", title: "SECURITY TOOLS — security", badge: "4 remaining", items: [
+  { id: "security", title: "SECURITY TOOLS — security", badge: "1 remaining", items: [
     ["sec-list-capabilities","`list_security_capabilities`",null,false, RUBY + "list_security_capabilities.rb"],
     ["sec-grant","`grant`",null,true, RUBY + "grant.rb"],
-    ["sec-revoke","`revoke`",null,false, RUBY + "revoke.rb"],
-    ["sec-user-permission","`user_permission`",null,false, RUBY + "user_permission.rb"],
+    ["sec-revoke","`revoke`","Unit-tested and mini-cluster-verified (mirrors TestGrantAgainstMiniCluster's AccessController handling); corpus row added (smoke — AccessController coprocessor not configured in this parity image).",true, IMPL + "RevokeCommand.java"],
+    ["sec-user-permission","`user_permission`","Unit-tested and mini-cluster-verified; corpus row added (smoke — same AccessController-unavailable limitation).",true, IMPL + "UserPermissionCommand.java"],
   ], portedNote: "Only applicable with the AccessController coprocessor." },
-  { id: "procedures", title: "PROCEDURES & LOCKS MANAGEMENT — procedures", badge: "2 remaining", items: [
-    ["proc-list-procedures","`list_procedures`",null,false, RUBY + "list_procedures.rb"],
-    ["proc-list-locks","`list_locks`",null,false, RUBY + "list_locks.rb"],
+  { id: "procedures", title: "PROCEDURES & LOCKS MANAGEMENT — procedures", badge: "0 remaining — fully ported", items: [
+    ["proc-list-procedures","`list_procedures`","Unit-tested and mini-cluster-verified; corpus row added (smoke — procedure ids/timestamps are run-specific).",true, IMPL + "ListProceduresCommand.java"],
+    ["proc-list-locks","`list_locks`","Unit-tested and mini-cluster-verified; corpus row added (smoke — same run-specific-output reasoning).",true, IMPL + "ListLocksCommand.java"],
   ]},
-  { id: "visibility-labels", title: "VISIBILITY LABEL TOOLS — visibility labels", badge: "6 remaining", items: [
-    ["vis-add-labels","`add_labels`",null,false, RUBY + "add_labels.rb"],
-    ["vis-list-labels","`list_labels`",null,false, RUBY + "list_labels.rb"],
+  { id: "visibility-labels", title: "VISIBILITY LABEL TOOLS — visibility labels", badge: "4 remaining", items: [
+    ["vis-add-labels","`add_labels`","Unit-tested and mini-cluster-verified; corpus row added (smoke — VisibilityController coprocessor not configured in this parity image).",true, IMPL + "AddLabelsCommand.java"],
+    ["vis-list-labels","`list_labels`","Unit-tested and mini-cluster-verified; corpus row added (smoke — same VisibilityController-unavailable limitation).",true, IMPL + "ListLabelsCommand.java"],
     ["vis-set-auths","`set_auths`",null,false, RUBY + "set_auths.rb"],
     ["vis-get-auths","`get_auths`",null,false, RUBY + "get_auths.rb"],
     ["vis-clear-auths","`clear_auths`",null,false, RUBY + "clear_auths.rb"],
     ["vis-set-visibility","`set_visibility`",null,false, RUBY + "set_visibility.rb"],
   ], portedNote: "Only applicable with the VisibilityController coprocessor." },
-  { id: "rsgroup", title: "RSGroups — rsgroup", badge: "17 remaining", items: [
-    ["rsg-list","`list_rsgroups`",null,false, RUBY + "list_rsgroups.rb"],
+  { id: "rsgroup", title: "RSGroups — rsgroup", badge: "13 remaining", items: [
+    ["rsg-list","`list_rsgroups`","Unit-tested and mini-cluster-verified (TestRsGroupAgainstMiniCluster); corpus row added (smoke — RSGroup feature disabled in this parity image, both engines reject the command outright).",true, IMPL + "ListRsgroupsCommand.java"],
     ["rsg-get","`get_rsgroup`",null,true, RUBY + "get_rsgroup.rb"],
-    ["rsg-add","`add_rsgroup`",null,false, RUBY + "add_rsgroup.rb"],
+    ["rsg-add","`add_rsgroup`","Unit-tested and mini-cluster-verified (TestRsGroupAgainstMiniCluster); corpus row added (smoke — same RSGroup-disabled parity-image limitation).",true, IMPL + "AddRsgroupCommand.java"],
     ["rsg-remove","`remove_rsgroup`",null,false, RUBY + "remove_rsgroup.rb"],
     ["rsg-balance","`balance_rsgroup`",null,false, RUBY + "balance_rsgroup.rb"],
     ["rsg-move-servers","`move_servers_rsgroup`",null,true, RUBY + "move_servers_rsgroup.rb"],
@@ -362,9 +362,9 @@ const DATA = [
     ["rsg-show-config","`show_rsgroup_config`",null,false, RUBY + "show_rsgroup_config.rb"],
     ["rsg-get-namespace","`get_namespace_rsgroup`",null,false, RUBY + "get_namespace_rsgroup.rb"],
   ]},
-  { id: "storefiletracker", title: "StoreFileTracker", badge: "2 remaining", items: [
-    ["sft-change","`change_sft`",null,false, RUBY + "change_sft.rb"],
-    ["sft-change-all","`change_sft_all`",null,false, RUBY + "change_sft_all.rb"],
+  { id: "storefiletracker", title: "StoreFileTracker", badge: "0 remaining — fully ported", items: [
+    ["sft-change","`change_sft`","Unit-tested; corpus row added (exact).",true, IMPL + "ChangeSftCommand.java"],
+    ["sft-change-all","`change_sft_all`","Unit-tested; corpus row added (smoke — legacy shell crashes with NoMethodError reading its y/n confirmation from exhausted piped stdin, same disable_all precedent; newshell's one-shot port intentionally skips the prompt).",true, IMPL + "ChangeSftAllCommand.java"],
   ]},
 ];
 

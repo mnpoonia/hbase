@@ -1,6 +1,6 @@
 # hbase-newshell: remaining work
 
-Status snapshot as of 2026-09-18. `hbase-newshell` currently ports **63 of 184**
+Status snapshot as of 2026-09-18. `hbase-newshell` currently ports **83 of 184**
 hbase-shell Ruby commands (`hbase-shell/src/main/ruby/shell/commands/*.rb`).
 Groups below follow the same grouping hbase-shell itself uses
 (`hbase-shell/src/main/ruby/shell.rb`). Every command/script entry also lists
@@ -392,7 +392,7 @@ either standard public API — already reachable from any `.jsh`/`.java`
 driver via classpath, no newshell change required — or Salesforce-internal
 tooling that's explicitly out of scope.
 
-## 8. Commands still to port (115 remaining, plus 2 skipped)
+## 8. Commands still to port (95 remaining, plus 2 skipped)
 
 Grouped exactly as `shell.rb`'s `load_command_group` calls group them, so
 porting can proceed group-by-group with a natural test boundary per group.
@@ -448,16 +448,16 @@ at
 > <span style="color:#4caf50">`truncate_preserve`</span>, <span style="color:#4caf50">`append`</span>, <span style="color:#4caf50">`get_splits`</span> —
 > `.../command/impl/{Get,Put,Scan,Count,Delete,Deleteall,GetCounter,Incr,Truncate,TruncatePreserve,Append,GetSplits}Command.java`.
 
-### HBASE SURGERY TOOLS — tools (42 remaining)
+### HBASE SURGERY TOOLS — tools (40 remaining)
 
-- [ ] <span style="color:#a5d6a7">`assign`</span> — `hbase-shell/src/main/ruby/shell/commands/assign.rb`
+- [x] <span style="color:#a5d6a7">`assign`</span> — `hbase-shell/src/main/ruby/shell/commands/assign.rb` — completed: true. Unit-tested (`AssignCommandTest`) and mini-cluster-verified (`assignReassignsARegionByEncodedName`); no corpus row — the harness has no mechanism to script the dynamically-generated encoded region name as literal command input, so real correctness verification lives solely in the mini-cluster test.
 - [ ] <span style="color:#a5d6a7">`balancer`</span> — `hbase-shell/src/main/ruby/shell/commands/balancer.rb`
 - [ ] <span style="color:#a5d6a7">`normalize`</span> — `hbase-shell/src/main/ruby/shell/commands/normalize.rb`
 - [ ] <span style="color:#a5d6a7">`is_in_maintenance_mode`</span> — `hbase-shell/src/main/ruby/shell/commands/is_in_maintenance_mode.rb`
 - [ ] <span style="color:#a5d6a7">`clear_slowlog_responses`</span> — `hbase-shell/src/main/ruby/shell/commands/clear_slowlog_responses.rb`
 - [ ] <span style="color:#a5d6a7">`reopen_regions`</span> — `hbase-shell/src/main/ruby/shell/commands/reopen_regions.rb`
 - [ ] <span style="color:#a5d6a7">`close_region`</span> — `hbase-shell/src/main/ruby/shell/commands/close_region.rb`
-- [ ] <span style="color:#a5d6a7">`flush`</span> — `hbase-shell/src/main/ruby/shell/commands/flush.rb`
+- [x] <span style="color:#a5d6a7">`flush`</span> — `hbase-shell/src/main/ruby/shell/commands/flush.rb` — completed: true. Unit-tested (`FlushCommandTest`) and mini-cluster-verified (`flushFlushesATableByName`); corpus row added (`exact` — has no stdout of its own).
 - [ ] <span style="color:#a5d6a7">`flush_master_store`</span> — `hbase-shell/src/main/ruby/shell/commands/flush_master_store.rb`
 - [ ] <span style="color:#a5d6a7">`get_balancer_decisions`</span> — `hbase-shell/src/main/ruby/shell/commands/get_balancer_decisions.rb`
 - [ ] <span style="color:#a5d6a7">`get_balancer_rejections`</span> — `hbase-shell/src/main/ruby/shell/commands/get_balancer_rejections.rb`
@@ -501,10 +501,10 @@ at
 > `recommission_regionserver` —
 > `.../command/impl/{BalanceSwitch,BalancerEnabled,NormalizerSwitch,NormalizerEnabled,Compact,CompactionSwitch,MajorCompact,Split,CatalogjanitorSwitch,CatalogjanitorEnabled,SplitormergeSwitch,SplitormergeEnabled,ListDecommissionedRegionServers,DecommissionRegionServers,RecommissionRegionServer}Command.java`.
 
-### CLUSTER REPLICATION TOOLS — replication (27 remaining)
+### CLUSTER REPLICATION TOOLS — replication (25 remaining)
 
-- [ ] <span style="color:#a5d6a7">`enable_peer`</span> — `hbase-shell/src/main/ruby/shell/commands/enable_peer.rb`
-- [ ] <span style="color:#a5d6a7">`disable_peer`</span> — `hbase-shell/src/main/ruby/shell/commands/disable_peer.rb`
+- [x] <span style="color:#a5d6a7">`enable_peer`</span> — `hbase-shell/src/main/ruby/shell/commands/enable_peer.rb` — completed: true. Unit-tested (`EnablePeerCommandTest`) and mini-cluster-verified (`enablePeerThenDisablePeerRoundTrips`); corpus row added (`exact`).
+- [x] <span style="color:#a5d6a7">`disable_peer`</span> — `hbase-shell/src/main/ruby/shell/commands/disable_peer.rb` — completed: true. Unit-tested (`DisablePeerCommandTest`) and mini-cluster-verified; corpus row added (`exact`).
 - [ ] <span style="color:#a5d6a7">`set_peer_replicate_all`</span> — `hbase-shell/src/main/ruby/shell/commands/set_peer_replicate_all.rb`
 - [ ] <span style="color:#a5d6a7">`set_peer_serial`</span> — `hbase-shell/src/main/ruby/shell/commands/set_peer_serial.rb`
 - [ ] <span style="color:#a5d6a7">`set_peer_namespaces`</span> — `hbase-shell/src/main/ruby/shell/commands/set_peer_namespaces.rb`
@@ -534,10 +534,10 @@ at
 > Already ported: <span style="color:#0b6623">`add_peer`</span>, <span style="color:#0b6623">`remove_peer`</span>, <span style="color:#0b6623">`list_peers`</span> —
 > `.../command/impl/{AddPeer,RemovePeer,ListPeers}Command.java`.
 
-### CLUSTER SNAPSHOT TOOLS — snapshots (5 remaining)
+### CLUSTER SNAPSHOT TOOLS — snapshots (3 remaining)
 
-- [ ] <span style="color:#a5d6a7">`clone_snapshot`</span> — `hbase-shell/src/main/ruby/shell/commands/clone_snapshot.rb`
-- [ ] <span style="color:#a5d6a7">`restore_snapshot`</span> — `hbase-shell/src/main/ruby/shell/commands/restore_snapshot.rb`
+- [x] <span style="color:#a5d6a7">`clone_snapshot`</span> — `hbase-shell/src/main/ruby/shell/commands/clone_snapshot.rb` — completed: true. Unit-tested (`CloneSnapshotCommandTest`) and mini-cluster-verified (`cloneSnapshotThenRestoreSnapshotRoundTrip`); corpus row added (`exact` — has no stdout of its own).
+- [x] <span style="color:#a5d6a7">`restore_snapshot`</span> — `hbase-shell/src/main/ruby/shell/commands/restore_snapshot.rb` — completed: true. Unit-tested (`RestoreSnapshotCommandTest`) and mini-cluster-verified; corpus row added (`exact` — has no stdout of its own).
 - [ ] <span style="color:#a5d6a7">`delete_all_snapshot`</span> — `hbase-shell/src/main/ruby/shell/commands/delete_all_snapshot.rb`
 - [ ] <span style="color:#a5d6a7">`delete_table_snapshots`</span> — `hbase-shell/src/main/ruby/shell/commands/delete_table_snapshots.rb`
 - [ ] <span style="color:#a5d6a7">`list_table_snapshots`</span> — `hbase-shell/src/main/ruby/shell/commands/list_table_snapshots.rb`
@@ -545,16 +545,16 @@ at
 > Already ported: <span style="color:#a5d6a7">`snapshot`</span>, <span style="color:#0b6623">`delete_snapshot`</span>, <span style="color:#0b6623">`list_snapshots`</span> —
 > `.../command/impl/{Snapshot,DeleteSnapshot,ListSnapshots}Command.java`.
 
-### ONLINE CONFIGURATION TOOLS — configuration (3 remaining — none ported yet)
+### ONLINE CONFIGURATION TOOLS — configuration (1 remaining)
 
-- [ ] <span style="color:#a5d6a7">`update_config`</span> — `hbase-shell/src/main/ruby/shell/commands/update_config.rb`
-- [ ] <span style="color:#a5d6a7">`update_all_config`</span> — `hbase-shell/src/main/ruby/shell/commands/update_all_config.rb`
+- [x] <span style="color:#a5d6a7">`update_config`</span> — `hbase-shell/src/main/ruby/shell/commands/update_config.rb` — completed: true. Unit-tested (`UpdateConfigCommandTest`) and mini-cluster-verified (`updateConfigDoesNotThrowForALiveServer`); no corpus row — the target server's `host,port,startcode` triple embeds a live regionserver startcode the harness has no mechanism to script as literal input.
+- [x] <span style="color:#a5d6a7">`update_all_config`</span> — `hbase-shell/src/main/ruby/shell/commands/update_all_config.rb` — completed: true. Unit-tested (`UpdateAllConfigCommandTest`) and mini-cluster-verified; corpus row added (`exact` — has no stdout of its own).
 - [ ] <span style="color:#a5d6a7">`update_rsgroup_config`</span> — `hbase-shell/src/main/ruby/shell/commands/update_rsgroup_config.rb`
 
-### CLUSTER QUOTAS TOOLS — quotas (10 remaining — none ported yet)
+### CLUSTER QUOTAS TOOLS — quotas (8 remaining)
 
-- [ ] <span style="color:#a5d6a7">`set_quota`</span> — `hbase-shell/src/main/ruby/shell/commands/set_quota.rb`
-- [ ] <span style="color:#a5d6a7">`list_quotas`</span> — `hbase-shell/src/main/ruby/shell/commands/list_quotas.rb`
+- [x] <span style="color:#a5d6a7">`set_quota`</span> — `hbase-shell/src/main/ruby/shell/commands/set_quota.rb` — completed: true, THROTTLE-only slice (`TYPE => SPACE`, `SCOPE`, `GLOBAL_BYPASS` explicitly not ported). Unit-tested (`SetQuotaCommandTest`) and mini-cluster-verified (`hbase.quota.enabled=true`, `TestQuotaAgainstMiniCluster`); corpus row added (`smoke` — `hbase.quota.enabled` isn't set in the parity Docker image, so both engines reject the command outright there).
+- [x] <span style="color:#a5d6a7">`list_quotas`</span> — `hbase-shell/src/main/ruby/shell/commands/list_quotas.rb` — completed: true. Unit-tested (`ListQuotasCommandTest`) and mini-cluster-verified; corpus row added (`smoke` — same quota-disabled parity-image limitation as `set_quota`).
 - [ ] <span style="color:#a5d6a7">`list_quota_table_sizes`</span> — `hbase-shell/src/main/ruby/shell/commands/list_quota_table_sizes.rb`
 - [ ] <span style="color:#a5d6a7">`list_quota_snapshots`</span> — `hbase-shell/src/main/ruby/shell/commands/list_quota_snapshots.rb`
 - [ ] <span style="color:#a5d6a7">`list_snapshot_sizes`</span> — `hbase-shell/src/main/ruby/shell/commands/list_snapshot_sizes.rb`
@@ -564,24 +564,24 @@ at
 - [ ] <span style="color:#a5d6a7">`enable_exceed_throttle_quota`</span> — `hbase-shell/src/main/ruby/shell/commands/enable_exceed_throttle_quota.rb`
 - [ ] <span style="color:#a5d6a7">`disable_exceed_throttle_quota`</span> — `hbase-shell/src/main/ruby/shell/commands/disable_exceed_throttle_quota.rb`
 
-### SECURITY TOOLS — security (3 remaining)
+### SECURITY TOOLS — security (1 remaining)
 
 - [ ] <span style="color:#a5d6a7">`list_security_capabilities`</span> — `hbase-shell/src/main/ruby/shell/commands/list_security_capabilities.rb`
-- [ ] <span style="color:#a5d6a7">`revoke`</span> — `hbase-shell/src/main/ruby/shell/commands/revoke.rb`
-- [ ] <span style="color:#a5d6a7">`user_permission`</span> — `hbase-shell/src/main/ruby/shell/commands/user_permission.rb`
+- [x] <span style="color:#a5d6a7">`revoke`</span> — `hbase-shell/src/main/ruby/shell/commands/revoke.rb` — completed: true. Unit-tested (`RevokeCommandTest`) and mini-cluster-verified against the AccessController coprocessor (`TestGrantAgainstMiniCluster`); corpus row added (`smoke` — AccessController isn't configured in the parity Docker image, so both engines reject the command outright there).
+- [x] <span style="color:#a5d6a7">`user_permission`</span> — `hbase-shell/src/main/ruby/shell/commands/user_permission.rb` — completed: true. Unit-tested (`UserPermissionCommandTest`) and mini-cluster-verified against the AccessController coprocessor; corpus row added (`smoke` — same AccessController-unavailable parity-image limitation as `revoke`).
 
 > Only applicable with the AccessController coprocessor.
 > Already ported: <span style="color:#0b6623">`grant`</span> — `.../command/impl/GrantCommand.java`.
 
-### PROCEDURES & LOCKS MANAGEMENT — procedures (2 remaining — none ported yet)
+### PROCEDURES & LOCKS MANAGEMENT — procedures (0 remaining — fully ported)
 
-- [ ] <span style="color:#a5d6a7">`list_procedures`</span> — `hbase-shell/src/main/ruby/shell/commands/list_procedures.rb`
-- [ ] <span style="color:#a5d6a7">`list_locks`</span> — `hbase-shell/src/main/ruby/shell/commands/list_locks.rb`
+- [x] <span style="color:#a5d6a7">`list_procedures`</span> — `hbase-shell/src/main/ruby/shell/commands/list_procedures.rb` — completed: true. Unit-tested (`ListProceduresCommandTest`) and mini-cluster-verified (`listProceduresReturnsAtLeastOneRow`); corpus row added (`smoke` — procedure ids/timestamps reflect whatever else is running against the live cluster at the time).
+- [x] <span style="color:#a5d6a7">`list_locks`</span> — `hbase-shell/src/main/ruby/shell/commands/list_locks.rb` — completed: true. Unit-tested (`ListLocksCommandTest`) and mini-cluster-verified (`listLocksDoesNotThrow`); corpus row added (`smoke` — lock listing reflects whatever else is running against the live cluster at the time).
 
-### VISIBILITY LABEL TOOLS — visibility labels (6 remaining — none ported yet)
+### VISIBILITY LABEL TOOLS — visibility labels (4 remaining)
 
-- [ ] <span style="color:#a5d6a7">`add_labels`</span> — `hbase-shell/src/main/ruby/shell/commands/add_labels.rb`
-- [ ] <span style="color:#a5d6a7">`list_labels`</span> — `hbase-shell/src/main/ruby/shell/commands/list_labels.rb`
+- [x] <span style="color:#a5d6a7">`add_labels`</span> — `hbase-shell/src/main/ruby/shell/commands/add_labels.rb` — completed: true. Unit-tested (`AddLabelsCommandTest`) and mini-cluster-verified against the VisibilityController coprocessor (`TestVisibilityLabelsAgainstMiniCluster`); corpus row added (`smoke` — VisibilityController isn't configured in the parity Docker image, so both engines reject the command outright there).
+- [x] <span style="color:#a5d6a7">`list_labels`</span> — `hbase-shell/src/main/ruby/shell/commands/list_labels.rb` — completed: true. Unit-tested (`ListLabelsCommandTest`) and mini-cluster-verified against the VisibilityController coprocessor; corpus row added (`smoke` — same VisibilityController-unavailable parity-image limitation as `add_labels`).
 - [ ] <span style="color:#a5d6a7">`set_auths`</span> — `hbase-shell/src/main/ruby/shell/commands/set_auths.rb`
 - [ ] <span style="color:#a5d6a7">`get_auths`</span> — `hbase-shell/src/main/ruby/shell/commands/get_auths.rb`
 - [ ] <span style="color:#a5d6a7">`clear_auths`</span> — `hbase-shell/src/main/ruby/shell/commands/clear_auths.rb`
@@ -589,10 +589,10 @@ at
 
 > Only applicable with the VisibilityController coprocessor.
 
-### RSGroups — rsgroup (15 remaining)
+### RSGroups — rsgroup (13 remaining)
 
-- [ ] <span style="color:#a5d6a7">`list_rsgroups`</span> — `hbase-shell/src/main/ruby/shell/commands/list_rsgroups.rb`
-- [ ] <span style="color:#a5d6a7">`add_rsgroup`</span> — `hbase-shell/src/main/ruby/shell/commands/add_rsgroup.rb`
+- [x] <span style="color:#a5d6a7">`list_rsgroups`</span> — `hbase-shell/src/main/ruby/shell/commands/list_rsgroups.rb` — completed: true. Unit-tested (`ListRsgroupsCommandTest`) and mini-cluster-verified (`TestRsGroupAgainstMiniCluster`); corpus row added (`smoke` — the RSGroup feature is disabled in the parity Docker image, so both engines reject the command outright there).
+- [x] <span style="color:#a5d6a7">`add_rsgroup`</span> — `hbase-shell/src/main/ruby/shell/commands/add_rsgroup.rb` — completed: true. Unit-tested (`AddRsgroupCommandTest`) and mini-cluster-verified; corpus row added (`smoke` — same RSGroup-disabled parity-image limitation as `list_rsgroups`).
 - [ ] <span style="color:#a5d6a7">`remove_rsgroup`</span> — `hbase-shell/src/main/ruby/shell/commands/remove_rsgroup.rb`
 - [ ] <span style="color:#a5d6a7">`balance_rsgroup`</span> — `hbase-shell/src/main/ruby/shell/commands/balance_rsgroup.rb`
 - [ ] <span style="color:#a5d6a7">`move_tables_rsgroup`</span> — `hbase-shell/src/main/ruby/shell/commands/move_tables_rsgroup.rb`
@@ -609,10 +609,10 @@ at
 
 > Already ported: <span style="color:#0b6623">`get_rsgroup`</span>, <span style="color:#0b6623">`move_servers_rsgroup`</span> — `.../command/impl/{GetRsgroup,MoveServersRsgroup}Command.java`.
 
-### StoreFileTracker (2 remaining — none ported yet)
+### StoreFileTracker (0 remaining — fully ported)
 
-- [ ] <span style="color:#a5d6a7">`change_sft`</span> — `hbase-shell/src/main/ruby/shell/commands/change_sft.rb`
-- [ ] <span style="color:#a5d6a7">`change_sft_all`</span> — `hbase-shell/src/main/ruby/shell/commands/change_sft_all.rb`
+- [x] <span style="color:#a5d6a7">`change_sft`</span> — `hbase-shell/src/main/ruby/shell/commands/change_sft.rb` — completed: true. Unit-tested (`ChangeSftCommandTest`) and mini-cluster-verified (`changeSftChangesTableAndFamilyLevelTracker`); corpus row added (`exact` — has no stdout of its own).
+- [x] <span style="color:#a5d6a7">`change_sft_all`</span> — `hbase-shell/src/main/ruby/shell/commands/change_sft_all.rb` — completed: true. The REPL-only y/n confirmation prompt is intentionally dropped, mirroring the existing `disable_all`/`drop_all`/`enable_all` precedent. Unit-tested (`ChangeSftAllCommandTest`) and mini-cluster-verified (`changeSftAllChangesEveryMatchingTable`); corpus row added (`smoke` — the legacy shell crashes with `NoMethodError` reading its `y/n` confirmation from exhausted piped stdin under `-n`, same divergence as `disable_all`).
 
 ## 9. New scripts (not ports of any existing `.rb`) — Kubernetes lifecycle drivers
 
