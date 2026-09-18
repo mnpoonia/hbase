@@ -19,6 +19,7 @@ package org.apache.hadoop.hbase.newshell.hbase;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.List;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.hadoop.hbase.NamespaceDescriptor;
 import org.apache.hadoop.hbase.TableName;
@@ -116,5 +117,54 @@ public class TestGrantAgainstMiniCluster {
     Permission granted = onlyPermissionFor("newshell_table_user", tableName);
     assertTrue(granted != null && granted.implies(Permission.Action.READ)
       && granted.implies(Permission.Action.WRITE));
+  }
+
+  @Test
+  public void revokeRemovesPreviouslyGrantedGlobalPermissions() throws Throwable {
+    ShellAdmin admin = new DefaultShellAdmin(connection.getAdmin());
+    admin.grant("newshell_revoke_global_user", "RW", null, null, null, null);
+    assertTrue(onlyPermissionFor("newshell_revoke_global_user", null) != null);
+
+    admin.revoke("newshell_revoke_global_user", null, null, null, null);
+    assertTrue(onlyPermissionFor("newshell_revoke_global_user", null) == null);
+  }
+
+  @Test
+  public void revokeRemovesPreviouslyGrantedNamespacePermissions() throws Throwable {
+    String namespace = "newshell_revoke_ns";
+    Admin realAdmin = connection.getAdmin();
+    realAdmin.createNamespace(NamespaceDescriptor.create(namespace).build());
+
+    ShellAdmin admin = new DefaultShellAdmin(realAdmin);
+    admin.grant("newshell_revoke_ns_user", "RW", null, null, null, namespace);
+    assertTrue(onlyPermissionFor("newshell_revoke_ns_user", "@" + namespace) != null);
+
+    admin.revoke("newshell_revoke_ns_user", null, null, null, namespace);
+    assertTrue(onlyPermissionFor("newshell_revoke_ns_user", "@" + namespace) == null);
+  }
+
+  @Test
+  public void revokeRemovesPreviouslyGrantedTablePermissions() throws Throwable {
+    String tableName = "newshell_revoke_table_test";
+    TEST_UTIL.createTable(TableName.valueOf(tableName), Bytes.toBytes("f1"));
+
+    ShellAdmin admin = new DefaultShellAdmin(connection.getAdmin());
+    admin.grant("newshell_revoke_table_user", "RW", tableName, null, null, null);
+    assertTrue(onlyPermissionFor("newshell_revoke_table_user", tableName) != null);
+
+    admin.revoke("newshell_revoke_table_user", tableName, null, null, null);
+    assertTrue(onlyPermissionFor("newshell_revoke_table_user", tableName) == null);
+  }
+
+  @Test
+  public void userPermissionReturnsGrantedTablePermission() throws Throwable {
+    String tableName = "newshell_user_permission_table_test";
+    TEST_UTIL.createTable(TableName.valueOf(tableName), Bytes.toBytes("f1"));
+
+    ShellAdmin admin = new DefaultShellAdmin(connection.getAdmin());
+    admin.grant("newshell_user_permission_user", "RW", tableName, null, null, null);
+
+    List<List<String>> rows = admin.userPermission(tableName);
+    assertTrue(rows.stream().anyMatch(row -> row.get(0).equals("newshell_user_permission_user")));
   }
 }

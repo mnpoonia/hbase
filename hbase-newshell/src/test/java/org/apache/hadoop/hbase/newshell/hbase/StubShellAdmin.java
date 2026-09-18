@@ -267,4 +267,106 @@ public class StubShellAdmin implements ShellAdmin {
   public List<String> listNamespaceTables(String namespace) {
     throw notNeeded();
   }
+
+  @Override
+  public void flush(String tableOrRegionOrServerName, String family) {
+    throw notNeeded();
+  }
+
+  @Override
+  public void assign(String regionName) {
+    throw notNeeded();
+  }
+
+  @Override
+  public void cloneSnapshot(String snapshotName, String tableName, boolean restoreAcl,
+    String cloneSft) {
+    throw notNeeded();
+  }
+
+  @Override
+  public void restoreSnapshot(String snapshotName, boolean restoreAcl) {
+    throw notNeeded();
+  }
+
+  @Override
+  public void enablePeer(String peerId) {
+    throw notNeeded();
+  }
+
+  @Override
+  public void disablePeer(String peerId) {
+    throw notNeeded();
+  }
+
+  @Override
+  public void updateConfig(String serverName) {
+    throw notNeeded();
+  }
+
+  @Override
+  public void updateAllConfig() {
+    throw notNeeded();
+  }
+
+  @Override
+  public void setQuota(Map<String, Object> args) {
+    throw notNeeded();
+  }
+
+  @Override
+  public List<List<String>> listQuotas(Map<String, Object> filterArgs) {
+    throw notNeeded();
+  }
+
+  @Override
+  public void revoke(String userOrGroup, String tableName, String family, String qualifier,
+    String namespace) {
+    throw notNeeded();
+  }
+
+  @Override
+  public List<List<String>> userPermission(String tableOrNamespaceRegex) {
+    throw notNeeded();
+  }
+
+  @Override
+  public List<List<String>> listProcedures() {
+    throw notNeeded();
+  }
+
+  @Override
+  public List<String> listLocks() {
+    throw notNeeded();
+  }
+
+  @Override
+  public void addLabels(List<String> labels) {
+    throw notNeeded();
+  }
+
+  @Override
+  public List<String> listLabels(String regex) {
+    throw notNeeded();
+  }
+
+  @Override
+  public List<RsGroupSummary> listRsGroups(String regex) {
+    throw notNeeded();
+  }
+
+  @Override
+  public void addRsGroup(String groupName) {
+    throw notNeeded();
+  }
+
+  @Override
+  public void changeSft(String tableName, String family, String sft) {
+    throw notNeeded();
+  }
+
+  @Override
+  public void changeSftAll(String tableRegex, String sft) {
+    throw notNeeded();
+  }
 }

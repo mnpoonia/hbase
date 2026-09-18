@@ -129,4 +129,46 @@ public interface ShellAdmin {
   List<String> listNamespaces(String regex) throws IOException;
 
   List<String> listNamespaceTables(String namespace) throws IOException;
+
+  void flush(String tableOrRegionOrServerName, String family) throws IOException;
+
+  void assign(String regionName) throws IOException;
+
+  void cloneSnapshot(String snapshotName, String tableName, boolean restoreAcl, String cloneSft)
+    throws IOException;
+
+  void restoreSnapshot(String snapshotName, boolean restoreAcl) throws IOException;
+
+  void enablePeer(String peerId) throws IOException;
+
+  void disablePeer(String peerId) throws IOException;
+
+  void updateConfig(String serverName) throws IOException;
+
+  void updateAllConfig() throws IOException;
+
+  void setQuota(Map<String, Object> args) throws IOException;
+
+  List<List<String>> listQuotas(Map<String, Object> filterArgs) throws IOException;
+
+  void revoke(String userOrGroup, String tableName, String family, String qualifier,
+    String namespace) throws IOException;
+
+  List<List<String>> userPermission(String tableOrNamespaceRegex) throws IOException;
+
+  List<List<String>> listProcedures() throws IOException;
+
+  List<String> listLocks() throws IOException;
+
+  void addLabels(List<String> labels) throws IOException;
+
+  List<String> listLabels(String regex) throws IOException;
+
+  List<RsGroupSummary> listRsGroups(String regex) throws IOException;
+
+  void addRsGroup(String groupName) throws IOException;
+
+  void changeSft(String tableName, String family, String sft) throws IOException;
+
+  void changeSftAll(String tableRegex, String sft) throws IOException;
 }

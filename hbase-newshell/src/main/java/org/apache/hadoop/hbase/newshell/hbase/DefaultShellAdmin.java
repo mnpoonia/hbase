@@ -41,16 +41,31 @@ import org.apache.hadoop.hbase.client.TableDescriptor;
 import org.apache.hadoop.hbase.client.TableDescriptorBuilder;
 import org.apache.hadoop.hbase.client.replication.ReplicationPeerConfigUtil;
 import org.apache.hadoop.hbase.net.Address;
+import org.apache.hadoop.hbase.quotas.QuotaFilter;
+import org.apache.hadoop.hbase.quotas.QuotaScope;
+import org.apache.hadoop.hbase.quotas.QuotaSettings;
+import org.apache.hadoop.hbase.quotas.QuotaSettingsFactory;
+import org.apache.hadoop.hbase.quotas.ThrottleType;
 import org.apache.hadoop.hbase.replication.ReplicationPeerConfig;
 import org.apache.hadoop.hbase.replication.ReplicationPeerConfigBuilder;
 import org.apache.hadoop.hbase.replication.ReplicationPeerDescription;
 import org.apache.hadoop.hbase.rsgroup.RSGroupInfo;
 import org.apache.hadoop.hbase.security.access.AccessControlClient;
 import org.apache.hadoop.hbase.security.access.Permission;
+import org.apache.hadoop.hbase.security.access.UserPermission;
+import org.apache.hadoop.hbase.security.visibility.VisibilityClient;
+import org.apache.hadoop.hbase.shaded.protobuf.generated.VisibilityLabelsProtos.ListLabelsResponse;
+import org.apache.hadoop.hbase.shaded.protobuf.generated.VisibilityLabelsProtos.VisibilityLabelsResponse;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.FutureUtils;
+import org.apache.hbase.thirdparty.com.google.gson.Gson;
+import org.apache.hbase.thirdparty.com.google.gson.JsonArray;
+import org.apache.hbase.thirdparty.com.google.gson.JsonObject;
+import org.apache.hbase.thirdparty.com.google.gson.JsonParser;
 import org.apache.yetus.audience.InterfaceAudience;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
+import java.util.regex.Matcher;
 
 /**
  * Wraps a real {@link Admin}. Ported, for the pilot commands only, from hbase-shell's
@@ -678,6 +693,414 @@ public final class DefaultShellAdmin implements ShellAdmin {
   public List<String> listNamespaceTables(String namespace) throws IOException {
     return Arrays.stream(admin.listTableNamesByNamespace(namespace))
       .map(TableName::getQualifierAsString).collect(Collectors.toList());
+  }
+
+  @Override
+  public void flush(String tableOrRegionOrServerName, String family) throws IOException {
+    byte[] familyBytes = family == null ? null : Bytes.toBytes(family);
+    try {
+      if (familyBytes == null) {
+        admin.flushRegion(Bytes.toBytes(tableOrRegionOrServerName));
+      } else {
+        admin.flushRegion(Bytes.toBytes(tableOrRegionOrServerName), familyBytes);
+      }
+    } catch (IllegalArgumentException | UnknownRegionException e) {
+      try {
+        TableName table = TableName.valueOf(tableOrRegionOrServerName);
+        if (familyBytes == null) {
+          admin.flush(table);
+        } else {
+          admin.flush(table, familyBytes);
+        }
+      } catch (IllegalArgumentException iae) {
+        admin.flushRegionServer(ServerName.valueOf(tableOrRegionOrServerName));
+      }
+    }
+  }
+
+  @Override
+  public void assign(String regionName) throws IOException {
+    admin.assign(Bytes.toBytes(regionName));
+  }
+
+  @Override
+  public void cloneSnapshot(String snapshotName, String tableName, boolean restoreAcl,
+    String cloneSft) throws IOException {
+    admin.cloneSnapshot(snapshotName, TableName.valueOf(tableName), restoreAcl, cloneSft);
+  }
+
+  @Override
+  public void restoreSnapshot(String snapshotName, boolean restoreAcl) throws IOException {
+    admin.restoreSnapshot(snapshotName, false, restoreAcl);
+  }
+
+  @Override
+  public void enablePeer(String peerId) throws IOException {
+    admin.enableReplicationPeer(peerId);
+  }
+
+  @Override
+  public void disablePeer(String peerId) throws IOException {
+    admin.disableReplicationPeer(peerId);
+  }
+
+  @Override
+  public void updateConfig(String serverName) throws IOException {
+    admin.updateConfiguration(ServerName.valueOf(serverName));
+  }
+
+  @Override
+  public void updateAllConfig() throws IOException {
+    admin.updateConfiguration();
+  }
+
+  @Override
+  public void setQuota(Map<String, Object> args) throws IOException {
+    Map<String, Object> spec = new LinkedHashMap<>(args);
+    Object type = spec.remove("TYPE");
+    if (!"THROTTLE".equals(type)) {
+      throw new IOException("Only TYPE => THROTTLE is supported by this newshell port; "
+        + "SPACE quotas and GLOBAL_BYPASS are not yet ported");
+    }
+    Object limit = spec.remove("LIMIT");
+    QuotaSettings settings;
+    if ("NONE".equals(limit)) {
+      settings = buildUnthrottle(spec);
+    } else {
+      if (limit == null) {
+        throw new IOException("set_quota requires a LIMIT");
+      }
+      settings = buildThrottle(spec, String.valueOf(limit));
+    }
+    admin.setQuota(settings);
+  }
+
+  private static QuotaSettings buildThrottle(Map<String, Object> spec, String limitSpec)
+    throws IOException {
+    String throttleTypeName = String.valueOf(spec.remove("THROTTLE_TYPE"));
+    Object[] parsed = parseThrottleLimit(limitSpec, "null".equals(throttleTypeName) ? "REQUEST"
+      : throttleTypeName);
+    ThrottleType throttleType = (ThrottleType) parsed[0];
+    long limit = (Long) parsed[1];
+    TimeUnit timeUnit = (TimeUnit) parsed[2];
+    QuotaScope scope = QuotaScope.valueOf(String.valueOf(spec.getOrDefault("SCOPE", "MACHINE")));
+    if (spec.containsKey("USER")) {
+      String user = String.valueOf(spec.get("USER"));
+      if (spec.containsKey("TABLE")) {
+        return QuotaSettingsFactory.throttleUser(user, TableName.valueOf(String.valueOf(spec.get("TABLE"))),
+          throttleType, limit, timeUnit, scope);
+      } else if (spec.containsKey("NAMESPACE")) {
+        return QuotaSettingsFactory.throttleUser(user, String.valueOf(spec.get("NAMESPACE")),
+          throttleType, limit, timeUnit, scope);
+      }
+      return QuotaSettingsFactory.throttleUser(user, throttleType, limit, timeUnit, scope);
+    } else if (spec.containsKey("TABLE")) {
+      return QuotaSettingsFactory.throttleTable(TableName.valueOf(String.valueOf(spec.get("TABLE"))),
+        throttleType, limit, timeUnit, scope);
+    } else if (spec.containsKey("NAMESPACE")) {
+      return QuotaSettingsFactory.throttleNamespace(String.valueOf(spec.get("NAMESPACE")),
+        throttleType, limit, timeUnit, scope);
+    } else if (spec.containsKey("REGIONSERVER")) {
+      if (scope == QuotaScope.CLUSTER) {
+        throw new IOException("Invalid region server throttle scope, must be MACHINE");
+      }
+      return QuotaSettingsFactory.throttleRegionServer("all", throttleType, limit, timeUnit);
+    }
+    throw new IOException("One of USER, TABLE, NAMESPACE or REGIONSERVER must be specified");
+  }
+
+  private static QuotaSettings buildUnthrottle(Map<String, Object> spec) throws IOException {
+    if (spec.containsKey("USER")) {
+      String user = String.valueOf(spec.get("USER"));
+      if (spec.containsKey("TABLE")) {
+        return QuotaSettingsFactory.unthrottleUser(user,
+          TableName.valueOf(String.valueOf(spec.get("TABLE"))));
+      } else if (spec.containsKey("NAMESPACE")) {
+        return QuotaSettingsFactory.unthrottleUser(user, String.valueOf(spec.get("NAMESPACE")));
+      }
+      return QuotaSettingsFactory.unthrottleUser(user);
+    } else if (spec.containsKey("TABLE")) {
+      return QuotaSettingsFactory
+        .unthrottleTable(TableName.valueOf(String.valueOf(spec.get("TABLE"))));
+    } else if (spec.containsKey("NAMESPACE")) {
+      return QuotaSettingsFactory.unthrottleNamespace(String.valueOf(spec.get("NAMESPACE")));
+    } else if (spec.containsKey("REGIONSERVER")) {
+      return QuotaSettingsFactory.unthrottleRegionServer("all");
+    }
+    throw new IOException("One of USER, TABLE, NAMESPACE or REGIONSERVER must be specified");
+  }
+
+  private static final java.util.regex.Pattern LIMIT_PATTERN =
+    java.util.regex.Pattern.compile("^(\\d+)(req|cu|[bkmgtp])/(sec|min|hour|day)$");
+
+  /**
+   * Ports {@code hbase/quotas.rb#_parse_limit}'s request/data-size/capacity-unit LIMIT syntax
+   * only; the raw-byte-size SPACE-quota syntax is not needed here since SPACE quotas are not
+   * ported.
+   */
+  private static Object[] parseThrottleLimit(String limitSpec, String throttleTypePrefix)
+    throws IOException {
+    Matcher matcher = LIMIT_PATTERN.matcher(limitSpec.toLowerCase(java.util.Locale.ROOT));
+    if (!matcher.matches()) {
+      throw new IOException("Invalid limit syntax: " + limitSpec);
+    }
+    long limit = Long.parseLong(matcher.group(1));
+    String unit = matcher.group(2);
+    ThrottleType type;
+    if ("req".equals(unit)) {
+      type = ThrottleType.valueOf(throttleTypePrefix + "_NUMBER");
+    } else if ("cu".equals(unit)) {
+      type = ThrottleType.valueOf(throttleTypePrefix + "_CAPACITY_UNIT");
+      limit = limit; // capacity units are unit-less counts
+    } else {
+      type = ThrottleType.valueOf(throttleTypePrefix + "_SIZE");
+      limit = sizeFromUnit(limit, unit);
+    }
+    TimeUnit timeUnit;
+    switch (matcher.group(3)) {
+      case "sec":
+        timeUnit = TimeUnit.SECONDS;
+        break;
+      case "min":
+        timeUnit = TimeUnit.MINUTES;
+        break;
+      case "hour":
+        timeUnit = TimeUnit.HOURS;
+        break;
+      case "day":
+        timeUnit = TimeUnit.DAYS;
+        break;
+      default:
+        throw new IOException("Invalid time unit in limit: " + limitSpec);
+    }
+    return new Object[] { type, limit, timeUnit };
+  }
+
+  private static long sizeFromUnit(long value, String unit) throws IOException {
+    switch (unit) {
+      case "b":
+        return value;
+      case "k":
+        return value * 1024L;
+      case "m":
+        return value * 1024L * 1024L;
+      case "g":
+        return value * 1024L * 1024L * 1024L;
+      case "t":
+        return value * 1024L * 1024L * 1024L * 1024L;
+      case "p":
+        return value * 1024L * 1024L * 1024L * 1024L * 1024L;
+      default:
+        throw new IOException("Invalid size unit: " + unit);
+    }
+  }
+
+  @Override
+  public List<List<String>> listQuotas(Map<String, Object> filterArgs) throws IOException {
+    QuotaFilter filter = new QuotaFilter();
+    if (filterArgs.containsKey("USER")) {
+      filter.setUserFilter(String.valueOf(filterArgs.get("USER")));
+    }
+    if (filterArgs.containsKey("TABLE")) {
+      filter.setTableFilter(String.valueOf(filterArgs.get("TABLE")));
+    }
+    if (filterArgs.containsKey("NAMESPACE")) {
+      filter.setNamespaceFilter(String.valueOf(filterArgs.get("NAMESPACE")));
+    }
+    List<List<String>> rows = new ArrayList<>();
+    for (QuotaSettings settings : admin.getQuota(filter)) {
+      Map<String, String> owner = new LinkedHashMap<>();
+      if (settings.getUserName() != null) {
+        owner.put("USER", settings.getUserName());
+      }
+      if (settings.getTableName() != null) {
+        owner.put("TABLE", settings.getTableName().getNameAsString());
+      }
+      if (settings.getNamespace() != null) {
+        owner.put("NAMESPACE", settings.getNamespace());
+      }
+      if (settings.getRegionServer() != null) {
+        owner.put("REGIONSERVER", settings.getRegionServer());
+      }
+      String ownerString = owner.entrySet().stream()
+        .map(entry -> entry.getKey() + " => " + entry.getValue())
+        .collect(Collectors.joining(", "));
+      rows.add(List.of(ownerString, settings.toString()));
+    }
+    return rows;
+  }
+
+  @Override
+  public void revoke(String userOrGroup, String tableName, String family, String qualifier,
+    String namespace) throws IOException {
+    try {
+      if (namespace != null) {
+        AccessControlClient.revoke(admin.getConnection(), namespace, userOrGroup);
+      } else if (tableName != null) {
+        byte[] familyBytes = family == null ? null : Bytes.toBytes(family);
+        byte[] qualifierBytes = qualifier == null ? null : Bytes.toBytes(qualifier);
+        AccessControlClient.revoke(admin.getConnection(), TableName.valueOf(tableName),
+          userOrGroup, familyBytes, qualifierBytes);
+      } else {
+        AccessControlClient.revoke(admin.getConnection(), userOrGroup, new Permission.Action[0]);
+      }
+    } catch (Throwable t) {
+      if (t instanceof IOException) {
+        throw (IOException) t;
+      }
+      throw new IOException(t);
+    }
+  }
+
+  @Override
+  public List<List<String>> userPermission(String tableOrNamespaceRegex) throws IOException {
+    try {
+      List<UserPermission> permissions =
+        AccessControlClient.getUserPermissions(admin.getConnection(), tableOrNamespaceRegex);
+      List<List<String>> rows = new ArrayList<>();
+      for (UserPermission permission : permissions) {
+        rows.add(List.of(permission.getUser(), permission.getPermission().toString()));
+      }
+      return rows;
+    } catch (Throwable t) {
+      if (t instanceof IOException) {
+        throw (IOException) t;
+      }
+      throw new IOException(t);
+    }
+  }
+
+  private static final Gson GSON = new Gson();
+
+  @Override
+  public List<List<String>> listProcedures() throws IOException {
+    JsonArray procedures = JsonParser.parseString(admin.getProcedures()).getAsJsonArray();
+    List<List<String>> rows = new ArrayList<>();
+    for (var element : procedures) {
+      JsonObject proc = element.getAsJsonObject();
+      rows.add(List.of(getAsString(proc, "procId"), getAsString(proc, "className"),
+        getAsString(proc, "state"), getAsString(proc, "submittedTime"),
+        getAsString(proc, "lastUpdate"), getAsString(proc, "stateMessage")));
+    }
+    return rows;
+  }
+
+  private static String getAsString(JsonObject object, String member) {
+    if (!object.has(member) || object.get(member).isJsonNull()) {
+      return "";
+    }
+    var element = object.get(member);
+    return element.isJsonPrimitive() ? element.getAsString() : element.toString();
+  }
+
+  @Override
+  public List<String> listLocks() throws IOException {
+    JsonArray locks = JsonParser.parseString(admin.getLocks()).getAsJsonArray();
+    List<String> lines = new ArrayList<>();
+    for (var element : locks) {
+      JsonObject lock = element.getAsJsonObject();
+      lines.add(getAsString(lock, "resourceType") + "(" + getAsString(lock, "resourceName") + ")");
+      String lockType = getAsString(lock, "lockType");
+      if ("EXCLUSIVE".equals(lockType)) {
+        lines.add("Lock type: " + lockType + ", procedure: "
+          + getAsString(lock, "exclusiveLockOwnerProcedure"));
+      } else if ("SHARED".equals(lockType)) {
+        lines.add(
+          "Lock type: " + lockType + ", count: " + getAsString(lock, "sharedLockCount"));
+      }
+      if (lock.has("waitingProcedures") && lock.get("waitingProcedures").isJsonArray()) {
+        for (var waiting : lock.getAsJsonArray("waitingProcedures")) {
+          lines.add("    " + waiting.getAsString());
+        }
+      }
+      lines.add("");
+    }
+    return lines;
+  }
+
+  @Override
+  public void addLabels(List<String> labels) throws IOException {
+    VisibilityLabelsResponse response;
+    try {
+      response = VisibilityClient.addLabels(admin.getConnection(), labels.toArray(new String[0]));
+    } catch (Throwable t) {
+      if (t instanceof IOException) {
+        throw (IOException) t;
+      }
+      throw new IOException(t);
+    }
+    if (response == null) {
+      throw new IOException("DISABLED: Visibility labels feature is not available");
+    }
+    StringBuilder failures = new StringBuilder();
+    for (var result : response.getResultList()) {
+      if (result.hasException()) {
+        failures.append(result.getException().getValue().toStringUtf8());
+      }
+    }
+    if (failures.length() > 0) {
+      throw new IOException(failures.toString());
+    }
+  }
+
+  @Override
+  public List<String> listLabels(String regex) throws IOException {
+    ListLabelsResponse response;
+    try {
+      response = VisibilityClient.listLabels(admin.getConnection(), regex);
+    } catch (Throwable t) {
+      if (t instanceof IOException) {
+        throw (IOException) t;
+      }
+      throw new IOException(t);
+    }
+    if (response == null) {
+      throw new IOException("DISABLED: Visibility labels feature is not available");
+    }
+    List<String> labels = new ArrayList<>();
+    for (var label : response.getLabelList()) {
+      labels.add(Bytes.toStringBinary(label.toByteArray()));
+    }
+    return labels;
+  }
+
+  @Override
+  public List<RsGroupSummary> listRsGroups(String regex) throws IOException {
+    Pattern pattern = Pattern.compile(regex);
+    List<RsGroupSummary> result = new ArrayList<>();
+    for (RSGroupInfo group : admin.listRSGroups()) {
+      if (!pattern.matcher(group.getName()).matches()) {
+        continue;
+      }
+      List<String> servers =
+        group.getServers().stream().map(Address::toString).collect(Collectors.toList());
+      List<String> tables =
+        group.getTables().stream().map(TableName::getNameAsString).collect(Collectors.toList());
+      result.add(new RsGroupSummary(group.getName(), servers, tables));
+    }
+    return result;
+  }
+
+  @Override
+  public void addRsGroup(String groupName) throws IOException {
+    admin.addRSGroup(groupName);
+  }
+
+  @Override
+  public void changeSft(String tableName, String family, String sft) throws IOException {
+    TableName table = TableName.valueOf(tableName);
+    if (family == null) {
+      admin.modifyTableStoreFileTracker(table, sft);
+    } else {
+      admin.modifyColumnFamilyStoreFileTracker(table, Bytes.toBytes(family), sft);
+    }
+  }
+
+  @Override
+  public void changeSftAll(String tableRegex, String sft) throws IOException {
+    for (TableName table : admin.listTableNames(Pattern.compile(tableRegex))) {
+      admin.modifyTableStoreFileTracker(table, sft);
+    }
   }
 
   private static Permission.Action charToAction(char c) throws IOException {

@@ -91,4 +91,30 @@ public class TestRsGroupAgainstMiniCluster {
     admin.moveServersToRsGroup(List.of(hostPort), RSGroupInfo.DEFAULT_GROUP);
     realAdmin.removeRSGroup(groupName);
   }
+
+  @Test
+  public void addRsGroupThenListRsGroupsFindsTheNewGroup() throws Exception {
+    Admin realAdmin = connection.getAdmin();
+    String groupName = "newshell_add_list_rsgroup_test";
+
+    ShellAdmin admin = new DefaultShellAdmin(realAdmin);
+    admin.addRsGroup(groupName);
+
+    List<RsGroupSummary> groups = admin.listRsGroups(".*");
+    assertTrue(groups.stream().anyMatch(group -> group.name().equals(groupName)));
+
+    realAdmin.removeRSGroup(groupName);
+  }
+
+  @Test
+  public void listRsGroupsFiltersByRegexAndIncludesDefaultGroupServers() throws Exception {
+    ShellAdmin admin = new DefaultShellAdmin(connection.getAdmin());
+
+    List<RsGroupSummary> groups = admin.listRsGroups(RSGroupInfo.DEFAULT_GROUP);
+    assertEquals(1, groups.size());
+    assertEquals(RSGroupInfo.DEFAULT_GROUP, groups.get(0).name());
+    assertEquals(2, groups.get(0).servers().size());
+
+    assertTrue(admin.listRsGroups("no_such_group_.*").isEmpty());
+  }
 }
