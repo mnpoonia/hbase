@@ -23,6 +23,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.client.ConnectionFactory;
+import org.apache.hadoop.hbase.newshell.command.CommandNameCompleter;
 import org.apache.hadoop.hbase.newshell.command.CommandRegistry;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
 import org.apache.hadoop.hbase.newshell.command.ShellCommand;
@@ -81,8 +82,9 @@ public final class NewShellMain {
       ShellAdmin admin = new DefaultShellAdmin(connection.getAdmin());
       ShellTableFactory tables = new DefaultShellTableFactory(connection);
       ExecutionContext context = new ExecutionContext(admin, tables, terminal.writer());
-      success =
-        run(terminal, context, new CommandRegistry(), new DefaultFormatter(), exitOnFirstError);
+      CommandRegistry registry = new CommandRegistry();
+      terminal.setCompleter(new CommandNameCompleter(registry));
+      success = run(terminal, context, registry, new DefaultFormatter(), exitOnFirstError);
     }
     if (!success) {
       System.exit(1);

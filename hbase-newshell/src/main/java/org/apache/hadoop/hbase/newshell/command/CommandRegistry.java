@@ -58,4 +58,11 @@ public final class CommandRegistry {
   public Optional<ShellCommand> lookup(String name) {
     return Optional.ofNullable(commandsByName.get(name.toLowerCase(Locale.ROOT)));
   }
+
+  /**
+   * @return every registered command name, sorted for stable completion/help-listing order
+   */
+  public List<String> commandNames() {
+    return commandsByName.keySet().stream().sorted().collect(Collectors.toList());
+  }
 }
