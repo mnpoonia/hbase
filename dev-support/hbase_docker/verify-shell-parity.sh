@@ -46,6 +46,7 @@ SETUP_TABLE="_newshell_parity_test"
 
 docker run --platform "$PLATFORM" --rm -i \
   -v "${SCRIPT_DIR}:/root/hbase/dev-support/hbase_docker:ro" \
+  -e HBASE_SHELL_ENGINE= \
   "$IMAGE_NAME" bash -s -- "$SETUP_TABLE" <<'CONTAINER_SCRIPT'
 set -euo pipefail
 SETUP_TABLE="$1"

@@ -123,4 +123,9 @@ RUN mvn -T1C clean install -DskipTests assembly:single -f ./hbase/pom.xml \
 ENV HBASE_HOME /root/hbase-bin
 ENV PATH "/root/hbase-bin/bin:${PATH}"
 
+# Point the legacy 'shell' command (and any 'shell -n' piped-stdin scripts)
+# at newshell instead of JRuby, so this image reflects the intended target
+# state without touching bin/hbase's default behavior outside this image.
+ENV HBASE_SHELL_ENGINE newshell
+
 CMD ["/bin/bash", "-c", "start-hbase.sh; hbase shell"]
