@@ -157,6 +157,12 @@ if [ -f "$HBASE_HOME/conf/hbase-env-$COMMAND.sh" ]; then
   . "$HBASE_HOME/conf/hbase-env-$COMMAND.sh"
 fi
 
+# HBASE_SHELL_ENGINE=newshell repoints the legacy 'shell' command (and any
+# 'shell -n'-style scripts) at the new JLine-based shell instead of JRuby.
+if [ "$COMMAND" = "shell" ] && [ "${HBASE_SHELL_ENGINE}" = "newshell" ] ; then
+  COMMAND="newshell"
+fi
+
 # establish a default value for HBASE_OPTS if it's not already set. For now,
 # all we set is the garbage collector.
 if [ -z "${HBASE_OPTS}" ] ; then
@@ -812,6 +818,12 @@ elif [ "$COMMAND" = "credential" ] ; then
 elif [ "$COMMAND" = "copyreppeers" ] ; then
   CLASS='org.apache.hadoop.hbase.replication.CopyReplicationPeers'
 elif [[ "$COMMAND" == *.jsh ]] ; then
+  java_version="$(read_java_version)"
+  major_version_number="$(parse_java_major_version "${java_version}")"
+  if [ "${major_version_number}" -lt 9 ] ; then
+    echo "JShell is available only with JDK9 and later. Detected JDK version is ${java_version}".
+    exit 1
+  fi
   if [[ "$COMMAND" == */* ]]; then
     JSH_SCRIPT="$COMMAND"
   else
@@ -832,7 +844,14 @@ elif [[ "$COMMAND" == *.jsh ]] ; then
   export HBASE_JSH_ARG_COUNT=$i
   set --
   CLASS='jdk.internal.jshell.tool.JShellToolProvider'
-  read -r -a JSHELL_ARGS <<< "${HBASE_JSHELL_ARGS:-"--startup DEFAULT --startup PRINTING --startup ${HBASE_HOME}/bin/hbase_startup.jsh"}"
+  if [ -n "${HBASE_JSHELL_ARGS}" ]; then
+    read -r -a JSHELL_ARGS <<< "${HBASE_JSHELL_ARGS}"
+  else
+    JSHELL_ARGS=(--startup DEFAULT --startup PRINTING)
+    if [ -f "${HBASE_HOME}/bin/hbase_startup.jsh" ]; then
+      JSHELL_ARGS+=(--startup "${HBASE_HOME}/bin/hbase_startup.jsh")
+    fi
+  fi
   # --execution local runs snippets in-process instead of forking a JDI remote VM;
   # without it, System.exit() inside the script only kills the (forked) remote VM,
   # so the local jshell process's own exit code stays 0 regardless of what the
@@ -846,6 +865,12 @@ elif [[ "$COMMAND" == *.java ]] ; then
   # JEP 330 single-file source launch: java forwards the remaining args
   # directly to main(String[] args), so no env-var passthrough is needed here
   # (unlike the .jsh case above).
+  java_version="$(read_java_version)"
+  major_version_number="$(parse_java_major_version "${java_version}")"
+  if [ "${major_version_number}" -lt 11 ] ; then
+    echo "Single-file .java launch requires JDK11 or later. Detected JDK version is ${java_version}".
+    exit 1
+  fi
   if [[ "$COMMAND" == */* ]]; then
     CLASS="$COMMAND"
   else
