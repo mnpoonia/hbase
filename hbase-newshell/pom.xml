@@ -142,6 +142,34 @@
           </archive>
         </configuration>
       </plugin>
+      <!--
+        Compile-check bin/**/*.java (JEP 330 drivers) against this module's compile
+        classpath. Classes land in target/bin-java-check only and are not packaged;
+        runtime still uses bin/hbase <script>.java. No-op when bin/ has no .java files.
+      -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>compile-check-bin-java</id>
+            <goals>
+              <goal>compile</goal>
+            </goals>
+            <phase>compile</phase>
+            <configuration>
+              <compileSourceRoots>
+                <compileSourceRoot>${project.basedir}/../bin</compileSourceRoot>
+              </compileSourceRoots>
+              <includes>
+                <include>**/*.java</include>
+              </includes>
+              <outputDirectory>${project.build.directory}/bin-java-check</outputDirectory>
+              <failOnError>true</failOnError>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
       <plugin>
         <groupId>net.revelc.code</groupId>
         <artifactId>warbucks-maven-plugin</artifactId>
