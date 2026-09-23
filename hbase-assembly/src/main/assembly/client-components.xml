@@ -63,6 +63,7 @@
         <include>hbase-config.sh</include>
         <include>hbase-jruby</include>
         <include>hirb.rb</include>
+        <include>get-active-master.jsh</include>
       </includes>
       <fileMode>0755</fileMode>
       <directoryMode>0755</directoryMode>
