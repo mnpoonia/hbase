@@ -85,3 +85,5 @@ org.apache.hadoop.hbase.newshell.command.impl.ListRsgroupsCommand
 org.apache.hadoop.hbase.newshell.command.impl.AddRsgroupCommand
 org.apache.hadoop.hbase.newshell.command.impl.ChangeSftCommand
 org.apache.hadoop.hbase.newshell.command.impl.ChangeSftAllCommand
+org.apache.hadoop.hbase.newshell.command.impl.BalancerCommand
+org.apache.hadoop.hbase.newshell.command.impl.MoveCommand

@@ -33,6 +33,8 @@ import org.apache.hadoop.hbase.ServerName;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.UnknownRegionException;
 import org.apache.hadoop.hbase.client.Admin;
+import org.apache.hadoop.hbase.client.BalanceRequest;
+import org.apache.hadoop.hbase.client.BalanceResponse;
 import org.apache.hadoop.hbase.client.ColumnFamilyDescriptor;
 import org.apache.hadoop.hbase.client.ColumnFamilyDescriptorBuilder;
 import org.apache.hadoop.hbase.client.CompactType;
@@ -721,6 +723,23 @@ public final class DefaultShellAdmin implements ShellAdmin {
   @Override
   public void assign(String regionName) throws IOException {
     admin.assign(Bytes.toBytes(regionName));
+  }
+
+  @Override
+  public BalanceResponse balance(boolean dryRun, boolean ignoreRegionsInTransition)
+    throws IOException {
+    return admin.balance(BalanceRequest.newBuilder().setDryRun(dryRun)
+      .setIgnoreRegionsInTransition(ignoreRegionsInTransition).build());
+  }
+
+  @Override
+  public void move(String encodedRegionName, String destServerName) throws IOException {
+    byte[] encoded = Bytes.toBytes(encodedRegionName);
+    if (destServerName == null) {
+      admin.move(encoded);
+    } else {
+      admin.move(encoded, ServerName.valueOf(destServerName));
+    }
   }
 
   @Override

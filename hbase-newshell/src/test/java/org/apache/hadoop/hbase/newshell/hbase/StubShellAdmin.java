@@ -20,6 +20,7 @@ package org.apache.hadoop.hbase.newshell.hbase;
 import java.util.List;
 import java.util.Map;
 import org.apache.hadoop.hbase.ClusterMetrics;
+import org.apache.hadoop.hbase.client.BalanceResponse;
 
 /**
  * Every method throws {@link UnsupportedOperationException} by default. Command-under-test
@@ -367,6 +368,16 @@ public class StubShellAdmin implements ShellAdmin {
 
   @Override
   public void changeSftAll(String tableRegex, String sft) {
+    throw notNeeded();
+  }
+
+  @Override
+  public BalanceResponse balance(boolean dryRun, boolean ignoreRegionsInTransition) {
+    throw notNeeded();
+  }
+
+  @Override
+  public void move(String encodedRegionName, String destServerName) {
     throw notNeeded();
   }
 }

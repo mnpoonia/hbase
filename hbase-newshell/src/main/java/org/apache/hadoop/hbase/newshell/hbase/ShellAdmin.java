@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import org.apache.hadoop.hbase.ClusterMetrics;
+import org.apache.hadoop.hbase.client.BalanceResponse;
 import org.apache.yetus.audience.InterfaceAudience;
 
 /**
@@ -171,4 +172,8 @@ public interface ShellAdmin {
   void changeSft(String tableName, String family, String sft) throws IOException;
 
   void changeSftAll(String tableRegex, String sft) throws IOException;
+
+  BalanceResponse balance(boolean dryRun, boolean ignoreRegionsInTransition) throws IOException;
+
+  void move(String encodedRegionName, String destServerName) throws IOException;
 }
