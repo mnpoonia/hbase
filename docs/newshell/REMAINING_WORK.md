@@ -1,6 +1,6 @@
 # hbase-newshell: remaining work
 
-Status snapshot as of 2026-09-18. `hbase-newshell` currently ports **83 of 184**
+Status snapshot as of 2026-09-22. `hbase-newshell` currently ports **85 of 184**
 hbase-shell Ruby commands (`hbase-shell/src/main/ruby/shell/commands/*.rb`).
 Groups below follow the same grouping hbase-shell itself uses
 (`hbase-shell/src/main/ruby/shell.rb`). Every command/script entry also lists
@@ -247,6 +247,29 @@ semantics").
   This is the parity tool referenced in section 1, not something needing
   porting itself.
 
+### Related ops scaffolding (new; not ports of existing `.rb`)
+
+These are **not** replacements for the still-open `graceful_stop.sh` /
+`rolling-restart.sh` cutover items above, and they do **not** complete
+section 9's K8s lifecycle drivers. They are split drain/stop helpers built
+on already-ported `draining_servers.jsh` / `region_mover.jsh`, and are
+candidates to compose into `regionserver-prestop.jsh` /
+`regionserver-poststart.jsh` later.
+
+- [x] `bin/graceful_drain.sh` — disable the balancer, mark the server
+  draining (`draining_servers.jsh add`), and unload its regions
+  (`region_mover.jsh unload`). Does **not** stop the RegionServer process
+  or remove it from the draining list.
+- [x] `bin/graceful_stop_drained.sh` — stop a regionserver that was already
+  drained via `graceful_drain.sh` (`hbase-daemon.sh stop regionserver` via
+  the local pidfile), then remove it from the draining list. Run on the
+  host running the regionserver, after drain, not as a remote drain+stop.
+- [x] `bin/rs_znode_cleanup.jsh` — last-resort force-delete of `/hbase/rs`
+  znode(s) matching a host after a confirmed hard kill (`kill -9`), so
+  operators need not wait for the ZK session timeout. Explicitly **not**
+  part of the happy path — deleting a live RS's znode is dangerous (master
+  treats it as a crash; the RS aborts on losing its own znode).
+
 ## 4. Thrift Ruby examples (`hbase-examples`)
 
 Separate from the shell/JRuby-removal effort, but still Ruby scripts living
@@ -392,7 +415,7 @@ either standard public API — already reachable from any `.jsh`/`.java`
 driver via classpath, no newshell change required — or Salesforce-internal
 tooling that's explicitly out of scope.
 
-## 8. Commands still to port (95 remaining, plus 2 skipped)
+## 8. Commands still to port (93 remaining, plus 2 skipped)
 
 Grouped exactly as `shell.rb`'s `load_command_group` calls group them, so
 porting can proceed group-by-group with a natural test boundary per group.
@@ -448,10 +471,10 @@ at
 > <span style="color:#4caf50">`truncate_preserve`</span>, <span style="color:#4caf50">`append`</span>, <span style="color:#4caf50">`get_splits`</span> —
 > `.../command/impl/{Get,Put,Scan,Count,Delete,Deleteall,GetCounter,Incr,Truncate,TruncatePreserve,Append,GetSplits}Command.java`.
 
-### HBASE SURGERY TOOLS — tools (40 remaining)
+### HBASE SURGERY TOOLS — tools (38 remaining)
 
 - [x] <span style="color:#a5d6a7">`assign`</span> — `hbase-shell/src/main/ruby/shell/commands/assign.rb` — completed: true. Unit-tested (`AssignCommandTest`) and mini-cluster-verified (`assignReassignsARegionByEncodedName`); no corpus row — the harness has no mechanism to script the dynamically-generated encoded region name as literal command input, so real correctness verification lives solely in the mini-cluster test.
-- [ ] <span style="color:#a5d6a7">`balancer`</span> — `hbase-shell/src/main/ruby/shell/commands/balancer.rb`
+- [x] <span style="color:#a5d6a7">`balancer`</span> — `hbase-shell/src/main/ruby/shell/commands/balancer.rb` — completed: true. Unit-tested (`BalancerCommandTest`); `ShellAdmin.balance` / `DefaultShellAdmin` / `StubShellAdmin` wired; ServiceLoader entry. No mini-cluster test and no parity-corpus row yet — stdout embeds live move counts (same class of limitation as other dynamic tools).
 - [ ] <span style="color:#a5d6a7">`normalize`</span> — `hbase-shell/src/main/ruby/shell/commands/normalize.rb`
 - [ ] <span style="color:#a5d6a7">`is_in_maintenance_mode`</span> — `hbase-shell/src/main/ruby/shell/commands/is_in_maintenance_mode.rb`
 - [ ] <span style="color:#a5d6a7">`clear_slowlog_responses`</span> — `hbase-shell/src/main/ruby/shell/commands/clear_slowlog_responses.rb`
@@ -463,7 +486,7 @@ at
 - [ ] <span style="color:#a5d6a7">`get_balancer_rejections`</span> — `hbase-shell/src/main/ruby/shell/commands/get_balancer_rejections.rb`
 - [ ] <span style="color:#a5d6a7">`get_slowlog_responses`</span> — `hbase-shell/src/main/ruby/shell/commands/get_slowlog_responses.rb`
 - [ ] <span style="color:#a5d6a7">`get_largelog_responses`</span> — `hbase-shell/src/main/ruby/shell/commands/get_largelog_responses.rb`
-- [ ] <span style="color:#a5d6a7">`move`</span> — `hbase-shell/src/main/ruby/shell/commands/move.rb`
+- [x] <span style="color:#a5d6a7">`move`</span> — `hbase-shell/src/main/ruby/shell/commands/move.rb` — completed: true. Unit-tested (`MoveCommandTest`); `ShellAdmin.move` / `DefaultShellAdmin` / `StubShellAdmin` wired; ServiceLoader entry. No mini-cluster test and no corpus row — needs a dynamically generated encoded region name (same rationale as `assign`).
 - [ ] <span style="color:#a5d6a7">`merge_region`</span> — `hbase-shell/src/main/ruby/shell/commands/merge_region.rb`
 - [ ] <span style="color:#a5d6a7">`unassign`</span> — `hbase-shell/src/main/ruby/shell/commands/unassign.rb`
 - [ ] <span style="color:#a5d6a7">`zk_dump`</span> — `hbase-shell/src/main/ruby/shell/commands/zk_dump.rb`
@@ -493,13 +516,13 @@ at
 - [ ] <span style="color:#a5d6a7">`refresh_meta`</span> — `hbase-shell/src/main/ruby/shell/commands/refresh_meta.rb`
 - [ ] <span style="color:#a5d6a7">`refresh_hfiles`</span> — `hbase-shell/src/main/ruby/shell/commands/refresh_hfiles.rb`
 
-> Already ported: <span style="color:#0b6623">`balance_switch`</span>, <span style="color:#a5d6a7">`balancer_enabled`</span>, <span style="color:#a5d6a7">`normalizer_switch`</span>,
+> Already ported: <span style="color:#0b6623">`balance_switch`</span>, <span style="color:#a5d6a7">`balancer`</span>, <span style="color:#a5d6a7">`balancer_enabled`</span>, <span style="color:#a5d6a7">`move`</span>, <span style="color:#a5d6a7">`normalizer_switch`</span>,
 > `normalizer_enabled`, `compact`, `compaction_switch`, `major_compact`,
 > `split`, `catalogjanitor_switch`, `catalogjanitor_enabled`,
 > `splitormerge_switch`, `splitormerge_enabled`,
 > `list_decommissioned_regionservers`, `decommission_regionservers`,
 > `recommission_regionserver` —
-> `.../command/impl/{BalanceSwitch,BalancerEnabled,NormalizerSwitch,NormalizerEnabled,Compact,CompactionSwitch,MajorCompact,Split,CatalogjanitorSwitch,CatalogjanitorEnabled,SplitormergeSwitch,SplitormergeEnabled,ListDecommissionedRegionServers,DecommissionRegionServers,RecommissionRegionServer}Command.java`.
+> `.../command/impl/{BalanceSwitch,Balancer,BalancerEnabled,Move,NormalizerSwitch,NormalizerEnabled,Compact,CompactionSwitch,MajorCompact,Split,CatalogjanitorSwitch,CatalogjanitorEnabled,SplitormergeSwitch,SplitormergeEnabled,ListDecommissionedRegionServers,DecommissionRegionServers,RecommissionRegionServer}Command.java`.
 
 ### CLUSTER REPLICATION TOOLS — replication (25 remaining)
 
@@ -633,7 +656,10 @@ resume.
 
 Both drivers below are built on top of already-planned section 2 scripts
 (`draining_servers.jsh`, `region_mover.jsh`) rather than reimplementing
-draining/move logic themselves.
+draining/move logic themselves. Related scaffolding already landed under
+section 3 (`graceful_drain.sh`, `graceful_stop_drained.sh`,
+`rs_znode_cleanup.jsh`) and is a candidate to fold into these drivers, but
+the StatefulSet PVC unload/load pairing itself is **not** built yet.
 
 - [ ] **`regionserver-prestop.jsh`** (working name; final path/name TBD) — run
   from the pod's `preStop` hook, before Kubernetes sends SIGTERM to the

@@ -58,7 +58,7 @@ footer { text-align: center; color: #666; font-size: 12px; margin-top: 30px; }
     <h1>hbase-newshell: command porting tracker</h1>
     <div class="summary">
       <div class="summary-card"><strong>Total work items (checked = done, unchecked = remaining)</strong><span id="overall-count">0 / 0</span></div>
-      <div class="summary-card"><strong>Commands ported</strong><span>83 / 184</span></div>
+      <div class="summary-card"><strong>Commands ported</strong><span>85 / 184</span></div>
     </div>
     <div class="progress-bar-outer"><div class="progress-bar-inner" id="overall-bar"></div></div>
     <div style="margin-top:14px;"><a href="https://github.com/mnpoonia/hbase/tree/hbase-newshell" target="_blank" style="color:#9cf;">View branch &amp; code on GitHub (mnpoonia/hbase @ hbase-newshell)</a></div>
@@ -113,7 +113,10 @@ const DATA = [
     ["graceful-stop", "`graceful_stop.sh`", "Pipes `balance_switch false` into `hbase --config \"${HBASE_CONF_DIR}\" shell -n` (line 118), and `balance_switch <state>` into plain `... shell` with no `-n` (line 199). balance_switch is already ported; script still hardcodes legacy `shell` and depends on newshell's piped-stdin mode once repointed.", false, "bin/graceful_stop.sh"],
     ["rolling-restart", "`rolling-restart.sh`", "Same `balance_switch` piped-into-`shell -n` pattern as graceful_stop.sh (lines 205, 225).", false, "bin/rolling-restart.sh"],
     ["verify-shell-parity", "`verify-shell-parity.sh`", "Already newshell-aware — runs commands through both `bin/hbase shell -n` and `bin/hbase newshell -n` and diffs the output.", true, "dev-support/hbase_docker/verify-shell-parity.sh"],
-  ]},
+    ["graceful-drain", "`graceful_drain.sh`", "New scaffolding (not a .rb port): disable balancer, draining_servers.jsh add, region_mover.jsh unload. Does not stop the process or remove from draining. Candidate to fold into section 9's regionserver-prestop.jsh.", true, "bin/graceful_drain.sh"],
+    ["graceful-stop-drained", "`graceful_stop_drained.sh`", "New scaffolding: stop a regionserver already drained via graceful_drain.sh (local hbase-daemon.sh stop), then remove from draining. Run on the RS host after drain.", true, "bin/graceful_stop_drained.sh"],
+    ["rs-znode-cleanup", "`rs_znode_cleanup.jsh`", "New scaffolding: last-resort force-delete of /hbase/rs znode(s) after confirmed hard kill. Not part of the happy path — deleting a live RS znode is dangerous.", true, "bin/rs_znode_cleanup.jsh"],
+  ], portedNote: "graceful_drain.sh / graceful_stop_drained.sh / rs_znode_cleanup.jsh are related ops scaffolding, not replacements for the still-open graceful_stop.sh / rolling-restart.sh cutover items, and do not complete section 9's K8s lifecycle drivers." },
   { id: "thrift-examples", title: "4. Thrift Ruby examples (hbase-examples)", badge: "3 remaining", items: [
     ["thrift-demo-client", "`DemoClient.rb`", "Plain Ruby (not JRuby) Thrift client example; needs the standalone thrift gem + gen-rb bindings, not bin/hbase. Marked TODO/broken (HBASE-3630) independent of newshell.", false, "hbase-examples/src/main/ruby/DemoClient.rb"],
     ["thrift-gen-rb", "`gen-rb/hbase.rb`, `hbase_constants.rb`, `hbase_types.rb`", "Thrift-generated bindings consumed by DemoClient.rb. Regenerate from the Thrift IDL rather than porting.", false, "hbase-examples/src/main/ruby/gen-rb/"],
@@ -207,9 +210,9 @@ const DATA = [
     ["dml-append","`append`",null,true, IMPL + "AppendCommand.java"],
     ["dml-get-splits","`get_splits`",null,true, IMPL + "GetSplitsCommand.java"],
   ] },
-  { id: "tools", title: "HBASE SURGERY TOOLS — tools", badge: "40 remaining", items: [
+  { id: "tools", title: "HBASE SURGERY TOOLS — tools", badge: "38 remaining", items: [
     ["tools-assign","`assign`","Unit-tested (AssignCommandTest) and mini-cluster-verified (assignReassignsARegionByEncodedName); no corpus row — no mechanism to script the dynamically-generated encoded region name as literal input, so real correctness verification lives solely in the mini-cluster test.",true, IMPL + "AssignCommand.java"],
-    ["tools-balancer","`balancer`",null,false, RUBY + "balancer.rb"],
+    ["tools-balancer","`balancer`","Unit-tested (BalancerCommandTest); ShellAdmin.balance / DefaultShellAdmin / StubShellAdmin wired; ServiceLoader entry. No mini-cluster test and no parity-corpus row yet — stdout embeds live move counts.",true, IMPL + "BalancerCommand.java"],
     ["tools-normalize","`normalize`",null,false, RUBY + "normalize.rb"],
     ["tools-maint-mode","`is_in_maintenance_mode`",null,false, RUBY + "is_in_maintenance_mode.rb"],
     ["tools-clear-slowlog","`clear_slowlog_responses`",null,false, RUBY + "clear_slowlog_responses.rb"],
@@ -221,7 +224,7 @@ const DATA = [
     ["tools-balancer-rejections","`get_balancer_rejections`",null,false, RUBY + "get_balancer_rejections.rb"],
     ["tools-slowlog-responses","`get_slowlog_responses`",null,false, RUBY + "get_slowlog_responses.rb"],
     ["tools-largelog-responses","`get_largelog_responses`",null,false, RUBY + "get_largelog_responses.rb"],
-    ["tools-move","`move`",null,false, RUBY + "move.rb"],
+    ["tools-move","`move`","Unit-tested (MoveCommandTest); ShellAdmin.move / DefaultShellAdmin / StubShellAdmin wired; ServiceLoader entry. No mini-cluster test / no corpus row — needs a dynamically generated encoded region name (same rationale as assign).",true, IMPL + "MoveCommand.java"],
     ["tools-merge-region","`merge_region`",null,false, RUBY + "merge_region.rb"],
     ["tools-unassign","`unassign`",null,false, RUBY + "unassign.rb"],
     ["tools-zk-dump","`zk_dump`",null,false, RUBY + "zk_dump.rb"],
@@ -366,6 +369,10 @@ const DATA = [
     ["sft-change","`change_sft`","Unit-tested; corpus row added (exact).",true, IMPL + "ChangeSftCommand.java"],
     ["sft-change-all","`change_sft_all`","Unit-tested; corpus row added (smoke — legacy shell crashes with NoMethodError reading its y/n confirmation from exhausted piped stdin, same disable_all precedent; newshell's one-shot port intentionally skips the prompt).",true, IMPL + "ChangeSftAllCommand.java"],
   ]},
+  { id: "k8s-lifecycle", title: "9. New scripts — Kubernetes lifecycle drivers", badge: "2 remaining", items: [
+    ["rs-prestop", "`regionserver-prestop.jsh`", "Working name; final path/name TBD. Run from the pod's preStop hook: draining_servers.jsh add + region_mover.jsh unload -f &lt;pvc-path&gt;. Related scaffolding (graceful_drain.sh / graceful_stop_drained.sh / rs_znode_cleanup.jsh) is a candidate to fold in, but the StatefulSet PVC unload/load pairing itself is not built yet.", false, "bin/regionserver-prestop.jsh (TBD)"],
+    ["rs-poststart", "`regionserver-poststart.jsh`", "Working name; run as a foreground step in the container entrypoint after the RS has registered with the master (not Kubernetes' async postStart hook): drain-check/remove-self + region_mover.jsh load -f &lt;pvc-path&gt;.", false, "bin/regionserver-poststart.jsh (TBD)"],
+  ], portedNote: "No .rb counterpart — these are new K8s StatefulSet lifecycle drivers. graceful_stop.sh's drain-then-stop-then-restart model does not fit a pod where the RS is PID 1." },
 ];
 
 // Priority tiers for section 8's command list only (id set below).
