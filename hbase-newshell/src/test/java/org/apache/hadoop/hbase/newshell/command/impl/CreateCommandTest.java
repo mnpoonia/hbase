@@ -99,14 +99,13 @@ public class CreateCommandTest {
     command.execute(parsed, context);
 
     assertEquals("t1", admin.lastTableName);
-    assertEquals(
-      List.of(Map.of("NAME", "f1"), Map.of("NAME", "f2", "VERSIONS", 5L)), admin.lastFamilySpecs);
+    assertEquals(List.of(Map.of("NAME", "f1"), Map.of("NAME", "f2", "VERSIONS", 5L)),
+      admin.lastFamilySpecs);
   }
 
   @Test
   public void bareTrailingAttributeHashWithoutNameBecomesTableAttribute() throws Exception {
-    var parsed =
-      ShellLineParser.parse("create 't1', {NAME => 'f1'}, SPLITS => ['1000', '2000']");
+    var parsed = ShellLineParser.parse("create 't1', {NAME => 'f1'}, SPLITS => ['1000', '2000']");
     command.execute(parsed, context);
 
     assertEquals("t1", admin.lastTableName);

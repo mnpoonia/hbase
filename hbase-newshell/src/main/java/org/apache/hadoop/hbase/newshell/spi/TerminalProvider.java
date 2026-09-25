@@ -21,26 +21,26 @@ import java.io.IOException;
 import org.apache.yetus.audience.InterfaceAudience;
 
 /**
- * Service Provider Interface for terminal/line-editing backends. Implementations are
- * discovered via {@link java.util.ServiceLoader} - newshell's core module never names a
- * concrete backend (JLine 3, JLine 4, or any future replacement such as a different TUI
- * library) directly. Adding a new backend means implementing this interface, registering it
- * under {@code META-INF/services/org.apache.hadoop.hbase.newshell.spi.TerminalProvider}, and
- * making sure it - and only it - ends up on the runtime classpath; no changes to this
- * interface or to newshell's core are required.
+ * Service Provider Interface for terminal/line-editing backends. Implementations are discovered via
+ * {@link java.util.ServiceLoader} - newshell's core module never names a concrete backend (JLine 3,
+ * JLine 4, or any future replacement such as a different TUI library) directly. Adding a new
+ * backend means implementing this interface, registering it under
+ * {@code META-INF/services/org.apache.hadoop.hbase.newshell.spi.TerminalProvider}, and making sure
+ * it - and only it - ends up on the runtime classpath; no changes to this interface or to
+ * newshell's core are required.
  */
 @InterfaceAudience.Private
 public interface TerminalProvider {
   /**
-   * Short, stable identifier for this backend (e.g. {@code "jline3"}, {@code "jline4"}), used
-   * for logging and for the {@code hbase.newshell.terminal.provider} override property.
+   * Short, stable identifier for this backend (e.g. {@code "jline3"}, {@code "jline4"}), used for
+   * logging and for the {@code hbase.newshell.terminal.provider} override property.
    */
   String name();
 
   /**
-   * Higher values are preferred when more than one provider is available and no explicit
-   * override was requested. Providers should pick a value that reflects how well-suited they
-   * are to the current runtime (e.g. JDK baseline).
+   * Higher values are preferred when more than one provider is available and no explicit override
+   * was requested. Providers should pick a value that reflects how well-suited they are to the
+   * current runtime (e.g. JDK baseline).
    */
   int priority();
 
@@ -52,8 +52,8 @@ public interface TerminalProvider {
   boolean isAvailable();
 
   /**
-   * Opens a new terminal session. Called once selection has already happened; implementations
-   * do not need to re-check {@link #isAvailable()}.
+   * Opens a new terminal session. Called once selection has already happened; implementations do
+   * not need to re-check {@link #isAvailable()}.
    */
   ShellTerminal open(TerminalConfig config) throws IOException;
 }

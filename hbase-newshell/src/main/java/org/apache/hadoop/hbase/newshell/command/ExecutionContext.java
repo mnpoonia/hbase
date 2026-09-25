@@ -34,11 +34,25 @@ public final class ExecutionContext {
   private final ShellAdmin admin;
   private final ShellTableFactory tables;
   private final PrintWriter out;
+  private final SessionOptions options;
+  private final ConfirmationReader confirmationReader;
 
   public ExecutionContext(ShellAdmin admin, ShellTableFactory tables, PrintWriter out) {
+    this(admin, tables, out, SessionOptions.defaults(), null);
+  }
+
+  public ExecutionContext(ShellAdmin admin, ShellTableFactory tables, PrintWriter out,
+    SessionOptions options) {
+    this(admin, tables, out, options, null);
+  }
+
+  public ExecutionContext(ShellAdmin admin, ShellTableFactory tables, PrintWriter out,
+    SessionOptions options, ConfirmationReader confirmationReader) {
     this.admin = admin;
     this.tables = tables;
     this.out = out;
+    this.options = options == null ? SessionOptions.defaults() : options;
+    this.confirmationReader = confirmationReader;
   }
 
   public ShellAdmin admin() {
@@ -51,5 +65,13 @@ public final class ExecutionContext {
 
   public PrintWriter out() {
     return out;
+  }
+
+  public SessionOptions options() {
+    return options;
+  }
+
+  public ConfirmationReader confirmationReader() {
+    return confirmationReader;
   }
 }

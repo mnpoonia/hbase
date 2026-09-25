@@ -20,8 +20,8 @@ package org.apache.hadoop.hbase.newshell.hbase;
 import org.apache.yetus.audience.InterfaceAudience;
 
 /**
- * A plain-Java view of one HBase {@code Cell} - deliberately holds binary-safe string fields
- * rather than a raw {@code org.apache.hadoop.hbase.Cell}, so no HBase client type leaks past the
+ * A plain-Java view of one HBase {@code Cell} - deliberately holds binary-safe string fields rather
+ * than a raw {@code org.apache.hadoop.hbase.Cell}, so no HBase client type leaks past the
  * {@code hbase} wrapper package into the command/format layers.
  */
 @InterfaceAudience.Private

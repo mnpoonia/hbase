@@ -25,11 +25,15 @@ import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.client.ConnectionFactory;
 import org.apache.hadoop.hbase.newshell.command.CommandNameCompleter;
 import org.apache.hadoop.hbase.newshell.command.CommandRegistry;
+import org.apache.hadoop.hbase.newshell.command.ErrorMapper;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
+import org.apache.hadoop.hbase.newshell.command.ExitCodes;
+import org.apache.hadoop.hbase.newshell.command.SessionOptions;
 import org.apache.hadoop.hbase.newshell.command.ShellCommand;
 import org.apache.hadoop.hbase.newshell.command.ShellCommandException;
-import org.apache.hadoop.hbase.newshell.format.DefaultFormatter;
 import org.apache.hadoop.hbase.newshell.format.Formatter;
+import org.apache.hadoop.hbase.newshell.format.Formatters;
+import org.apache.hadoop.hbase.newshell.format.OutputFormat;
 import org.apache.hadoop.hbase.newshell.hbase.DefaultShellAdmin;
 import org.apache.hadoop.hbase.newshell.hbase.DefaultShellTableFactory;
 import org.apache.hadoop.hbase.newshell.hbase.ShellAdmin;
@@ -49,8 +53,13 @@ import org.apache.yetus.audience.InterfaceAudience;
  * parse-lookup-execute-format loop against the {@link CommandRegistry} until the user types
  * {@code exit}/{@code quit} or reaches end-of-input. Supports hbase-shell's {@code -n}/
  * {@code --noninteractive} flag and positional {@code SCRIPTFILE} argument (see
- * {@code jar-bootstrap.rb}): with {@code -n}, the process exits with status 1 on the first command
- * failure instead of printing the error and continuing.
+ * {@code jar-bootstrap.rb}): with {@code -n}, the process exits with a mapped status on the first
+ * command failure instead of printing the error and continuing.
+ * <p>
+ * Session flags: {@code --output}/{@code -o} ({@code text}|{@code json}|{@code csv}),
+ * {@code --verbose}/{@code -v}, {@code --quiet}/{@code -q}, {@code --yes}/{@code -y} (skip
+ * confirmation prompts for destructive batch commands).
+ * </p>
  */
 @InterfaceAudience.Private
 public final class NewShellMain {
@@ -66,28 +75,33 @@ public final class NewShellMain {
     Configuration conf = HBaseConfiguration.create();
     conf.set("hbase.client.retries.number", "7");
 
-    boolean exitOnFirstError = false;
-    String scriptFile = null;
-    for (String arg : args) {
-      if (arg.equals("-n") || arg.equals("--noninteractive")) {
-        exitOnFirstError = true;
-      } else if (scriptFile == null) {
-        scriptFile = arg;
-      }
+    LaunchArgs launch;
+    try {
+      launch = LaunchArgs.parse(args);
+    } catch (IllegalArgumentException e) {
+      System.err.println("ERROR: " + e.getMessage());
+      System.exit(ExitCodes.CLIENT_ERROR);
+      return;
     }
 
-    boolean success;
-    try (ShellTerminal terminal = openTerminal(scriptFile); Connection connection =
-      ConnectionFactory.createConnection(conf)) {
+    boolean interactive = launch.scriptFile == null && !launch.exitOnFirstError;
+    SessionOptions options = new SessionOptions(launch.outputFormat, launch.verbose,
+      launch.forceYes, launch.quiet, interactive);
+    Formatter formatter = Formatters.forFormat(options.outputFormat());
+
+    int exitCode = ExitCodes.SUCCESS;
+    try (ShellTerminal terminal = openTerminal(launch.scriptFile);
+      Connection connection = ConnectionFactory.createConnection(conf)) {
       ShellAdmin admin = new DefaultShellAdmin(connection.getAdmin());
       ShellTableFactory tables = new DefaultShellTableFactory(connection);
-      ExecutionContext context = new ExecutionContext(admin, tables, terminal.writer());
+      ExecutionContext context = new ExecutionContext(admin, tables, terminal.writer(), options,
+        options.interactive() ? terminal::readLine : null);
       CommandRegistry registry = new CommandRegistry();
       terminal.setCompleter(new CommandNameCompleter(registry));
-      success = run(terminal, context, registry, new DefaultFormatter(), exitOnFirstError);
+      exitCode = run(terminal, context, registry, formatter, launch.exitOnFirstError);
     }
-    if (!success) {
-      System.exit(1);
+    if (exitCode != ExitCodes.SUCCESS) {
+      System.exit(exitCode);
     }
   }
 
@@ -100,12 +114,13 @@ public final class NewShellMain {
     return provider.open(config);
   }
 
-  static boolean run(ShellTerminal terminal, ExecutionContext context, CommandRegistry registry,
+  /** Returns {@link ExitCodes#SUCCESS} unless {@code exitOnFirstError} and a command failed */
+  static int run(ShellTerminal terminal, ExecutionContext context, CommandRegistry registry,
     Formatter formatter) throws IOException {
     return run(terminal, context, registry, formatter, false);
   }
 
-  static boolean run(ShellTerminal terminal, ExecutionContext context, CommandRegistry registry,
+  static int run(ShellTerminal terminal, ExecutionContext context, CommandRegistry registry,
     Formatter formatter, boolean exitOnFirstError) throws IOException {
     PrintWriter out = context.out();
     String line;
@@ -117,36 +132,100 @@ public final class NewShellMain {
       if (trimmed.equalsIgnoreCase(EXIT_COMMAND) || trimmed.equalsIgnoreCase(QUIT_COMMAND)) {
         break;
       }
-      if (!dispatch(trimmed, context, registry, formatter, out) && exitOnFirstError) {
-        return false;
+      int code = dispatch(trimmed, context, registry, formatter, out);
+      if (code != ExitCodes.SUCCESS && exitOnFirstError) {
+        return code;
       }
     }
-    return true;
+    return ExitCodes.SUCCESS;
   }
 
-  private static boolean dispatch(String line, ExecutionContext context, CommandRegistry registry,
+  private static int dispatch(String line, ExecutionContext context, CommandRegistry registry,
     Formatter formatter, PrintWriter out) {
     ParsedCommand parsed;
     try {
       parsed = ShellLineParser.parse(line);
     } catch (ShellParseException e) {
-      out.println("ERROR: " + e.getMessage());
-      out.flush();
-      return false;
+      printError(context, out, e.getMessage(), e);
+      return ExitCodes.CLIENT_ERROR;
     }
     ShellCommand command = registry.lookup(parsed.commandName()).orElse(null);
     if (command == null) {
-      out.println("ERROR: unknown command '" + parsed.commandName() + "'");
-      out.flush();
-      return false;
+      printError(context, out, "unknown command '" + parsed.commandName() + "'", null);
+      return ExitCodes.CLIENT_ERROR;
     }
     try {
-      formatter.format(command.execute(parsed, context), out);
+      formatter.format(command.name(), command.execute(parsed, context), out);
+      return ExitCodes.SUCCESS;
     } catch (ShellCommandException | IOException e) {
-      out.println("ERROR: " + e.getMessage());
-      out.flush();
-      return false;
+      printError(context, out, e.getMessage(), e);
+      return ErrorMapper.exitCodeFor(e);
     }
-    return true;
+  }
+
+  private static void printError(ExecutionContext context, PrintWriter out, String message,
+    Throwable cause) {
+    if (!context.options().quiet()) {
+      out.println("ERROR: " + message);
+      if (context.options().verbose() && cause != null) {
+        cause.printStackTrace(out);
+      }
+      out.flush();
+    }
+  }
+
+  /** Parsed argv for {@link NewShellMain#main}. Visible for tests. */
+  static final class LaunchArgs {
+    final boolean exitOnFirstError;
+    final boolean forceYes;
+    final boolean verbose;
+    final boolean quiet;
+    final OutputFormat outputFormat;
+    final String scriptFile;
+
+    LaunchArgs(boolean exitOnFirstError, boolean forceYes, boolean verbose, boolean quiet,
+      OutputFormat outputFormat, String scriptFile) {
+      this.exitOnFirstError = exitOnFirstError;
+      this.forceYes = forceYes;
+      this.verbose = verbose;
+      this.quiet = quiet;
+      this.outputFormat = outputFormat;
+      this.scriptFile = scriptFile;
+    }
+
+    static LaunchArgs parse(String[] args) {
+      boolean exitOnFirstError = false;
+      boolean forceYes = false;
+      boolean verbose = false;
+      boolean quiet = false;
+      OutputFormat outputFormat = OutputFormat.TEXT;
+      String scriptFile = null;
+      for (int i = 0; i < args.length; i++) {
+        String arg = args[i];
+        if (arg.equals("-n") || arg.equals("--noninteractive")) {
+          exitOnFirstError = true;
+        } else if (arg.equals("-y") || arg.equals("--yes")) {
+          forceYes = true;
+        } else if (arg.equals("-v") || arg.equals("--verbose")) {
+          verbose = true;
+        } else if (arg.equals("-q") || arg.equals("--quiet")) {
+          quiet = true;
+        } else if (arg.equals("-o") || arg.equals("--output")) {
+          if (i + 1 >= args.length) {
+            throw new IllegalArgumentException(arg + " requires a value (text|json|csv)");
+          }
+          outputFormat = OutputFormat.parse(args[++i]);
+        } else if (arg.startsWith("--output=")) {
+          outputFormat = OutputFormat.parse(arg.substring("--output=".length()));
+        } else if (arg.startsWith("-o=") || arg.startsWith("--o=")) {
+          outputFormat = OutputFormat.parse(arg.substring(arg.indexOf('=') + 1));
+        } else if (scriptFile == null && !arg.startsWith("-")) {
+          scriptFile = arg;
+        } else if (arg.startsWith("-")) {
+          throw new IllegalArgumentException("Unknown option: " + arg);
+        }
+      }
+      return new LaunchArgs(exitOnFirstError, forceYes, verbose, quiet, outputFormat, scriptFile);
+    }
   }
 }

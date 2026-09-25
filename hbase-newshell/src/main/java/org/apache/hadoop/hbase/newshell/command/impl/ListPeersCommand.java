@@ -30,10 +30,10 @@ import org.apache.hadoop.hbase.newshell.parser.ParsedCommand;
 import org.apache.yetus.audience.InterfaceAudience;
 
 /**
- * Ported, minimal slice, from hbase-shell's {@code shell/commands/list_peers.rb}: no arguments,
- * one row per configured peer with PEER_ID/CLUSTER_KEY/ENDPOINT_CLASSNAME/STATE/TABLE_CFS/
- * NAMESPACES columns. REMOTE_ROOT_DIR/SYNC_REPLICATION_STATE/REPLICATE_ALL/BANDWIDTH/SERIAL are
- * explicitly not ported for this slice.
+ * Ported, minimal slice, from hbase-shell's {@code shell/commands/list_peers.rb}: no arguments, one
+ * row per configured peer with PEER_ID/CLUSTER_KEY/ENDPOINT_CLASSNAME/STATE/TABLE_CFS/ NAMESPACES
+ * columns. REMOTE_ROOT_DIR/SYNC_REPLICATION_STATE/REPLICATE_ALL/BANDWIDTH/SERIAL are explicitly not
+ * ported for this slice.
  */
 @InterfaceAudience.Private
 public final class ListPeersCommand implements ShellCommand {
@@ -58,10 +58,8 @@ public final class ListPeersCommand implements ShellCommand {
         String.valueOf(peer.replicateAllUserTables()), peer.namespaces(), peer.tableCfs(),
         String.valueOf(peer.bandwidth()), String.valueOf(peer.serial())));
     }
-    return new TabularResult(
-      List.of("PEER_ID", "CLUSTER_KEY", "ENDPOINT_CLASSNAME", "REMOTE_ROOT_DIR",
-        "SYNC_REPLICATION_STATE", "STATE", "REPLICATE_ALL", "NAMESPACES", "TABLE_CFS",
-        "BANDWIDTH", "SERIAL"),
-      rows);
+    return new TabularResult(List.of("PEER_ID", "CLUSTER_KEY", "ENDPOINT_CLASSNAME",
+      "REMOTE_ROOT_DIR", "SYNC_REPLICATION_STATE", "STATE", "REPLICATE_ALL", "NAMESPACES",
+      "TABLE_CFS", "BANDWIDTH", "SERIAL"), rows);
   }
 }

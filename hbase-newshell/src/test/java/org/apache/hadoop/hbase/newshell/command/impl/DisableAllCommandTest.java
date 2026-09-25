@@ -18,13 +18,16 @@
 package org.apache.hadoop.hbase.newshell.command.impl;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.List;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
+import org.apache.hadoop.hbase.newshell.command.SessionOptions;
 import org.apache.hadoop.hbase.newshell.command.TextResult;
+import org.apache.hadoop.hbase.newshell.command.UserAbortException;
 import org.apache.hadoop.hbase.newshell.hbase.StubShellAdmin;
 import org.apache.hadoop.hbase.newshell.hbase.StubShellTableFactory;
 import org.apache.hadoop.hbase.newshell.parser.ShellLineParser;
@@ -52,8 +55,8 @@ public class DisableAllCommandTest {
 
   private final DisableAllCommand command = new DisableAllCommand();
   private final RecordingShellAdmin admin = new RecordingShellAdmin();
-  private final ExecutionContext context =
-    new ExecutionContext(admin, new StubShellTableFactory(), new PrintWriter(new StringWriter()));
+  private final ExecutionContext context = new ExecutionContext(admin, new StubShellTableFactory(),
+    new PrintWriter(new StringWriter()), SessionOptions.defaults().withForceYes(true));
 
   @Test
   public void disablesEveryMatch() throws Exception {
@@ -74,4 +77,24 @@ public class DisableAllCommandTest {
     assertEquals(List.of("No tables matched the regex nope.*"), result.lines());
   }
 
+  @Test
+  public void abortsWithoutYesWhenNonInteractive() throws Exception {
+    admin.tableNames = List.of("t1");
+    ExecutionContext noYes =
+      new ExecutionContext(admin, new StubShellTableFactory(), new PrintWriter(new StringWriter()));
+    var parsed = ShellLineParser.parse("disable_all 't.*'");
+    assertThrows(UserAbortException.class, () -> command.execute(parsed, noYes));
+    assertEquals(List.of(), admin.disabled);
+  }
+
+  @Test
+  public void acceptsInlineYesFlag() throws Exception {
+    admin.tableNames = List.of("t1");
+    ExecutionContext noYes =
+      new ExecutionContext(admin, new StubShellTableFactory(), new PrintWriter(new StringWriter()));
+    var parsed = ShellLineParser.parse("disable_all 't.*' --yes");
+    TextResult result = (TextResult) command.execute(parsed, noYes);
+    assertEquals(List.of("t1"), admin.disabled);
+    assertEquals(List.of("1 tables successfully disabled"), result.lines());
+  }
 }

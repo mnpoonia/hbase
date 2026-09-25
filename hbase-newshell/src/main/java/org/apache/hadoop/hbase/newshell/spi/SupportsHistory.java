@@ -21,9 +21,9 @@ import java.io.IOException;
 import org.apache.yetus.audience.InterfaceAudience;
 
 /**
- * Optional capability implemented by a {@link ShellTerminal} that can persist command history
- * to disk. Core code probes for this via {@code instanceof} rather than requiring every backend
- * to support persistent history.
+ * Optional capability implemented by a {@link ShellTerminal} that can persist command history to
+ * disk. Core code probes for this via {@code instanceof} rather than requiring every backend to
+ * support persistent history.
  */
 @InterfaceAudience.Private
 public interface SupportsHistory {

@@ -29,8 +29,7 @@ import org.apache.hadoop.hbase.newshell.parser.ParsedCommand;
 import org.apache.yetus.audience.InterfaceAudience;
 
 /**
- * Ported from hbase-shell's {@code shell/commands/add_labels.rb}: one label, or an array of
- * labels.
+ * Ported from hbase-shell's {@code shell/commands/add_labels.rb}: one label, or an array of labels.
  */
 @InterfaceAudience.Private
 public final class AddLabelsCommand implements ShellCommand {
@@ -49,8 +48,7 @@ public final class AddLabelsCommand implements ShellCommand {
     throws ShellCommandException, IOException {
     List<Object> positionals = command.positionalArgs();
     if (positionals.isEmpty()) {
-      throw new ShellCommandException(
-        "add_labels requires a label (or array of labels) argument");
+      throw new ShellCommandException("add_labels requires a label (or array of labels) argument");
     }
     List<String> labels = new ArrayList<>();
     for (Object positional : positionals) {

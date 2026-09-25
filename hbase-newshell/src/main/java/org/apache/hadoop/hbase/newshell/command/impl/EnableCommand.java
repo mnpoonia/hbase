@@ -27,8 +27,8 @@ import org.apache.hadoop.hbase.newshell.parser.ParsedCommand;
 import org.apache.yetus.audience.InterfaceAudience;
 
 /**
- * Ported from hbase-shell's {@code hbase/admin.rb#enable}: a single table-name positional
- * argument, guarded by the wrapper layer's exists/already-enabled checks.
+ * Ported from hbase-shell's {@code hbase/admin.rb#enable}: a single table-name positional argument,
+ * guarded by the wrapper layer's exists/already-enabled checks.
  */
 @InterfaceAudience.Private
 public final class EnableCommand implements ShellCommand {

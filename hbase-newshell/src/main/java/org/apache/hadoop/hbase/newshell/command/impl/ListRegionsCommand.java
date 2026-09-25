@@ -18,23 +18,31 @@
 package org.apache.hadoop.hbase.newshell.command.impl;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import org.apache.hadoop.hbase.newshell.command.CommandResult;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
 import org.apache.hadoop.hbase.newshell.command.ShellCommand;
 import org.apache.hadoop.hbase.newshell.command.ShellCommandException;
-import org.apache.hadoop.hbase.newshell.command.TabularResult;
+import org.apache.hadoop.hbase.newshell.command.TextResult;
+import org.apache.hadoop.hbase.newshell.hbase.ListRegionsView;
 import org.apache.hadoop.hbase.newshell.parser.ParsedCommand;
 import org.apache.yetus.audience.InterfaceAudience;
 
 /**
  * Ported, minimal slice, from hbase-shell's {@code shell/commands/list_regions.rb}: table name
- * only, always reporting all seven columns (SERVER_NAME, REGION_NAME, START_KEY, END_KEY, SIZE,
- * REQ, LOCALITY) for every region. The Ruby original's optional server-name filter, locality
- * threshold, and column-projection array are not ported for this slice.
+ * only, always reporting all seven columns. Output uses the Ruby command's pipe-aligned
+ * {@code printf} layout (not the shared shell formatter), including the trailing
+ * {@code N rows} footer.
  */
 @InterfaceAudience.Private
 public final class ListRegionsCommand implements ShellCommand {
+  private static final List<String> COLUMNS =
+    List.of("SERVER_NAME", "REGION_NAME", "START_KEY", "END_KEY", "SIZE", "REQ", "LOCALITY");
+  private static final int[] DEFAULT_WIDTHS = { 12, 12, 10, 10, 5, 5, 10 };
+
   @Override
   public String name() {
     return "list_regions";
@@ -52,9 +60,52 @@ public final class ListRegionsCommand implements ShellCommand {
       throw new ShellCommandException("list_regions requires a table name argument");
     }
     String tableName = String.valueOf(command.positionalArgs().get(0));
-    List<List<String>> rows = context.admin().listRegions(tableName);
-    return new TabularResult(
-      List.of("SERVER_NAME", "REGION_NAME", "START_KEY", "END_KEY", "SIZE", "REQ", "LOCALITY"),
-      rows);
+    ListRegionsView view = context.admin().listRegions(tableName);
+    return new TextResult(format(view));
+  }
+
+  /** Mirrors {@code list_regions.rb}'s size_hash + printf layout. */
+  static List<String> format(ListRegionsView view) {
+    Map<String, Integer> widths = new LinkedHashMap<>();
+    for (int i = 0; i < COLUMNS.size(); i++) {
+      widths.put(COLUMNS.get(i), DEFAULT_WIDTHS[i]);
+    }
+    for (List<String> row : view.rows()) {
+      for (int i = 0; i < COLUMNS.size(); i++) {
+        String value = i < row.size() && row.get(i) != null ? row.get(i) : "";
+        widths.put(COLUMNS.get(i), Math.max(widths.get(COLUMNS.get(i)), value.length()));
+      }
+    }
+
+    List<String> lines = new ArrayList<>(view.warnings());
+    lines.add(formatPipeRow(COLUMNS.stream().map(col -> pad(col, widths.get(col))).toList()));
+    lines.add(formatPipeRow(
+      COLUMNS.stream().map(col -> "-".repeat(widths.get(col))).toList()));
+    for (List<String> row : view.rows()) {
+      List<String> cells = new ArrayList<>(COLUMNS.size());
+      for (int i = 0; i < COLUMNS.size(); i++) {
+        String value = i < row.size() && row.get(i) != null ? row.get(i) : "";
+        cells.add(pad(value, widths.get(COLUMNS.get(i))));
+      }
+      lines.add(formatPipeRow(cells));
+    }
+    lines.add(" " + view.rows().size() + " rows");
+    return lines;
+  }
+
+  private static String formatPipeRow(List<String> cells) {
+    StringBuilder sb = new StringBuilder();
+    for (String cell : cells) {
+      sb.append(' ').append(cell).append(" |");
+    }
+    return sb.toString();
+  }
+
+  /** Right-pad like Ruby {@code printf(" %#{length}s |", value)}. */
+  private static String pad(String value, int width) {
+    if (value.length() >= width) {
+      return value;
+    }
+    return " ".repeat(width - value.length()) + value;
   }
 }

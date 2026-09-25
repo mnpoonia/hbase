@@ -55,7 +55,7 @@ public class AlterStatusCommandTest {
     var parsed = ShellLineParser.parse("alter_status 't1'");
     TextResult result = (TextResult) command.execute(parsed, context);
 
-    assertEquals(List.of("8/10 regions updated."), result.lines());
+    assertEquals(List.of("8/10 regions updated.", "Done."), result.lines());
   }
 
   @Test
@@ -64,6 +64,6 @@ public class AlterStatusCommandTest {
     var parsed = ShellLineParser.parse("alter_status 't1'");
     TextResult result = (TextResult) command.execute(parsed, context);
 
-    assertEquals(List.of("All regions updated."), result.lines());
+    assertEquals(List.of("All regions updated.", "Done."), result.lines());
   }
 }

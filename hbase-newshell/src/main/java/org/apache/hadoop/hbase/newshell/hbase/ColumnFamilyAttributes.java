@@ -31,27 +31,28 @@ import org.apache.yetus.audience.InterfaceAudience;
 
 /**
  * Builds a real {@link ColumnFamilyDescriptor} from a {@code create}-style family spec map
- * ({@code NAME} required, everything else optional). Each supported attribute is a single map
- * entry below rather than a hand-written {@code if (x != null) builder.setX(...)} branch, so
- * adding coverage for another {@code hbase/admin.rb#cfd} attribute (see hbase-shell's own
- * generic hash-driven column descriptor builder) is a one-line addition here, not a new branch
- * spread across {@link DefaultShellAdmin}. Attributes not listed here (e.g. {@code CONFIGURATION},
- * MOB-related keys) are still explicitly out of scope for the pilot slice and are silently
- * ignored, same as before this refactor.
+ * ({@code NAME} required, everything else optional). Each supported attribute is a single map entry
+ * below rather than a hand-written {@code if (x != null) builder.setX(...)} branch, so adding
+ * coverage for another {@code hbase/admin.rb#cfd} attribute (see hbase-shell's own generic
+ * hash-driven column descriptor builder) is a one-line addition here, not a new branch spread
+ * across {@link DefaultShellAdmin}. Attributes not listed here (e.g. {@code CONFIGURATION},
+ * MOB-related keys) are still explicitly out of scope for the pilot slice and are silently ignored,
+ * same as before this refactor.
  */
 @InterfaceAudience.Private
 final class ColumnFamilyAttributes {
-  private static final Map<String, BiConsumer<ColumnFamilyDescriptorBuilder, Object>> SETTERS = Map.of(
-    "VERSIONS", (builder, value) -> builder.setMaxVersions(toInt(value)),
-    "MIN_VERSIONS", (builder, value) -> builder.setMinVersions(toInt(value)),
-    "TTL", (builder, value) -> builder.setTimeToLive(toInt(value)),
-    "BLOCKCACHE", (builder, value) -> builder.setBlockCacheEnabled(toBoolean(value)),
-    "IN_MEMORY", (builder, value) -> builder.setInMemory(toBoolean(value)),
-    "COMPRESSION",
-    (builder, value) -> builder.setCompressionType(Compression.Algorithm.valueOf(toUpper(value))),
-    "BLOOMFILTER", (builder, value) -> builder.setBloomFilterType(BloomType.valueOf(toUpper(value))),
-    "DATA_BLOCK_ENCODING",
-    (builder, value) -> builder.setDataBlockEncoding(DataBlockEncoding.valueOf(toUpper(value))));
+  private static final Map<String,
+    BiConsumer<ColumnFamilyDescriptorBuilder, Object>> SETTERS = Map.of("VERSIONS",
+      (builder, value) -> builder.setMaxVersions(toInt(value)), "MIN_VERSIONS",
+      (builder, value) -> builder.setMinVersions(toInt(value)), "TTL",
+      (builder, value) -> builder.setTimeToLive(toInt(value)), "BLOCKCACHE",
+      (builder, value) -> builder.setBlockCacheEnabled(toBoolean(value)), "IN_MEMORY",
+      (builder, value) -> builder.setInMemory(toBoolean(value)), "COMPRESSION",
+      (builder, value) -> builder.setCompressionType(Compression.Algorithm.valueOf(toUpper(value))),
+      "BLOOMFILTER",
+      (builder, value) -> builder.setBloomFilterType(BloomType.valueOf(toUpper(value))),
+      "DATA_BLOCK_ENCODING",
+      (builder, value) -> builder.setDataBlockEncoding(DataBlockEncoding.valueOf(toUpper(value))));
 
   private ColumnFamilyAttributes() {
   }
@@ -72,7 +73,8 @@ final class ColumnFamilyAttributes {
    * attributes not present in the spec untouched - used by {@code alter} to modify an existing
    * {@link ColumnFamilyDescriptor} in place rather than building a fresh one.
    */
-  static void applyAttributes(ColumnFamilyDescriptorBuilder builder, Map<String, Object> familySpec) {
+  static void applyAttributes(ColumnFamilyDescriptorBuilder builder,
+    Map<String, Object> familySpec) {
     for (Map.Entry<String, Object> entry : familySpec.entrySet()) {
       if (entry.getKey().equals("NAME")) {
         continue;

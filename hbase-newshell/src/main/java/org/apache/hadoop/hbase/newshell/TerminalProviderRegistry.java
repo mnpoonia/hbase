@@ -28,10 +28,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Resolves the {@link TerminalProvider} newshell should use, via {@link ServiceLoader}. This
- * class is the only place in newshell's core that reasons about "which backend" - and it never
- * names one; it only asks the classpath what's there. Which concrete backend module is
- * actually present is decided at build/packaging time.
+ * Resolves the {@link TerminalProvider} newshell should use, via {@link ServiceLoader}. This class
+ * is the only place in newshell's core that reasons about "which backend" - and it never names one;
+ * it only asks the classpath what's there. Which concrete backend module is actually present is
+ * decided at build/packaging time.
  */
 @InterfaceAudience.Private
 public final class TerminalProviderRegistry {
@@ -55,24 +55,25 @@ public final class TerminalProviderRegistry {
 
   /**
    * Resolves a single provider to use: honors the {@value #PROVIDER_OVERRIDE_PROPERTY} system
-   * property if set, otherwise picks the highest-{@link TerminalProvider#priority()} provider
-   * that reports {@link TerminalProvider#isAvailable()}.
+   * property if set, otherwise picks the highest-{@link TerminalProvider#priority()} provider that
+   * reports {@link TerminalProvider#isAvailable()}.
    * @throws NoAvailableTerminalProviderException if no suitable provider could be resolved
    */
   public TerminalProvider resolve() {
     String override = System.getProperty(PROVIDER_OVERRIDE_PROPERTY);
     TerminalProvider resolved;
     if (override != null && !override.isEmpty()) {
-      resolved = providers.stream().filter(p -> p.name().equals(override)).filter(TerminalProvider::isAvailable)
-        .findFirst()
-        .orElseThrow(() -> new NoAvailableTerminalProviderException("No available TerminalProvider named '"
-          + override + "' (requested via -D" + PROVIDER_OVERRIDE_PROPERTY + "). Providers found: "
-          + describeProviders()));
+      resolved = providers.stream().filter(p -> p.name().equals(override))
+        .filter(TerminalProvider::isAvailable).findFirst()
+        .orElseThrow(() -> new NoAvailableTerminalProviderException(
+          "No available TerminalProvider named '" + override + "' (requested via -D"
+            + PROVIDER_OVERRIDE_PROPERTY + "). Providers found: " + describeProviders()));
     } else {
       resolved = providers.stream().filter(TerminalProvider::isAvailable)
         .max(Comparator.comparingInt(TerminalProvider::priority))
         .orElseThrow(() -> new NoAvailableTerminalProviderException(
-          "No available TerminalProvider found on the classpath. Providers found: " + describeProviders()));
+          "No available TerminalProvider found on the classpath. Providers found: "
+            + describeProviders()));
     }
     LOG.info("Resolved newshell terminal provider: {}", resolved.name());
     return resolved;

@@ -29,10 +29,10 @@ import org.apache.hadoop.hbase.newshell.parser.ParsedCommand;
 import org.apache.yetus.audience.InterfaceAudience;
 
 /**
- * Ported from hbase-shell's {@code shell/commands/alter_async.rb}: identical column family spec
- * as {@link AlterCommand}, but does not wait for all regions to receive the schema change - this
- * matches {@link org.apache.hadoop.hbase.newshell.hbase.ShellAdmin#alterTable}, which already
- * does not block on region propagation, so {@code alter} and {@code alter_async} share the same
+ * Ported from hbase-shell's {@code shell/commands/alter_async.rb}: identical column family spec as
+ * {@link AlterCommand}, but does not wait for all regions to receive the schema change - this
+ * matches {@link org.apache.hadoop.hbase.newshell.hbase.ShellAdmin#alterTable}, which already does
+ * not block on region propagation, so {@code alter} and {@code alter_async} share the same
  * wrapper-layer call. Use {@link AlterStatusCommand} to check propagation progress.
  */
 @InterfaceAudience.Private

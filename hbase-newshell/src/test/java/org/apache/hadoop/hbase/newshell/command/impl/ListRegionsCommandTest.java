@@ -18,12 +18,14 @@
 package org.apache.hadoop.hbase.newshell.command.impl;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.List;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
-import org.apache.hadoop.hbase.newshell.command.TabularResult;
+import org.apache.hadoop.hbase.newshell.command.TextResult;
+import org.apache.hadoop.hbase.newshell.hbase.ListRegionsView;
 import org.apache.hadoop.hbase.newshell.hbase.StubShellAdmin;
 import org.apache.hadoop.hbase.newshell.hbase.StubShellTableFactory;
 import org.apache.hadoop.hbase.newshell.parser.ShellLineParser;
@@ -36,12 +38,12 @@ public class ListRegionsCommandTest {
 
   private static final class RecordingShellAdmin extends StubShellAdmin {
     private String lastTableName;
-    private List<List<String>> rows = List.of();
+    private ListRegionsView view = new ListRegionsView(List.of(), List.of());
 
     @Override
-    public List<List<String>> listRegions(String tableName) {
+    public ListRegionsView listRegions(String tableName) {
       this.lastTableName = tableName;
-      return rows;
+      return view;
     }
   }
 
@@ -51,15 +53,31 @@ public class ListRegionsCommandTest {
     new ExecutionContext(admin, new StubShellTableFactory(), new PrintWriter(new StringWriter()));
 
   @Test
-  public void reportsRegionRows() throws Exception {
-    admin.rows = List.of(List.of("host1:1234", "t1,,123.abc.", "", "", "0", "0", "1.0"));
+  public void reportsPipeAlignedRegionRows() throws Exception {
+    admin.view = new ListRegionsView(List.of(),
+      List.of(List.of("host1:1234", "t1,,123.abc.", "", "", "0", "0", "1.0")));
     var parsed = ShellLineParser.parse("list_regions 't1'");
-    TabularResult result = (TabularResult) command.execute(parsed, context);
+    TextResult result = (TextResult) command.execute(parsed, context);
 
     assertEquals("t1", admin.lastTableName);
-    assertEquals(
-      List.of("SERVER_NAME", "REGION_NAME", "START_KEY", "END_KEY", "SIZE", "REQ", "LOCALITY"),
-      result.header());
-    assertEquals(admin.rows, result.rows());
+    List<String> lines = result.lines();
+    assertTrue(lines.get(0).contains("SERVER_NAME"));
+    assertTrue(lines.get(0).contains("|"));
+    assertTrue(lines.get(1).contains("---"));
+    assertTrue(lines.get(2).contains("host1:1234"));
+    assertTrue(lines.get(2).contains("t1,,123.abc."));
+    assertEquals(" 1 rows", lines.get(3));
+  }
+
+  @Test
+  public void prependsMissingMetricsWarnings() throws Exception {
+    admin.view = new ListRegionsView(
+      List.of("Can not find all details for region: t1,,123.abc. , it may be disabled or in transition"),
+      List.of(List.of("host1:1234", "t1,,123.abc.", "", "", "", "", "")));
+    var parsed = ShellLineParser.parse("list_regions 't1'");
+    TextResult result = (TextResult) command.execute(parsed, context);
+
+    assertTrue(result.lines().get(0).startsWith("Can not find all details"));
+    assertEquals(" 1 rows", result.lines().get(result.lines().size() - 1));
   }
 }

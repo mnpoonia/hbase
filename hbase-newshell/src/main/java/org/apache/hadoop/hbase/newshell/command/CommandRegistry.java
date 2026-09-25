@@ -29,9 +29,9 @@ import org.apache.yetus.audience.InterfaceAudience;
 /**
  * Resolves command names to {@link ShellCommand} implementations, discovered via
  * {@link ServiceLoader} - mirroring
- * {@code org.apache.hadoop.hbase.newshell.TerminalProviderRegistry}'s extensibility pattern.
- * Adding command #5 onward means adding a class and one {@code META-INF/services} line; this
- * registry never needs to change.
+ * {@code org.apache.hadoop.hbase.newshell.TerminalProviderRegistry}'s extensibility pattern. Adding
+ * command #5 onward means adding a class and one {@code META-INF/services} line; this registry
+ * never needs to change.
  */
 @InterfaceAudience.Private
 public final class CommandRegistry {
@@ -48,8 +48,8 @@ public final class CommandRegistry {
       String name = command.name().toLowerCase(Locale.ROOT);
       ShellCommand existing = byName.putIfAbsent(name, command);
       if (existing != null) {
-        throw new IllegalStateException("Duplicate ShellCommand registered for name '" + name + "': "
-          + existing.getClass().getName() + " and " + command.getClass().getName());
+        throw new IllegalStateException("Duplicate ShellCommand registered for name '" + name
+          + "': " + existing.getClass().getName() + " and " + command.getClass().getName());
       }
     }
     this.commandsByName = byName;
@@ -59,9 +59,7 @@ public final class CommandRegistry {
     return Optional.ofNullable(commandsByName.get(name.toLowerCase(Locale.ROOT)));
   }
 
-  /**
-   * @return every registered command name, sorted for stable completion/help-listing order
-   */
+  /** Returns every registered command name, sorted for stable completion/help-listing order */
   public List<String> commandNames() {
     return commandsByName.keySet().stream().sorted().collect(Collectors.toList());
   }

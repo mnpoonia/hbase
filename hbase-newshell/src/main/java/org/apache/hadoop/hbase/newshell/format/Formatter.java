@@ -21,8 +21,8 @@ import java.io.PrintWriter;
 import org.apache.hadoop.hbase.newshell.command.CommandResult;
 import org.apache.yetus.audience.InterfaceAudience;
 
-/** Renders a {@link CommandResult} to a writer. The seam for future output modes (e.g. JSON). */
+/** Renders a {@link CommandResult} to a writer. */
 @InterfaceAudience.Private
 public interface Formatter {
-  void format(CommandResult result, PrintWriter out);
+  void format(String commandName, CommandResult result, PrintWriter out);
 }

@@ -23,10 +23,10 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.List;
-import org.apache.hadoop.hbase.client.BalanceResponse;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
 import org.apache.hadoop.hbase.newshell.command.ShellCommandException;
 import org.apache.hadoop.hbase.newshell.command.TextResult;
+import org.apache.hadoop.hbase.newshell.hbase.BalanceResult;
 import org.apache.hadoop.hbase.newshell.hbase.StubShellAdmin;
 import org.apache.hadoop.hbase.newshell.hbase.StubShellTableFactory;
 import org.apache.hadoop.hbase.newshell.parser.ShellLineParser;
@@ -40,11 +40,10 @@ public class BalancerCommandTest {
   private static final class RecordingShellAdmin extends StubShellAdmin {
     private Boolean lastDryRun;
     private Boolean lastIgnoreRit;
-    private BalanceResponse response = BalanceResponse.newBuilder().setBalancerRan(true)
-      .setMovesCalculated(3).setMovesExecuted(2).build();
+    private BalanceResult response = new BalanceResult(true, 3, 2);
 
     @Override
-    public BalanceResponse balance(boolean dryRun, boolean ignoreRegionsInTransition) {
+    public BalanceResult balance(boolean dryRun, boolean ignoreRegionsInTransition) {
       this.lastDryRun = dryRun;
       this.lastIgnoreRit = ignoreRegionsInTransition;
       return response;
@@ -63,8 +62,7 @@ public class BalancerCommandTest {
 
     assertEquals(false, admin.lastDryRun);
     assertEquals(false, admin.lastIgnoreRit);
-    assertEquals(List.of("Balancer ran", "Moves calculated: 3, moves executed: 2"),
-      result.lines());
+    assertEquals(List.of("Balancer ran", "Moves calculated: 3, moves executed: 2"), result.lines());
   }
 
   @Test
@@ -78,7 +76,7 @@ public class BalancerCommandTest {
 
   @Test
   public void reportsWhenBalancerDidNotRun() throws Exception {
-    admin.response = BalanceResponse.newBuilder().setBalancerRan(false).build();
+    admin.response = new BalanceResult(false, 0, 0);
     var parsed = ShellLineParser.parse("balancer");
     TextResult result = (TextResult) command.execute(parsed, context);
 

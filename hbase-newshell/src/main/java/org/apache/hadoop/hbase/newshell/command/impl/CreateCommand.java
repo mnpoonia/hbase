@@ -31,9 +31,9 @@ import org.apache.hadoop.hbase.newshell.parser.ParsedCommand;
 import org.apache.yetus.audience.InterfaceAudience;
 
 /**
- * Ported, minimal slice, from hbase-shell's {@code hbase/admin.rb#create}: one table name plus
- * one or more column families, each given either as a bareword string (e.g. {@code 'f1'}) or a
- * hash literal ({@code NAME} required, {@code VERSIONS} optional), plus an optional table-level
+ * Ported, minimal slice, from hbase-shell's {@code hbase/admin.rb#create}: one table name plus one
+ * or more column families, each given either as a bareword string (e.g. {@code 'f1'}) or a hash
+ * literal ({@code NAME} required, {@code VERSIONS} optional), plus an optional table-level
  * attribute hash with no {@code NAME} key (e.g. {@code SPLITS => [...]}) - see
  * {@link org.apache.hadoop.hbase.newshell.hbase.ShellAdmin#createTable} for the supported
  * attributes. SPLITALGO, CONFIGURATION and MOB options are explicitly not ported for this pilot
@@ -63,7 +63,8 @@ public final class CreateCommand implements ShellCommand {
     List<Map<String, Object>> familySpecs = new ArrayList<>();
     // Bareword family names, e.g. create 't1', 'f1', 'f2' - each becomes a family spec with
     // just a NAME, mirroring hbase-shell's admin.rb#create treating a String arg as a family.
-    for (Object extraPositional : command.positionalArgs().subList(1, command.positionalArgs().size())) {
+    for (Object extraPositional : command.positionalArgs().subList(1,
+      command.positionalArgs().size())) {
       familySpecs.add(Map.of("NAME", String.valueOf(extraPositional)));
     }
     // Only hash literals with a NAME are families; a hash literal without one (e.g.

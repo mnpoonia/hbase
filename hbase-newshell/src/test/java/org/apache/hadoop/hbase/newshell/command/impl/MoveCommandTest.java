@@ -62,7 +62,8 @@ public class MoveCommandTest {
 
   @Test
   public void movesRegionToSpecificServer() throws Exception {
-    var parsed = ShellLineParser.parse("move 'abcdef1234567890', 'host187.example.com,60020,1289493121758'");
+    var parsed =
+      ShellLineParser.parse("move 'abcdef1234567890', 'host187.example.com,60020,1289493121758'");
     command.execute(parsed, context);
 
     assertEquals("abcdef1234567890", admin.lastEncodedRegionName);

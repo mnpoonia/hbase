@@ -23,8 +23,10 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.List;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
 import org.apache.hadoop.hbase.newshell.command.ShellCommandException;
+import org.apache.hadoop.hbase.newshell.command.TextResult;
 import org.apache.hadoop.hbase.newshell.hbase.StubShellAdmin;
 import org.apache.hadoop.hbase.newshell.hbase.StubShellTableFactory;
 import org.apache.hadoop.hbase.newshell.parser.ShellLineParser;
@@ -38,6 +40,12 @@ public class TruncateCommandTest {
   private static final class RecordingShellAdmin extends StubShellAdmin {
     private String lastTableName;
     private Boolean lastPreserveSplits;
+    private boolean enabled = true;
+
+    @Override
+    public boolean isTableEnabled(String tableName) {
+      return enabled;
+    }
 
     @Override
     public void truncateTable(String tableName, boolean preserveSplits) {
@@ -52,12 +60,24 @@ public class TruncateCommandTest {
     new ExecutionContext(admin, new StubShellTableFactory(), new PrintWriter(new StringWriter()));
 
   @Test
-  public void truncatesWithoutPreservingSplits() throws Exception {
+  public void truncatesWithoutPreservingSplitsAndEmitsProgress() throws Exception {
     var parsed = ShellLineParser.parse("truncate 't1'");
-    command.execute(parsed, context);
+    TextResult result = (TextResult) command.execute(parsed, context);
 
     assertEquals("t1", admin.lastTableName);
     assertFalse(admin.lastPreserveSplits);
+    assertEquals(List.of("Truncating 't1' table (it may take a while):", "Disabling table...",
+      "Truncating table..."), result.lines());
+  }
+
+  @Test
+  public void skipsDisablingLineWhenAlreadyDisabled() throws Exception {
+    admin.enabled = false;
+    var parsed = ShellLineParser.parse("truncate 't1'");
+    TextResult result = (TextResult) command.execute(parsed, context);
+
+    assertEquals(List.of("Truncating 't1' table (it may take a while):", "Truncating table..."),
+      result.lines());
   }
 
   @Test

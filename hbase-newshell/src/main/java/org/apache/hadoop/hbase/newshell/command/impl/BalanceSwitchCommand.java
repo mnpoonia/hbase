@@ -18,6 +18,7 @@
 package org.apache.hadoop.hbase.newshell.command.impl;
 
 import java.io.IOException;
+import org.apache.hadoop.hbase.newshell.command.ArgParsing;
 import org.apache.hadoop.hbase.newshell.command.CommandResult;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
 import org.apache.hadoop.hbase.newshell.command.ShellCommand;
@@ -48,15 +49,9 @@ public final class BalanceSwitchCommand implements ShellCommand {
     if (command.positionalArgs().isEmpty()) {
       throw new ShellCommandException("balance_switch requires a true|false argument");
     }
-    boolean enabled = parseBoolean(command.positionalArgs().get(0));
+    boolean enabled = ArgParsing.parseBoolean(command.positionalArgs().get(0));
     boolean previousState = context.admin().balancerSwitch(enabled);
     return TextResult.of("Previous balancer state : " + previousState);
   }
 
-  private static boolean parseBoolean(Object value) {
-    if (value instanceof Boolean) {
-      return (Boolean) value;
-    }
-    return Boolean.parseBoolean(String.valueOf(value));
-  }
 }

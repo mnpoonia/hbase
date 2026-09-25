@@ -58,8 +58,9 @@ public class GetRsgroupCommandTest {
     TextResult result = (TextResult) command.execute(parsed, context);
 
     assertEquals("default", admin.lastGroupName);
-    assertEquals(List.of("SERVERS", "    host1:1000", "    host2:1000", "TABLES", "    t1",
-      "    t2"), result.lines());
+    assertEquals(
+      List.of("SERVERS", "    host1:1000", "    host2:1000", "TABLES", "    t1", "    t2"),
+      result.lines());
   }
 
   @Test

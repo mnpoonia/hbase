@@ -20,6 +20,7 @@ package org.apache.hadoop.hbase.newshell.command.impl;
 import java.io.IOException;
 import java.util.List;
 import org.apache.hadoop.hbase.newshell.command.CommandResult;
+import org.apache.hadoop.hbase.newshell.command.DestructiveBatchConfirm;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
 import org.apache.hadoop.hbase.newshell.command.ShellCommand;
 import org.apache.hadoop.hbase.newshell.command.ShellCommandException;
@@ -29,9 +30,8 @@ import org.apache.yetus.audience.InterfaceAudience;
 
 /**
  * Ported from hbase-shell's {@code shell/commands/change_sft_all.rb}: a table-name regular
- * expression and a StoreFileTracker implementation name. The REPL-only y/n confirmation prompt
- * (which crashes under piped stdin in the legacy shell) is intentionally dropped, mirroring the
- * existing {@code disable_all}/{@code drop_all}/{@code enable_all} precedent.
+ * expression and a StoreFileTracker implementation name. See {@link DisableAllCommand} for
+ * confirmation semantics.
  */
 @InterfaceAudience.Private
 public final class ChangeSftAllCommand implements ShellCommand {
@@ -42,8 +42,8 @@ public final class ChangeSftAllCommand implements ShellCommand {
 
   @Override
   public String help() {
-    return "change_sft_all 'tableRegex', 'FILE' - change the StoreFileTracker implementation "
-      + "of every table matching a regular expression";
+    return "change_sft_all 'tableRegex', 'FILE' [--yes] - change the StoreFileTracker "
+      + "implementation of every table matching a regular expression";
   }
 
   @Override
@@ -54,8 +54,11 @@ public final class ChangeSftAllCommand implements ShellCommand {
       throw new ShellCommandException(
         "change_sft_all requires a table regex and an implementation name argument");
     }
-    context.admin().changeSftAll(String.valueOf(positionals.get(0)),
-      String.valueOf(positionals.get(1)));
+    String regex = String.valueOf(positionals.get(0));
+    String impl = String.valueOf(positionals.get(1));
+    List<String> tables = context.admin().listTables(regex);
+    DestructiveBatchConfirm.confirm(context, command, "change_sft_all", tables);
+    context.admin().changeSftAll(regex, impl);
     return TextResult.of();
   }
 }

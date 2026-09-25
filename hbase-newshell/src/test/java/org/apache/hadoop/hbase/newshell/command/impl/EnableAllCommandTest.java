@@ -24,6 +24,7 @@ import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.List;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
+import org.apache.hadoop.hbase.newshell.command.SessionOptions;
 import org.apache.hadoop.hbase.newshell.command.TextResult;
 import org.apache.hadoop.hbase.newshell.hbase.StubShellAdmin;
 import org.apache.hadoop.hbase.newshell.hbase.StubShellTableFactory;
@@ -52,8 +53,8 @@ public class EnableAllCommandTest {
 
   private final EnableAllCommand command = new EnableAllCommand();
   private final RecordingShellAdmin admin = new RecordingShellAdmin();
-  private final ExecutionContext context =
-    new ExecutionContext(admin, new StubShellTableFactory(), new PrintWriter(new StringWriter()));
+  private final ExecutionContext context = new ExecutionContext(admin, new StubShellTableFactory(),
+    new PrintWriter(new StringWriter()), SessionOptions.defaults().withForceYes(true));
 
   @Test
   public void enablesEveryMatch() throws Exception {

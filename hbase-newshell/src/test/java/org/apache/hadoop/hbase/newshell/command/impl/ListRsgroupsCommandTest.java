@@ -58,7 +58,7 @@ public class ListRsgroupsCommandTest {
 
     assertEquals(".*", admin.lastRegex);
     assertEquals(List.of("NAME", "SERVER / TABLE"), result.header());
-    assertEquals(List.of(List.of("default", "server host1:1000"),
-      List.of("", "table t1"), List.of("empty", "")), result.rows());
+    assertEquals(List.of(List.of("default", "server host1:1000"), List.of("", "table t1"),
+      List.of("empty", "")), result.rows());
   }
 }

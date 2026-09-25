@@ -45,8 +45,7 @@ public class DeleteallCommandTest {
     private Map<String, Object> lastOptions;
 
     @Override
-    public void deleteAll(String row, String column, Long timestamp,
-      Map<String, Object> options) {
+    public void deleteAll(String row, String column, Long timestamp, Map<String, Object> options) {
       this.lastRow = row;
       this.lastColumn = column;
       this.lastTimestamp = timestamp;

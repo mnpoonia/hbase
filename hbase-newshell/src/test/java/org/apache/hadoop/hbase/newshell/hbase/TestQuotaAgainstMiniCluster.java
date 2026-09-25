@@ -17,6 +17,7 @@
  */
 package org.apache.hadoop.hbase.newshell.hbase;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -32,9 +33,8 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /**
- * End-to-end verification of {@link DefaultShellAdmin#setQuota} and
- * {@link DefaultShellAdmin#listQuotas} against a real minicluster with quota support enabled -
- * mirrors {@code hbase/quotas.rb}'s THROTTLE quota forms.
+ * End-to-end verification of quota shell APIs against a real minicluster with quota support
+ * enabled - mirrors {@code hbase/quotas.rb}'s THROTTLE forms and rpc/exceed-throttle switches.
  */
 @Tag(LargeTests.TAG)
 @Tag(ClientTests.TAG)
@@ -61,8 +61,8 @@ public class TestQuotaAgainstMiniCluster {
     ShellAdmin admin = new DefaultShellAdmin(connection.getAdmin());
     String user = "newshell_quota_user";
 
-    admin.setQuota(Map.of("TYPE", "THROTTLE", "USER", user, "THROTTLE_TYPE", "REQUEST", "LIMIT",
-      "10req/sec"));
+    admin.setQuota(
+      Map.of("TYPE", "THROTTLE", "USER", user, "THROTTLE_TYPE", "REQUEST", "LIMIT", "10req/sec"));
 
     List<List<String>> rows = admin.listQuotas(Map.of("USER", user));
     assertTrue(rows.stream().anyMatch(row -> row.get(0).contains(user)));
@@ -85,5 +85,47 @@ public class TestQuotaAgainstMiniCluster {
     assertTrue(rows.stream().anyMatch(row -> row.get(0).contains(namespace)));
 
     admin.setQuota(Map.of("TYPE", "THROTTLE", "NAMESPACE", namespace, "LIMIT", "NONE"));
+  }
+
+  @Test
+  public void rpcThrottleSwitchRoundTrips() throws Exception {
+    ShellAdmin admin = new DefaultShellAdmin(connection.getAdmin());
+
+    boolean beforeDisable = admin.switchRpcThrottle(false);
+    assertFalse(admin.isRpcThrottleEnabled());
+    boolean beforeEnable = admin.switchRpcThrottle(true);
+    assertFalse(beforeEnable);
+    assertTrue(admin.isRpcThrottleEnabled());
+    // restore prior state if the cluster started disabled
+    if (!beforeDisable) {
+      admin.switchRpcThrottle(false);
+    }
+  }
+
+  @Test
+  public void exceedThrottleQuotaSwitchRoundTrips() throws Exception {
+    ShellAdmin admin = new DefaultShellAdmin(connection.getAdmin());
+
+    // Enabling exceed-throttle requires region-server READ+WRITE quotas in seconds.
+    admin.setQuota(Map.of("TYPE", "THROTTLE", "REGIONSERVER", "all", "THROTTLE_TYPE", "WRITE",
+      "LIMIT", "100req/sec"));
+    admin.setQuota(Map.of("TYPE", "THROTTLE", "REGIONSERVER", "all", "THROTTLE_TYPE", "READ",
+      "LIMIT", "20req/sec"));
+
+    assertFalse(admin.switchExceedThrottleQuota(true));
+    assertTrue(admin.switchExceedThrottleQuota(true));
+    assertTrue(admin.switchExceedThrottleQuota(false));
+    assertFalse(admin.switchExceedThrottleQuota(false));
+
+    admin.setQuota(Map.of("TYPE", "THROTTLE", "REGIONSERVER", "all", "LIMIT", "NONE"));
+  }
+
+  @Test
+  public void listQuotaTableSizesSnapshotsAndSnapshotSizesDoNotThrow() throws Exception {
+    ShellAdmin admin = new DefaultShellAdmin(connection.getAdmin());
+
+    assertDoesNotThrow(admin::listQuotaTableSizes);
+    assertDoesNotThrow(() -> admin.listQuotaSnapshots(Map.of()));
+    assertDoesNotThrow(admin::listSnapshotSizes);
   }
 }

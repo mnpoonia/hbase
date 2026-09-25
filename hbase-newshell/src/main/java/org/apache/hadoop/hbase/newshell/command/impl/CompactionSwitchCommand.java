@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import org.apache.hadoop.hbase.newshell.command.ArgParsing;
 import org.apache.hadoop.hbase.newshell.command.CommandResult;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
 import org.apache.hadoop.hbase.newshell.command.ShellCommand;
@@ -30,8 +31,8 @@ import org.apache.hadoop.hbase.newshell.parser.ParsedCommand;
 import org.apache.yetus.audience.InterfaceAudience;
 
 /**
- * Ported from hbase-shell's {@code shell/commands/compaction_switch.rb}: an enable/disable
- * boolean plus zero or more trailing region server names (all servers when omitted). Returns a
+ * Ported from hbase-shell's {@code shell/commands/compaction_switch.rb}: an enable/disable boolean
+ * plus zero or more trailing region server names (all servers when omitted). Returns a
  * SERVER/PREV_STATE row per affected server.
  */
 @InterfaceAudience.Private
@@ -54,7 +55,7 @@ public final class CompactionSwitchCommand implements ShellCommand {
     if (positionals.isEmpty()) {
       throw new ShellCommandException("compaction_switch requires a true|false argument");
     }
-    boolean enabled = parseBoolean(positionals.get(0));
+    boolean enabled = ArgParsing.parseBoolean(positionals.get(0));
     List<String> serverNames = new ArrayList<>();
     for (Object server : positionals.subList(1, positionals.size())) {
       serverNames.add(String.valueOf(server));
@@ -67,10 +68,4 @@ public final class CompactionSwitchCommand implements ShellCommand {
     return new TabularResult(List.of("SERVER", "PREV_STATE"), rows);
   }
 
-  private static boolean parseBoolean(Object value) {
-    if (value instanceof Boolean) {
-      return (Boolean) value;
-    }
-    return Boolean.parseBoolean(String.valueOf(value));
-  }
 }

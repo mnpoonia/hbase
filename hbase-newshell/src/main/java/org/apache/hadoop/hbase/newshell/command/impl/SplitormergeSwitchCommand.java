@@ -18,6 +18,7 @@
 package org.apache.hadoop.hbase.newshell.command.impl;
 
 import java.io.IOException;
+import org.apache.hadoop.hbase.newshell.command.ArgParsing;
 import org.apache.hadoop.hbase.newshell.command.CommandResult;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
 import org.apache.hadoop.hbase.newshell.command.ShellCommand;
@@ -28,8 +29,7 @@ import org.apache.yetus.audience.InterfaceAudience;
 
 /**
  * Ported from hbase-shell's {@code shell/commands/splitormerge_switch.rb}: a switch type
- * ({@code 'SPLIT'} or {@code 'MERGE'}) plus an enable/disable boolean, returns the previous
- * state.
+ * ({@code 'SPLIT'} or {@code 'MERGE'}) plus an enable/disable boolean, returns the previous state.
  */
 @InterfaceAudience.Private
 public final class SplitormergeSwitchCommand implements ShellCommand {
@@ -53,15 +53,9 @@ public final class SplitormergeSwitchCommand implements ShellCommand {
         "splitormerge_switch requires a switch type ('SPLIT'|'MERGE') and a true|false argument");
     }
     String switchType = String.valueOf(positionals.get(0));
-    boolean enabled = parseBoolean(positionals.get(1));
+    boolean enabled = ArgParsing.parseBoolean(positionals.get(1));
     boolean previousState = context.admin().splitOrMergeSwitch(switchType, enabled);
     return TextResult.of(String.valueOf(previousState));
   }
 
-  private static boolean parseBoolean(Object value) {
-    if (value instanceof Boolean) {
-      return (Boolean) value;
-    }
-    return Boolean.parseBoolean(String.valueOf(value));
-  }
 }

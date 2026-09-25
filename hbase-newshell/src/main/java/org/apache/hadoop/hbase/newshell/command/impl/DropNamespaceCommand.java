@@ -27,8 +27,8 @@ import org.apache.hadoop.hbase.newshell.parser.ParsedCommand;
 import org.apache.yetus.audience.InterfaceAudience;
 
 /**
- * Ported from hbase-shell's {@code shell/commands/drop_namespace.rb}: the namespace must be
- * empty (no tables), per the real {@code Admin#deleteNamespace} guard.
+ * Ported from hbase-shell's {@code shell/commands/drop_namespace.rb}: the namespace must be empty
+ * (no tables), per the real {@code Admin#deleteNamespace} guard.
  */
 @InterfaceAudience.Private
 public final class DropNamespaceCommand implements ShellCommand {

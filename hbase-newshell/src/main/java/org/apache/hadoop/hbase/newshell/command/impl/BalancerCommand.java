@@ -19,12 +19,12 @@ package org.apache.hadoop.hbase.newshell.command.impl;
 
 import java.io.IOException;
 import java.util.List;
-import org.apache.hadoop.hbase.client.BalanceResponse;
 import org.apache.hadoop.hbase.newshell.command.CommandResult;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
 import org.apache.hadoop.hbase.newshell.command.ShellCommand;
 import org.apache.hadoop.hbase.newshell.command.ShellCommandException;
 import org.apache.hadoop.hbase.newshell.command.TextResult;
+import org.apache.hadoop.hbase.newshell.hbase.BalanceResult;
 import org.apache.hadoop.hbase.newshell.parser.ParsedCommand;
 import org.apache.yetus.audience.InterfaceAudience;
 
@@ -59,10 +59,10 @@ public final class BalancerCommand implements ShellCommand {
         throw new ShellCommandException("balancer accepts only 'dry_run' and/or 'ignore_rit'");
       }
     }
-    BalanceResponse response = context.admin().balance(dryRun, ignoreRit);
-    if (response.isBalancerRan()) {
+    BalanceResult response = context.admin().balance(dryRun, ignoreRit);
+    if (response.ran()) {
       return new TextResult(List.of("Balancer ran", "Moves calculated: "
-        + response.getMovesCalculated() + ", moves executed: " + response.getMovesExecuted()));
+        + response.movesCalculated() + ", moves executed: " + response.movesExecuted()));
     }
     return TextResult.of("Balancer did not run. See logs for details.");
   }

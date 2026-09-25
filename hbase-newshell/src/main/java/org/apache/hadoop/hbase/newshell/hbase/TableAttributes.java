@@ -30,26 +30,26 @@ import org.apache.yetus.audience.InterfaceAudience;
  * key, e.g. {@code SPLITS => [...], REGION_REPLICATION => 3}) to a {@link TableDescriptorBuilder}.
  * Ported from the generic dispatch in hbase-shell's {@code hbase/admin.rb#update_tdb_from_arg} -
  * each supported attribute is a single map entry rather than a hand-written
- * {@code if (x != null) builder.setX(...)} branch, same rationale as {@link ColumnFamilyAttributes}.
- * {@code SPLITS} is handled separately from the declarative map since it isn't a
- * {@link TableDescriptorBuilder} setter - it is passed to {@code Admin.createTable} as pre-split
- * region boundaries. Attributes not listed here (e.g. {@code CONFIGURATION}, coprocessors,
- * erasure coding, normalizer sizing, split/flush policy class names) are explicitly out of scope
- * for the pilot slice and are silently ignored.
+ * {@code if (x != null) builder.setX(...)} branch, same rationale as
+ * {@link ColumnFamilyAttributes}. {@code SPLITS} is handled separately from the declarative map
+ * since it isn't a {@link TableDescriptorBuilder} setter - it is passed to
+ * {@code Admin.createTable} as pre-split region boundaries. Attributes not listed here (e.g.
+ * {@code CONFIGURATION}, coprocessors, erasure coding, normalizer sizing, split/flush policy class
+ * names) are explicitly out of scope for the pilot slice and are silently ignored.
  */
 @InterfaceAudience.Private
 final class TableAttributes {
-  private static final Map<String, BiConsumer<TableDescriptorBuilder, Object>> SETTERS = Map.of(
-    "MAX_FILESIZE", (builder, value) -> builder.setMaxFileSize(toLong(value)),
-    "MEMSTORE_FLUSHSIZE", (builder, value) -> builder.setMemStoreFlushSize(toLong(value)),
-    "READONLY", (builder, value) -> builder.setReadOnly(toBoolean(value)),
-    "COMPACTION_ENABLED", (builder, value) -> builder.setCompactionEnabled(toBoolean(value)),
-    "SPLIT_ENABLED", (builder, value) -> builder.setSplitEnabled(toBoolean(value)),
-    "MERGE_ENABLED", (builder, value) -> builder.setMergeEnabled(toBoolean(value)),
-    "NORMALIZATION_ENABLED", (builder, value) -> builder.setNormalizationEnabled(toBoolean(value)),
-    "DURABILITY", (builder, value) -> builder.setDurability(Durability.valueOf(value.toString())),
-    "REGION_REPLICATION", (builder, value) -> builder.setRegionReplication(toInt(value)),
-    "PRIORITY", (builder, value) -> builder.setPriority(toInt(value)));
+  private static final Map<String, BiConsumer<TableDescriptorBuilder, Object>> SETTERS =
+    Map.of("MAX_FILESIZE", (builder, value) -> builder.setMaxFileSize(toLong(value)),
+      "MEMSTORE_FLUSHSIZE", (builder, value) -> builder.setMemStoreFlushSize(toLong(value)),
+      "READONLY", (builder, value) -> builder.setReadOnly(toBoolean(value)), "COMPACTION_ENABLED",
+      (builder, value) -> builder.setCompactionEnabled(toBoolean(value)), "SPLIT_ENABLED",
+      (builder, value) -> builder.setSplitEnabled(toBoolean(value)), "MERGE_ENABLED",
+      (builder, value) -> builder.setMergeEnabled(toBoolean(value)), "NORMALIZATION_ENABLED",
+      (builder, value) -> builder.setNormalizationEnabled(toBoolean(value)), "DURABILITY",
+      (builder, value) -> builder.setDurability(Durability.valueOf(value.toString())),
+      "REGION_REPLICATION", (builder, value) -> builder.setRegionReplication(toInt(value)),
+      "PRIORITY", (builder, value) -> builder.setPriority(toInt(value)));
 
   private TableAttributes() {
   }

@@ -23,8 +23,8 @@ import org.apache.yetus.audience.InterfaceAudience;
 /**
  * Immutable configuration passed to a {@link TerminalProvider} when opening a
  * {@link ShellTerminal}. Deliberately holds only plain data - no reference to any concrete
- * terminal/line-editing library - so that {@code TerminalProvider} implementations remain the
- * only place a particular backend (JLine, or any future replacement) is named.
+ * terminal/line-editing library - so that {@code TerminalProvider} implementations remain the only
+ * place a particular backend (JLine, or any future replacement) is named.
  */
 @InterfaceAudience.Private
 public final class TerminalConfig {

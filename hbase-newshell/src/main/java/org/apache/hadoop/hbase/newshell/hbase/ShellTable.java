@@ -23,10 +23,9 @@ import java.util.Map;
 import org.apache.yetus.audience.InterfaceAudience;
 
 /**
- * Narrow, newshell-specific facade over the data-plane operations the pilot commands need.
- * Command implementations depend on this interface, never on
- * {@code org.apache.hadoop.hbase.client.Table} directly - {@link DefaultShellTable} is the only
- * class that does.
+ * Narrow, newshell-specific facade over the data-plane operations the pilot commands need. Command
+ * implementations depend on this interface, never on {@code org.apache.hadoop.hbase.client.Table}
+ * directly - {@link DefaultShellTable} is the only class that does.
  */
 @InterfaceAudience.Private
 public interface ShellTable {

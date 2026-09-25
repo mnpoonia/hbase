@@ -66,8 +66,8 @@ public class AlterCommandTest {
 
   @Test
   public void altersMultipleColumnFamilies() throws Exception {
-    var parsed =
-      ShellLineParser.parse("alter 't1', {NAME => 'f1', TTL => 100}, {NAME => 'f2', VERSIONS => 3}");
+    var parsed = ShellLineParser
+      .parse("alter 't1', {NAME => 'f1', TTL => 100}, {NAME => 'f2', VERSIONS => 3}");
     command.execute(parsed, context);
 
     assertEquals(2, admin.lastFamilySpecs.size());

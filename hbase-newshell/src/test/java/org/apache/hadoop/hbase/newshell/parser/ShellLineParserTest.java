@@ -145,12 +145,14 @@ public class ShellLineParserTest {
 
   @Test
   public void throwsOnMalformedHashLiteral() {
-    assertThrows(ShellParseException.class, () -> ShellLineParser.parse("create 't1', {NAME 'f1'}"));
+    assertThrows(ShellParseException.class,
+      () -> ShellLineParser.parse("create 't1', {NAME 'f1'}"));
   }
 
   @Test
   public void throwsOnUnclosedHashLiteral() {
-    assertThrows(ShellParseException.class, () -> ShellLineParser.parse("create 't1', {NAME => 'f1'"));
+    assertThrows(ShellParseException.class,
+      () -> ShellLineParser.parse("create 't1', {NAME => 'f1'"));
   }
 
   @Test

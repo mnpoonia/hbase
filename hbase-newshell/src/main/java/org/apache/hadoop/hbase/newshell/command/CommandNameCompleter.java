@@ -25,9 +25,9 @@ import org.apache.hadoop.hbase.newshell.spi.Completer;
 import org.apache.yetus.audience.InterfaceAudience;
 
 /**
- * Completes the command name (the first whitespace-delimited token of the line) against every
- * name registered in a {@link CommandRegistry}. Does not attempt to complete command arguments
- * (table names, etc.) - only the leading command token.
+ * Completes the command name (the first whitespace-delimited token of the line) against every name
+ * registered in a {@link CommandRegistry}. Does not attempt to complete command arguments (table
+ * names, etc.) - only the leading command token.
  */
 @InterfaceAudience.Private
 public final class CommandNameCompleter implements Completer {

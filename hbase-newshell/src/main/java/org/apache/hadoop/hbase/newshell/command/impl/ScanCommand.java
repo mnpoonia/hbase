@@ -18,9 +18,6 @@
 package org.apache.hadoop.hbase.newshell.command.impl;
 
 import java.io.IOException;
-import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -30,6 +27,7 @@ import org.apache.hadoop.hbase.newshell.command.ShellCommand;
 import org.apache.hadoop.hbase.newshell.command.ShellCommandException;
 import org.apache.hadoop.hbase.newshell.command.TabularResult;
 import org.apache.hadoop.hbase.newshell.hbase.CellView;
+import org.apache.hadoop.hbase.newshell.hbase.CellViews;
 import org.apache.hadoop.hbase.newshell.hbase.ScanResult;
 import org.apache.hadoop.hbase.newshell.hbase.ScanRow;
 import org.apache.hadoop.hbase.newshell.parser.ParsedCommand;
@@ -67,12 +65,7 @@ public final class ScanCommand implements ShellCommand {
     List<List<String>> rows = new ArrayList<>();
     for (ScanRow row : result.rows()) {
       for (CellView cell : row.cells()) {
-        String column = cell.family() + ":" + cell.qualifier();
-        String timestamp =
-          LocalDateTime.ofInstant(Instant.ofEpochMilli(cell.timestamp()), ZoneId.systemDefault())
-            .toString();
-        String cellText = "timestamp=" + timestamp + ", value=" + cell.value();
-        rows.add(List.of(row.row(), column + " " + cellText));
+        rows.add(List.of(row.row(), CellViews.column(cell) + " " + CellViews.formatCell(cell)));
       }
     }
     return new TabularResult(HEADER, rows);

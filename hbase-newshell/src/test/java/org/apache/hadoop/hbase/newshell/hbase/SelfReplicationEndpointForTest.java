@@ -22,11 +22,10 @@ import org.apache.hadoop.hbase.replication.BaseReplicationEndpoint;
 import org.apache.hadoop.hbase.replication.WALEntryFilter;
 
 /**
- * A no-op replication endpoint whose only purpose is
- * {@link #canReplicateToSameCluster()} returning {@code true}, so
- * {@code add_peer}/{@code list_peers}/{@code remove_peer} minicluster tests can add a peer
- * pointing back at the same single-node minicluster without HBase's normal
- * "should not replicate to itself" guard rejecting it.
+ * A no-op replication endpoint whose only purpose is {@link #canReplicateToSameCluster()} returning
+ * {@code true}, so {@code add_peer}/{@code list_peers}/{@code remove_peer} minicluster tests can
+ * add a peer pointing back at the same single-node minicluster without HBase's normal "should not
+ * replicate to itself" guard rejecting it.
  */
 public class SelfReplicationEndpointForTest extends BaseReplicationEndpoint {
   @Override

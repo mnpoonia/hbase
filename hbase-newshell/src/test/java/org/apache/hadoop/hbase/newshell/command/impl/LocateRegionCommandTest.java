@@ -43,7 +43,8 @@ public class LocateRegionCommandTest {
     public RegionLocationView locateRegion(String tableName, String rowKey) {
       this.lastTableName = tableName;
       this.lastRowKey = rowKey;
-      return new RegionLocationView("host1:1234", "t1,,123.abc.");
+      return new RegionLocationView("host1:1234",
+        "{ENCODED => abc, NAME => 't1,,123.abc.', STARTKEY => '', ENDKEY => ''}");
     }
   }
 
@@ -60,6 +61,9 @@ public class LocateRegionCommandTest {
     assertEquals("t1", admin.lastTableName);
     assertEquals("row0", admin.lastRowKey);
     assertEquals(List.of("HOST", "REGION"), result.header());
-    assertEquals(List.of(List.of("host1:1234", "t1,,123.abc.")), result.rows());
+    assertEquals(
+      List.of(List.of("host1:1234",
+        "{ENCODED => abc, NAME => 't1,,123.abc.', STARTKEY => '', ENDKEY => ''}")),
+      result.rows());
   }
 }

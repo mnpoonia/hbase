@@ -55,7 +55,7 @@ run_step() {
   echo "================================================================"
   echo "newshell> ${cmd}"
   echo "================================================================"
-  echo "${cmd}" | tr ';' '\n' | bin/hbase newshell -n
+  echo "${cmd}" | tr ';' '\n' | bin/hbase newshell -n --yes
   sleep "${PAUSE_SECONDS}"
 }
 

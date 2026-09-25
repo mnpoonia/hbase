@@ -18,6 +18,8 @@
 package org.apache.hadoop.hbase.newshell.command.impl;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import org.apache.hadoop.hbase.newshell.command.CommandResult;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
 import org.apache.hadoop.hbase.newshell.command.ShellCommand;
@@ -27,8 +29,9 @@ import org.apache.hadoop.hbase.newshell.parser.ParsedCommand;
 import org.apache.yetus.audience.InterfaceAudience;
 
 /**
- * Ported from hbase-shell's {@code shell/commands/truncate_preserve.rb}: {@code
- * Admin.truncateTable} with {@code preserveSplits=true}.
+ * Ported from hbase-shell's {@code shell/commands/truncate_preserve.rb} /
+ * {@code admin.rb#truncate_preserve}: {@code Admin.truncateTable} with
+ * {@code preserveSplits=true}, including the Ruby progress lines.
  */
 @InterfaceAudience.Private
 public final class TruncatePreserveCommand implements ShellCommand {
@@ -49,7 +52,13 @@ public final class TruncatePreserveCommand implements ShellCommand {
       throw new ShellCommandException("truncate_preserve requires a table name argument");
     }
     String tableName = String.valueOf(command.positionalArgs().get(0));
+    List<String> lines = new ArrayList<>();
+    lines.add("Truncating '" + tableName + "' table (it may take a while):");
+    if (context.admin().isTableEnabled(tableName)) {
+      lines.add("Disabling table...");
+    }
+    lines.add("Truncating table...");
     context.admin().truncateTable(tableName, true);
-    return TextResult.of();
+    return new TextResult(lines);
   }
 }

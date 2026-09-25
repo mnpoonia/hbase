@@ -31,8 +31,8 @@ import org.apache.yetus.audience.InterfaceAudience;
 
 /**
  * Ported from hbase-shell's {@code shell/commands/describe.rb}: a single table-name positional
- * argument, printing enabled/disabled status, table attributes, and one line per column family.
- * The QUOTAS section is explicitly not ported for this pilot slice - "Quota is disabled" is always
+ * argument, printing enabled/disabled status, table attributes, and one line per column family. The
+ * QUOTAS section is explicitly not ported for this pilot slice - "Quota is disabled" is always
  * printed instead of checking whether the {@code hbase:quota} table actually exists.
  */
 @InterfaceAudience.Private

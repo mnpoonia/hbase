@@ -30,8 +30,8 @@ import org.apache.yetus.audience.InterfaceAudience;
  * Ported from hbase-shell's {@code shell/commands/get_table.rb}: in the Ruby REPL this binds a
  * table object to a variable for later method calls (e.g. {@code t1 = get_table 't1'}) and prints
  * nothing itself. newshell has no persistent variable/table-object binding, so this port only
- * validates the table exists (surfacing the same error a later {@code t1.help}-style use would
- * hit) and, like the original, produces no output of its own.
+ * validates the table exists (surfacing the same error a later {@code t1.help}-style use would hit)
+ * and, like the original, produces no output of its own.
  */
 @InterfaceAudience.Private
 public final class GetTableCommand implements ShellCommand {

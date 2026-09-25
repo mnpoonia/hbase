@@ -26,7 +26,10 @@ import org.apache.hadoop.hbase.newshell.command.TextResult;
 import org.apache.hadoop.hbase.newshell.parser.ParsedCommand;
 import org.apache.yetus.audience.InterfaceAudience;
 
-/** Ported from hbase-shell's {@code shell/commands/is_enabled.rb}: prints {@code true}/{@code false}. */
+/**
+ * Ported from hbase-shell's {@code shell/commands/is_enabled.rb}: prints
+ * {@code true}/{@code false}.
+ */
 @InterfaceAudience.Private
 public final class IsEnabledCommand implements ShellCommand {
   @Override

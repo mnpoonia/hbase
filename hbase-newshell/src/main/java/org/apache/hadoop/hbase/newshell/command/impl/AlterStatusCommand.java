@@ -53,10 +53,12 @@ public final class AlterStatusCommand implements ShellCommand {
     }
     String tableName = String.valueOf(command.positionalArgs().get(0));
     AlterStatusView status = context.admin().alterStatus(tableName);
+    // Ruby polls until RIT is empty then always prints "Done." — for a one-shot
+    // piped invocation we report a single snapshot plus the same trailing Done.
     if (status.totalRegions() == 0) {
-      return TextResult.of("All regions updated.");
+      return TextResult.of("All regions updated.", "Done.");
     }
     int updated = status.totalRegions() - status.regionsYetToUpdate();
-    return TextResult.of(updated + "/" + status.totalRegions() + " regions updated.");
+    return TextResult.of(updated + "/" + status.totalRegions() + " regions updated.", "Done.");
   }
 }

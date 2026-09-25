@@ -20,9 +20,9 @@ package org.apache.hadoop.hbase.newshell.parser;
 import org.apache.yetus.audience.InterfaceAudience;
 
 /**
- * Thrown when a typed line does not match the (small, fixed) grammar newshell understands -
- * either the legacy Ruby-hash-literal syntax or the native bareword/flag syntax. Never thrown for
- * "valid syntax, unknown command" - that is a command-registry-level concern, not a parse error.
+ * Thrown when a typed line does not match the (small, fixed) grammar newshell understands - either
+ * the legacy Ruby-hash-literal syntax or the native bareword/flag syntax. Never thrown for "valid
+ * syntax, unknown command" - that is a command-registry-level concern, not a parse error.
  */
 @InterfaceAudience.Private
 public class ShellParseException extends Exception {

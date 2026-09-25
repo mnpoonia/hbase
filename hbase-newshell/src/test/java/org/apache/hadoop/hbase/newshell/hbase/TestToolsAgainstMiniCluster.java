@@ -80,8 +80,7 @@ public class TestToolsAgainstMiniCluster {
 
     Admin realAdmin = connection.getAdmin();
     byte[] regionName = realAdmin.getRegions(TableName.valueOf(tableName)).get(0).getRegionName();
-    String encodedName =
-      realAdmin.getRegions(TableName.valueOf(tableName)).get(0).getEncodedName();
+    String encodedName = realAdmin.getRegions(TableName.valueOf(tableName)).get(0).getEncodedName();
     realAdmin.unassign(regionName, false);
 
     ShellAdmin admin = new DefaultShellAdmin(realAdmin);
@@ -108,6 +107,54 @@ public class TestToolsAgainstMiniCluster {
     assertTrue(realAdmin.tableExists(TableName.valueOf(tableName)));
     realAdmin.enableTable(TableName.valueOf(tableName));
     assertTrue(realAdmin.isTableEnabled(TableName.valueOf(tableName)));
+  }
+
+  @Test
+  public void listTableSnapshotsThenDeleteAllSnapshotsRoundTrips() throws Exception {
+    String tableName = "newshell_table_snap_list_test";
+    String snap1 = "newshell_table_snap_list_s1";
+    String snap2 = "newshell_table_snap_list_s2";
+    TEST_UTIL.createTable(TableName.valueOf(tableName), Bytes.toBytes("f1"));
+
+    ShellAdmin admin = new DefaultShellAdmin(connection.getAdmin());
+    admin.snapshot(tableName, snap1);
+    admin.snapshot(tableName, snap2);
+
+    assertEquals(2, admin.listTableSnapshots(tableName, ".*").size());
+    assertEquals(1, admin.listTableSnapshots(tableName, ".*_s1").size());
+    assertEquals(snap1, admin.listTableSnapshots(tableName, ".*_s1").get(0).name());
+
+    admin.deleteAllSnapshots("newshell_table_snap_list_s.*");
+    assertTrue(admin.listTableSnapshots(tableName, ".*").isEmpty());
+  }
+
+  @Test
+  public void deleteTableSnapshotsDeletesMatchingSnapshotsOnly() throws Exception {
+    String tableName = "newshell_delete_table_snaps_test";
+    String keep = "newshell_delete_table_snaps_keep";
+    String drop = "newshell_delete_table_snaps_drop";
+    TEST_UTIL.createTable(TableName.valueOf(tableName), Bytes.toBytes("f1"));
+
+    ShellAdmin admin = new DefaultShellAdmin(connection.getAdmin());
+    admin.snapshot(tableName, keep);
+    admin.snapshot(tableName, drop);
+
+    // Mirror delete_table_snapshots.rb: list then deleteSnapshot each name.
+    for (SnapshotInfo snapshot : admin.listTableSnapshots(tableName, ".*_drop")) {
+      admin.deleteSnapshot(snapshot.name());
+    }
+
+    List<SnapshotInfo> remaining = admin.listTableSnapshots(tableName, ".*");
+    assertEquals(1, remaining.size());
+    assertEquals(keep, remaining.get(0).name());
+    admin.deleteSnapshot(keep);
+  }
+
+  @Test
+  public void listSecurityCapabilitiesDoesNotThrow() throws Exception {
+    ShellAdmin admin = new DefaultShellAdmin(connection.getAdmin());
+    List<String> caps = admin.listSecurityCapabilities();
+    assertFalse(caps.isEmpty());
   }
 
   @Test
@@ -178,13 +225,88 @@ public class TestToolsAgainstMiniCluster {
       SelfReplicationEndpointForTest.class.getName()));
 
     admin.disablePeer(peerId);
-    assertTrue(admin.listPeers().stream()
-      .anyMatch(peer -> peer.peerId().equals(peerId) && !peer.enabled()));
+    assertTrue(
+      admin.listPeers().stream().anyMatch(peer -> peer.peerId().equals(peerId) && !peer.enabled()));
 
     admin.enablePeer(peerId);
-    assertTrue(admin.listPeers().stream()
-      .anyMatch(peer -> peer.peerId().equals(peerId) && peer.enabled()));
+    assertTrue(
+      admin.listPeers().stream().anyMatch(peer -> peer.peerId().equals(peerId) && peer.enabled()));
 
     admin.removePeer(peerId);
+  }
+
+  @Test
+  public void toolsChoresAndSwitchesDoNotThrow() throws Exception {
+    ShellAdmin admin = new DefaultShellAdmin(connection.getAdmin());
+    assertDoesNotThrow(admin::isInMaintenanceMode);
+    assertDoesNotThrow(admin::cleanerChoreEnabled);
+    assertDoesNotThrow(admin::snapshotCleanupEnabled);
+    assertDoesNotThrow(admin::peerModificationEnabled);
+    assertDoesNotThrow(admin::listDeadServers);
+    assertDoesNotThrow(admin::listLiveServers);
+    assertDoesNotThrow(admin::listUnknownServers);
+    assertDoesNotThrow(admin::regionsInTransition);
+    assertDoesNotThrow(admin::catalogJanitorRun);
+    assertDoesNotThrow(admin::cleanerChoreRun);
+    assertDoesNotThrow(admin::hbckChoreRun);
+    assertDoesNotThrow(admin::flushMasterStore);
+    assertDoesNotThrow(() -> admin.normalize(Map.of()));
+    assertDoesNotThrow(admin::zkDump);
+    assertDoesNotThrow(admin::walRollAll);
+    assertDoesNotThrow(admin::refreshMeta);
+
+    boolean previousCleaner = admin.cleanerChoreSwitch(false);
+    assertFalse(admin.cleanerChoreEnabled());
+    admin.cleanerChoreSwitch(previousCleaner);
+
+    boolean previousSnap = admin.snapshotCleanupSwitch(false);
+    admin.snapshotCleanupSwitch(previousSnap);
+  }
+
+  @Test
+  public void compactionStateAndClearBlockCacheRoundTrip() throws Exception {
+    String tableName = "newshell_compaction_state_test";
+    TEST_UTIL.createTable(TableName.valueOf(tableName), Bytes.toBytes("f1"));
+    ShellAdmin admin = new DefaultShellAdmin(connection.getAdmin());
+    assertEquals("NONE", admin.getCompactionState(tableName));
+    assertDoesNotThrow(() -> admin.clearBlockCache(tableName));
+  }
+
+  @Test
+  public void peerConfigMutatorsRoundTrip() throws Exception {
+    String peerId = "newshell_peer_cfg_" + UUID.randomUUID().toString().replace("-", "");
+    ShellAdmin admin = new DefaultShellAdmin(connection.getAdmin());
+    admin.addPeer(peerId, Map.of("CLUSTER_KEY", TEST_UTIL.getClusterKey(), "ENDPOINT_CLASSNAME",
+      SelfReplicationEndpointForTest.class.getName()));
+
+    admin.setPeerReplicateAll(peerId, false);
+    admin.setPeerSerial(peerId, true);
+    admin.setPeerNamespaces(peerId, List.of("default"));
+    admin.appendPeerNamespaces(peerId, List.of("hbase"));
+    admin.removePeerNamespaces(peerId, List.of("hbase"));
+    admin.setPeerBandwidth(peerId, 1024L * 1024L);
+    assertDoesNotThrow(() -> admin.showPeerTableCFs(peerId));
+    assertFalse(admin.getPeerConfigRows(peerId).isEmpty());
+    assertDoesNotThrow(admin::listPeerConfigRows);
+    assertDoesNotThrow(() -> admin.listReplicatedTables(".*"));
+
+    admin.removePeer(peerId);
+  }
+
+  @Test
+  public void enableThenDisableTableReplicationRoundTrip() throws Exception {
+    String tableName = "newshell_table_rep_test";
+    String peerId = "newshell_table_rep_peer_" + UUID.randomUUID().toString().replace("-", "");
+    TEST_UTIL.createTable(TableName.valueOf(tableName), Bytes.toBytes("f1"));
+    ShellAdmin admin = new DefaultShellAdmin(connection.getAdmin());
+    // enableTableReplication requires at least one peer to sync CF scopes against.
+    admin.addPeer(peerId, Map.of("CLUSTER_KEY", TEST_UTIL.getClusterKey(), "ENDPOINT_CLASSNAME",
+      SelfReplicationEndpointForTest.class.getName()));
+    try {
+      assertDoesNotThrow(() -> admin.enableTableReplication(tableName));
+      assertDoesNotThrow(() -> admin.disableTableReplication(tableName));
+    } finally {
+      admin.removePeer(peerId);
+    }
   }
 }

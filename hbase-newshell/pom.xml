@@ -28,12 +28,10 @@
   </parent>
   <artifactId>hbase-newshell</artifactId>
   <name>Apache HBase - New Shell</name>
-  <description>
-    Preview of a pure-Java, JLine-based shell for HBase, developed in parallel with
+  <description>Preview of a pure-Java, JLine-based shell for HBase, developed in parallel with
     hbase-shell (the existing JRuby-based shell). This module has no JRuby dependency.
     See the jline3-backend / jline4-backend profiles below for how the JLine
-    version-abstraction layer is wired up.
-  </description>
+    version-abstraction layer is wired up.</description>
   <dependencies>
     <!-- Intra-project dependencies -->
     <dependency>
@@ -61,6 +59,11 @@
     <dependency>
       <groupId>org.apache.hbase</groupId>
       <artifactId>hbase-client</artifactId>
+    </dependency>
+    <!-- For zk_dump (ZKWatcher / ZKDump), matching hbase-shell's admin.rb#zk_dump -->
+    <dependency>
+      <groupId>org.apache.hbase</groupId>
+      <artifactId>hbase-zookeeper</artifactId>
     </dependency>
     <!-- General dependencies -->
     <dependency>

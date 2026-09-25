@@ -48,8 +48,8 @@ public final class ListCommand implements ShellCommand {
   @Override
   public CommandResult execute(ParsedCommand command, ExecutionContext context)
     throws ShellCommandException, IOException {
-    String regex = command.positionalArgs().isEmpty() ? ".*"
-      : String.valueOf(command.positionalArgs().get(0));
+    String regex =
+      command.positionalArgs().isEmpty() ? ".*" : String.valueOf(command.positionalArgs().get(0));
     List<String> tableNames = context.admin().listTables(regex);
     List<List<String>> rows = new ArrayList<>();
     for (String tableName : tableNames) {

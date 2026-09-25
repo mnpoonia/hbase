@@ -50,7 +50,6 @@ public final class UserPermissionCommand implements ShellCommand {
     List<Object> positionals = command.positionalArgs();
     String regex = positionals.isEmpty() ? null : String.valueOf(positionals.get(0));
     List<List<String>> rows = context.admin().userPermission(regex);
-    return new TabularResult(List.of("User", "Namespace,Table,Family,Qualifier:Permission"),
-      rows);
+    return new TabularResult(List.of("User", "Namespace,Table,Family,Qualifier:Permission"), rows);
   }
 }

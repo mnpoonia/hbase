@@ -43,7 +43,7 @@ public final class VersionCommand implements ShellCommand {
 
   @Override
   public CommandResult execute(ParsedCommand command, ExecutionContext context) {
-    return TextResult.of(VersionInfo.getVersion() + ", r" + VersionInfo.getRevision() + ", "
-      + VersionInfo.getDate());
+    return TextResult.of(
+      VersionInfo.getVersion() + ", r" + VersionInfo.getRevision() + ", " + VersionInfo.getDate());
   }
 }

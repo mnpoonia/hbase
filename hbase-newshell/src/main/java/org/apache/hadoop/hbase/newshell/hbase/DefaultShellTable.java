@@ -45,13 +45,12 @@ import org.apache.yetus.audience.InterfaceAudience;
  * {@code hbase/table.rb#_get_internal} - handles {@code COLUMN} (including {@code cf:qualifier}
  * splitting and array-of-columns values), {@code VERSIONS}, and {@code TIMESTAMP} - and
  * {@code hbase/table.rb#_put_internal} - a single {@code cf:qualifier} column, required, plus an
- * optional {@code TIMESTAMP}; {@code _count_internal} (row count only, no {@code INTERVAL}
- * progress reporting, no {@code FILTER}); {@code _delete_internal}/{@code _deleteall_internal}
- * (single-version vs all-versions column delete, plus {@code ROWPREFIXFILTER}/{@code CACHE}
- * batched range delete); {@code _get_counter_internal}/{@code _incr_internal}/
- * {@code _append_internal}; and {@code _get_splits_internal}. FILTER/ATTRIBUTES/AUTHORIZATIONS/
- * CONSISTENCY/TIMERANGE (for {@code get}), ATTRIBUTES/VISIBILITY/TTL (for {@code put}) are
- * explicitly not ported.
+ * optional {@code TIMESTAMP}; {@code _count_internal} (row count only, no {@code INTERVAL} progress
+ * reporting, no {@code FILTER}); {@code _delete_internal}/{@code _deleteall_internal}
+ * (single-version vs all-versions column delete, plus {@code ROWPREFIXFILTER}/{@code CACHE} batched
+ * range delete); {@code _get_counter_internal}/{@code _incr_internal}/ {@code _append_internal};
+ * and {@code _get_splits_internal}. FILTER/ATTRIBUTES/AUTHORIZATIONS/ CONSISTENCY/TIMERANGE (for
+ * {@code get}), ATTRIBUTES/VISIBILITY/TTL (for {@code put}) are explicitly not ported.
  */
 @InterfaceAudience.Private
 public final class DefaultShellTable implements ShellTable {
@@ -214,8 +213,7 @@ public final class DefaultShellTable implements ShellTable {
       return null;
     }
     Cell cell = result.listCells().get(0);
-    return Bytes.toStringBinary(cell.getValueArray(), cell.getValueOffset(),
-      cell.getValueLength());
+    return Bytes.toStringBinary(cell.getValueArray(), cell.getValueOffset(), cell.getValueLength());
   }
 
   @Override

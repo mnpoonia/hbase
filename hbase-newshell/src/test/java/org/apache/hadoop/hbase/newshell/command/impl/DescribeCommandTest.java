@@ -60,10 +60,8 @@ public class DescribeCommandTest {
     TextResult result = (TextResult) command.execute(parsed, context);
 
     assertEquals("t1", admin.lastDescribedTable);
-    assertEquals(
-      List.of("Table t1 is ENABLED", "t1, {attr}", "COLUMN FAMILIES DESCRIPTION",
-        "{NAME => 'f1'}", "", "1 row(s)", "Quota is disabled"),
-      result.lines());
+    assertEquals(List.of("Table t1 is ENABLED", "t1, {attr}", "COLUMN FAMILIES DESCRIPTION",
+      "{NAME => 'f1'}", "", "1 row(s)", "Quota is disabled"), result.lines());
   }
 
   @Test

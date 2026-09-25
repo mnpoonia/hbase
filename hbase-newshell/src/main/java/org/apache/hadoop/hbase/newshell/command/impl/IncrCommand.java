@@ -46,8 +46,7 @@ public final class IncrCommand implements ShellCommand {
   public CommandResult execute(ParsedCommand command, ExecutionContext context)
     throws ShellCommandException, IOException {
     if (command.positionalArgs().size() < 3) {
-      throw new ShellCommandException(
-        "incr requires a table name, row key and column argument");
+      throw new ShellCommandException("incr requires a table name, row key and column argument");
     }
     String tableName = String.valueOf(command.positionalArgs().get(0));
     String row = String.valueOf(command.positionalArgs().get(1));

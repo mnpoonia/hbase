@@ -43,10 +43,10 @@ import org.apache.yetus.audience.InterfaceAudience;
  * {@code KEY => value} pairs with no enclosing {@code {}} (e.g. {@code SPLITS => ['1', '2']}) is
  * still one hash literal, exactly as if it were braced; this lets commands accept the same
  * trailing-hash argument hbase-shell does without requiring the caller to add braces.
- *
- * <p>This intentionally does not attempt to parse arbitrary Ruby expressions - only the literal
- * shapes hbase-shell's legacy syntax and newshell's native syntax actually use for the pilot
- * commands. Both syntaxes populate the same {@link ParsedCommand#options()} map.
+ * <p>
+ * This intentionally does not attempt to parse arbitrary Ruby expressions - only the literal shapes
+ * hbase-shell's legacy syntax and newshell's native syntax actually use for the pilot commands.
+ * Both syntaxes populate the same {@link ParsedCommand#options()} map.
  */
 @InterfaceAudience.Private
 public final class ShellLineParser {

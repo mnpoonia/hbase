@@ -28,9 +28,9 @@ import org.apache.yetus.audience.InterfaceAudience;
 
 /**
  * Ported from hbase-shell's {@code hbase/table.rb#_delete_internal}: table name, row key, a
- * required {@code family[:qualifier]} column, and an optional timestamp - deletes a single
- * version of that column, matching the ruby original's {@code all_version=false}. ATTRIBUTES and
- * VISIBILITY are explicitly not ported.
+ * required {@code family[:qualifier]} column, and an optional timestamp - deletes a single version
+ * of that column, matching the ruby original's {@code all_version=false}. ATTRIBUTES and VISIBILITY
+ * are explicitly not ported.
  */
 @InterfaceAudience.Private
 public final class DeleteCommand implements ShellCommand {

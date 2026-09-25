@@ -24,8 +24,8 @@ import org.apache.yetus.audience.InterfaceAudience;
 /**
  * One newshell command. Implementations are discovered via {@link CommandRegistry} through
  * {@link java.util.ServiceLoader} - adding a new command means adding a new implementation class
- * plus one {@code META-INF/services} line, with no change to the registry, the execution engine,
- * or any other command.
+ * plus one {@code META-INF/services} line, with no change to the registry, the execution engine, or
+ * any other command.
  */
 @InterfaceAudience.Private
 public interface ShellCommand {

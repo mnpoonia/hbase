@@ -29,8 +29,8 @@ import org.apache.hadoop.hbase.newshell.parser.ParsedCommand;
 import org.apache.yetus.audience.InterfaceAudience;
 
 /**
- * Ported from hbase-shell's {@code shell/commands/list_namespace.rb}: an optional regex
- * positional argument (defaulting to {@code .*}) filters the namespace names returned.
+ * Ported from hbase-shell's {@code shell/commands/list_namespace.rb}: an optional regex positional
+ * argument (defaulting to {@code .*}) filters the namespace names returned.
  */
 @InterfaceAudience.Private
 public final class ListNamespaceCommand implements ShellCommand {
@@ -48,8 +48,8 @@ public final class ListNamespaceCommand implements ShellCommand {
   @Override
   public CommandResult execute(ParsedCommand command, ExecutionContext context)
     throws ShellCommandException, IOException {
-    String regex = command.positionalArgs().isEmpty() ? ".*"
-      : String.valueOf(command.positionalArgs().get(0));
+    String regex =
+      command.positionalArgs().isEmpty() ? ".*" : String.valueOf(command.positionalArgs().get(0));
     List<String> namespaces = context.admin().listNamespaces(regex);
     List<List<String>> rows = new ArrayList<>();
     for (String namespace : namespaces) {

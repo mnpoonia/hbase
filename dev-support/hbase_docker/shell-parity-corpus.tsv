@@ -10,7 +10,7 @@ create '_newshell_parity_{ENGINE}_enable', 'cf';disable '_newshell_parity_{ENGIN
 create '_newshell_parity_{ENGINE}_drop', 'cf';disable '_newshell_parity_{ENGINE}_drop';drop '_newshell_parity_{ENGINE}_drop'	exact	drop confirmation message
 create '_newshell_parity_{ENGINE}_alter', 'cf';alter '_newshell_parity_{ENGINE}_alter', {NAME => 'cf', TTL => 100}	exact	alter confirmation message
 create '_newshell_parity_{ENGINE}_getput', 'cf';put '_newshell_parity_{ENGINE}_getput', 'r1', 'cf:c1', 'v1';get '_newshell_parity_{ENGINE}_getput', 'r1'	smoke	put/get round trip; cell timestamp is real wall-clock time and differs run to run
-add_peer '{ENGINE}_parity_peer', CLUSTER_KEY => 'zk1,zk2,zk3:2181:/hbase';list_peers;remove_peer '{ENGINE}_parity_peer'	exact	replication peer add/list/remove
+add_peer '{ENGINE}_parity_peer', CLUSTER_KEY => '{CLUSTER_KEY}';list_peers;remove_peer '{ENGINE}_parity_peer'	exact	replication peer add/list/remove
 create '_newshell_parity_{ENGINE}_snap', 'cf';snapshot '_newshell_parity_{ENGINE}_snap', '_newshell_parity_{ENGINE}_snap_snap';list_snapshots;delete_snapshot '_newshell_parity_{ENGINE}_snap_snap'	smoke	list_snapshots includes a real creation timestamp that differs run to run
 decommission_regionservers ['{HOST}'];list_decommissioned_regionservers;recommission_regionserver '{HOST}'	exact	decommission/list/recommission round trip
 version	exact	static build metadata, identical for both engines against the same binary
@@ -20,18 +20,18 @@ create '_newshell_parity_{ENGINE}_delete', 'cf';put '_newshell_parity_{ENGINE}_d
 create '_newshell_parity_{ENGINE}_deleteall', 'cf';put '_newshell_parity_{ENGINE}_deleteall', 'r1', 'cf:c1', 'v1';put '_newshell_parity_{ENGINE}_deleteall', 'r1', 'cf:c2', 'v2';deleteall '_newshell_parity_{ENGINE}_deleteall', 'r1';get '_newshell_parity_{ENGINE}_deleteall', 'r1'	exact	deleteall has no stdout of its own; verified via a follow-up get
 create '_newshell_parity_{ENGINE}_getcounter', 'cf';incr '_newshell_parity_{ENGINE}_getcounter', 'r1', 'cf:c', 5;get_counter '_newshell_parity_{ENGINE}_getcounter', 'r1', 'cf:c'	exact	COUNTER VALUE line
 create '_newshell_parity_{ENGINE}_incr', 'cf';incr '_newshell_parity_{ENGINE}_incr', 'r1', 'cf:c', 1;incr '_newshell_parity_{ENGINE}_incr', 'r1', 'cf:c', 2	exact	COUNTER VALUE line after two accumulating increments
-create '_newshell_parity_{ENGINE}_truncate', 'cf';put '_newshell_parity_{ENGINE}_truncate', 'r1', 'cf:c1', 'v1';truncate '_newshell_parity_{ENGINE}_truncate'	smoke	ruby prints "Truncating/Disabling/Truncating table..." progress messages the Java port does not emit yet (Important Issue tracked separately)
-create '_newshell_parity_{ENGINE}_truncp', 'cf', {SPLITS => ['1000', '2000']};truncate_preserve '_newshell_parity_{ENGINE}_truncp'	smoke	same progress-message divergence as truncate
+create '_newshell_parity_{ENGINE}_truncate', 'cf';put '_newshell_parity_{ENGINE}_truncate', 'r1', 'cf:c1', 'v1';truncate '_newshell_parity_{ENGINE}_truncate'	exact	truncate progress lines (Truncating/Disabling/Truncating table...)
+create '_newshell_parity_{ENGINE}_truncp', 'cf', {SPLITS => ['1000', '2000']};truncate_preserve '_newshell_parity_{ENGINE}_truncp'	exact	truncate_preserve progress lines match truncate
 create '_newshell_parity_{ENGINE}_append', 'cf';put '_newshell_parity_{ENGINE}_append', 'r1', 'cf:c', 'a';append '_newshell_parity_{ENGINE}_append', 'r1', 'cf:c', 'b'	exact	CURRENT VALUE line
 create '_newshell_parity_{ENGINE}_splits', 'cf', {SPLITS => ['1000', '2000']};get_splits '_newshell_parity_{ENGINE}_splits'	exact	total-splits line plus one split key per line
 balance_switch false;balance_switch true	exact	the only shell command real ops scripts (bin/graceful_stop.sh, bin/rolling-restart.sh) actually pipe via 'shell -n'; exercises -n/piped-stdin one-shot semantics end to end
-create '_newshell_parity_{ENGINE}_disall', 'cf';disable_all '_newshell_parity_{ENGINE}_disall'	smoke	legacy shell crashes (NoMethodError) reading its y/n confirmation from exhausted piped stdin; newshell's one-shot port intentionally skips the prompt (see REMAINING_WORK.md)
+create '_newshell_parity_{ENGINE}_disall', 'cf';disable_all '_newshell_parity_{ENGINE}_disall'	smoke	legacy shell crashes (NoMethodError) reading its y/n confirmation from exhausted piped stdin; newshell requires --yes (harness: bin/hbase newshell -n --yes)
 create '_newshell_parity_{ENGINE}_isdis', 'cf';disable '_newshell_parity_{ENGINE}_isdis';is_disabled '_newshell_parity_{ENGINE}_isdis'	exact	is_disabled boolean-style check
-create '_newshell_parity_{ENGINE}_dropall', 'cf';disable '_newshell_parity_{ENGINE}_dropall';drop_all '_newshell_parity_{ENGINE}_dropall'	smoke	legacy shell crashes (NoMethodError) reading its y/n confirmation from exhausted piped stdin; newshell's one-shot port intentionally skips the prompt (see REMAINING_WORK.md)
-create '_newshell_parity_{ENGINE}_enaall', 'cf';disable '_newshell_parity_{ENGINE}_enaall';enable_all '_newshell_parity_{ENGINE}_enaall'	smoke	legacy shell crashes (NoMethodError) reading its y/n confirmation from exhausted piped stdin; newshell's one-shot port intentionally skips the prompt (see REMAINING_WORK.md)
+create '_newshell_parity_{ENGINE}_dropall', 'cf';disable '_newshell_parity_{ENGINE}_dropall';drop_all '_newshell_parity_{ENGINE}_dropall'	smoke	legacy shell crashes (NoMethodError) reading its y/n confirmation from exhausted piped stdin; newshell requires --yes (harness passes --yes)
+create '_newshell_parity_{ENGINE}_enaall', 'cf';disable '_newshell_parity_{ENGINE}_enaall';enable_all '_newshell_parity_{ENGINE}_enaall'	smoke	legacy shell crashes (NoMethodError) reading its y/n confirmation from exhausted piped stdin; newshell requires --yes (harness passes --yes)
 create '_newshell_parity_{ENGINE}_isena', 'cf';is_enabled '_newshell_parity_{ENGINE}_isena'	exact	is_enabled boolean-style check
 show_filters	exact	static list of registered Filter classes, identical for both engines against the same binary
-create '_newshell_parity_{ENGINE}_altst', 'cf';alter '_newshell_parity_{ENGINE}_altst', {NAME => 'cf', TTL => 100};alter_status '_newshell_parity_{ENGINE}_altst'	smoke	region-update progress count; single-region table converges immediately but the Ruby original still polls, so timing can shift the reported count
+create '_newshell_parity_{ENGINE}_altst', 'cf';alter '_newshell_parity_{ENGINE}_altst', {NAME => 'cf', TTL => 100};alter_status '_newshell_parity_{ENGINE}_altst'	smoke	region-update progress count plus trailing Done.; single-region table converges immediately but the Ruby original still polls, so timing can shift the reported count
 create '_newshell_parity_{ENGINE}_altas', 'cf';alter_async '_newshell_parity_{ENGINE}_altas', {NAME => 'cf', TTL => 100}	exact	alter_async has no stdout of its own (does not wait/announce, unlike alter)
 create '_newshell_parity_{ENGINE}_gett', 'cf';get_table '_newshell_parity_{ENGINE}_gett'	exact	get_table has no stdout of its own (Ruby binds a variable; newshell only validates existence)
 create '_newshell_parity_{ENGINE}_locrgn', 'cf';locate_region '_newshell_parity_{ENGINE}_locrgn', 'r1'	smoke	region name embeds a per-create-time encoded hash that differs run to run
@@ -46,13 +46,59 @@ create_namespace '_newshell_parity_{ENGINE}_nsdesc';describe_namespace '_newshel
 create_namespace '_newshell_parity_{ENGINE}_nslist';list_namespace '_newshell_parity_{ENGINE}_nslist'	exact	namespace listing filtered to this run's own namespace name
 create_namespace '_newshell_parity_{ENGINE}_nstbls';create '_newshell_parity_{ENGINE}_nstbls:t1', 'cf';list_namespace_tables '_newshell_parity_{ENGINE}_nstbls'	exact	table listing scoped to this run's own namespace
 create '_newshell_parity_{ENGINE}_flush', 'cf';put '_newshell_parity_{ENGINE}_flush', 'r1', 'cf:c1', 'v1';flush '_newshell_parity_{ENGINE}_flush'	exact	flush has no stdout of its own; verified it does not throw after a put
-add_peer '{ENGINE}_parity_peer2', CLUSTER_KEY => 'zk1,zk2,zk3:2181:/hbase';disable_peer '{ENGINE}_parity_peer2';enable_peer '{ENGINE}_parity_peer2';remove_peer '{ENGINE}_parity_peer2'	exact	replication peer disable/enable round trip; neither has stdout of its own beyond the add/remove confirmations already covered by the add_peer/list_peers/remove_peer row
+add_peer '{ENGINE}_parity_peer2', CLUSTER_KEY => '{CLUSTER_KEY}';disable_peer '{ENGINE}_parity_peer2';enable_peer '{ENGINE}_parity_peer2';remove_peer '{ENGINE}_parity_peer2'	exact	replication peer disable/enable round trip; neither has stdout of its own beyond the add/remove confirmations already covered by the add_peer/list_peers/remove_peer row
 create '_newshell_parity_{ENGINE}_snaprt', 'cf';snapshot '_newshell_parity_{ENGINE}_snaprt', '_newshell_parity_{ENGINE}_snaprt_snap';disable '_newshell_parity_{ENGINE}_snaprt';restore_snapshot '_newshell_parity_{ENGINE}_snaprt_snap';enable '_newshell_parity_{ENGINE}_snaprt';clone_snapshot '_newshell_parity_{ENGINE}_snaprt_snap', '_newshell_parity_{ENGINE}_snaprt_clone';delete_snapshot '_newshell_parity_{ENGINE}_snaprt_snap'	exact	clone_snapshot/restore_snapshot have no stdout of their own; surrounding disable/enable confirmations are already covered by other exact rows
+create '_newshell_parity_{ENGINE}_tabsnap', 'cf';snapshot '_newshell_parity_{ENGINE}_tabsnap', '_newshell_parity_{ENGINE}_tabsnap_s1';list_table_snapshots '_newshell_parity_{ENGINE}_tabsnap'	smoke	creation-time formatting differs slightly (JRuby Time.at vs Java DateTimeFormatter); names/table matching is what we verify
+create '_newshell_parity_{ENGINE}_delsnap', 'cf';snapshot '_newshell_parity_{ENGINE}_delsnap', '_newshell_parity_{ENGINE}_delsnap_s1';snapshot '_newshell_parity_{ENGINE}_delsnap', '_newshell_parity_{ENGINE}_delsnap_s2';delete_all_snapshot '_newshell_parity_{ENGINE}_delsnap_s.*' --yes	smoke	delete_all_snapshot confirmation/listing path; --yes bypasses TTY prompt (legacy shell still prompts from stdin)
+create '_newshell_parity_{ENGINE}_deltabsnap', 'cf';snapshot '_newshell_parity_{ENGINE}_deltabsnap', '_newshell_parity_{ENGINE}_deltabsnap_s1';delete_table_snapshots '_newshell_parity_{ENGINE}_deltabsnap' --yes	smoke	delete_table_snapshots confirmation path; --yes bypasses TTY prompt
 update_all_config	exact	update_all_config has no stdout of its own; verified it does not throw against the live cluster
+update_rsgroup_config 'default'	smoke	RSGroup feature may be disabled in this parity image; both engines reject similarly when unavailable; real correctness via unit tests
 set_quota TYPE => THROTTLE, USER => '_newshell_parity_{ENGINE}_quota', LIMIT => '10req/sec';list_quotas USER => '_newshell_parity_{ENGINE}_quota';set_quota TYPE => THROTTLE, USER => '_newshell_parity_{ENGINE}_quota', LIMIT => NONE	smoke	hbase.quota.enabled isn't set in this parity image, so both engines reject the command outright; real correctness is verified by TestQuotaAgainstMiniCluster
 revoke '_newshell_parity_{ENGINE}_user';user_permission	smoke	AccessController coprocessor isn't configured in this parity image, so revoke/user_permission can't be meaningfully exercised here; real correctness is verified by TestGrantAgainstMiniCluster
 add_labels '_newshell_parity_{ENGINE}_label';list_labels '_newshell_parity_{ENGINE}_label'	smoke	VisibilityController coprocessor isn't configured in this parity image, so add_labels/list_labels can't be meaningfully exercised here; real correctness is verified by TestVisibilityLabelsAgainstMiniCluster
+list_quota_table_sizes	smoke	hbase.quota.enabled isn't set in this parity image; both engines reject or return empty depending on master support; real correctness via unit tests + mini-cluster when quotas enabled
+list_quota_snapshots	smoke	same quota-disabled parity-image limitation as list_quota_table_sizes
+list_snapshot_sizes	smoke	same quota-disabled parity-image limitation as list_quota_table_sizes
+rpc_throttle_enabled	smoke	hbase.quota.enabled isn't set; both engines reject or return false; real correctness via unit tests
+enable_rpc_throttle	smoke	same quota-disabled parity-image limitation
+disable_rpc_throttle	smoke	same quota-disabled parity-image limitation
+enable_exceed_throttle_quota	smoke	same quota-disabled parity-image limitation
+disable_exceed_throttle_quota	smoke	same quota-disabled parity-image limitation
+list_security_capabilities	smoke	capability list depends on master/coprocessor config; smoke that both engines accept the command
+set_auths '_newshell_parity_{ENGINE}_user', ['_newshell_parity_{ENGINE}_label']	smoke	VisibilityController isn't configured in this parity image; both engines reject; real correctness via TestVisibilityLabelsAgainstMiniCluster
+get_auths '_newshell_parity_{ENGINE}_user'	smoke	same VisibilityController-unavailable limitation as set_auths
+clear_auths '_newshell_parity_{ENGINE}_user', ['_newshell_parity_{ENGINE}_label']	smoke	same VisibilityController-unavailable limitation as set_auths
+create '_newshell_parity_{ENGINE}_vis', 'cf';put '_newshell_parity_{ENGINE}_vis', 'r1', 'cf:c1', 'v1';set_visibility '_newshell_parity_{ENGINE}_vis', 'SECRET', {COLUMNS => ['cf:c1']}	smoke	VisibilityController isn't configured; set_visibility still rewrites cells but label enforcement may no-op; smoke both engines accept
 list_procedures	smoke	procedure ids/timestamps reflect whatever else is running against the live cluster at the time, differing run to run
 list_locks	smoke	lock listing reflects whatever else is running against the live cluster at the time, differing run to run
 add_rsgroup '_newshell_parity_{ENGINE}_rsgroup';list_rsgroups	smoke	RSGroup feature is disabled in this parity image (no rsgroup coprocessor/config), so both engines reject the command outright; real correctness is verified by TestRsGroupAgainstMiniCluster
-create '_newshell_parity_{ENGINE}_sft', 'cf';change_sft '_newshell_parity_{ENGINE}_sft', 'FILE';change_sft_all '_newshell_parity_{ENGINE}_sft', 'FILE'	smoke	legacy shell crashes (NoMethodError) reading change_sft_all's y/n confirmation from exhausted piped stdin; newshell's one-shot port intentionally skips the prompt (see REMAINING_WORK.md)
+create '_newshell_parity_{ENGINE}_sft', 'cf';change_sft '_newshell_parity_{ENGINE}_sft', 'FILE';change_sft_all '_newshell_parity_{ENGINE}_sft', 'FILE'	smoke	legacy shell crashes (NoMethodError) reading change_sft_all's y/n confirmation from exhausted piped stdin; newshell requires --yes (harness passes --yes)
+is_in_maintenance_mode	exact	boolean maintenance-mode check; identical against the same live master
+cleaner_chore_enabled	exact	boolean cleaner-chore state
+snapshot_cleanup_enabled	exact	boolean snapshot TTL cleanup state
+peer_modification_enabled	exact	boolean peer-modification switch state
+list_deadservers	exact	dead-server listing; empty on a healthy standalone
+list_unknownservers	exact	unknown-server listing; empty on a healthy standalone
+list_liveservers	smoke	live server names embed host/startcode that can differ in formatting between engines
+catalogjanitor_run	exact	catalog janitor scan trigger; no meaningful stdout beyond what both engines emit (or empty)
+cleaner_chore_run	exact	cleaner chore trigger; no meaningful stdout
+hbck_chore_run	exact	hbck chore trigger; no meaningful stdout
+flush_master_store	exact	flush master local region; no stdout of its own
+normalize	exact	returns true/false whether normalize request was submitted
+rit	exact	regions-in-transition listing; empty on a quiet standalone
+zk_dump	smoke	ZK dump text is verbose and may differ in whitespace/ordering across engines
+create '_newshell_parity_{ENGINE}_cstate', 'cf';compaction_state '_newshell_parity_{ENGINE}_cstate'	exact	compaction state MAJOR/MINOR/NONE for a quiet table
+create '_newshell_parity_{ENGINE}_cbc', 'cf';clear_block_cache '_newshell_parity_{ENGINE}_cbc'	exact	clear_block_cache returns a CacheEvictionStats-style string both engines share
+create '_newshell_parity_{ENGINE}_walroll', 'cf';wal_roll '{HOST}'	smoke	wal_roll against the live RS; HostPort vs ServerName formatting may differ between engines
+wal_roll_all	exact	roll all WAL writers; no stdout of its own
+refresh_meta	smoke	returns a procedure id that differs run to run
+cleaner_chore_switch false;cleaner_chore_switch true	exact	cleaner chore switch round trip; returns previous boolean state
+snapshot_cleanup_switch false;snapshot_cleanup_switch true	smoke	Ruby prints "Previous snapshot cleanup state : …" wording; verify both engines agree after port
+add_peer '{ENGINE}_parity_peer_cfg', CLUSTER_KEY => '{CLUSTER_KEY}';set_peer_replicate_all '{ENGINE}_parity_peer_cfg', true;set_peer_serial '{ENGINE}_parity_peer_cfg', false;show_peer_tableCFs '{ENGINE}_parity_peer_cfg';get_peer_config '{ENGINE}_parity_peer_cfg';list_peer_configs;list_replicated_tables;remove_peer '{ENGINE}_parity_peer_cfg'	smoke	peer config mutators/readers; get/list peer config formatting can differ slightly; list_replicated_tables may be empty
+add_peer '{ENGINE}_parity_peer_ns', CLUSTER_KEY => '{CLUSTER_KEY}';set_peer_replicate_all '{ENGINE}_parity_peer_ns', false;set_peer_namespaces '{ENGINE}_parity_peer_ns', ['default'];append_peer_namespaces '{ENGINE}_parity_peer_ns', ['hbase'];remove_peer_namespaces '{ENGINE}_parity_peer_ns', ['hbase'];remove_peer '{ENGINE}_parity_peer_ns'	smoke	namespace peer-filter set/append/remove against live cluster key
+add_peer '{ENGINE}_parity_peer_bw', CLUSTER_KEY => '{CLUSTER_KEY}';set_peer_bandwidth '{ENGINE}_parity_peer_bw', 1048576;remove_peer '{ENGINE}_parity_peer_bw'	smoke	set_peer_bandwidth against live cluster key; formatting may differ slightly
+create '_newshell_parity_{ENGINE}_tablerep', 'cf';enable_table_replication '_newshell_parity_{ENGINE}_tablerep';disable_table_replication '_newshell_parity_{ENGINE}_tablerep'	smoke	enable/disable table replication confirmation wording may differ slightly between engines
+remove_rsgroup '_newshell_parity_{ENGINE}_missing_rsg'	smoke	RSGroup feature disabled in parity image — both engines should reject similarly
+get_balancer_decisions LIMIT => 1	smoke	JSON-ish balancer decision log dump; may be empty or differ in formatting
+get_balancer_rejections LIMIT => 1	smoke	JSON-ish balancer rejection log dump; may be empty or differ in formatting
+clear_slowlog_responses	smoke	clears slowlog on all RS; summary wording may differ slightly

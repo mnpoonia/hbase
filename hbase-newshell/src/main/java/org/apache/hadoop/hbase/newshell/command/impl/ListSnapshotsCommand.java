@@ -34,8 +34,8 @@ import org.apache.yetus.audience.InterfaceAudience;
 
 /**
  * Ported from hbase-shell's {@code shell/commands/list_snapshots.rb}: an optional
- * regular-expression positional argument (defaulting to {@code .*}) filters the snapshots
- * returned as a SNAPSHOT/TABLE/CREATION_TIME/TTL table.
+ * regular-expression positional argument (defaulting to {@code .*}) filters the snapshots returned
+ * as a SNAPSHOT/TABLE/CREATION_TIME/TTL table.
  */
 @InterfaceAudience.Private
 public final class ListSnapshotsCommand implements ShellCommand {
@@ -56,8 +56,8 @@ public final class ListSnapshotsCommand implements ShellCommand {
   @Override
   public CommandResult execute(ParsedCommand command, ExecutionContext context)
     throws ShellCommandException, IOException {
-    String regex = command.positionalArgs().isEmpty() ? ".*"
-      : String.valueOf(command.positionalArgs().get(0));
+    String regex =
+      command.positionalArgs().isEmpty() ? ".*" : String.valueOf(command.positionalArgs().get(0));
     List<SnapshotInfo> snapshots = context.admin().listSnapshots(regex);
     List<List<String>> rows = new ArrayList<>();
     for (SnapshotInfo snapshot : snapshots) {

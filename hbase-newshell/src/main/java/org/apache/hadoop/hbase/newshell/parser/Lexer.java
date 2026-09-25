@@ -100,7 +100,10 @@ final class Lexer {
     while (!atEnd() && Character.isDigit(input.charAt(pos))) {
       pos++;
     }
-    if (!atEnd() && input.charAt(pos) == '.' && pos + 1 < input.length() && Character.isDigit(input.charAt(pos + 1))) {
+    if (
+      !atEnd() && input.charAt(pos) == '.' && pos + 1 < input.length()
+        && Character.isDigit(input.charAt(pos + 1))
+    ) {
       pos++;
       while (!atEnd() && Character.isDigit(input.charAt(pos))) {
         pos++;

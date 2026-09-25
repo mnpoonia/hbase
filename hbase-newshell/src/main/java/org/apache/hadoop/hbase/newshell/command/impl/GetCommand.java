@@ -18,9 +18,6 @@
 package org.apache.hadoop.hbase.newshell.command.impl;
 
 import java.io.IOException;
-import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 import org.apache.hadoop.hbase.newshell.command.CommandResult;
@@ -29,15 +26,16 @@ import org.apache.hadoop.hbase.newshell.command.ShellCommand;
 import org.apache.hadoop.hbase.newshell.command.ShellCommandException;
 import org.apache.hadoop.hbase.newshell.command.TabularResult;
 import org.apache.hadoop.hbase.newshell.hbase.CellView;
+import org.apache.hadoop.hbase.newshell.hbase.CellViews;
 import org.apache.hadoop.hbase.newshell.hbase.GetResult;
 import org.apache.hadoop.hbase.newshell.parser.ParsedCommand;
 import org.apache.yetus.audience.InterfaceAudience;
 
 /**
- * Ported, minimal slice, from hbase-shell's {@code hbase/table.rb#_get_internal}: table name,
- * row key, and an optional {@code COLUMN}/{@code VERSIONS}/{@code TIMESTAMP} hash literal.
- * FILTER, ATTRIBUTES, AUTHORIZATIONS, CONSISTENCY and TIMERANGE are explicitly not ported for
- * this pilot slice.
+ * Ported, minimal slice, from hbase-shell's {@code hbase/table.rb#_get_internal}: table name, row
+ * key, and an optional {@code COLUMN}/{@code VERSIONS}/{@code TIMESTAMP} hash literal. FILTER,
+ * ATTRIBUTES, AUTHORIZATIONS, CONSISTENCY and TIMERANGE are explicitly not ported for this pilot
+ * slice.
  */
 @InterfaceAudience.Private
 public final class GetCommand implements ShellCommand {
@@ -64,12 +62,7 @@ public final class GetCommand implements ShellCommand {
     GetResult result = context.tables().forTable(tableName).get(row, command.options());
     List<List<String>> rows = new ArrayList<>();
     for (CellView cell : result.cells()) {
-      String column = cell.family() + ":" + cell.qualifier();
-      String timestamp =
-        LocalDateTime.ofInstant(Instant.ofEpochMilli(cell.timestamp()), ZoneId.systemDefault())
-          .toString();
-      String cellText = "timestamp=" + timestamp + ", value=" + cell.value();
-      rows.add(List.of(column, cellText));
+      rows.add(List.of(CellViews.column(cell), CellViews.formatCell(cell)));
     }
     return new TabularResult(HEADER, rows);
   }

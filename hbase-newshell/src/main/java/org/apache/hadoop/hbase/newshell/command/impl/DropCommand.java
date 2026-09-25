@@ -27,9 +27,9 @@ import org.apache.hadoop.hbase.newshell.parser.ParsedCommand;
 import org.apache.yetus.audience.InterfaceAudience;
 
 /**
- * Ported from hbase-shell's {@code hbase/admin.rb#drop}: a single table-name positional
- * argument, guarded by the wrapper layer's exists/still-enabled checks (the table must be
- * disabled first, matching real hbase-shell's behavior).
+ * Ported from hbase-shell's {@code hbase/admin.rb#drop}: a single table-name positional argument,
+ * guarded by the wrapper layer's exists/still-enabled checks (the table must be disabled first,
+ * matching real hbase-shell's behavior).
  */
 @InterfaceAudience.Private
 public final class DropCommand implements ShellCommand {

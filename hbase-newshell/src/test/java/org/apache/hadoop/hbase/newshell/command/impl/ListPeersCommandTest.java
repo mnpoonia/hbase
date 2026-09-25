@@ -53,15 +53,11 @@ public class ListPeersCommandTest {
     var parsed = ShellLineParser.parse("list_peers");
     TabularResult result = (TabularResult) command.execute(parsed, context);
 
-    assertEquals(
-      List.of("PEER_ID", "CLUSTER_KEY", "ENDPOINT_CLASSNAME", "REMOTE_ROOT_DIR",
-        "SYNC_REPLICATION_STATE", "STATE", "REPLICATE_ALL", "NAMESPACES", "TABLE_CFS",
-        "BANDWIDTH", "SERIAL"),
-      result.header());
+    assertEquals(List.of("PEER_ID", "CLUSTER_KEY", "ENDPOINT_CLASSNAME", "REMOTE_ROOT_DIR",
+      "SYNC_REPLICATION_STATE", "STATE", "REPLICATE_ALL", "NAMESPACES", "TABLE_CFS", "BANDWIDTH",
+      "SERIAL"), result.header());
     assertEquals(1, result.rows().size());
-    assertEquals(
-      List.of("1", "zk1,zk2:2181:/hbase", "nil", "nil", "NONE", "ENABLED", "true", "", "", "0",
-        "false"),
-      result.rows().get(0));
+    assertEquals(List.of("1", "zk1,zk2:2181:/hbase", "nil", "nil", "NONE", "ENABLED", "true", "",
+      "", "0", "false"), result.rows().get(0));
   }
 }

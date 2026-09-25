@@ -60,7 +60,8 @@ public class CreateNamespaceCommandTest {
 
   @Test
   public void createsWithProperties() throws Exception {
-    var parsed = ShellLineParser.parse("create_namespace 'ns1', {'PROPERTY_NAME'=>'PROPERTY_VALUE'}");
+    var parsed =
+      ShellLineParser.parse("create_namespace 'ns1', {'PROPERTY_NAME'=>'PROPERTY_VALUE'}");
     command.execute(parsed, context);
 
     assertEquals("ns1", admin.lastNamespace);

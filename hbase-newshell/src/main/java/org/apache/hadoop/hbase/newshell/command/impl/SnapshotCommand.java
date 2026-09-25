@@ -27,8 +27,8 @@ import org.apache.hadoop.hbase.newshell.parser.ParsedCommand;
 import org.apache.yetus.audience.InterfaceAudience;
 
 /**
- * Ported, minimal slice, from hbase-shell's {@code shell/commands/snapshot.rb}: a table name plus
- * a snapshot name, taking a default FLUSH-type snapshot. The {@code TTL}/{@code MAX_FILESIZE}/
+ * Ported, minimal slice, from hbase-shell's {@code shell/commands/snapshot.rb}: a table name plus a
+ * snapshot name, taking a default FLUSH-type snapshot. The {@code TTL}/{@code MAX_FILESIZE}/
  * {@code SKIP_FLUSH} options hash is explicitly not ported for this slice.
  */
 @InterfaceAudience.Private

@@ -807,6 +807,15 @@ elif [ "$COMMAND" = "newshell" ] ; then
         break
       fi
     done
+    # zk_dump needs ZKWatcher/ZKDump from hbase-zookeeper, which are not in the
+    # shaded client. The full shell gets them via the internal classpath; pull
+    # the jar in explicitly for the shaded-client newshell path.
+    for f in "${HBASE_HOME}"/lib/hbase-zookeeper-*.jar; do
+      if [ -f "${f}" ] && [[ "${f}" != *-tests.jar ]]; then
+        CLASSPATH="${CLASSPATH}:${f}"
+        break
+      fi
+    done
     for f in "${HBASE_HOME}"/lib/jline-reader*.jar "${HBASE_HOME}"/lib/jline-terminal*.jar "${HBASE_HOME}"/lib/jline-native*.jar; do
       if [ -f "${f}" ]; then
         CLASSPATH="${CLASSPATH}:${f}"

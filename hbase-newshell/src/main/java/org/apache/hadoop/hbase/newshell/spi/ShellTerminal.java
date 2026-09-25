@@ -22,14 +22,13 @@ import java.io.PrintWriter;
 import org.apache.yetus.audience.InterfaceAudience;
 
 /**
- * A single interactive terminal session, opened by a {@link TerminalProvider}. Callers
- * (newshell's core REPL loop) interact only through this interface, never through whatever
- * concrete line-editing library backs it.
- *
+ * A single interactive terminal session, opened by a {@link TerminalProvider}. Callers (newshell's
+ * core REPL loop) interact only through this interface, never through whatever concrete
+ * line-editing library backs it.
  * <p>
- * Backends that support additional capabilities beyond this minimal contract implement the
- * relevant optional marker interface (e.g. {@link SupportsHistory}) rather than forcing every
- * backend to implement a lowest-common-denominator surface.
+ * Backends that support additional capabilities beyond this minimal contract implement the relevant
+ * optional marker interface (e.g. {@link SupportsHistory}) rather than forcing every backend to
+ * implement a lowest-common-denominator surface.
  * </p>
  */
 @InterfaceAudience.Private
@@ -41,14 +40,14 @@ public interface ShellTerminal extends AutoCloseable {
   String readLine(String prompt) throws IOException;
 
   /**
-   * @return a writer for output that participates correctly with the terminal's line-editing
-   *         state (e.g. redrawing the prompt after printing above it)
+   * @return a writer for output that participates correctly with the terminal's line-editing state
+   *         (e.g. redrawing the prompt after printing above it)
    */
   PrintWriter writer();
 
   /**
-   * Installs a completer to be consulted while the user is editing a line. Optional - backends
-   * that don't support completion may make this a no-op.
+   * Installs a completer to be consulted while the user is editing a line. Optional - backends that
+   * don't support completion may make this a no-op.
    */
   void setCompleter(Completer completer);
 

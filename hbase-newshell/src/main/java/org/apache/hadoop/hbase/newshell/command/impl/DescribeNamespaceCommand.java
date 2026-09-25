@@ -29,8 +29,8 @@ import org.apache.yetus.audience.InterfaceAudience;
 
 /**
  * Ported, minimal slice, from hbase-shell's {@code shell/commands/describe_namespace.rb}: the
- * namespace descriptor's string form. The Ruby original's QUOTAS section (only relevant when
- * quotas are enabled) is not ported.
+ * namespace descriptor's string form. The Ruby original's QUOTAS section (only relevant when quotas
+ * are enabled) is not ported.
  */
 @InterfaceAudience.Private
 public final class DescribeNamespaceCommand implements ShellCommand {

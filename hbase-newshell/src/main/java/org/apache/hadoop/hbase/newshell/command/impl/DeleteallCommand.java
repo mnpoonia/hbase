@@ -27,13 +27,13 @@ import org.apache.hadoop.hbase.newshell.parser.ParsedCommand;
 import org.apache.yetus.audience.InterfaceAudience;
 
 /**
- * Ported from hbase-shell's {@code hbase/table.rb#_deleteall_internal}: table name, row key
- * (unless {@code ROWPREFIXFILTER} is given, in which case the parser has already lifted it into
- * the options map and the row positional argument is absent), an optional column (whole row if
- * omitted), and an optional timestamp - deletes all versions up to that timestamp, matching the
- * ruby original's {@code all_version=true}. {@code ROWPREFIXFILTER} plus optional {@code CACHE}
- * (default 100) batches a prefix-scan range delete, per {@code _deleterows_internal}. Meta-table
- * guards, ATTRIBUTES and VISIBILITY are explicitly not ported.
+ * Ported from hbase-shell's {@code hbase/table.rb#_deleteall_internal}: table name, row key (unless
+ * {@code ROWPREFIXFILTER} is given, in which case the parser has already lifted it into the options
+ * map and the row positional argument is absent), an optional column (whole row if omitted), and an
+ * optional timestamp - deletes all versions up to that timestamp, matching the ruby original's
+ * {@code all_version=true}. {@code ROWPREFIXFILTER} plus optional {@code CACHE} (default 100)
+ * batches a prefix-scan range delete, per {@code _deleterows_internal}. Meta-table guards,
+ * ATTRIBUTES and VISIBILITY are explicitly not ported.
  */
 @InterfaceAudience.Private
 public final class DeleteallCommand implements ShellCommand {

@@ -22,10 +22,12 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import org.apache.hadoop.hbase.ClusterMetrics;
@@ -34,46 +36,38 @@ import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.UnknownRegionException;
 import org.apache.hadoop.hbase.client.Admin;
 import org.apache.hadoop.hbase.client.BalanceRequest;
-import org.apache.hadoop.hbase.client.BalanceResponse;
 import org.apache.hadoop.hbase.client.ColumnFamilyDescriptor;
 import org.apache.hadoop.hbase.client.ColumnFamilyDescriptorBuilder;
 import org.apache.hadoop.hbase.client.CompactType;
+import org.apache.hadoop.hbase.client.Hbck;
+import org.apache.hadoop.hbase.client.LogEntry;
+import org.apache.hadoop.hbase.client.NormalizeTableFilterParams;
+import org.apache.hadoop.hbase.client.RegionInfo;
+import org.apache.hadoop.hbase.client.ServerType;
 import org.apache.hadoop.hbase.client.SnapshotDescription;
 import org.apache.hadoop.hbase.client.TableDescriptor;
 import org.apache.hadoop.hbase.client.TableDescriptorBuilder;
-import org.apache.hadoop.hbase.client.replication.ReplicationPeerConfigUtil;
+import org.apache.hadoop.hbase.master.RegionState;
 import org.apache.hadoop.hbase.net.Address;
-import org.apache.hadoop.hbase.quotas.QuotaFilter;
-import org.apache.hadoop.hbase.quotas.QuotaScope;
-import org.apache.hadoop.hbase.quotas.QuotaSettings;
-import org.apache.hadoop.hbase.quotas.QuotaSettingsFactory;
-import org.apache.hadoop.hbase.quotas.ThrottleType;
-import org.apache.hadoop.hbase.replication.ReplicationPeerConfig;
-import org.apache.hadoop.hbase.replication.ReplicationPeerConfigBuilder;
-import org.apache.hadoop.hbase.replication.ReplicationPeerDescription;
 import org.apache.hadoop.hbase.rsgroup.RSGroupInfo;
 import org.apache.hadoop.hbase.security.access.AccessControlClient;
 import org.apache.hadoop.hbase.security.access.Permission;
 import org.apache.hadoop.hbase.security.access.UserPermission;
 import org.apache.hadoop.hbase.security.visibility.VisibilityClient;
-import org.apache.hadoop.hbase.shaded.protobuf.generated.VisibilityLabelsProtos.ListLabelsResponse;
-import org.apache.hadoop.hbase.shaded.protobuf.generated.VisibilityLabelsProtos.VisibilityLabelsResponse;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.FutureUtils;
-import org.apache.hbase.thirdparty.com.google.gson.Gson;
-import org.apache.hbase.thirdparty.com.google.gson.JsonArray;
-import org.apache.hbase.thirdparty.com.google.gson.JsonObject;
-import org.apache.hbase.thirdparty.com.google.gson.JsonParser;
+import org.apache.hadoop.hbase.zookeeper.ZKDump;
+import org.apache.hadoop.hbase.zookeeper.ZKWatcher;
 import org.apache.yetus.audience.InterfaceAudience;
-import java.util.Set;
-import java.util.concurrent.TimeUnit;
-import java.util.regex.Matcher;
+
+import org.apache.hadoop.hbase.shaded.protobuf.generated.VisibilityLabelsProtos.ListLabelsResponse;
+import org.apache.hadoop.hbase.shaded.protobuf.generated.VisibilityLabelsProtos.VisibilityLabelsResponse;
 
 /**
  * Wraps a real {@link Admin}. Ported, for the pilot commands only, from hbase-shell's
- * {@code hbase/admin.rb} - {@code status} (summary branch only), {@code create} (one or more
- * column families - see {@link ColumnFamilyAttributes} for the supported per-family attributes,
- * and {@link TableAttributes} for the supported table-level attributes including SPLITS - no
+ * {@code hbase/admin.rb} - {@code status} (summary branch only), {@code create} (one or more column
+ * families - see {@link ColumnFamilyAttributes} for the supported per-family attributes, and
+ * {@link TableAttributes} for the supported table-level attributes including SPLITS - no
  * SPLITALGO/CONFIGURATION/MOB at the table level), {@code disable}, {@code enable} (mirrors
  * {@code disable}'s exists/already-in-that-state guards), {@code drop} (requires the table be
  * disabled first, per {@code admin.rb#drop}), {@code list} (regex-filtered table names, per
@@ -86,20 +80,27 @@ import java.util.regex.Matcher;
 @InterfaceAudience.Private
 public final class DefaultShellAdmin implements ShellAdmin {
   private final Admin admin;
+  private final ReplicationAdminOps replication;
+  private final QuotaAdminOps quotas;
+  private final ProcedureAdminOps procedures;
 
   public DefaultShellAdmin(Admin admin) {
     this.admin = admin;
+    this.replication = new ReplicationAdminOps(admin);
+    this.quotas = new QuotaAdminOps(admin);
+    this.procedures = new ProcedureAdminOps(admin);
   }
 
   @Override
-  public ClusterMetrics status() throws IOException {
-    return admin.getClusterMetrics();
+  public StatusView status() throws IOException {
+    return StatusView.from(admin.getClusterMetrics());
   }
 
   @Override
   public void createTable(String tableName, List<Map<String, Object>> familySpecs,
     Map<String, Object> tableAttributes) throws IOException {
-    TableDescriptorBuilder tableBuilder = TableDescriptorBuilder.newBuilder(TableName.valueOf(tableName));
+    TableDescriptorBuilder tableBuilder =
+      TableDescriptorBuilder.newBuilder(TableName.valueOf(tableName));
     for (Map<String, Object> familySpec : familySpecs) {
       tableBuilder.setColumnFamily(ColumnFamilyAttributes.build(familySpec));
     }
@@ -187,8 +188,7 @@ public final class DefaultShellAdmin implements ShellAdmin {
     Collection<ServerName> liveServers = admin.getClusterMetrics().getLiveServerMetrics().keySet();
     List<ServerName> servers = new ArrayList<>();
     for (String hostOrServer : hostOrServers) {
-      resolveServerName(hostOrServer, liveServers)
-        .ifPresent(servers::add);
+      resolveServerName(hostOrServer, liveServers).ifPresent(servers::add);
     }
     if (servers.isEmpty()) {
       throw new IOException(
@@ -201,9 +201,8 @@ public final class DefaultShellAdmin implements ShellAdmin {
   public void recommissionRegionServer(String hostOrServer, List<String> encodedRegionNames)
     throws IOException {
     Collection<ServerName> liveServers = admin.getClusterMetrics().getLiveServerMetrics().keySet();
-    ServerName serverName = resolveServerName(hostOrServer, liveServers)
-      .orElseThrow(() -> new IOException(
-        "Could not find any server with specified name: " + hostOrServer));
+    ServerName serverName = resolveServerName(hostOrServer, liveServers).orElseThrow(
+      () -> new IOException("Could not find any server with specified name: " + hostOrServer));
     List<byte[]> regionNameBytes =
       encodedRegionNames.stream().map(Bytes::toBytes).collect(Collectors.toList());
     admin.recommissionRegionServer(serverName, regionNameBytes);
@@ -319,80 +318,6 @@ public final class DefaultShellAdmin implements ShellAdmin {
   }
 
   @Override
-  public void addPeer(String peerId, Map<String, Object> peerConfigSpec) throws IOException {
-    Object clusterKey = peerConfigSpec.get("CLUSTER_KEY");
-    Object endpointClassname = peerConfigSpec.get("ENDPOINT_CLASSNAME");
-    if (clusterKey == null && endpointClassname == null) {
-      throw new IOException("add_peer requires CLUSTER_KEY or ENDPOINT_CLASSNAME");
-    }
-    ReplicationPeerConfigBuilder builder = ReplicationPeerConfig.newBuilder();
-    if (clusterKey != null) {
-      builder.setClusterKey(String.valueOf(clusterKey));
-    }
-    if (endpointClassname != null) {
-      builder.setReplicationEndpointImpl(String.valueOf(endpointClassname));
-    }
-    Object tableCfs = peerConfigSpec.get("TABLE_CFS");
-    if (tableCfs instanceof Map) {
-      Map<TableName, List<String>> tableCfsMap = new HashMap<>();
-      for (Map.Entry<?, ?> entry : ((Map<?, ?>) tableCfs).entrySet()) {
-        List<String> cfs = entry.getValue() == null ? List.of()
-          : ((List<?>) entry.getValue()).stream().map(String::valueOf)
-            .collect(Collectors.toList());
-        tableCfsMap.put(TableName.valueOf(String.valueOf(entry.getKey())), cfs);
-      }
-      builder.setTableCFsMap(tableCfsMap);
-    }
-    Object namespaces = peerConfigSpec.get("NAMESPACES");
-    if (namespaces instanceof List) {
-      builder.setNamespaces(((List<?>) namespaces).stream().map(String::valueOf)
-        .collect(Collectors.toSet()));
-    }
-    boolean enabled = !"DISABLED".equals(peerConfigSpec.getOrDefault("STATE", "ENABLED"));
-    admin.addReplicationPeer(peerId, builder.build(), enabled);
-  }
-
-  @Override
-  public void removePeer(String peerId) throws IOException {
-    admin.removeReplicationPeer(peerId);
-  }
-
-  @Override
-  public List<PeerDescription> listPeers() throws IOException {
-    List<PeerDescription> descriptions = new ArrayList<>();
-    for (ReplicationPeerDescription peer : admin.listReplicationPeers()) {
-      ReplicationPeerConfig config = peer.getPeerConfig();
-      boolean replicateAll = config.replicateAllUserTables();
-      String namespaces;
-      String tableCfs;
-      if (replicateAll) {
-        String excludeNamespaces =
-          ReplicationPeerConfigUtil.convertToString(config.getExcludeNamespaces());
-        namespaces = excludeNamespaces == null ? "" : "!" + excludeNamespaces;
-        String excludeTableCfs =
-          ReplicationPeerConfigUtil.convertToString(config.getExcludeTableCFsMap());
-        tableCfs = excludeTableCfs == null ? "" : "!" + excludeTableCfs;
-      } else {
-        namespaces = orEmpty(ReplicationPeerConfigUtil.convertToString(config.getNamespaces()));
-        tableCfs = orEmpty(ReplicationPeerConfigUtil.convertToString(config.getTableCFsMap()));
-      }
-      descriptions.add(new PeerDescription(peer.getPeerId(), orNil(config.getClusterKey()),
-        orNil(config.getReplicationEndpointImpl()), orNil(config.getRemoteWALDir()),
-        peer.getSyncReplicationState().toString(), peer.isEnabled(), replicateAll, namespaces,
-        tableCfs, config.getBandwidth(), config.isSerial()));
-    }
-    return descriptions;
-  }
-
-  private static String orNil(String value) {
-    return value == null ? "nil" : value;
-  }
-
-  private static String orEmpty(String value) {
-    return value == null ? "" : value;
-  }
-
-  @Override
   public void snapshot(String tableName, String snapshotName) throws IOException {
     admin.snapshot(snapshotName, TableName.valueOf(tableName));
   }
@@ -403,13 +328,33 @@ public final class DefaultShellAdmin implements ShellAdmin {
   }
 
   @Override
+  public void deleteAllSnapshots(String regex) throws IOException {
+    admin.deleteSnapshots(Pattern.compile(regex));
+  }
+
+  @Override
   public List<SnapshotInfo> listSnapshots(String regex) throws IOException {
     List<SnapshotInfo> snapshots = new ArrayList<>();
     for (SnapshotDescription snapshot : admin.listSnapshots(Pattern.compile(regex))) {
-      snapshots.add(new SnapshotInfo(snapshot.getName(), snapshot.getTableNameAsString(),
-        snapshot.getCreationTime(), snapshot.getTtl()));
+      snapshots.add(toSnapshotInfo(snapshot));
     }
     return snapshots;
+  }
+
+  @Override
+  public List<SnapshotInfo> listTableSnapshots(String tableNameRegex, String snapshotNameRegex)
+    throws IOException {
+    List<SnapshotInfo> snapshots = new ArrayList<>();
+    for (SnapshotDescription snapshot : admin.listTableSnapshots(Pattern.compile(tableNameRegex),
+      Pattern.compile(snapshotNameRegex))) {
+      snapshots.add(toSnapshotInfo(snapshot));
+    }
+    return snapshots;
+  }
+
+  private static SnapshotInfo toSnapshotInfo(SnapshotDescription snapshot) {
+    return new SnapshotInfo(snapshot.getName(), snapshot.getTableNameAsString(),
+      snapshot.getCreationTime(), snapshot.getTtl());
   }
 
   @Override
@@ -494,10 +439,8 @@ public final class DefaultShellAdmin implements ShellAdmin {
       return Optional.of(ServerName.valueOf(hostOrServer));
     }
     String[] parts = hostOrServer.split(",");
-    return liveServers.stream()
-      .filter(sn -> parts[0].equals(sn.getHostname())
-        && (parts.length < 2 || parts[1].equals(String.valueOf(sn.getPort()))))
-      .findFirst();
+    return liveServers.stream().filter(sn -> parts[0].equals(sn.getHostname())
+      && (parts.length < 2 || parts[1].equals(String.valueOf(sn.getPort())))).findFirst();
   }
 
   @Override
@@ -530,8 +473,8 @@ public final class DefaultShellAdmin implements ShellAdmin {
       } else if (tableName != null) {
         byte[] familyBytes = family == null ? null : Bytes.toBytes(family);
         byte[] qualifierBytes = qualifier == null ? null : Bytes.toBytes(qualifier);
-        AccessControlClient.grant(admin.getConnection(), TableName.valueOf(tableName),
-          userOrGroup, familyBytes, qualifierBytes, permActions);
+        AccessControlClient.grant(admin.getConnection(), TableName.valueOf(tableName), userOrGroup,
+          familyBytes, qualifierBytes, permActions);
       } else {
         AccessControlClient.grant(admin.getConnection(), userOrGroup, permActions);
       }
@@ -608,37 +551,45 @@ public final class DefaultShellAdmin implements ShellAdmin {
   public RegionLocationView locateRegion(String tableName, String rowKey) throws IOException {
     var location = admin.getConnection().getRegionLocator(TableName.valueOf(tableName))
       .getRegionLocation(Bytes.toBytes(rowKey));
-    return new RegionLocationView(location.getHostnamePort(),
-      location.getRegion().getRegionNameAsString());
+    // Ruby locate_region prints RegionInfo#toString (ENCODED/NAME/STARTKEY/ENDKEY dict).
+    return new RegionLocationView(location.getHostnamePort(), location.getRegion().toString());
   }
 
   @Override
-  public List<List<String>> listRegions(String tableName) throws IOException {
+  public ListRegionsView listRegions(String tableName) throws IOException {
     TableName table = TableName.valueOf(tableName);
     if (!admin.isTableEnabled(table)) {
       throw new IOException("Table " + tableName + " must be enabled.");
     }
     ClusterMetrics clusterMetrics = admin.getClusterMetrics();
+    List<String> warnings = new ArrayList<>();
     List<List<String>> rows = new ArrayList<>();
     for (var location : admin.getConnection().getRegionLocator(table).getAllRegionLocations()) {
       var regionInfo = location.getRegion();
       ServerName serverName = location.getServerName();
       var serverMetrics = clusterMetrics.getLiveServerMetrics().get(serverName);
-      var regionMetrics =
-        serverMetrics == null ? null : serverMetrics.getRegionMetrics().get(regionInfo.getRegionName());
+      var regionMetrics = serverMetrics == null
+        ? null
+        : serverMetrics.getRegionMetrics().get(regionInfo.getRegionName());
+      String regionName = regionInfo.getRegionNameAsString().strip();
+      if (regionMetrics == null) {
+        warnings.add("Can not find all details for region: " + regionName
+          + " , it may be disabled or in transition");
+      }
       String size = regionMetrics == null ? "" : String.valueOf(regionMetrics.getStoreFileSize());
       String req = regionMetrics == null ? "" : String.valueOf(regionMetrics.getRequestCount());
-      String locality = regionMetrics == null ? "" : String.valueOf(regionMetrics.getDataLocality());
-      rows.add(List.of(serverName == null ? "" : serverName.toString(),
-        regionInfo.getRegionNameAsString(), Bytes.toStringBinary(regionInfo.getStartKey()),
-        Bytes.toStringBinary(regionInfo.getEndKey()), size, req, locality));
+      String locality =
+        regionMetrics == null ? "" : String.valueOf(regionMetrics.getDataLocality());
+      rows.add(List.of(serverName == null ? "" : serverName.toString().strip(), regionName,
+        Bytes.toStringBinary(regionInfo.getStartKey()).strip(),
+        Bytes.toStringBinary(regionInfo.getEndKey()).strip(), size.strip(), req.strip(),
+        locality.strip()));
     }
-    return rows;
+    return new ListRegionsView(warnings, rows);
   }
 
   @Override
-  public void createNamespace(String namespace, Map<String, Object> properties)
-    throws IOException {
+  public void createNamespace(String namespace, Map<String, Object> properties) throws IOException {
     var builder = org.apache.hadoop.hbase.NamespaceDescriptor.create(namespace);
     for (Map.Entry<String, Object> entry : properties.entrySet()) {
       builder.addConfiguration(entry.getKey(), String.valueOf(entry.getValue()));
@@ -652,8 +603,7 @@ public final class DefaultShellAdmin implements ShellAdmin {
   }
 
   @Override
-  public void alterNamespace(String namespace, Map<String, Object> properties)
-    throws IOException {
+  public void alterNamespace(String namespace, Map<String, Object> properties) throws IOException {
     var existing = admin.getNamespaceDescriptor(namespace);
     var builder = org.apache.hadoop.hbase.NamespaceDescriptor.create(existing);
     String method = String.valueOf(properties.get("METHOD"));
@@ -726,10 +676,10 @@ public final class DefaultShellAdmin implements ShellAdmin {
   }
 
   @Override
-  public BalanceResponse balance(boolean dryRun, boolean ignoreRegionsInTransition)
+  public BalanceResult balance(boolean dryRun, boolean ignoreRegionsInTransition)
     throws IOException {
-    return admin.balance(BalanceRequest.newBuilder().setDryRun(dryRun)
-      .setIgnoreRegionsInTransition(ignoreRegionsInTransition).build());
+    return BalanceResult.from(admin.balance(BalanceRequest.newBuilder().setDryRun(dryRun)
+      .setIgnoreRegionsInTransition(ignoreRegionsInTransition).build()));
   }
 
   @Override
@@ -754,16 +704,6 @@ public final class DefaultShellAdmin implements ShellAdmin {
   }
 
   @Override
-  public void enablePeer(String peerId) throws IOException {
-    admin.enableReplicationPeer(peerId);
-  }
-
-  @Override
-  public void disablePeer(String peerId) throws IOException {
-    admin.disableReplicationPeer(peerId);
-  }
-
-  @Override
   public void updateConfig(String serverName) throws IOException {
     admin.updateConfiguration(ServerName.valueOf(serverName));
   }
@@ -774,179 +714,8 @@ public final class DefaultShellAdmin implements ShellAdmin {
   }
 
   @Override
-  public void setQuota(Map<String, Object> args) throws IOException {
-    Map<String, Object> spec = new LinkedHashMap<>(args);
-    Object type = spec.remove("TYPE");
-    if (!"THROTTLE".equals(type)) {
-      throw new IOException("Only TYPE => THROTTLE is supported by this newshell port; "
-        + "SPACE quotas and GLOBAL_BYPASS are not yet ported");
-    }
-    Object limit = spec.remove("LIMIT");
-    QuotaSettings settings;
-    if ("NONE".equals(limit)) {
-      settings = buildUnthrottle(spec);
-    } else {
-      if (limit == null) {
-        throw new IOException("set_quota requires a LIMIT");
-      }
-      settings = buildThrottle(spec, String.valueOf(limit));
-    }
-    admin.setQuota(settings);
-  }
-
-  private static QuotaSettings buildThrottle(Map<String, Object> spec, String limitSpec)
-    throws IOException {
-    String throttleTypeName = String.valueOf(spec.remove("THROTTLE_TYPE"));
-    Object[] parsed = parseThrottleLimit(limitSpec, "null".equals(throttleTypeName) ? "REQUEST"
-      : throttleTypeName);
-    ThrottleType throttleType = (ThrottleType) parsed[0];
-    long limit = (Long) parsed[1];
-    TimeUnit timeUnit = (TimeUnit) parsed[2];
-    QuotaScope scope = QuotaScope.valueOf(String.valueOf(spec.getOrDefault("SCOPE", "MACHINE")));
-    if (spec.containsKey("USER")) {
-      String user = String.valueOf(spec.get("USER"));
-      if (spec.containsKey("TABLE")) {
-        return QuotaSettingsFactory.throttleUser(user, TableName.valueOf(String.valueOf(spec.get("TABLE"))),
-          throttleType, limit, timeUnit, scope);
-      } else if (spec.containsKey("NAMESPACE")) {
-        return QuotaSettingsFactory.throttleUser(user, String.valueOf(spec.get("NAMESPACE")),
-          throttleType, limit, timeUnit, scope);
-      }
-      return QuotaSettingsFactory.throttleUser(user, throttleType, limit, timeUnit, scope);
-    } else if (spec.containsKey("TABLE")) {
-      return QuotaSettingsFactory.throttleTable(TableName.valueOf(String.valueOf(spec.get("TABLE"))),
-        throttleType, limit, timeUnit, scope);
-    } else if (spec.containsKey("NAMESPACE")) {
-      return QuotaSettingsFactory.throttleNamespace(String.valueOf(spec.get("NAMESPACE")),
-        throttleType, limit, timeUnit, scope);
-    } else if (spec.containsKey("REGIONSERVER")) {
-      if (scope == QuotaScope.CLUSTER) {
-        throw new IOException("Invalid region server throttle scope, must be MACHINE");
-      }
-      return QuotaSettingsFactory.throttleRegionServer("all", throttleType, limit, timeUnit);
-    }
-    throw new IOException("One of USER, TABLE, NAMESPACE or REGIONSERVER must be specified");
-  }
-
-  private static QuotaSettings buildUnthrottle(Map<String, Object> spec) throws IOException {
-    if (spec.containsKey("USER")) {
-      String user = String.valueOf(spec.get("USER"));
-      if (spec.containsKey("TABLE")) {
-        return QuotaSettingsFactory.unthrottleUser(user,
-          TableName.valueOf(String.valueOf(spec.get("TABLE"))));
-      } else if (spec.containsKey("NAMESPACE")) {
-        return QuotaSettingsFactory.unthrottleUser(user, String.valueOf(spec.get("NAMESPACE")));
-      }
-      return QuotaSettingsFactory.unthrottleUser(user);
-    } else if (spec.containsKey("TABLE")) {
-      return QuotaSettingsFactory
-        .unthrottleTable(TableName.valueOf(String.valueOf(spec.get("TABLE"))));
-    } else if (spec.containsKey("NAMESPACE")) {
-      return QuotaSettingsFactory.unthrottleNamespace(String.valueOf(spec.get("NAMESPACE")));
-    } else if (spec.containsKey("REGIONSERVER")) {
-      return QuotaSettingsFactory.unthrottleRegionServer("all");
-    }
-    throw new IOException("One of USER, TABLE, NAMESPACE or REGIONSERVER must be specified");
-  }
-
-  private static final java.util.regex.Pattern LIMIT_PATTERN =
-    java.util.regex.Pattern.compile("^(\\d+)(req|cu|[bkmgtp])/(sec|min|hour|day)$");
-
-  /**
-   * Ports {@code hbase/quotas.rb#_parse_limit}'s request/data-size/capacity-unit LIMIT syntax
-   * only; the raw-byte-size SPACE-quota syntax is not needed here since SPACE quotas are not
-   * ported.
-   */
-  private static Object[] parseThrottleLimit(String limitSpec, String throttleTypePrefix)
-    throws IOException {
-    Matcher matcher = LIMIT_PATTERN.matcher(limitSpec.toLowerCase(java.util.Locale.ROOT));
-    if (!matcher.matches()) {
-      throw new IOException("Invalid limit syntax: " + limitSpec);
-    }
-    long limit = Long.parseLong(matcher.group(1));
-    String unit = matcher.group(2);
-    ThrottleType type;
-    if ("req".equals(unit)) {
-      type = ThrottleType.valueOf(throttleTypePrefix + "_NUMBER");
-    } else if ("cu".equals(unit)) {
-      type = ThrottleType.valueOf(throttleTypePrefix + "_CAPACITY_UNIT");
-      limit = limit; // capacity units are unit-less counts
-    } else {
-      type = ThrottleType.valueOf(throttleTypePrefix + "_SIZE");
-      limit = sizeFromUnit(limit, unit);
-    }
-    TimeUnit timeUnit;
-    switch (matcher.group(3)) {
-      case "sec":
-        timeUnit = TimeUnit.SECONDS;
-        break;
-      case "min":
-        timeUnit = TimeUnit.MINUTES;
-        break;
-      case "hour":
-        timeUnit = TimeUnit.HOURS;
-        break;
-      case "day":
-        timeUnit = TimeUnit.DAYS;
-        break;
-      default:
-        throw new IOException("Invalid time unit in limit: " + limitSpec);
-    }
-    return new Object[] { type, limit, timeUnit };
-  }
-
-  private static long sizeFromUnit(long value, String unit) throws IOException {
-    switch (unit) {
-      case "b":
-        return value;
-      case "k":
-        return value * 1024L;
-      case "m":
-        return value * 1024L * 1024L;
-      case "g":
-        return value * 1024L * 1024L * 1024L;
-      case "t":
-        return value * 1024L * 1024L * 1024L * 1024L;
-      case "p":
-        return value * 1024L * 1024L * 1024L * 1024L * 1024L;
-      default:
-        throw new IOException("Invalid size unit: " + unit);
-    }
-  }
-
-  @Override
-  public List<List<String>> listQuotas(Map<String, Object> filterArgs) throws IOException {
-    QuotaFilter filter = new QuotaFilter();
-    if (filterArgs.containsKey("USER")) {
-      filter.setUserFilter(String.valueOf(filterArgs.get("USER")));
-    }
-    if (filterArgs.containsKey("TABLE")) {
-      filter.setTableFilter(String.valueOf(filterArgs.get("TABLE")));
-    }
-    if (filterArgs.containsKey("NAMESPACE")) {
-      filter.setNamespaceFilter(String.valueOf(filterArgs.get("NAMESPACE")));
-    }
-    List<List<String>> rows = new ArrayList<>();
-    for (QuotaSettings settings : admin.getQuota(filter)) {
-      Map<String, String> owner = new LinkedHashMap<>();
-      if (settings.getUserName() != null) {
-        owner.put("USER", settings.getUserName());
-      }
-      if (settings.getTableName() != null) {
-        owner.put("TABLE", settings.getTableName().getNameAsString());
-      }
-      if (settings.getNamespace() != null) {
-        owner.put("NAMESPACE", settings.getNamespace());
-      }
-      if (settings.getRegionServer() != null) {
-        owner.put("REGIONSERVER", settings.getRegionServer());
-      }
-      String ownerString = owner.entrySet().stream()
-        .map(entry -> entry.getKey() + " => " + entry.getValue())
-        .collect(Collectors.joining(", "));
-      rows.add(List.of(ownerString, settings.toString()));
-    }
-    return rows;
+  public void updateRsGroupConfig(String groupName) throws IOException {
+    admin.updateConfiguration(groupName);
   }
 
   @Override
@@ -958,8 +727,8 @@ public final class DefaultShellAdmin implements ShellAdmin {
       } else if (tableName != null) {
         byte[] familyBytes = family == null ? null : Bytes.toBytes(family);
         byte[] qualifierBytes = qualifier == null ? null : Bytes.toBytes(qualifier);
-        AccessControlClient.revoke(admin.getConnection(), TableName.valueOf(tableName),
-          userOrGroup, familyBytes, qualifierBytes);
+        AccessControlClient.revoke(admin.getConnection(), TableName.valueOf(tableName), userOrGroup,
+          familyBytes, qualifierBytes);
       } else {
         AccessControlClient.revoke(admin.getConnection(), userOrGroup, new Permission.Action[0]);
       }
@@ -989,54 +758,6 @@ public final class DefaultShellAdmin implements ShellAdmin {
     }
   }
 
-  private static final Gson GSON = new Gson();
-
-  @Override
-  public List<List<String>> listProcedures() throws IOException {
-    JsonArray procedures = JsonParser.parseString(admin.getProcedures()).getAsJsonArray();
-    List<List<String>> rows = new ArrayList<>();
-    for (var element : procedures) {
-      JsonObject proc = element.getAsJsonObject();
-      rows.add(List.of(getAsString(proc, "procId"), getAsString(proc, "className"),
-        getAsString(proc, "state"), getAsString(proc, "submittedTime"),
-        getAsString(proc, "lastUpdate"), getAsString(proc, "stateMessage")));
-    }
-    return rows;
-  }
-
-  private static String getAsString(JsonObject object, String member) {
-    if (!object.has(member) || object.get(member).isJsonNull()) {
-      return "";
-    }
-    var element = object.get(member);
-    return element.isJsonPrimitive() ? element.getAsString() : element.toString();
-  }
-
-  @Override
-  public List<String> listLocks() throws IOException {
-    JsonArray locks = JsonParser.parseString(admin.getLocks()).getAsJsonArray();
-    List<String> lines = new ArrayList<>();
-    for (var element : locks) {
-      JsonObject lock = element.getAsJsonObject();
-      lines.add(getAsString(lock, "resourceType") + "(" + getAsString(lock, "resourceName") + ")");
-      String lockType = getAsString(lock, "lockType");
-      if ("EXCLUSIVE".equals(lockType)) {
-        lines.add("Lock type: " + lockType + ", procedure: "
-          + getAsString(lock, "exclusiveLockOwnerProcedure"));
-      } else if ("SHARED".equals(lockType)) {
-        lines.add(
-          "Lock type: " + lockType + ", count: " + getAsString(lock, "sharedLockCount"));
-      }
-      if (lock.has("waitingProcedures") && lock.get("waitingProcedures").isJsonArray()) {
-        for (var waiting : lock.getAsJsonArray("waitingProcedures")) {
-          lines.add("    " + waiting.getAsString());
-        }
-      }
-      lines.add("");
-    }
-    return lines;
-  }
-
   @Override
   public void addLabels(List<String> labels) throws IOException {
     VisibilityLabelsResponse response;
@@ -1048,18 +769,7 @@ public final class DefaultShellAdmin implements ShellAdmin {
       }
       throw new IOException(t);
     }
-    if (response == null) {
-      throw new IOException("DISABLED: Visibility labels feature is not available");
-    }
-    StringBuilder failures = new StringBuilder();
-    for (var result : response.getResultList()) {
-      if (result.hasException()) {
-        failures.append(result.getException().getValue().toStringUtf8());
-      }
-    }
-    if (failures.length() > 0) {
-      throw new IOException(failures.toString());
-    }
+    throwIfVisibilityFailures(response);
   }
 
   @Override
@@ -1084,6 +794,90 @@ public final class DefaultShellAdmin implements ShellAdmin {
   }
 
   @Override
+  public void setAuths(String user, List<String> labels) throws IOException {
+    VisibilityLabelsResponse response;
+    try {
+      response =
+        VisibilityClient.setAuths(admin.getConnection(), labels.toArray(new String[0]), user);
+    } catch (Throwable t) {
+      if (t instanceof IOException) {
+        throw (IOException) t;
+      }
+      throw new IOException(t);
+    }
+    throwIfVisibilityFailures(response);
+  }
+
+  @Override
+  public List<String> getAuths(String user) throws IOException {
+    org.apache.hadoop.hbase.shaded.protobuf.generated.VisibilityLabelsProtos.GetAuthsResponse
+      response;
+    try {
+      response = VisibilityClient.getAuths(admin.getConnection(), user);
+    } catch (Throwable t) {
+      if (t instanceof IOException) {
+        throw (IOException) t;
+      }
+      throw new IOException(t);
+    }
+    if (response == null) {
+      throw new IOException("DISABLED: Visibility labels feature is not available");
+    }
+    List<String> labels = new ArrayList<>();
+    for (var auth : response.getAuthList()) {
+      labels.add(Bytes.toStringBinary(auth.toByteArray()));
+    }
+    return labels;
+  }
+
+  @Override
+  public void clearAuths(String user, List<String> labels) throws IOException {
+    VisibilityLabelsResponse response;
+    try {
+      response =
+        VisibilityClient.clearAuths(admin.getConnection(), labels.toArray(new String[0]), user);
+    } catch (Throwable t) {
+      if (t instanceof IOException) {
+        throw (IOException) t;
+      }
+      throw new IOException(t);
+    }
+    throwIfVisibilityFailures(response);
+  }
+
+  @Override
+  public long setVisibility(String tableName, String visibility, Map<String, Object> scanOptions)
+    throws IOException {
+    return VisibilityOps.setVisibility(admin.getConnection(), tableName, visibility, scanOptions);
+  }
+
+  @Override
+  public List<String> listSecurityCapabilities() throws IOException {
+    List<String> names = new ArrayList<>();
+    for (org.apache.hadoop.hbase.client.security.SecurityCapability capability : admin
+      .getSecurityCapabilities()) {
+      names.add(capability.getName());
+    }
+    return names;
+  }
+
+  private static void throwIfVisibilityFailures(VisibilityLabelsResponse response)
+    throws IOException {
+    if (response == null) {
+      throw new IOException("DISABLED: Visibility labels feature is not available");
+    }
+    StringBuilder failures = new StringBuilder();
+    for (var result : response.getResultList()) {
+      if (result.hasException()) {
+        failures.append(result.getException().getValue().toStringUtf8());
+      }
+    }
+    if (failures.length() > 0) {
+      throw new IOException(failures.toString());
+    }
+  }
+
+  @Override
   public List<RsGroupSummary> listRsGroups(String regex) throws IOException {
     Pattern pattern = Pattern.compile(regex);
     List<RsGroupSummary> result = new ArrayList<>();
@@ -1103,6 +897,134 @@ public final class DefaultShellAdmin implements ShellAdmin {
   @Override
   public void addRsGroup(String groupName) throws IOException {
     admin.addRSGroup(groupName);
+  }
+
+  @Override
+  public void removeRsGroup(String groupName) throws IOException {
+    admin.removeRSGroup(groupName);
+  }
+
+  @Override
+  public BalanceResult balanceRsGroup(String groupName, boolean dryRun,
+    boolean ignoreRegionsInTransition) throws IOException {
+    return BalanceResult.from(admin.balanceRSGroup(groupName, BalanceRequest.newBuilder()
+      .setDryRun(dryRun).setIgnoreRegionsInTransition(ignoreRegionsInTransition).build()));
+  }
+
+  @Override
+  public void moveTablesToRsGroup(List<String> tables, String groupName) throws IOException {
+    Set<TableName> tableNames =
+      tables.stream().map(TableName::valueOf).collect(Collectors.toSet());
+    admin.setRSGroup(tableNames, groupName);
+  }
+
+  @Override
+  public void moveNamespacesToRsGroup(List<String> namespaces, String groupName)
+    throws IOException {
+    Set<TableName> tables = new HashSet<>();
+    for (String ns : namespaces) {
+      try {
+        admin.getNamespaceDescriptor(ns);
+      } catch (org.apache.hadoop.hbase.NamespaceNotFoundException e) {
+        throw new IOException("Can't find a namespace: " + ns, e);
+      }
+      for (TableName table : admin.listTableNamesByNamespace(ns)) {
+        tables.add(table);
+      }
+    }
+    if (!tables.isEmpty()) {
+      admin.setRSGroup(tables, groupName);
+    }
+    for (String ns : namespaces) {
+      Map<String, Object> props = new HashMap<>();
+      props.put("METHOD", "set");
+      props.put("hbase.rsgroup.name", groupName);
+      alterNamespace(ns, props);
+    }
+  }
+
+  @Override
+  public void moveServersAndTablesToRsGroup(List<String> hostPorts, List<String> tables,
+    String groupName) throws IOException {
+    moveServersToRsGroup(hostPorts, groupName);
+    moveTablesToRsGroup(tables, groupName);
+  }
+
+  @Override
+  public void moveServersAndNamespacesToRsGroup(List<String> hostPorts, List<String> namespaces,
+    String groupName) throws IOException {
+    moveServersToRsGroup(hostPorts, groupName);
+    moveNamespacesToRsGroup(namespaces, groupName);
+  }
+
+  @Override
+  public String getRsGroupOfServer(String hostPort) throws IOException {
+    RSGroupInfo group = admin.getRSGroup(Address.fromString(hostPort));
+    if (group == null) {
+      throw new IOException("Server has no group: " + hostPort);
+    }
+    return group.getName();
+  }
+
+  @Override
+  public String getRsGroupOfTable(String tableName) throws IOException {
+    RSGroupInfo group = admin.getRSGroup(TableName.valueOf(tableName));
+    if (group == null) {
+      throw new IOException("Table has no group: " + tableName);
+    }
+    return group.getName();
+  }
+
+  @Override
+  public void removeServersFromRsGroup(List<String> hostPorts) throws IOException {
+    Set<Address> addresses =
+      hostPorts.stream().map(Address::fromString).collect(Collectors.toSet());
+    admin.removeServersFromRSGroup(addresses);
+  }
+
+  @Override
+  public void renameRsGroup(String oldName, String newName) throws IOException {
+    admin.renameRSGroup(oldName, newName);
+  }
+
+  @Override
+  public void alterRsGroupConfig(String groupName, Map<String, Object> args) throws IOException {
+    RSGroupInfo group = admin.getRSGroup(groupName);
+    if (group == null) {
+      throw new IOException("RSGroup does not exist");
+    }
+    Map<String, String> configuration = new HashMap<>(group.getConfiguration());
+    Object method = args.get("METHOD");
+    if ("unset".equals(String.valueOf(method))) {
+      configuration.remove(String.valueOf(args.get("NAME")));
+    } else {
+      for (Map.Entry<String, Object> e : args.entrySet()) {
+        if ("METHOD".equals(e.getKey())) {
+          continue;
+        }
+        configuration.put(e.getKey(), String.valueOf(e.getValue()));
+      }
+    }
+    admin.updateRSGroupConfig(groupName, configuration);
+  }
+
+  @Override
+  public List<List<String>> showRsGroupConfig(String groupName) throws IOException {
+    RSGroupInfo group = admin.getRSGroup(groupName);
+    if (group == null) {
+      throw new IOException("RSGroup does not exist");
+    }
+    List<List<String>> rows = new ArrayList<>();
+    for (Map.Entry<String, String> e : group.getConfiguration().entrySet()) {
+      rows.add(List.of(e.getKey(), e.getValue()));
+    }
+    return rows;
+  }
+
+  @Override
+  public String getNamespaceRsGroup(String namespace) throws IOException {
+    var nsd = admin.getNamespaceDescriptor(namespace);
+    return nsd.getConfigurationValue("hbase.rsgroup.name");
   }
 
   @Override
@@ -1138,4 +1060,610 @@ public final class DefaultShellAdmin implements ShellAdmin {
         throw new IOException("Unknown permission action: " + c);
     }
   }
+
+  @Override
+  public void addPeer(String peerId, Map<String, Object> peerConfigSpec) throws IOException {
+    replication.addPeer(peerId, peerConfigSpec);
+  }
+
+  @Override
+  public void removePeer(String peerId) throws IOException {
+    replication.removePeer(peerId);
+  }
+
+  @Override
+  public List<PeerDescription> listPeers() throws IOException {
+    return replication.listPeers();
+  }
+
+  @Override
+  public void enablePeer(String peerId) throws IOException {
+    replication.enablePeer(peerId);
+  }
+
+  @Override
+  public void disablePeer(String peerId) throws IOException {
+    replication.disablePeer(peerId);
+  }
+
+  @Override
+  public void setPeerReplicateAll(String peerId, boolean replicateAll) throws IOException {
+    replication.setPeerReplicateAll(peerId, replicateAll);
+  }
+
+  @Override
+  public void setPeerSerial(String peerId, boolean serial) throws IOException {
+    replication.setPeerSerial(peerId, serial);
+  }
+
+  @Override
+  public void setPeerNamespaces(String peerId, List<String> namespaces) throws IOException {
+    replication.setPeerNamespaces(peerId, namespaces);
+  }
+
+  @Override
+  public void appendPeerNamespaces(String peerId, List<String> namespaces) throws IOException {
+    replication.appendPeerNamespaces(peerId, namespaces);
+  }
+
+  @Override
+  public void removePeerNamespaces(String peerId, List<String> namespaces) throws IOException {
+    replication.removePeerNamespaces(peerId, namespaces);
+  }
+
+  @Override
+  public void setPeerExcludeNamespaces(String peerId, List<String> namespaces) throws IOException {
+    replication.setPeerExcludeNamespaces(peerId, namespaces);
+  }
+
+  @Override
+  public void appendPeerExcludeNamespaces(String peerId, List<String> namespaces)
+    throws IOException {
+    replication.appendPeerExcludeNamespaces(peerId, namespaces);
+  }
+
+  @Override
+  public void removePeerExcludeNamespaces(String peerId, List<String> namespaces)
+    throws IOException {
+    replication.removePeerExcludeNamespaces(peerId, namespaces);
+  }
+
+  @Override
+  public String showPeerTableCFs(String peerId) throws IOException {
+    return replication.showPeerTableCFs(peerId);
+  }
+
+  @Override
+  public void setPeerTableCFs(String peerId, Map<String, Object> tableCFs) throws IOException {
+    replication.setPeerTableCFs(peerId, tableCFs);
+  }
+
+  @Override
+  public void appendPeerTableCFs(String peerId, Map<String, Object> tableCFs) throws IOException {
+    replication.appendPeerTableCFs(peerId, tableCFs);
+  }
+
+  @Override
+  public void removePeerTableCFs(String peerId, Map<String, Object> tableCFs) throws IOException {
+    replication.removePeerTableCFs(peerId, tableCFs);
+  }
+
+  @Override
+  public void setPeerExcludeTableCFs(String peerId, Map<String, Object> tableCFs)
+    throws IOException {
+    replication.setPeerExcludeTableCFs(peerId, tableCFs);
+  }
+
+  @Override
+  public void appendPeerExcludeTableCFs(String peerId, Map<String, Object> tableCFs)
+    throws IOException {
+    replication.appendPeerExcludeTableCFs(peerId, tableCFs);
+  }
+
+  @Override
+  public void removePeerExcludeTableCFs(String peerId, Map<String, Object> tableCFs)
+    throws IOException {
+    replication.removePeerExcludeTableCFs(peerId, tableCFs);
+  }
+
+  @Override
+  public void setPeerBandwidth(String peerId, long bandwidth) throws IOException {
+    replication.setPeerBandwidth(peerId, bandwidth);
+  }
+
+  @Override
+  public List<List<String>> listReplicatedTables(String regex) throws IOException {
+    return replication.listReplicatedTables(regex);
+  }
+
+  @Override
+  public void enableTableReplication(String tableName) throws IOException {
+    replication.enableTableReplication(tableName);
+  }
+
+  @Override
+  public void disableTableReplication(String tableName) throws IOException {
+    replication.disableTableReplication(tableName);
+  }
+
+  @Override
+  public List<List<String>> getPeerConfigRows(String peerId) throws IOException {
+    return replication.getPeerConfigRows(peerId);
+  }
+
+  @Override
+  public List<List<String>> listPeerConfigRows() throws IOException {
+    return replication.listPeerConfigRows();
+  }
+
+  @Override
+  public void updatePeerConfig(String peerId, Map<String, Object> args) throws IOException {
+    replication.updatePeerConfig(peerId, args);
+  }
+
+  @Override
+  public void transitPeerSyncReplicationState(String peerId, String state) throws IOException {
+    replication.transitPeerSyncReplicationState(peerId, state);
+  }
+
+  @Override
+  public boolean peerModificationSwitch(boolean enabled, boolean drainProcs) throws IOException {
+    return replication.peerModificationSwitch(enabled, drainProcs);
+  }
+
+  @Override
+  public boolean peerModificationEnabled() throws IOException {
+    return replication.peerModificationEnabled();
+  }
+
+  @Override
+  public void setQuota(Map<String, Object> args) throws IOException {
+    quotas.setQuota(args);
+  }
+
+  @Override
+  public List<List<String>> listQuotas(Map<String, Object> filterArgs) throws IOException {
+    return quotas.listQuotas(filterArgs);
+  }
+
+  @Override
+  public List<List<String>> listQuotaTableSizes() throws IOException {
+    return quotas.listQuotaTableSizes();
+  }
+
+  @Override
+  public List<List<String>> listQuotaSnapshots(Map<String, Object> filterArgs) throws IOException {
+    return quotas.listQuotaSnapshots(filterArgs);
+  }
+
+  @Override
+  public List<List<String>> listSnapshotSizes() throws IOException {
+    return quotas.listSnapshotSizes();
+  }
+
+  @Override
+  public boolean switchRpcThrottle(boolean enabled) throws IOException {
+    return quotas.switchRpcThrottle(enabled);
+  }
+
+  @Override
+  public boolean isRpcThrottleEnabled() throws IOException {
+    return quotas.isRpcThrottleEnabled();
+  }
+
+  @Override
+  public boolean switchExceedThrottleQuota(boolean enabled) throws IOException {
+    return quotas.switchExceedThrottleQuota(enabled);
+  }
+
+  @Override
+  public List<List<String>> listProcedures() throws IOException {
+    return procedures.listProcedures();
+  }
+
+  @Override
+  public List<String> listLocks() throws IOException {
+    return procedures.listLocks();
+  }
+
+  @Override
+  public boolean normalize(Map<String, Object> filterArgs) throws IOException {
+    NormalizeTableFilterParams.Builder builder = new NormalizeTableFilterParams.Builder();
+    if (filterArgs != null && !filterArgs.isEmpty()) {
+      if (filterArgs.containsKey("TABLE_NAME")) {
+        Object tableName = filterArgs.get("TABLE_NAME");
+        builder.tableNames(List.of(TableName.valueOf(String.valueOf(tableName))));
+      } else if (filterArgs.containsKey("TABLE_NAMES")) {
+        Object tableNames = filterArgs.get("TABLE_NAMES");
+        if (!(tableNames instanceof List)) {
+          throw new IOException("TABLE_NAMES must be of type Array");
+        }
+        List<TableName> names = new ArrayList<>();
+        for (Object tn : (List<?>) tableNames) {
+          names.add(TableName.valueOf(String.valueOf(tn)));
+        }
+        builder.tableNames(names);
+      }
+      if (filterArgs.containsKey("REGEX")) {
+        builder.regex(String.valueOf(filterArgs.get("REGEX")));
+      }
+      if (filterArgs.containsKey("NAMESPACE")) {
+        builder.namespace(String.valueOf(filterArgs.get("NAMESPACE")));
+      }
+    }
+    return admin.normalize(builder.build());
+  }
+
+  @Override
+  public boolean isInMaintenanceMode() throws IOException {
+    return admin.isMasterInMaintenanceMode();
+  }
+
+  @Override
+  public void unassign(String regionName) throws IOException {
+    admin.unassign(Bytes.toBytes(regionName));
+  }
+
+  @Override
+  public void flushMasterStore() throws IOException {
+    admin.flushMasterStore();
+  }
+
+  @Override
+  public int catalogJanitorRun() throws IOException {
+    return admin.runCatalogJanitor();
+  }
+
+  @Override
+  public boolean hbckChoreRun() throws IOException {
+    try (Hbck hbck = admin.getConnection().getHbck()) {
+      return hbck.runHbckChore();
+    }
+  }
+
+  @Override
+  public boolean cleanerChoreRun() throws IOException {
+    return admin.runCleanerChore();
+  }
+
+  @Override
+  public boolean cleanerChoreSwitch(boolean enabled) throws IOException {
+    return admin.cleanerChoreSwitch(enabled);
+  }
+
+  @Override
+  public boolean cleanerChoreEnabled() throws IOException {
+    return admin.isCleanerChoreEnabled();
+  }
+
+  @Override
+  public void walRoll(String serverName) throws IOException {
+    Collection<ServerName> liveServers = admin.getClusterMetrics().getLiveServerMetrics().keySet();
+    ServerName resolved = resolveServerName(serverName, liveServers)
+      .orElseThrow(() -> new IOException("Could not find server with specified name: " + serverName));
+    admin.rollWALWriter(resolved);
+  }
+
+  @Override
+  public void walRollAll() throws IOException {
+    admin.rollAllWALWriters();
+  }
+
+  @Override
+  public boolean snapshotCleanupSwitch(boolean enabled) throws IOException {
+    return admin.snapshotCleanupSwitch(enabled, false);
+  }
+
+  @Override
+  public boolean snapshotCleanupEnabled() throws IOException {
+    return admin.isSnapshotCleanupEnabled();
+  }
+
+  @Override
+  public long refreshMeta() throws IOException {
+    return admin.refreshMeta();
+  }
+
+  @Override
+  public void stopMaster() throws IOException {
+    admin.stopMaster();
+  }
+
+  @Override
+  public void stopRegionServer(String hostPort) throws IOException {
+    admin.stopRegionServer(hostPort);
+  }
+
+  @Override
+  public List<String> listDeadServers() throws IOException {
+    return admin.listDeadServers().stream().map(ServerName::getServerName)
+      .collect(Collectors.toList());
+  }
+
+  @Override
+  public List<String> listLiveServers() throws IOException {
+    return admin.getClusterMetrics().getLiveServerMetrics().keySet().stream()
+      .map(ServerName::getServerName).collect(Collectors.toList());
+  }
+
+  @Override
+  public List<String> listUnknownServers() throws IOException {
+    return admin.listUnknownServers().stream().map(ServerName::getServerName)
+      .collect(Collectors.toList());
+  }
+
+  @Override
+  public List<String> clearDeadServers(List<String> serverNames) throws IOException {
+    List<ServerName> servers;
+    if (serverNames == null || serverNames.isEmpty()) {
+      servers = admin.listDeadServers();
+    } else {
+      servers = new ArrayList<>();
+      for (String serverName : serverNames) {
+        servers.add(ServerName.valueOf(serverName));
+      }
+    }
+    return admin.clearDeadServers(servers).stream().map(ServerName::getServerName)
+      .collect(Collectors.toList());
+  }
+
+  @Override
+  public String clearSlowLogResponses(List<String> serverNames) throws IOException {
+    Set<ServerName> servers = resolveLogServers(serverNames, true);
+    List<Boolean> responses = admin.clearSlowLogResponses(servers);
+    int success = 0;
+    for (Boolean response : responses) {
+      if (Boolean.TRUE.equals(response)) {
+        success++;
+      }
+    }
+    return "Cleared Slowlog responses from " + success + "/" + responses.size() + " RegionServers";
+  }
+
+  @Override
+  public void reopenRegions(String tableName, List<String> regionNames) throws IOException {
+    TableName table = TableName.valueOf(tableName);
+    if (regionNames == null || regionNames.isEmpty()) {
+      admin.reopenTableRegions(table);
+      return;
+    }
+    List<RegionInfo> allRegions = admin.getRegions(table);
+    List<RegionInfo> targetRegions = new ArrayList<>();
+    for (String region : regionNames) {
+      RegionInfo found = null;
+      for (RegionInfo info : allRegions) {
+        if (info.getEncodedName().equals(region) || info.getRegionNameAsString().equals(region)) {
+          found = info;
+          break;
+        }
+      }
+      if (found == null) {
+        throw new IOException("Region " + region + " not found in table " + tableName);
+      }
+      targetRegions.add(found);
+    }
+    admin.reopenTableRegions(table, targetRegions);
+  }
+
+  @Override
+  public List<String> getBalancerDecisions(Map<String, Object> args) throws IOException {
+    int limit = intArg(args, "LIMIT", 250);
+    return logEntriesToJson(
+      admin.getLogEntries(null, "BALANCER_DECISION", ServerType.MASTER, limit, null));
+  }
+
+  @Override
+  public List<String> getBalancerRejections(Map<String, Object> args) throws IOException {
+    int limit = intArg(args, "LIMIT", 250);
+    return logEntriesToJson(
+      admin.getLogEntries(null, "BALANCER_REJECTION", ServerType.MASTER, limit, null));
+  }
+
+  @Override
+  public List<String> getSlowLogResponses(List<String> serverNames, Map<String, Object> args,
+    boolean largeLog) throws IOException {
+    Set<ServerName> servers;
+    if (serverNames != null && serverNames.size() == 1 && "*".equals(serverNames.get(0))) {
+      servers = resolveLogServers(List.of(), true);
+    } else {
+      servers = resolveLogServers(serverNames, false);
+    }
+    int limit = intArg(args, "LIMIT", 10);
+    Map<String, Object> filterParams = slowLogFilterParams(args);
+    String logType = largeLog ? "LARGE_LOG" : "SLOW_LOG";
+    return logEntriesToJson(
+      admin.getLogEntries(servers, logType, ServerType.REGION_SERVER, limit, filterParams));
+  }
+
+  @Override
+  public void mergeRegion(List<String> regionNames, boolean force) throws IOException {
+    if (regionNames == null || regionNames.size() < 2) {
+      throw new IOException("Must pass at least 2 regions to merge");
+    }
+    byte[][] regions = new byte[regionNames.size()][];
+    for (int i = 0; i < regionNames.size(); i++) {
+      regions[i] = Bytes.toBytes(regionNames.get(i));
+    }
+    FutureUtils.get(admin.mergeRegionsAsync(regions, force));
+  }
+
+  @Override
+  public String zkDump() throws IOException {
+    try (ZKWatcher watcher = new ZKWatcher(admin.getConfiguration(), "admin", null)) {
+      return ZKDump.dump(watcher);
+    }
+  }
+
+  @Override
+  public void compactRegionServer(String serverName, boolean major) throws IOException {
+    ServerName sn = ServerName.valueOf(serverName);
+    if (major) {
+      admin.majorCompactRegionServer(sn);
+    } else {
+      admin.compactRegionServer(sn);
+    }
+  }
+
+  @Override
+  public String getCompactionState(String tableName) throws IOException {
+    return admin.getCompactionState(TableName.valueOf(tableName)).name();
+  }
+
+  @Override
+  public void clearCompactionQueues(String serverName, List<String> queueNames) throws IOException {
+    Set<String> queues = new HashSet<>();
+    if (queueNames == null || queueNames.isEmpty()) {
+      queues.add("long");
+      queues.add("short");
+    } else {
+      for (String queue : queueNames) {
+        if (!"long".equals(queue) && !"short".equals(queue)) {
+          throw new IOException("Unknown queue name " + queue);
+        }
+        queues.add(queue);
+      }
+    }
+    try {
+      admin.clearCompactionQueues(ServerName.valueOf(serverName), queues);
+    } catch (InterruptedException ie) {
+      Thread.currentThread().interrupt();
+      throw new IOException(ie);
+    }
+  }
+
+  @Override
+  public String clearBlockCache(String tableName) throws IOException {
+    return admin.clearBlockCache(TableName.valueOf(tableName)).toString();
+  }
+
+  @Override
+  public String regionInfo(String regionName) throws IOException {
+    for (TableName table : admin.listTableNames()) {
+      for (RegionInfo info : admin.getRegions(table)) {
+        if (
+          info.getEncodedName().equals(regionName)
+            || info.getRegionNameAsString().equals(regionName)
+        ) {
+          return info.toString();
+        }
+      }
+    }
+    for (RegionInfo info : admin.getRegions(TableName.META_TABLE_NAME)) {
+      if (
+        info.getEncodedName().equals(regionName) || info.getRegionNameAsString().equals(regionName)
+      ) {
+        return info.toString();
+      }
+    }
+    throw new UnknownRegionException(regionName);
+  }
+
+  @Override
+  public List<String> regionsInTransition() throws IOException {
+    List<String> rows = new ArrayList<>();
+    for (RegionState state : admin.getClusterMetrics().getRegionStatesInTransition()) {
+      rows.add(state.toDescriptiveString());
+    }
+    return rows;
+  }
+
+  @Override
+  public void truncateRegion(String regionName) throws IOException {
+    byte[] bytes = Bytes.toBytes(regionName);
+    try {
+      FutureUtils.get(admin.truncateRegionAsync(bytes));
+    } catch (IllegalArgumentException | UnknownRegionException e) {
+      admin.truncateRegion(bytes);
+    }
+  }
+
+  @Override
+  public long refreshHFiles(Map<String, Object> args) throws IOException {
+    Object tableName = args == null ? null : args.get("TABLE_NAME");
+    Object namespace = args == null ? null : args.get("NAMESPACE");
+    if (namespace != null && tableName != null) {
+      throw new IOException("Specify either a TABLE_NAME or a NAMESPACE, not both");
+    }
+    if ("".equals(namespace) || "".equals(tableName)) {
+      throw new IOException("TABLE_NAME or NAMESPACE cannot be empty string");
+    }
+    if (namespace instanceof List || tableName instanceof List) {
+      throw new IOException("TABLE_NAME or NAMESPACE must be a single string, not an array");
+    }
+    if (namespace != null) {
+      return admin.refreshHFiles(String.valueOf(namespace));
+    }
+    if (tableName != null) {
+      return admin.refreshHFiles(TableName.valueOf(String.valueOf(tableName)));
+    }
+    return admin.refreshHFiles();
+  }
+
+  private Set<ServerName> resolveLogServers(List<String> serverNames, boolean allIfEmpty)
+    throws IOException {
+    Collection<ServerName> liveServers = admin.getClusterMetrics().getLiveServerMetrics().keySet();
+    if (serverNames == null || serverNames.isEmpty()) {
+      if (allIfEmpty) {
+        return new HashSet<>(liveServers);
+      }
+      return Set.of();
+    }
+    Set<ServerName> resolved = new HashSet<>();
+    for (String hostOrServer : serverNames) {
+      resolveServerName(hostOrServer, liveServers).ifPresent(resolved::add);
+    }
+    return resolved;
+  }
+
+  private static int intArg(Map<String, Object> args, String key, int defaultValue) {
+    if (args == null || !args.containsKey(key)) {
+      return defaultValue;
+    }
+    Object value = args.get(key);
+    if (value instanceof Number) {
+      return ((Number) value).intValue();
+    }
+    return Integer.parseInt(String.valueOf(value));
+  }
+
+  private static Map<String, Object> slowLogFilterParams(Map<String, Object> args) {
+    Map<String, Object> filterParams = new HashMap<>();
+    if (args == null) {
+      return filterParams;
+    }
+    if (args.containsKey("REGION_NAME")) {
+      filterParams.put("regionName", String.valueOf(args.get("REGION_NAME")));
+    }
+    if (args.containsKey("TABLE_NAME")) {
+      filterParams.put("tableName", String.valueOf(args.get("TABLE_NAME")));
+    }
+    if (args.containsKey("CLIENT_IP")) {
+      filterParams.put("clientAddress", String.valueOf(args.get("CLIENT_IP")));
+    }
+    if (args.containsKey("USER")) {
+      filterParams.put("userName", String.valueOf(args.get("USER")));
+    }
+    if (args.containsKey("FILTER_BY_OP")) {
+      String op = String.valueOf(args.get("FILTER_BY_OP"));
+      if (!"OR".equals(op) && !"AND".equals(op)) {
+        throw new IllegalArgumentException("FILTER_BY_OP should be either OR / AND");
+      }
+      if ("AND".equals(op)) {
+        filterParams.put("filterByOperator", "AND");
+      }
+    }
+    return filterParams;
+  }
+
+  private static List<String> logEntriesToJson(List<LogEntry> entries) {
+    List<String> result = new ArrayList<>();
+    if (entries == null) {
+      return result;
+    }
+    for (LogEntry entry : entries) {
+      result.add(entry.toJsonPrettyPrint());
+    }
+    return result;
+  }
+
 }

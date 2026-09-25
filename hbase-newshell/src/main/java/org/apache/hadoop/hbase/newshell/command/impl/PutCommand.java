@@ -27,10 +27,10 @@ import org.apache.hadoop.hbase.newshell.parser.ParsedCommand;
 import org.apache.yetus.audience.InterfaceAudience;
 
 /**
- * Ported, minimal slice, from hbase-shell's {@code hbase/table.rb#_put_internal}: table name,
- * row key, a single required {@code family:qualifier} column, and value, plus an optional
- * {@code TIMESTAMP} hash literal. ATTRIBUTES, VISIBILITY and TTL are explicitly not ported for
- * this pilot slice.
+ * Ported, minimal slice, from hbase-shell's {@code hbase/table.rb#_put_internal}: table name, row
+ * key, a single required {@code family:qualifier} column, and value, plus an optional
+ * {@code TIMESTAMP} hash literal. ATTRIBUTES, VISIBILITY and TTL are explicitly not ported for this
+ * pilot slice.
  */
 @InterfaceAudience.Private
 public final class PutCommand implements ShellCommand {

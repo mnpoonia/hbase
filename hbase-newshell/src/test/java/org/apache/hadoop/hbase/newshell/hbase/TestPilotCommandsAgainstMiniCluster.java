@@ -43,8 +43,8 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /**
- * End-to-end verification of the pilot commands' Java API wrapper layer against a real
- * minicluster - {@link DefaultShellAdmin} for {@code status}/{@code create}/{@code disable}/
+ * End-to-end verification of the pilot commands' Java API wrapper layer against a real minicluster
+ * - {@link DefaultShellAdmin} for {@code status}/{@code create}/{@code disable}/
  * {@code enable}/{@code drop}/{@code list}/{@code describe} and {@link DefaultShellTable} for
  * {@code get}/{@code put}.
  */
@@ -67,7 +67,7 @@ public class TestPilotCommandsAgainstMiniCluster {
   }
 
   @Test
-  public void statusReturnsNonNullClusterMetrics() throws Exception {
+  public void statusReturnsNonNullStatusView() throws Exception {
     ShellAdmin admin = new DefaultShellAdmin(connection.getAdmin());
     assertNotNull(admin.status());
   }
@@ -149,8 +149,8 @@ public class TestPilotCommandsAgainstMiniCluster {
   @Test
   public void getReturnsCellsAcrossMultipleFamiliesAndQualifiers() throws Exception {
     String tableName = "newshell_get_multi_family_test";
-    TEST_UTIL.createTable(TableName.valueOf(tableName), new byte[][] { Bytes.toBytes("f1"),
-      Bytes.toBytes("f2") });
+    TEST_UTIL.createTable(TableName.valueOf(tableName),
+      new byte[][] { Bytes.toBytes("f1"), Bytes.toBytes("f2") });
     try (Table table = connection.getTable(TableName.valueOf(tableName))) {
       Put put = new Put(Bytes.toBytes("r1"));
       put.addColumn(Bytes.toBytes("f1"), Bytes.toBytes("c1"), Bytes.toBytes("v1"));
@@ -160,8 +160,8 @@ public class TestPilotCommandsAgainstMiniCluster {
     }
 
     ShellTableFactory factory = new DefaultShellTableFactory(connection);
-    GetResult result = factory.forTable(tableName)
-      .get("r1", Map.of("COLUMN", List.of("f1:c1", "f1:c2", "f2:c1")));
+    GetResult result =
+      factory.forTable(tableName).get("r1", Map.of("COLUMN", List.of("f1:c1", "f1:c2", "f2:c1")));
 
     List<CellView> cells = result.cells();
     assertEquals(3, cells.size());
@@ -424,10 +424,8 @@ public class TestPilotCommandsAgainstMiniCluster {
     assertEquals(1, limited.rows().size());
     assertEquals("r1", limited.rows().get(0).row());
 
-    ScanResult ranged =
-      factory.forTable(tableName).scan(Map.of("STARTROW", "r2", "STOPROW", "r4"));
-    assertEquals(List.of("r2", "r3"),
-      ranged.rows().stream().map(ScanRow::row).toList());
+    ScanResult ranged = factory.forTable(tableName).scan(Map.of("STARTROW", "r2", "STOPROW", "r4"));
+    assertEquals(List.of("r2", "r3"), ranged.rows().stream().map(ScanRow::row).toList());
   }
 
   @Test
@@ -663,8 +661,8 @@ public class TestPilotCommandsAgainstMiniCluster {
 
     Admin realAdmin = connection.getAdmin();
     assertTrue(realAdmin.tableExists(TableName.valueOf(newTableName)));
-    assertTrue(
-      realAdmin.getDescriptor(TableName.valueOf(newTableName)).hasColumnFamily(Bytes.toBytes("f1")));
+    assertTrue(realAdmin.getDescriptor(TableName.valueOf(newTableName))
+      .hasColumnFamily(Bytes.toBytes("f1")));
     ShellTableFactory factory = new DefaultShellTableFactory(connection);
     assertTrue(factory.forTable(newTableName).scan(Map.of()).rows().isEmpty());
   }
@@ -677,7 +675,8 @@ public class TestPilotCommandsAgainstMiniCluster {
     ShellAdmin admin = new DefaultShellAdmin(connection.getAdmin());
     RegionLocationView location = admin.locateRegion(tableName, "r1");
     assertNotNull(location.hostnamePort());
-    assertTrue(location.regionName().startsWith(tableName));
+    assertTrue(location.regionName().contains("ENCODED"));
+    assertTrue(location.regionName().contains(tableName));
   }
 
   @Test
@@ -687,8 +686,8 @@ public class TestPilotCommandsAgainstMiniCluster {
     admin.createTable(tableName, List.of(Map.of("NAME", "f1")),
       Map.of("SPLITS", List.of("1000", "2000")));
 
-    List<List<String>> rows = admin.listRegions(tableName);
-    assertEquals(3, rows.size());
-    assertTrue(rows.get(0).get(1).startsWith(tableName));
+    ListRegionsView view = admin.listRegions(tableName);
+    assertEquals(3, view.rows().size());
+    assertTrue(view.rows().get(0).get(1).startsWith(tableName));
   }
 }

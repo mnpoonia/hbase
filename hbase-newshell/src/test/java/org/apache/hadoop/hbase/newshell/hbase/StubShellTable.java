@@ -21,9 +21,9 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Every method throws {@link UnsupportedOperationException} by default. Command-under-test
- * fakes extend this and override only the method(s) their command actually calls, instead of
- * every test re-declaring all of {@link ShellTable}'s methods.
+ * Every method throws {@link UnsupportedOperationException} by default. Command-under-test fakes
+ * extend this and override only the method(s) their command actually calls, instead of every test
+ * re-declaring all of {@link ShellTable}'s methods.
  */
 public class StubShellTable implements ShellTable {
   private static UnsupportedOperationException notNeeded() {

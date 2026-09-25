@@ -80,8 +80,9 @@ public class TerminalProviderRegistryTest {
 
   @Test
   public void skipsUnavailableProviders() {
-    TerminalProviderRegistry registry = new TerminalProviderRegistry(
-      List.of(new FakeProvider("unavailable-high", 100, false), new FakeProvider("available-low", 1, true)));
+    TerminalProviderRegistry registry =
+      new TerminalProviderRegistry(List.of(new FakeProvider("unavailable-high", 100, false),
+        new FakeProvider("available-low", 1, true)));
     assertEquals("available-low", registry.resolve().name());
   }
 

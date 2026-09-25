@@ -51,7 +51,8 @@ public class SetQuotaCommandTest {
 
   @Test
   public void setsThrottleQuota() throws Exception {
-    var parsed = ShellLineParser.parse("set_quota TYPE => THROTTLE, USER => 'u1', LIMIT => '10req/sec'");
+    var parsed =
+      ShellLineParser.parse("set_quota TYPE => THROTTLE, USER => 'u1', LIMIT => '10req/sec'");
     command.execute(parsed, context);
 
     assertEquals("THROTTLE", admin.lastArgs.get("TYPE"));

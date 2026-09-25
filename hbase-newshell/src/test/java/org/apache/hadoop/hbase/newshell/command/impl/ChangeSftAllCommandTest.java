@@ -22,7 +22,9 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.List;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
+import org.apache.hadoop.hbase.newshell.command.SessionOptions;
 import org.apache.hadoop.hbase.newshell.command.ShellCommandException;
 import org.apache.hadoop.hbase.newshell.hbase.StubShellAdmin;
 import org.apache.hadoop.hbase.newshell.hbase.StubShellTableFactory;
@@ -39,6 +41,11 @@ public class ChangeSftAllCommandTest {
     private String lastSft;
 
     @Override
+    public List<String> listTables(String regex) {
+      return List.of();
+    }
+
+    @Override
     public void changeSftAll(String tableRegex, String sft) {
       this.lastTableRegex = tableRegex;
       this.lastSft = sft;
@@ -47,8 +54,8 @@ public class ChangeSftAllCommandTest {
 
   private final ChangeSftAllCommand command = new ChangeSftAllCommand();
   private final RecordingShellAdmin admin = new RecordingShellAdmin();
-  private final ExecutionContext context =
-    new ExecutionContext(admin, new StubShellTableFactory(), new PrintWriter(new StringWriter()));
+  private final ExecutionContext context = new ExecutionContext(admin, new StubShellTableFactory(),
+    new PrintWriter(new StringWriter()), SessionOptions.defaults().withForceYes(true));
 
   @Test
   public void changesSftForAllMatchingTables() throws Exception {

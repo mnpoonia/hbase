@@ -17,6 +17,7 @@
  */
 package org.apache.hadoop.hbase.newshell.hbase;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -116,5 +117,11 @@ public class TestRsGroupAgainstMiniCluster {
     assertEquals(2, groups.get(0).servers().size());
 
     assertTrue(admin.listRsGroups("no_such_group_.*").isEmpty());
+  }
+
+  @Test
+  public void updateRsGroupConfigDoesNotThrowForDefaultGroup() throws Exception {
+    ShellAdmin admin = new DefaultShellAdmin(connection.getAdmin());
+    assertDoesNotThrow(() -> admin.updateRsGroupConfig(RSGroupInfo.DEFAULT_GROUP));
   }
 }

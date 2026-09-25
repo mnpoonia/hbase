@@ -69,10 +69,9 @@ public class TestGrantAgainstMiniCluster {
     TEST_UTIL.shutdownMiniCluster();
   }
 
-  private static Permission onlyPermissionFor(String userName, String tableRegex)
-    throws Throwable {
-    for (UserPermission permission : AccessControlClient.getUserPermissions(connection,
-      tableRegex, userName)) {
+  private static Permission onlyPermissionFor(String userName, String tableRegex) throws Throwable {
+    for (UserPermission permission : AccessControlClient.getUserPermissions(connection, tableRegex,
+      userName)) {
       if (permission.getUser().equals(userName)) {
         return permission.getPermission();
       }
@@ -102,8 +101,7 @@ public class TestGrantAgainstMiniCluster {
 
     Permission granted = onlyPermissionFor("newshell_ns_user", "@" + namespace);
     assertTrue(granted != null && granted.implies(Permission.Action.READ)
-      && granted.implies(Permission.Action.WRITE)
-      && !granted.implies(Permission.Action.ADMIN));
+      && granted.implies(Permission.Action.WRITE) && !granted.implies(Permission.Action.ADMIN));
   }
 
   @Test

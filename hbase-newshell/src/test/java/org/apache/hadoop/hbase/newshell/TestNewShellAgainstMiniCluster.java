@@ -59,9 +59,9 @@ import org.apache.hadoop.hbase.newshell.command.impl.ListPeersCommand;
 import org.apache.hadoop.hbase.newshell.command.impl.ListSnapshotsCommand;
 import org.apache.hadoop.hbase.newshell.command.impl.MajorCompactCommand;
 import org.apache.hadoop.hbase.newshell.command.impl.NormalizerEnabledCommand;
+import org.apache.hadoop.hbase.newshell.command.impl.NormalizerSwitchCommand;
 import org.apache.hadoop.hbase.newshell.command.impl.PutCommand;
 import org.apache.hadoop.hbase.newshell.command.impl.RecommissionRegionServerCommand;
-import org.apache.hadoop.hbase.newshell.command.impl.NormalizerSwitchCommand;
 import org.apache.hadoop.hbase.newshell.command.impl.RemovePeerCommand;
 import org.apache.hadoop.hbase.newshell.command.impl.SnapshotCommand;
 import org.apache.hadoop.hbase.newshell.command.impl.SplitCommand;
@@ -85,13 +85,13 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /**
- * End-to-end "typed line in, rendered text out" test of the full newshell stack - real parser,
- * real {@link CommandRegistry} of all pilot commands, real {@link DefaultShellAdmin}/
+ * End-to-end "typed line in, rendered text out" test of the full newshell stack - real parser, real
+ * {@link CommandRegistry} of all pilot commands, real {@link DefaultShellAdmin}/
  * {@link DefaultShellTableFactory} wired to an actual minicluster - driven through
  * {@link NewShellMain#run}. This is the newshell analogue of hbase-shell's Ruby-script-driven
  * {@code AbstractTestShell}: unlike {@code TestPilotCommandsAgainstMiniCluster} (which calls the
- * wrapper layer directly), this test feeds the exact strings a user would type and asserts on
- * the terminal's rendered output.
+ * wrapper layer directly), this test feeds the exact strings a user would type and asserts on the
+ * terminal's rendered output.
  */
 @Tag(LargeTests.TAG)
 @Tag(ClientTests.TAG)
@@ -149,29 +149,34 @@ public class TestNewShellAgainstMiniCluster {
     ShellTableFactory tables = new DefaultShellTableFactory(connection);
     ScriptedShellTerminal terminal = new ScriptedShellTerminal(lines);
     ExecutionContext context = new ExecutionContext(admin, tables, terminal.writer());
-    CommandRegistry registry = new CommandRegistry(
-      List.of(new StatusCommand(), new CreateCommand(), new DisableCommand(), new GetCommand(),
-        new EnableCommand(), new DropCommand(), new PutCommand(), new ListCommand(),
-        new DescribeCommand(), new DecommissionRegionServersCommand(),
-        new RecommissionRegionServerCommand(), new ListDecommissionedRegionServersCommand(),
-        new AlterCommand(), new ExistsCommand(), new CompactCommand(), new MajorCompactCommand(),
-        new SplitCommand(), new AddPeerCommand(), new RemovePeerCommand(),
-        new ListPeersCommand(), new SnapshotCommand(), new DeleteSnapshotCommand(),
-        new ListSnapshotsCommand(), new BalanceSwitchCommand(), new NormalizerSwitchCommand(),
-        new CatalogjanitorSwitchCommand(), new CompactionSwitchCommand(),
-        new SplitormergeSwitchCommand(), new BalancerEnabledCommand(),
-        new CatalogjanitorEnabledCommand(), new NormalizerEnabledCommand(),
-        new SplitormergeEnabledCommand()));
+    CommandRegistry registry = new CommandRegistry(List.of(new StatusCommand(), new CreateCommand(),
+      new DisableCommand(), new GetCommand(), new EnableCommand(), new DropCommand(),
+      new PutCommand(), new ListCommand(), new DescribeCommand(),
+      new DecommissionRegionServersCommand(), new RecommissionRegionServerCommand(),
+      new ListDecommissionedRegionServersCommand(), new AlterCommand(), new ExistsCommand(),
+      new CompactCommand(), new MajorCompactCommand(), new SplitCommand(), new AddPeerCommand(),
+      new RemovePeerCommand(), new ListPeersCommand(), new SnapshotCommand(),
+      new DeleteSnapshotCommand(), new ListSnapshotsCommand(), new BalanceSwitchCommand(),
+      new NormalizerSwitchCommand(), new CatalogjanitorSwitchCommand(),
+      new CompactionSwitchCommand(), new SplitormergeSwitchCommand(), new BalancerEnabledCommand(),
+      new CatalogjanitorEnabledCommand(), new NormalizerEnabledCommand(),
+      new SplitormergeEnabledCommand()));
     NewShellMain.run(terminal, context, registry, new DefaultFormatter());
     lastOutput = terminal.output();
   }
 
   private String lastOutput;
 
+  private void assertNoError() {
+    assertTrue(!lastOutput.contains("ERROR:"), () -> "unexpected ERROR in output:\n" + lastOutput);
+  }
+
   @Test
   public void statusCommandPrintsLiveServerCount() throws Exception {
     runScript("status", "exit");
-    assertTrue(lastOutput.contains("live servers"));
+    // Summary format matches Ruby admin.rb: "... N servers," (not "live servers").
+    assertTrue(lastOutput.contains("servers,"));
+    assertTrue(lastOutput.contains("average load"));
   }
 
   @Test
@@ -186,7 +191,7 @@ public class TestNewShellAgainstMiniCluster {
   public void createWithMultipleHashLiteralsBuildsAllFamilies() throws Exception {
     String tableName = "newshell_typed_multi_family";
     runScript("create '" + tableName + "', {NAME => 'f1'}, {NAME => 'f2'}", "exit");
-    assertTrue(lastOutput.contains(tableName + " created"));
+    assertTrue(lastOutput.contains("Created table " + tableName));
     var descriptor = connection.getAdmin().getDescriptor(TableName.valueOf(tableName));
     assertTrue(descriptor.hasColumnFamily(Bytes.toBytes("f1")));
     assertTrue(descriptor.hasColumnFamily(Bytes.toBytes("f2")));
@@ -217,7 +222,7 @@ public class TestNewShellAgainstMiniCluster {
     runScript("create '" + tableName + "', {NAME => 'f1'}", "exit");
 
     runScript("put '" + tableName + "', 'r1', 'f1:c1', 'v1'", "exit");
-    assertTrue(lastOutput.contains("1 row(s) put"));
+    assertTrue(!lastOutput.contains("ERROR:"));
 
     runScript("get '" + tableName + "', 'r1'", "exit");
     assertTrue(lastOutput.contains("v1"));
@@ -229,13 +234,15 @@ public class TestNewShellAgainstMiniCluster {
     runScript("create '" + tableName + "', {NAME => 'f1'}", "exit");
 
     runScript("disable '" + tableName + "'", "exit");
-    assertTrue(lastOutput.contains(tableName + " disabled"));
+    assertTrue(!lastOutput.contains("ERROR:"));
+    assertTrue(connection.getAdmin().isTableDisabled(TableName.valueOf(tableName)));
 
     runScript("enable '" + tableName + "'", "exit");
-    assertTrue(lastOutput.contains(tableName + " enabled"));
+    assertTrue(!lastOutput.contains("ERROR:"));
+    assertTrue(connection.getAdmin().isTableEnabled(TableName.valueOf(tableName)));
 
     runScript("disable '" + tableName + "'", "drop '" + tableName + "'", "exit");
-    assertTrue(lastOutput.contains(tableName + " dropped"));
+    assertTrue(!lastOutput.contains("ERROR:"));
     assertTrue(!connection.getAdmin().tableExists(TableName.valueOf(tableName)));
   }
 
@@ -265,13 +272,13 @@ public class TestNewShellAgainstMiniCluster {
       realAdmin.getClusterMetrics().getLiveServerMetrics().keySet().iterator().next();
 
     runScript("decommission_regionservers '" + liveServer.getHostname() + "'", "exit");
-    assertTrue(lastOutput.contains("1 region server(s) decommissioned"));
+    assertNoError();
 
     runScript("list_decommissioned_regionservers", "exit");
     assertTrue(lastOutput.contains(liveServer.getServerName()));
 
     runScript("recommission_regionserver '" + liveServer.getHostname() + "'", "exit");
-    assertTrue(lastOutput.contains("recommissioned"));
+    assertNoError();
 
     runScript("list_decommissioned_regionservers", "exit");
     assertTrue(!lastOutput.contains(liveServer.getServerName()));
@@ -283,7 +290,7 @@ public class TestNewShellAgainstMiniCluster {
     runScript("create '" + tableName + "', {NAME => 'f1'}", "exit");
 
     runScript("alter '" + tableName + "', {NAME => 'f1', TTL => 100}", "exit");
-    assertTrue(lastOutput.contains(tableName + " altered"));
+    assertTrue(lastOutput.contains("Updating all regions with the new schema..."));
     var descriptor = connection.getAdmin().getDescriptor(TableName.valueOf(tableName));
     assertTrue(descriptor.getColumnFamily(Bytes.toBytes("f1")).getTimeToLive() == 100);
   }
@@ -322,13 +329,13 @@ public class TestNewShellAgainstMiniCluster {
 
     runScript("add_peer '" + peerId + "', CLUSTER_KEY => '" + clusterKey + "', "
       + "ENDPOINT_CLASSNAME => '" + SelfReplicationEndpointForTest.class.getName() + "'", "exit");
-    assertTrue(lastOutput.contains(peerId + " peer added"));
+    assertNoError();
 
     runScript("list_peers", "exit");
     assertTrue(lastOutput.contains(peerId));
 
     runScript("remove_peer '" + peerId + "'", "exit");
-    assertTrue(lastOutput.contains(peerId + " peer removed"));
+    assertNoError();
 
     runScript("list_peers", "exit");
     assertTrue(!lastOutput.contains(peerId));
@@ -341,13 +348,13 @@ public class TestNewShellAgainstMiniCluster {
     runScript("create '" + tableName + "', {NAME => 'f1'}", "exit");
 
     runScript("snapshot '" + tableName + "', '" + snapshotName + "'", "exit");
-    assertTrue(lastOutput.contains(snapshotName + " snapshot of table " + tableName + " created"));
+    assertNoError();
 
     runScript("list_snapshots", "exit");
     assertTrue(lastOutput.contains(snapshotName));
 
     runScript("delete_snapshot '" + snapshotName + "'", "exit");
-    assertTrue(lastOutput.contains(snapshotName + " snapshot deleted"));
+    assertNoError();
 
     runScript("list_snapshots", "exit");
     assertTrue(!lastOutput.contains(snapshotName));

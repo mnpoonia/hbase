@@ -29,8 +29,8 @@ import org.apache.yetus.audience.InterfaceAudience;
 
 /**
  * Ported, original form only, from hbase-shell's {@code shell/commands/grant.rb}: user (or
- * {@code @group}), permissions, and an optional table (or {@code @namespace})/family/qualifier.
- * The cell-ACL-update form (a permissions hash plus a scanner spec) is explicitly not ported.
+ * {@code @group}), permissions, and an optional table (or {@code @namespace})/family/qualifier. The
+ * cell-ACL-update form (a permissions hash plus a scanner spec) is explicitly not ported.
  */
 @InterfaceAudience.Private
 public final class GrantCommand implements ShellCommand {
@@ -50,8 +50,8 @@ public final class GrantCommand implements ShellCommand {
     throws ShellCommandException, IOException {
     List<Object> positionals = command.positionalArgs();
     if (positionals.size() < 2) {
-      throw new ShellCommandException("grant requires a user (or group) and a permissions "
-        + "argument");
+      throw new ShellCommandException(
+        "grant requires a user (or group) and a permissions " + "argument");
     }
     String userOrGroup = String.valueOf(positionals.get(0));
     String actions = String.valueOf(positionals.get(1));

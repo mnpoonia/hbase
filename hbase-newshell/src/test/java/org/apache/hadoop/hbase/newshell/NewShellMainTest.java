@@ -30,6 +30,7 @@ import java.util.Deque;
 import org.apache.hadoop.hbase.newshell.command.CommandRegistry;
 import org.apache.hadoop.hbase.newshell.command.CommandResult;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
+import org.apache.hadoop.hbase.newshell.command.ExitCodes;
 import org.apache.hadoop.hbase.newshell.command.ShellCommand;
 import org.apache.hadoop.hbase.newshell.command.ShellCommandException;
 import org.apache.hadoop.hbase.newshell.command.TextResult;
@@ -180,10 +181,9 @@ public class NewShellMainTest {
     FakeShellTerminal terminal = new FakeShellTerminal("boom", "hello", "exit");
     CommandRegistry registry =
       new CommandRegistry(java.util.List.of(new SucceedingCommand(), new FailingCommand()));
-    boolean success =
-      NewShellMain.run(terminal, newContext(terminal.writer()), registry, new DefaultFormatter(),
-        false);
-    assertTrue(success);
+    int code = NewShellMain.run(terminal, newContext(terminal.writer()), registry,
+      new DefaultFormatter(), false);
+    assertEquals(ExitCodes.SUCCESS, code);
     assertTrue(terminal.output().contains("hello world"));
   }
 
@@ -192,10 +192,9 @@ public class NewShellMainTest {
     FakeShellTerminal terminal = new FakeShellTerminal("boom", "hello", "exit");
     CommandRegistry registry =
       new CommandRegistry(java.util.List.of(new SucceedingCommand(), new FailingCommand()));
-    boolean success =
-      NewShellMain.run(terminal, newContext(terminal.writer()), registry, new DefaultFormatter(),
-        true);
-    assertFalse(success);
+    int code = NewShellMain.run(terminal, newContext(terminal.writer()), registry,
+      new DefaultFormatter(), true);
+    assertEquals(ExitCodes.CLIENT_ERROR, code);
     assertFalse(terminal.output().contains("hello world"));
   }
 
@@ -203,9 +202,18 @@ public class NewShellMainTest {
   public void exitOnFirstErrorTrueSucceedsWhenNoFailureOccurs() throws IOException {
     FakeShellTerminal terminal = new FakeShellTerminal("hello", "exit");
     CommandRegistry registry = new CommandRegistry(java.util.List.of(new SucceedingCommand()));
-    boolean success =
-      NewShellMain.run(terminal, newContext(terminal.writer()), registry, new DefaultFormatter(),
-        true);
-    assertTrue(success);
+    int code = NewShellMain.run(terminal, newContext(terminal.writer()), registry,
+      new DefaultFormatter(), true);
+    assertEquals(ExitCodes.SUCCESS, code);
+  }
+
+  @Test
+  public void launchArgsParsesOutputAndYes() {
+    NewShellMain.LaunchArgs args = NewShellMain.LaunchArgs
+      .parse(new String[] { "-n", "--yes", "--output", "json", "script.ns" });
+    assertTrue(args.exitOnFirstError);
+    assertTrue(args.forceYes);
+    assertEquals(org.apache.hadoop.hbase.newshell.format.OutputFormat.JSON, args.outputFormat);
+    assertEquals("script.ns", args.scriptFile);
   }
 }

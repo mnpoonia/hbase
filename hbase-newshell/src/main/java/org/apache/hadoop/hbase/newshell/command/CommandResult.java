@@ -23,8 +23,8 @@ import org.apache.yetus.audience.InterfaceAudience;
  * The result of executing a {@link ShellCommand}, rendered by a
  * {@code org.apache.hadoop.hbase.newshell.format.Formatter}. Deliberately a small, closed set of
  * shapes - the two output shapes the pilot commands actually need - rather than a general "any
- * object graph" result type. If a third fundamentally different shape is needed later, add a
- * third sealed subtype rather than generalizing this ahead of need.
+ * object graph" result type. If a third fundamentally different shape is needed later, add a third
+ * sealed subtype rather than generalizing this ahead of need.
  */
 @InterfaceAudience.Private
 public sealed interface CommandResult permits TextResult, TabularResult {

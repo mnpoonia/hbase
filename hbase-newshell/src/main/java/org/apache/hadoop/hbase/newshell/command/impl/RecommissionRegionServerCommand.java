@@ -31,8 +31,8 @@ import org.apache.yetus.audience.InterfaceAudience;
 /**
  * Ported from hbase-shell's {@code shell/commands/recommission_regionserver.rb}: a single
  * server-name string (matched against live servers by hostname/host-port, per
- * {@code hbase/admin.rb#getServerName}), plus an optional trailing array of encoded region names
- * to load onto it (default none).
+ * {@code hbase/admin.rb#getServerName}), plus an optional trailing array of encoded region names to
+ * load onto it (default none).
  */
 @InterfaceAudience.Private
 public final class RecommissionRegionServerCommand implements ShellCommand {

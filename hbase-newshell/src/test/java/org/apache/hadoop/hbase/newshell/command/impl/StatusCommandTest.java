@@ -30,6 +30,7 @@ import org.apache.hadoop.hbase.ServerName;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
 import org.apache.hadoop.hbase.newshell.command.ShellCommandException;
 import org.apache.hadoop.hbase.newshell.command.TextResult;
+import org.apache.hadoop.hbase.newshell.hbase.StatusView;
 import org.apache.hadoop.hbase.newshell.hbase.StubShellAdmin;
 import org.apache.hadoop.hbase.newshell.hbase.StubShellTableFactory;
 import org.apache.hadoop.hbase.newshell.parser.ShellLineParser;
@@ -41,23 +42,23 @@ import org.junit.jupiter.api.Test;
 public class StatusCommandTest {
 
   private static final class FakeShellAdmin extends StubShellAdmin {
-    private final ClusterMetrics metrics;
+    private final StatusView status;
 
-    FakeShellAdmin(ClusterMetrics metrics) {
-      this.metrics = metrics;
+    FakeShellAdmin(StatusView status) {
+      this.status = status;
     }
 
     @Override
-    public ClusterMetrics status() {
-      return metrics;
+    public StatusView status() {
+      return status;
     }
   }
 
   private final StatusCommand command = new StatusCommand();
 
   private static ExecutionContext contextFor(ClusterMetrics metrics) {
-    return new ExecutionContext(new FakeShellAdmin(metrics), new StubShellTableFactory(),
-      new PrintWriter(new StringWriter()));
+    return new ExecutionContext(new FakeShellAdmin(StatusView.from(metrics)),
+      new StubShellTableFactory(), new PrintWriter(new StringWriter()));
   }
 
   @Test
@@ -120,7 +121,6 @@ public class StatusCommandTest {
       .setLiveServerMetrics(Map.of()).setDeadServerNames(List.of()).build();
 
     var parsed = ShellLineParser.parse("status 'replication'");
-    assertThrows(ShellCommandException.class,
-      () -> command.execute(parsed, contextFor(metrics)));
+    assertThrows(ShellCommandException.class, () -> command.execute(parsed, contextFor(metrics)));
   }
 }

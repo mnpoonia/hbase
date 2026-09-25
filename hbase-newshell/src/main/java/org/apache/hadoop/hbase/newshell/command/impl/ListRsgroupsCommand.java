@@ -30,9 +30,9 @@ import org.apache.hadoop.hbase.newshell.parser.ParsedCommand;
 import org.apache.yetus.audience.InterfaceAudience;
 
 /**
- * Ported from hbase-shell's {@code shell/commands/list_rsgroups.rb}: an optional
- * regular-expression positional argument (defaulting to {@code .*}); each matching group
- * contributes one row per server and one row per table, sharing a NAME/SERVER-or-TABLE header.
+ * Ported from hbase-shell's {@code shell/commands/list_rsgroups.rb}: an optional regular-expression
+ * positional argument (defaulting to {@code .*}); each matching group contributes one row per
+ * server and one row per table, sharing a NAME/SERVER-or-TABLE header.
  */
 @InterfaceAudience.Private
 public final class ListRsgroupsCommand implements ShellCommand {
@@ -50,8 +50,8 @@ public final class ListRsgroupsCommand implements ShellCommand {
   @Override
   public CommandResult execute(ParsedCommand command, ExecutionContext context)
     throws ShellCommandException, IOException {
-    String regex = command.positionalArgs().isEmpty() ? ".*"
-      : String.valueOf(command.positionalArgs().get(0));
+    String regex =
+      command.positionalArgs().isEmpty() ? ".*" : String.valueOf(command.positionalArgs().get(0));
     List<List<String>> rows = new ArrayList<>();
     for (RsGroupSummary group : context.admin().listRsGroups(regex)) {
       boolean nameWritten = false;

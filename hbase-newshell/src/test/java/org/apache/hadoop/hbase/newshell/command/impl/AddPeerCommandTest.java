@@ -65,14 +65,12 @@ public class AddPeerCommandTest {
 
   @Test
   public void addsPeerWithNestedTableCfsMap() throws Exception {
-    var parsed = ShellLineParser
-      .parse("add_peer '1', CLUSTER_KEY => 'zk1,zk2:2181:/hbase', "
-        + "TABLE_CFS => {'ns:tab' => ['cf1', 'cf2']}");
+    var parsed = ShellLineParser.parse("add_peer '1', CLUSTER_KEY => 'zk1,zk2:2181:/hbase', "
+      + "TABLE_CFS => {'ns:tab' => ['cf1', 'cf2']}");
     command.execute(parsed, context);
 
     @SuppressWarnings("unchecked")
-    Map<String, Object> tableCfs =
-      (Map<String, Object>) admin.lastPeerConfigSpec.get("TABLE_CFS");
+    Map<String, Object> tableCfs = (Map<String, Object>) admin.lastPeerConfigSpec.get("TABLE_CFS");
     assertEquals(List.of("cf1", "cf2"), tableCfs.get("ns:tab"));
   }
 

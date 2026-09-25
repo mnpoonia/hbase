@@ -27,9 +27,8 @@ import org.apache.hadoop.hbase.newshell.parser.ParsedCommand;
 import org.apache.yetus.audience.InterfaceAudience;
 
 /**
- * Ported from hbase-shell's {@code shell/commands/major_compact.rb}: a table or region name,
- * plus optional column family and compact type ({@code NORMAL} or {@code MOB}, default
- * {@code NORMAL}).
+ * Ported from hbase-shell's {@code shell/commands/major_compact.rb}: a table or region name, plus
+ * optional column family and compact type ({@code NORMAL} or {@code MOB}, default {@code NORMAL}).
  */
 @InterfaceAudience.Private
 public final class MajorCompactCommand implements ShellCommand {

@@ -29,8 +29,8 @@ import org.apache.hadoop.hbase.security.User;
 import org.apache.yetus.audience.InterfaceAudience;
 
 /**
- * Ported from hbase-shell's {@code shell/commands/whoami.rb}: {@link User#getCurrent()}'s name
- * plus group names, no admin/table interaction.
+ * Ported from hbase-shell's {@code shell/commands/whoami.rb}: {@link User#getCurrent()}'s name plus
+ * group names, no admin/table interaction.
  */
 @InterfaceAudience.Private
 public final class WhoamiCommand implements ShellCommand {
@@ -45,8 +45,7 @@ public final class WhoamiCommand implements ShellCommand {
   }
 
   @Override
-  public CommandResult execute(ParsedCommand command, ExecutionContext context)
-    throws IOException {
+  public CommandResult execute(ParsedCommand command, ExecutionContext context) throws IOException {
     User user = User.getCurrent();
     List<String> lines = new ArrayList<>();
     lines.add(user.toString());

@@ -57,8 +57,8 @@ public final class CloneSnapshotCommand implements ShellCommand {
     String tableName = String.valueOf(positionals.get(1));
     Map<String, Object> args =
       command.hashLiterals().isEmpty() ? command.options() : command.hashLiterals().get(0);
-    boolean restoreAcl = Boolean.parseBoolean(String.valueOf(args.getOrDefault("RESTORE_ACL",
-      false)));
+    boolean restoreAcl =
+      Boolean.parseBoolean(String.valueOf(args.getOrDefault("RESTORE_ACL", false)));
     Object cloneSft = args.get("CLONE_SFT");
     context.admin().cloneSnapshot(snapshotName, tableName, restoreAcl,
       cloneSft == null ? null : String.valueOf(cloneSft));

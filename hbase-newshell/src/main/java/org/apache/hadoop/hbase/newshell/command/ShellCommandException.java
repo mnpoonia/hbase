@@ -36,4 +36,9 @@ public class ShellCommandException extends Exception {
   public ShellCommandException(String message, Throwable cause) {
     super(message, cause);
   }
+
+  /** Process exit code when this failure ends a non-interactive run. */
+  public int exitCode() {
+    return ExitCodes.CLIENT_ERROR;
+  }
 }

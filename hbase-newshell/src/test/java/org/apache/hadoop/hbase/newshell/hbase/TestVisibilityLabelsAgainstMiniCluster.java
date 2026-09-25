@@ -17,28 +17,33 @@
  */
 package org.apache.hadoop.hbase.newshell.hbase;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
+import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Connection;
+import org.apache.hadoop.hbase.client.Put;
+import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.coprocessor.CoprocessorHost;
 import org.apache.hadoop.hbase.security.User;
 import org.apache.hadoop.hbase.security.visibility.VisibilityConstants;
 import org.apache.hadoop.hbase.security.visibility.VisibilityController;
 import org.apache.hadoop.hbase.testclassification.ClientTests;
 import org.apache.hadoop.hbase.testclassification.LargeTests;
+import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /**
- * End-to-end verification of {@link DefaultShellAdmin#addLabels} and
- * {@link DefaultShellAdmin#listLabels} against a real minicluster with the
- * {@link VisibilityController} coprocessor enabled - mirrors {@code hbase/visibility_labels.rb}'s
- * expectations.
+ * End-to-end verification of visibility-label shell APIs against a real minicluster with the
+ * {@link VisibilityController} coprocessor enabled - mirrors {@code hbase/visibility_labels.rb}.
  */
 @Tag(LargeTests.TAG)
 @Tag(ClientTests.TAG)
@@ -85,5 +90,48 @@ public class TestVisibilityLabelsAgainstMiniCluster {
 
     assertTrue(admin.listLabels(label).contains(label));
     assertTrue(admin.listLabels("no_such_label_.*").isEmpty());
+  }
+
+  @Test
+  public void setAuthsThenGetAuthsThenClearAuthsRoundTrips() throws Exception {
+    String label = "newshell_auth_label_" + UUID.randomUUID().toString().replace("-", "");
+    String user = "newshell_auth_user_" + UUID.randomUUID().toString().replace("-", "");
+    ShellAdmin admin = new DefaultShellAdmin(connection.getAdmin());
+
+    admin.addLabels(List.of(label));
+    int before = admin.getAuths(user).size();
+
+    admin.setAuths(user, List.of(label));
+    List<String> afterSet = admin.getAuths(user);
+    assertEquals(before + 1, afterSet.size());
+    assertTrue(afterSet.contains(label));
+
+    admin.clearAuths(user, List.of(label));
+    assertEquals(before, admin.getAuths(user).size());
+    assertFalse(admin.getAuths(user).contains(label));
+  }
+
+  @Test
+  public void setVisibilityRewritesExistingCells() throws Exception {
+    String label = "newshell_vis_label_" + UUID.randomUUID().toString().replace("-", "");
+    String tableName = "newshell_set_visibility_" + UUID.randomUUID().toString().replace("-", "");
+    ShellAdmin admin = new DefaultShellAdmin(connection.getAdmin());
+    admin.addLabels(List.of(label));
+
+    TEST_UTIL.createTable(TableName.valueOf(tableName), Bytes.toBytes("cf"));
+    try (Table table = connection.getTable(TableName.valueOf(tableName))) {
+      table.put(new Put(Bytes.toBytes("r1")).addColumn(Bytes.toBytes("cf"), Bytes.toBytes("c1"),
+        Bytes.toBytes("v1")));
+    }
+
+    long count = admin.setVisibility(tableName, label, Map.of("COLUMNS", List.of("cf:c1")));
+    assertEquals(1L, count);
+  }
+
+  @Test
+  public void listSecurityCapabilitiesIncludesCellVisibility() throws Exception {
+    ShellAdmin admin = new DefaultShellAdmin(connection.getAdmin());
+    List<String> caps = admin.listSecurityCapabilities();
+    assertTrue(caps.contains("CELL_VISIBILITY"));
   }
 }

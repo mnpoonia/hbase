@@ -22,18 +22,17 @@ import java.util.Map;
 import org.apache.yetus.audience.InterfaceAudience;
 
 /**
- * The result of parsing one typed line: a command name, its positional arguments, and its
- * options - whether those options came from a legacy Ruby-style trailing hash literal
- * ({@code {NAME => 'f1'}}) or the native bareword/flag syntax ({@code --name f1}), both populate
- * this same {@code options} map, so {@code ShellCommand} implementations never know which syntax
- * was typed.
- *
- * <p>{@code hashLiterals} additionally preserves each trailing hash literal as its own map, in
- * the order written - needed by commands like {@code create} where multiple hash literals each
- * describe a separate column family (e.g. {@code {NAME => 'f1'}, {NAME => 'f2'}}) and would
- * otherwise collide if flattened into the single {@code options} map.
+ * The result of parsing one typed line: a command name, its positional arguments, and its options -
+ * whether those options came from a legacy Ruby-style trailing hash literal ({@code {NAME =>
+ * 'f1'}}) or the native bareword/flag syntax ({@code --name f1}), both populate this same
+ * {@code options} map, so {@code ShellCommand} implementations never know which syntax was typed.
+ * <p>
+ * {@code hashLiterals} additionally preserves each trailing hash literal as its own map, in the
+ * order written - needed by commands like {@code create} where multiple hash literals each describe
+ * a separate column family (e.g. {@code {NAME => 'f1'}, {NAME => 'f2'}}) and would otherwise
+ * collide if flattened into the single {@code options} map.
  */
 @InterfaceAudience.Private
-public record ParsedCommand(String commandName, List<Object> positionalArgs, Map<String, Object> options,
-  List<Map<String, Object>> hashLiterals) {
+public record ParsedCommand(String commandName, List<Object> positionalArgs,
+  Map<String, Object> options, List<Map<String, Object>> hashLiterals) {
 }
