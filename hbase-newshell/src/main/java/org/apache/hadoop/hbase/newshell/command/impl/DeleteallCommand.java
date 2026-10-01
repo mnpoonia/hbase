@@ -66,9 +66,14 @@ public final class DeleteallCommand implements ShellCommand {
     String column = command.positionalArgs().size() > nextIndex
       ? String.valueOf(command.positionalArgs().get(nextIndex++))
       : null;
-    Long timestamp = command.positionalArgs().size() > nextIndex
-      ? ((Number) command.positionalArgs().get(nextIndex)).longValue()
-      : null;
+    Long timestamp = null;
+    if (command.positionalArgs().size() > nextIndex) {
+      Object timestampArg = command.positionalArgs().get(nextIndex);
+      if (!(timestampArg instanceof Number)) {
+        throw new ShellCommandException("Timestamp must be numeric: '" + timestampArg + "'");
+      }
+      timestamp = ((Number) timestampArg).longValue();
+    }
     context.tables().forTable(tableName).deleteAll(row, column, timestamp, command.options());
     return TextResult.of();
   }

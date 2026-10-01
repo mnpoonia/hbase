@@ -53,9 +53,14 @@ public final class DeleteCommand implements ShellCommand {
     String tableName = String.valueOf(command.positionalArgs().get(0));
     String row = String.valueOf(command.positionalArgs().get(1));
     String column = String.valueOf(command.positionalArgs().get(2));
-    Long timestamp = command.positionalArgs().size() > 3
-      ? ((Number) command.positionalArgs().get(3)).longValue()
-      : null;
+    Long timestamp = null;
+    if (command.positionalArgs().size() > 3) {
+      Object timestampArg = command.positionalArgs().get(3);
+      if (!(timestampArg instanceof Number)) {
+        throw new ShellCommandException("Timestamp must be numeric: '" + timestampArg + "'");
+      }
+      timestamp = ((Number) timestampArg).longValue();
+    }
     context.tables().forTable(tableName).delete(row, column, timestamp);
     return TextResult.of();
   }

@@ -96,4 +96,10 @@ public class DeleteCommandTest {
     ParsedCommand parsed = ShellLineParser.parse("delete 't1', 'r1'");
     assertThrows(ShellCommandException.class, () -> command.execute(parsed, context));
   }
+
+  @Test
+  public void throwsWhenTimestampNotNumeric() throws Exception {
+    ParsedCommand parsed = ShellLineParser.parse("delete 't1', 'r1', 'f1:c1', 'notanumber'");
+    assertThrows(ShellCommandException.class, () -> command.execute(parsed, context));
+  }
 }

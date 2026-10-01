@@ -51,9 +51,14 @@ public final class IncrCommand implements ShellCommand {
     String tableName = String.valueOf(command.positionalArgs().get(0));
     String row = String.valueOf(command.positionalArgs().get(1));
     String column = String.valueOf(command.positionalArgs().get(2));
-    long amount = command.positionalArgs().size() > 3
-      ? ((Number) command.positionalArgs().get(3)).longValue()
-      : 1L;
+    long amount = 1L;
+    if (command.positionalArgs().size() > 3) {
+      Object amountArg = command.positionalArgs().get(3);
+      if (!(amountArg instanceof Number)) {
+        throw new ShellCommandException("Amount must be numeric: '" + amountArg + "'");
+      }
+      amount = ((Number) amountArg).longValue();
+    }
     Long counter = context.tables().forTable(tableName).increment(row, column, amount);
     if (counter == null) {
       return TextResult.of("No counter found at specified coordinates");

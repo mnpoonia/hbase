@@ -18,12 +18,14 @@
 package org.apache.hadoop.hbase.newshell.command.impl;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.Map;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
+import org.apache.hadoop.hbase.newshell.command.ShellCommandException;
 import org.apache.hadoop.hbase.newshell.hbase.StubShellAdmin;
 import org.apache.hadoop.hbase.newshell.hbase.StubShellTableFactory;
 import org.apache.hadoop.hbase.newshell.parser.ShellLineParser;
@@ -52,5 +54,15 @@ public class AlterRsgroupConfigCommandTest {
       new ExecutionContext(a, new StubShellTableFactory(), new PrintWriter(new StringWriter())));
     assertEquals("grp1", a.g);
     assertTrue(a.a.containsKey("METHOD") || a.a.containsKey("k"));
+  }
+
+  @Test
+  public void throwsWhenConfigArgIsNeitherMapNorHash() throws Exception {
+    Rec a = new Rec();
+    ExecutionContext context =
+      new ExecutionContext(a, new StubShellTableFactory(), new PrintWriter(new StringWriter()));
+    assertThrows(ShellCommandException.class,
+      () -> new AlterRsgroupConfigCommand().execute(
+        ShellLineParser.parse("alter_rsgroup_config 'grp1', 'notahash'"), context));
   }
 }
