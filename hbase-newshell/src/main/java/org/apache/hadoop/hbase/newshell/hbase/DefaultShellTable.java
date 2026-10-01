@@ -114,22 +114,22 @@ public final class DefaultShellTable implements ShellTable {
   @Override
   public ScanResult scan(Map<String, Object> options) throws IOException {
     Scan scan = buildScan(options);
-    List<ScanRow> rows = new ArrayList<>();
-    try (ResultScanner scanner = table.getScanner(scan)) {
-      for (Result result : scanner) {
-        List<CellView> cells = new ArrayList<>();
-        List<Cell> resultCells = result.listCells();
-        if (resultCells != null) {
-          for (Cell cell : resultCells) {
-            cells.add(new CellView(Bytes.toStringBinary(CellUtil.cloneFamily(cell)),
-              Bytes.toStringBinary(CellUtil.cloneQualifier(cell)), cell.getTimestamp(),
-              Bytes.toStringBinary(CellUtil.cloneValue(cell))));
+    return new ScanResult(rowConsumer -> {
+      try (ResultScanner scanner = table.getScanner(scan)) {
+        for (Result result : scanner) {
+          List<CellView> cells = new ArrayList<>();
+          List<Cell> resultCells = result.listCells();
+          if (resultCells != null) {
+            for (Cell cell : resultCells) {
+              cells.add(new CellView(Bytes.toStringBinary(CellUtil.cloneFamily(cell)),
+                Bytes.toStringBinary(CellUtil.cloneQualifier(cell)), cell.getTimestamp(),
+                Bytes.toStringBinary(CellUtil.cloneValue(cell))));
+            }
           }
+          rowConsumer.accept(new ScanRow(Bytes.toStringBinary(result.getRow()), cells));
         }
-        rows.add(new ScanRow(Bytes.toStringBinary(result.getRow()), cells));
       }
-    }
-    return new ScanResult(rows);
+    });
   }
 
   @Override

@@ -17,41 +17,32 @@
  */
 package org.apache.hadoop.hbase.newshell.hbase;
 
-import java.util.List;
-import java.util.Objects;
+import java.io.IOException;
+import java.util.function.Consumer;
 import org.apache.yetus.audience.InterfaceAudience;
 
+/**
+ * The result of a {@code scan}: rows are pushed to a consumer one at a time as they are read from
+ * the server, rather than buffered into a list. {@link DefaultShellTable#scan} defers opening the
+ * underlying {@code ResultScanner} until {@link #forEachRow} is called, and closes it via
+ * try-with-resources when that call returns or throws, so a full-table scan never holds more than
+ * one row in memory at a time. Produce-once by design, so unlike the old list-backed version this
+ * has no {@code equals}/{@code hashCode}.
+ */
 @InterfaceAudience.Private
 public final class ScanResult {
-  private final List<ScanRow> rows;
-
-  public ScanResult(List<ScanRow> rows) {
-    this.rows = rows;
+  @FunctionalInterface
+  public interface Producer {
+    void produce(Consumer<ScanRow> rowConsumer) throws IOException;
   }
 
-  public List<ScanRow> rows() {
-    return rows;
+  private final Producer producer;
+
+  public ScanResult(Producer producer) {
+    this.producer = producer;
   }
 
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) {
-      return true;
-    }
-    if (!(o instanceof ScanResult)) {
-      return false;
-    }
-    ScanResult other = (ScanResult) o;
-    return Objects.equals(rows, other.rows);
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hash(rows);
-  }
-
-  @Override
-  public String toString() {
-    return "ScanResult[rows=" + rows + "]";
+  public void forEachRow(Consumer<ScanRow> rowConsumer) throws IOException {
+    producer.produce(rowConsumer);
   }
 }

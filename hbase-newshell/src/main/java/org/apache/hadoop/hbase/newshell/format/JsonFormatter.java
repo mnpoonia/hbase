@@ -23,6 +23,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import org.apache.hadoop.hbase.newshell.command.CommandResult;
+import org.apache.hadoop.hbase.newshell.command.StreamingTabularResult;
 import org.apache.hadoop.hbase.newshell.command.TabularResult;
 import org.apache.hadoop.hbase.newshell.command.TextResult;
 import org.apache.hadoop.hbase.util.JsonMapper;
@@ -30,9 +31,11 @@ import org.apache.yetus.audience.InterfaceAudience;
 
 /**
  * JSON / NDJSON renderer. {@link TextResult} emits a single envelope object. {@link TabularResult}
- * streams one JSON object per row (NDJSON) using header names as keys, then a final envelope line
- * with {@code status}/{@code command}/{@code rows} — suitable for large {@code scan} results
- * without buffering a giant array.
+ * and {@link StreamingTabularResult} both stream one JSON object per row (NDJSON) using header
+ * names as keys, then a final envelope line with {@code status}/{@code command}/{@code rows}.
+ * {@link StreamingTabularResult} (used by {@code scan}) is the one that's actually safe for large
+ * result sets without buffering a giant array in memory - {@link TabularResult} still requires its
+ * full row list to be built by the caller first.
  */
 @InterfaceAudience.Private
 public final class JsonFormatter implements Formatter {
@@ -67,10 +70,35 @@ public final class JsonFormatter implements Formatter {
         }
         trailer.put("rows", tabularResult.rows().size());
         out.println(JsonMapper.writeObjectAsString(trailer));
+      } else if (result instanceof StreamingTabularResult) {
+        StreamingTabularResult streamingResult = (StreamingTabularResult) result;
+        List<String> header = streamingResult.header();
+        int[] count = { 0 };
+        streamingResult.forEachRow(row -> {
+          Map<String, Object> obj = new LinkedHashMap<>();
+          for (int i = 0; i < header.size(); i++) {
+            String key = header.get(i);
+            String value = i < row.size() ? row.get(i) : "";
+            obj.put(key, value);
+          }
+          count[0]++;
+          try {
+            out.println(JsonMapper.writeObjectAsString(obj));
+          } catch (java.io.IOException e) {
+            throw new java.io.UncheckedIOException(e);
+          }
+        });
+        Map<String, Object> trailer = new LinkedHashMap<>();
+        trailer.put("status", "ok");
+        if (commandName != null) {
+          trailer.put("command", commandName);
+        }
+        trailer.put("rows", count[0]);
+        out.println(JsonMapper.writeObjectAsString(trailer));
       } else {
         throw new IllegalArgumentException("Unknown CommandResult type: " + result.getClass());
       }
-    } catch (java.io.IOException e) {
+    } catch (java.io.IOException | java.io.UncheckedIOException e) {
       throw new IllegalStateException("Failed to serialize JSON output", e);
     }
     out.flush();

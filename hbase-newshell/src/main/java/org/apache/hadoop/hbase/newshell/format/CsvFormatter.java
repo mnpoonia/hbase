@@ -17,9 +17,11 @@
  */
 package org.apache.hadoop.hbase.newshell.format;
 
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.List;
 import org.apache.hadoop.hbase.newshell.command.CommandResult;
+import org.apache.hadoop.hbase.newshell.command.StreamingTabularResult;
 import org.apache.hadoop.hbase.newshell.command.TabularResult;
 import org.apache.hadoop.hbase.newshell.command.TextResult;
 import org.apache.yetus.audience.InterfaceAudience;
@@ -40,6 +42,14 @@ public final class CsvFormatter implements Formatter {
       out.println(joinCsv(tabularResult.header()));
       for (List<String> row : tabularResult.rows()) {
         out.println(joinCsv(row));
+      }
+    } else if (result instanceof StreamingTabularResult) {
+      StreamingTabularResult streamingResult = (StreamingTabularResult) result;
+      out.println(joinCsv(streamingResult.header()));
+      try {
+        streamingResult.forEachRow(row -> out.println(joinCsv(row)));
+      } catch (IOException e) {
+        throw new IllegalStateException("Failed to stream scan result", e);
       }
     } else {
       throw new IllegalArgumentException("Unknown CommandResult type: " + result.getClass());

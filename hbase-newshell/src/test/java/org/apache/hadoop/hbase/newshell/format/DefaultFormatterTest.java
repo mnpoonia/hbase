@@ -29,25 +29,25 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 @Tag(SmallTests.TAG)
-public class CsvFormatterTest {
+public class DefaultFormatterTest {
   @Test
-  public void emitsHeaderAndRows() {
+  public void tabularResultEmitsHeaderRowsAndFooter() {
     StringWriter buf = new StringWriter();
-    TabularResult result = new TabularResult(Arrays.asList("A", "B"),
-      Arrays.asList(Arrays.asList("1", "x,y"), Arrays.asList("2", "z")));
-    new CsvFormatter().format("list", result, new PrintWriter(buf));
-    assertEquals("A,B\n1,\"x,y\"\n2,z\n", buf.toString());
+    TabularResult result = new TabularResult(Arrays.asList("ROW", "COLUMN+CELL"),
+      Arrays.asList(Arrays.asList("r1", "cell1"), Arrays.asList("r2", "cell2")));
+    new DefaultFormatter().format("scan", result, new PrintWriter(buf));
+    assertEquals("ROW  COLUMN+CELL\n r1 cell1\n r2 cell2\n2 row(s)\n", buf.toString());
   }
 
   @Test
   public void streamingTabularResultMatchesTabularResultOutput() {
     StringWriter buf = new StringWriter();
-    StreamingTabularResult result = new StreamingTabularResult(Arrays.asList("A", "B"),
+    StreamingTabularResult result = new StreamingTabularResult(Arrays.asList("ROW", "COLUMN+CELL"),
       rowConsumer -> {
-        rowConsumer.accept(Arrays.asList("1", "x,y"));
-        rowConsumer.accept(Arrays.asList("2", "z"));
+        rowConsumer.accept(Arrays.asList("r1", "cell1"));
+        rowConsumer.accept(Arrays.asList("r2", "cell2"));
       });
-    new CsvFormatter().format("scan", result, new PrintWriter(buf));
-    assertEquals("A,B\n1,\"x,y\"\n2,z\n", buf.toString());
+    new DefaultFormatter().format("scan", result, new PrintWriter(buf));
+    assertEquals("ROW  COLUMN+CELL\n r1 cell1\n r2 cell2\n2 row(s)\n", buf.toString());
   }
 }

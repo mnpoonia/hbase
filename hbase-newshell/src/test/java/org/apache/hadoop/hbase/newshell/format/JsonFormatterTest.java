@@ -23,6 +23,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.Arrays;
+import org.apache.hadoop.hbase.newshell.command.StreamingTabularResult;
 import org.apache.hadoop.hbase.newshell.command.TabularResult;
 import org.apache.hadoop.hbase.newshell.command.TextResult;
 import org.apache.hadoop.hbase.testclassification.SmallTests;
@@ -46,6 +47,23 @@ public class JsonFormatterTest {
     StringWriter buf = new StringWriter();
     TabularResult result = new TabularResult(Arrays.asList("ROW", "CELL"),
       Arrays.asList(Arrays.asList("r1", "v1"), Arrays.asList("r2", "v2")));
+    new JsonFormatter().format("scan", result, new PrintWriter(buf));
+    String[] lines = buf.toString().trim().split("\n");
+    assertEquals(3, lines.length);
+    assertTrue(lines[0].contains("\"ROW\":\"r1\""));
+    assertTrue(lines[1].contains("\"ROW\":\"r2\""));
+    assertTrue(lines[2].contains("\"rows\":2"));
+    assertTrue(lines[2].contains("\"command\":\"scan\""));
+  }
+
+  @Test
+  public void streamingTabularResultEmitsNdjsonThenTrailer() {
+    StringWriter buf = new StringWriter();
+    StreamingTabularResult result = new StreamingTabularResult(Arrays.asList("ROW", "CELL"),
+      rowConsumer -> {
+        rowConsumer.accept(Arrays.asList("r1", "v1"));
+        rowConsumer.accept(Arrays.asList("r2", "v2"));
+      });
     new JsonFormatter().format("scan", result, new PrintWriter(buf));
     String[] lines = buf.toString().trim().split("\n");
     assertEquals(3, lines.length);

@@ -23,6 +23,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -68,6 +69,12 @@ public class TestPilotCommandsAgainstMiniCluster {
   public static void tearDownAfterClass() throws Exception {
     connection.close();
     TEST_UTIL.shutdownMiniCluster();
+  }
+
+  private static List<ScanRow> collectRows(ScanResult result) throws Exception {
+    List<ScanRow> rows = new ArrayList<>();
+    result.forEachRow(rows::add);
+    return rows;
   }
 
   @Test
@@ -406,12 +413,12 @@ public class TestPilotCommandsAgainstMiniCluster {
     }
 
     ShellTableFactory factory = new DefaultShellTableFactory(connection);
-    ScanResult result = factory.forTable(tableName).scan(Collections.emptyMap());
+    List<ScanRow> rows = collectRows(factory.forTable(tableName).scan(Collections.emptyMap()));
 
-    assertEquals(2, result.rows().size());
-    assertEquals("r1", result.rows().get(0).row());
-    assertEquals("v1", result.rows().get(0).cells().get(0).value());
-    assertEquals("r2", result.rows().get(1).row());
+    assertEquals(2, rows.size());
+    assertEquals("r1", rows.get(0).row());
+    assertEquals("v1", rows.get(0).cells().get(0).value());
+    assertEquals("r2", rows.get(1).row());
   }
 
   @Test
@@ -427,13 +434,15 @@ public class TestPilotCommandsAgainstMiniCluster {
     }
 
     ShellTableFactory factory = new DefaultShellTableFactory(connection);
-    ScanResult limited = factory.forTable(tableName).scan(Collections.singletonMap("LIMIT", 1L));
-    assertEquals(1, limited.rows().size());
-    assertEquals("r1", limited.rows().get(0).row());
+    List<ScanRow> limited =
+      collectRows(factory.forTable(tableName).scan(Collections.singletonMap("LIMIT", 1L)));
+    assertEquals(1, limited.size());
+    assertEquals("r1", limited.get(0).row());
 
-    ScanResult ranged = factory.forTable(tableName).scan(mapOf("STARTROW", "r2", "STOPROW", "r4"));
+    List<ScanRow> ranged =
+      collectRows(factory.forTable(tableName).scan(mapOf("STARTROW", "r2", "STOPROW", "r4")));
     assertEquals(Arrays.asList("r2", "r3"),
-      ranged.rows().stream().map(ScanRow::row).collect(Collectors.toList()));
+      ranged.stream().map(ScanRow::row).collect(Collectors.toList()));
   }
 
   @Test
@@ -449,11 +458,12 @@ public class TestPilotCommandsAgainstMiniCluster {
     }
 
     ShellTableFactory factory = new DefaultShellTableFactory(connection);
-    ScanResult result = factory.forTable(tableName).scan(Collections.singletonMap("COLUMNS", "f1"));
+    List<ScanRow> rows =
+      collectRows(factory.forTable(tableName).scan(Collections.singletonMap("COLUMNS", "f1")));
 
-    assertEquals(1, result.rows().size());
-    assertEquals(1, result.rows().get(0).cells().size());
-    assertEquals("f1", result.rows().get(0).cells().get(0).family());
+    assertEquals(1, rows.size());
+    assertEquals(1, rows.get(0).cells().size());
+    assertEquals("f1", rows.get(0).cells().get(0).family());
   }
 
   @Test
@@ -524,9 +534,9 @@ public class TestPilotCommandsAgainstMiniCluster {
     factory.forTable(tableName).deleteAll(null, null, null,
       mapOf("ROWPREFIXFILTER", "prefix-", "CACHE", 1L));
 
-    ScanResult remaining = factory.forTable(tableName).scan(Collections.emptyMap());
+    List<ScanRow> remaining = collectRows(factory.forTable(tableName).scan(Collections.emptyMap()));
     assertEquals(Arrays.asList("other-1"),
-      remaining.rows().stream().map(ScanRow::row).collect(Collectors.toList()));
+      remaining.stream().map(ScanRow::row).collect(Collectors.toList()));
   }
 
   @Test
@@ -593,7 +603,7 @@ public class TestPilotCommandsAgainstMiniCluster {
     admin.truncateTable(tableName, false);
 
     ShellTableFactory factory = new DefaultShellTableFactory(connection);
-    assertTrue(factory.forTable(tableName).scan(Collections.emptyMap()).rows().isEmpty());
+    assertTrue(collectRows(factory.forTable(tableName).scan(Collections.emptyMap())).isEmpty());
   }
 
   @Test
@@ -673,7 +683,7 @@ public class TestPilotCommandsAgainstMiniCluster {
     assertTrue(realAdmin.getDescriptor(TableName.valueOf(newTableName))
       .hasColumnFamily(Bytes.toBytes("f1")));
     ShellTableFactory factory = new DefaultShellTableFactory(connection);
-    assertTrue(factory.forTable(newTableName).scan(Collections.emptyMap()).rows().isEmpty());
+    assertTrue(collectRows(factory.forTable(newTableName).scan(Collections.emptyMap())).isEmpty());
   }
 
   @Test

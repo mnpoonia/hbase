@@ -17,16 +17,18 @@
  */
 package org.apache.hadoop.hbase.newshell.format;
 
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.List;
 import org.apache.hadoop.hbase.newshell.command.CommandResult;
+import org.apache.hadoop.hbase.newshell.command.StreamingTabularResult;
 import org.apache.hadoop.hbase.newshell.command.TabularResult;
 import org.apache.hadoop.hbase.newshell.command.TextResult;
 import org.apache.yetus.audience.InterfaceAudience;
 
 /**
- * Plain-text renderer for the two {@link CommandResult} shapes. Uses {@code instanceof} rather than
- * a pattern-matching {@code switch} because this module's release target is Java 8, which has
+ * Plain-text renderer for the {@link CommandResult} shapes. Uses {@code instanceof} rather than a
+ * pattern-matching {@code switch} because this module's release target is Java 8, which has
  * neither pattern matching nor switch expressions.
  */
 @InterfaceAudience.Private
@@ -40,10 +42,26 @@ public final class DefaultFormatter implements Formatter {
       }
     } else if (result instanceof TabularResult) {
       formatTabular((TabularResult) result, out);
+    } else if (result instanceof StreamingTabularResult) {
+      formatStreamingTabular((StreamingTabularResult) result, out);
     } else {
       throw new IllegalArgumentException("Unknown CommandResult type: " + result.getClass());
     }
     out.flush();
+  }
+
+  private void formatStreamingTabular(StreamingTabularResult result, PrintWriter out) {
+    out.println(formatRow(result.header(), true));
+    long[] count = { 0 };
+    try {
+      result.forEachRow(row -> {
+        out.println(formatRow(row, false));
+        count[0]++;
+      });
+    } catch (IOException e) {
+      throw new IllegalStateException("Failed to stream scan result", e);
+    }
+    out.println(count[0] + " row(s)");
   }
 
   /**

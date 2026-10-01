@@ -18,7 +18,6 @@
 package org.apache.hadoop.hbase.newshell.command.impl;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -26,11 +25,10 @@ import org.apache.hadoop.hbase.newshell.command.CommandResult;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
 import org.apache.hadoop.hbase.newshell.command.ShellCommand;
 import org.apache.hadoop.hbase.newshell.command.ShellCommandException;
-import org.apache.hadoop.hbase.newshell.command.TabularResult;
+import org.apache.hadoop.hbase.newshell.command.StreamingTabularResult;
 import org.apache.hadoop.hbase.newshell.hbase.CellView;
 import org.apache.hadoop.hbase.newshell.hbase.CellViews;
 import org.apache.hadoop.hbase.newshell.hbase.ScanResult;
-import org.apache.hadoop.hbase.newshell.hbase.ScanRow;
 import org.apache.hadoop.hbase.newshell.parser.ParsedCommand;
 import org.apache.yetus.audience.InterfaceAudience;
 
@@ -63,13 +61,11 @@ public final class ScanCommand implements ShellCommand {
     String tableName = String.valueOf(command.positionalArgs().get(0));
     Map<String, Object> options = command.options();
     ScanResult result = context.tables().forTable(tableName).scan(options);
-    List<List<String>> rows = new ArrayList<>();
-    for (ScanRow row : result.rows()) {
+    return new StreamingTabularResult(HEADER, rowConsumer -> result.forEachRow(row -> {
       for (CellView cell : row.cells()) {
-        rows
-          .add(Arrays.asList(row.row(), CellViews.column(cell) + " " + CellViews.formatCell(cell)));
+        rowConsumer
+          .accept(Arrays.asList(row.row(), CellViews.column(cell) + " " + CellViews.formatCell(cell)));
       }
-    }
-    return new TabularResult(HEADER, rows);
+    }));
   }
 }
