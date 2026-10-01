@@ -83,6 +83,65 @@ public class LexerTest {
   }
 
   @Test
+  public void tokenizesUnderscoreDigitSeparators() throws ShellParseException {
+    List<Token> tokens = new Lexer("1_000_000").tokenize();
+    assertEquals(TokenType.NUMBER, tokens.get(0).type());
+    assertEquals("1_000_000", tokens.get(0).text());
+    assertEquals(TokenType.EOF, tokens.get(1).type());
+  }
+
+  @Test
+  public void tokenizesUnderscoreSeparatorsWithDecimal() throws ShellParseException {
+    List<Token> tokens = new Lexer("1_000.5").tokenize();
+    assertEquals(TokenType.NUMBER, tokens.get(0).type());
+    assertEquals("1_000.5", tokens.get(0).text());
+  }
+
+  @Test
+  public void tokenizesExponentNotation() throws ShellParseException {
+    List<Token> tokens = new Lexer("1e5 1.5e-3 2E+10").tokenize();
+    assertEquals(TokenType.NUMBER, tokens.get(0).type());
+    assertEquals("1e5", tokens.get(0).text());
+    assertEquals(TokenType.NUMBER, tokens.get(1).type());
+    assertEquals("1.5e-3", tokens.get(1).text());
+    assertEquals(TokenType.NUMBER, tokens.get(2).type());
+    assertEquals("2E+10", tokens.get(2).text());
+  }
+
+  @Test
+  public void tokenizesLeadingUnderscoreAsIdentifierNotNumber() throws ShellParseException {
+    // '_' is a valid identifier-start character; a leading digit separator is ambiguous with a
+    // bareword and is deliberately left as an IDENT rather than treated as a NUMBER.
+    List<Token> tokens = new Lexer("_1000").tokenize();
+    assertEquals(TokenType.IDENT, tokens.get(0).type());
+    assertEquals("_1000", tokens.get(0).text());
+  }
+
+  @Test
+  public void tokenizesTrailingAndDoubledUnderscoresLeniently() throws ShellParseException {
+    // Deliberately permissive about underscore placement (unlike real Ruby, which rejects both
+    // of these): a trailing or doubled separator is still folded into one NUMBER token rather
+    // than erroring or splitting into separate tokens.
+    List<Token> trailing = new Lexer("1000_").tokenize();
+    assertEquals(TokenType.NUMBER, trailing.get(0).type());
+    assertEquals("1000_", trailing.get(0).text());
+
+    List<Token> doubled = new Lexer("1__000").tokenize();
+    assertEquals(TokenType.NUMBER, doubled.get(0).type());
+    assertEquals("1__000", doubled.get(0).text());
+  }
+
+  @Test
+  public void throwsOnMalformedExponentWithNoDigits() {
+    assertThrows(ShellParseException.class, () -> new Lexer("1e").tokenize());
+  }
+
+  @Test
+  public void throwsOnMalformedExponentWithOnlySign() {
+    assertThrows(ShellParseException.class, () -> new Lexer("1e+").tokenize());
+  }
+
+  @Test
   public void throwsOnUnterminatedString() {
     assertThrows(ShellParseException.class, () -> new Lexer("'unterminated").tokenize());
   }

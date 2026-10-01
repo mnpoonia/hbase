@@ -93,23 +93,44 @@ final class Lexer {
     return new Token(TokenType.FLAG, input.substring(nameStart, pos), start);
   }
 
-  private Token readNumber(int start) {
+  private Token readNumber(int start) throws ShellParseException {
     if (input.charAt(pos) == '-') {
       pos++;
     }
-    while (!atEnd() && Character.isDigit(input.charAt(pos))) {
-      pos++;
-    }
+    readDigitsWithUnderscores();
     if (
       !atEnd() && input.charAt(pos) == '.' && pos + 1 < input.length()
         && Character.isDigit(input.charAt(pos + 1))
     ) {
       pos++;
-      while (!atEnd() && Character.isDigit(input.charAt(pos))) {
+      readDigitsWithUnderscores();
+    }
+    if (!atEnd() && (input.charAt(pos) == 'e' || input.charAt(pos) == 'E')) {
+      int exponentStart = pos;
+      pos++;
+      if (!atEnd() && (input.charAt(pos) == '+' || input.charAt(pos) == '-')) {
         pos++;
       }
+      if (atEnd() || !Character.isDigit(input.charAt(pos))) {
+        throw new ShellParseException(
+          "Malformed exponent in numeric literal at position " + exponentStart);
+      }
+      readDigitsWithUnderscores();
     }
     return new Token(TokenType.NUMBER, input.substring(start, pos), start);
+  }
+
+  /**
+   * Consumes a run of digits that may contain {@code _} digit separators (Ruby numeric literal
+   * syntax, e.g. {@code 1_000_000}). Deliberately permissive about placement - leading/trailing/
+   * doubled underscores are tolerated rather than rejected, since this is a narrow literal
+   * tokenizer rather than a full Ruby-fidelity lexer; {@link ShellLineParser#parseNumber} strips
+   * all underscores before handing the text to {@code Long}/{@code Double}.
+   */
+  private void readDigitsWithUnderscores() {
+    while (!atEnd() && (Character.isDigit(input.charAt(pos)) || input.charAt(pos) == '_')) {
+      pos++;
+    }
   }
 
   private Token readIdent(int start) {

@@ -170,4 +170,51 @@ public class ShellLineParserTest {
     assertThrows(ShellParseException.class,
       () -> ShellLineParser.parse("describe 99999999999999999999"));
   }
+
+  @Test
+  public void parsesUnderscoreDigitSeparatorAsLong() throws ShellParseException {
+    ParsedCommand parsed = ShellLineParser.parse("create 't1', {VERSIONS => 1_000_000}");
+    assertEquals(1000000L, parsed.options().get("VERSIONS"));
+  }
+
+  @Test
+  public void parsesUnderscoreDigitSeparatorWithDecimalAsDouble() throws ShellParseException {
+    ParsedCommand parsed = ShellLineParser.parse("create 't1', {VERSIONS => 1_000.5}");
+    assertEquals(1000.5, parsed.options().get("VERSIONS"));
+  }
+
+  @Test
+  public void parsesExponentNotationAsDouble() throws ShellParseException {
+    ParsedCommand parsed = ShellLineParser.parse("create 't1', {VERSIONS => 1e5}");
+    assertEquals(100000.0, parsed.options().get("VERSIONS"));
+  }
+
+  @Test
+  public void parsesNegativeExponentNotationAsDouble() throws ShellParseException {
+    ParsedCommand parsed = ShellLineParser.parse("create 't1', {VERSIONS => 1.5e-3}");
+    assertEquals(0.0015, parsed.options().get("VERSIONS"));
+  }
+
+  @Test
+  public void parsesUppercaseExponentWithExplicitPlusSign() throws ShellParseException {
+    ParsedCommand parsed = ShellLineParser.parse("create 't1', {VERSIONS => 2E+10}");
+    assertEquals(2.0E10, parsed.options().get("VERSIONS"));
+  }
+
+  @Test
+  public void parsesTrailingAndDoubledUnderscoresLenientlyAsLong() throws ShellParseException {
+    // Unlike real Ruby (which raises SyntaxError on these), this parser is deliberately lenient
+    // about underscore placement - both still resolve to the obvious numeric value.
+    ParsedCommand trailing = ShellLineParser.parse("create 't1', {VERSIONS => 1000_}");
+    assertEquals(1000L, trailing.options().get("VERSIONS"));
+
+    ParsedCommand doubled = ShellLineParser.parse("create 't1', {VERSIONS => 1__000}");
+    assertEquals(1000L, doubled.options().get("VERSIONS"));
+  }
+
+  @Test
+  public void throwsOnMalformedExponentInNumericLiteral() {
+    assertThrows(ShellParseException.class, () -> ShellLineParser.parse("describe 1e"));
+    assertThrows(ShellParseException.class, () -> ShellLineParser.parse("describe 1e+"));
+  }
 }

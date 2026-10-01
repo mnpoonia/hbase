@@ -223,11 +223,16 @@ public final class ShellLineParser {
 
   private static Object parseNumber(Token token) throws ShellParseException {
     String text = token.text();
+    // The lexer keeps '_' digit separators in the token text (e.g. "1_000_000"); strip them
+    // before handing the literal to Long/Double, neither of which understands Ruby-style
+    // separators. A '.' or an exponent (e/E) makes the literal a float, matching Ruby semantics
+    // where "1e5" is a Float even though it has no decimal point.
+    String normalized = text.replace("_", "");
     try {
-      if (text.indexOf('.') >= 0) {
-        return Double.valueOf(text);
+      if (text.indexOf('.') >= 0 || text.indexOf('e') >= 0 || text.indexOf('E') >= 0) {
+        return Double.valueOf(normalized);
       }
-      return Long.valueOf(text);
+      return Long.valueOf(normalized);
     } catch (NumberFormatException e) {
       throw new ShellParseException("Numeric literal out of range: " + text);
     }
