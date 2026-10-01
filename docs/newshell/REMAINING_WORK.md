@@ -783,6 +783,72 @@ the StatefulSet PVC unload/load pairing itself is **not** built yet.
   this) — the drain-check step relies on `draining_servers.jsh`'s host-only
   resolution, not an exact stale `ServerName` match.
 
+## 10. git.soma PR #1646/#1644 gap analysis & remediation (0 remaining — fully done)
+
+Reconstructed PR #1646 (the internal Salesforce fork's original
+module-introduction PR — an early snapshot vs. our mature superset) and PR
+#1644 (`bin/hbase` `.jsh`/`.java` dispatch, already covered by the local
+HBASE-30419 cherry-pick) from their added-file diffs and diffed against
+local. Build/config/assembly/`bin/hbase`/jline3/SPI comparisons found no
+gaps — not itemized here.
+
+- [x] **`#` comment lines skipped in the REPL loop** — completed: true.
+  `NewShellMain.run()`'s line-skip guard extended to
+  `trimmed.isEmpty() || trimmed.startsWith("#")`, matching PR #1646's
+  behavior that newshell's rewrite had dropped. Fixes comments in
+  `.hbase`/newshell scripts.
+- [x] **`RuntimeException` trust boundary in `dispatch()`** — completed:
+  true. Added `catch (RuntimeException e)` around `command.execute()` with
+  a `LOG.warn` + non-zero exit code, so one bad command (attribute
+  coercion, `TableName` validation, `Admin` calls) can't kill the REPL
+  session.
+- [x] **Hardened `toInt`/`toLong`/`toBoolean` coercion** — completed: true.
+  `TableAttributes`/`ColumnFamilyAttributes` coercion helpers now accept
+  numeric-string values (not just boxed `Number`) and null-guard into a
+  shell-friendly `IOException` instead of a raw
+  `NullPointerException`/`ClassCastException`; restored `toLong` in
+  `ColumnFamilyAttributes`.
+- [x] **Persistent interactive history re-wired** — completed: true.
+  `TerminalConfig` now built with `.historyFile(defaultHistoryFile())`
+  (`~/.hbase-newshell-history`); `saveHistoryIfSupported`/
+  `saveHistoryQuietly` called on exit. Confirmed with the user this was an
+  unintentional regression, not a deferral.
+- [x] **`CreateCommand` native `--flag` merge onto bareword family** —
+  completed: true. `create 't1','f1' --versions=3` now applies `VERSIONS`
+  onto `f1` instead of silently dropping the flag when a bareword family is
+  already present.
+- [x] **Full `TableAttributes`/`ColumnFamilyAttributes` port (scope
+  expansion)** — completed: true. User-authorized mid-session scope
+  expansion: ported PR #1646's richer `CONFIGURATION`/`METADATA` maps,
+  `SPLITS_FILE`, `NUMREGIONS`+`SPLITALGO` (via `RegionSplitter`), MOB
+  support, and unknown-key `IOException` rejection into both classes;
+  updated `DefaultShellAdmin`'s `createTable` call site accordingly.
+- [x] **`hbase-server` promoted to compile dependency** — completed: true.
+  User-authorized (matches PR #1646's own approach + TODO): NUMREGIONS+
+  SPLITALGO needs `RegionSplitter`, which only lives in `hbase-server`.
+  Moved out of the test-scope block into general dependencies, with a TODO
+  to investigate exposing the split-algorithm math via
+  hbase-common/hbase-client so this client-facing module doesn't need
+  hbase-server.
+- [x] **Test coverage for all of the above** — completed: true. Added
+  `TableAttributesTest` (16 cases), `ColumnFamilyAttributesTest` (17),
+  `DefaultShellAdminTest` (4), `NewShellMainHistoryTest` (3), and 4 new
+  `NewShellMainTest` cases (`RuntimeException`-from-command,
+  `exitOnFirstError`+`RuntimeException`, null-message
+  `ShellCommandException` fallback, comment-line skip). Two real bugs found
+  and fixed while porting: `dispatch()`'s `ShellCommandException|IOException`
+  catch printed `"ERROR: null"` for null-message exceptions;
+  `DefaultShellAdmin.createTable()` let `TableName.valueOf()`'s
+  `IllegalArgumentException` propagate raw instead of wrapping as
+  `IOException`. Full `mvn -pl hbase-newshell test`: **410 tests, 0
+  failures**.
+
+Two of PR #1646's `NewShellMainDispatchTest` cases —
+`runSessionClosesAdminEvenWhenCommandThrows` and
+`runSessionWrapsHistorySaveFailureInsteadOfPropagating` — were intentionally
+not ported: they exercise a `runSession()` extraction our `main()` doesn't
+have. That's an architectural difference from the PR, not a gap.
+
 ## Suggested porting order
 
 1. **general** + **dml** — small, high-traffic, most likely to be scripted
