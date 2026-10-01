@@ -194,7 +194,7 @@ public final class ShellLineParser {
         return t.text();
       case NUMBER:
         advance();
-        return parseNumber(t.text());
+        return parseNumber(t);
       case IDENT:
         advance();
         return t.text();
@@ -221,11 +221,16 @@ public final class ShellLineParser {
     return values;
   }
 
-  private static Object parseNumber(String text) {
-    if (text.indexOf('.') >= 0) {
-      return Double.valueOf(text);
+  private static Object parseNumber(Token token) throws ShellParseException {
+    String text = token.text();
+    try {
+      if (text.indexOf('.') >= 0) {
+        return Double.valueOf(text);
+      }
+      return Long.valueOf(text);
+    } catch (NumberFormatException e) {
+      throw new ShellParseException("Numeric literal out of range: " + text);
     }
-    return Long.valueOf(text);
   }
 
   private Token peek() {

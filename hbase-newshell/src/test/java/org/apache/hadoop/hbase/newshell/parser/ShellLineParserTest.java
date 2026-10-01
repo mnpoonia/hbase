@@ -165,4 +165,10 @@ public class ShellLineParserTest {
   public void throwsWhenLineIsNotACommandName() {
     assertThrows(ShellParseException.class, () -> ShellLineParser.parse("'t1'"));
   }
+
+  @Test
+  public void throwsParseExceptionForOutOfRangeNumericLiteral() {
+    assertThrows(ShellParseException.class,
+      () -> ShellLineParser.parse("describe 99999999999999999999"));
+  }
 }
