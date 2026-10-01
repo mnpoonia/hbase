@@ -23,6 +23,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellUtil;
@@ -50,8 +51,9 @@ import org.apache.yetus.audience.InterfaceAudience;
  * {@code hbase/table.rb#_get_internal} - handles {@code COLUMN} (including {@code cf:qualifier}
  * splitting and array-of-columns values), {@code VERSIONS}, and {@code TIMESTAMP} - and
  * {@code hbase/table.rb#_put_internal} - a single {@code cf:qualifier} column, required, plus an
- * optional {@code TIMESTAMP}; {@code _count_internal} (row count only, no {@code INTERVAL} progress
- * reporting, no {@code FILTER}); {@code _delete_internal}/{@code _deleteall_internal}
+ * optional {@code TIMESTAMP}; {@code _count_internal} (row count, with {@code INTERVAL} progress
+ * reporting via {@link ShellTable.CountProgressListener}, {@code CACHE_BLOCKS}, and
+ * {@code FILTER}); {@code _delete_internal}/{@code _deleteall_internal}
  * (single-version vs all-versions column delete, plus {@code ROWPREFIXFILTER}/{@code CACHE} batched
  * range delete); {@code _get_counter_internal}/{@code _incr_internal}/ {@code _append_internal};
  * and {@code _get_splits_internal}. {@code FILTER} (via {@link ParseFilter}'s textual filter
@@ -158,15 +160,61 @@ public final class DefaultShellTable implements ShellTable {
   }
 
   @Override
-  public long count(Map<String, Object> options) throws IOException {
+  public long count(Map<String, Object> options, CountProgressListener progressListener)
+    throws ShellCommandException, IOException {
     Scan scan = buildScan(options);
+    Object filter = options.get("FILTER");
+    if (filter instanceof String) {
+      scan.setFilter(parseFilterString((String) filter));
+    }
+    scan.setCacheBlocks(resolveCacheBlocks(options.get("CACHE_BLOCKS")));
+    long interval = resolveInterval(options.get("INTERVAL"));
     long count = 0;
     try (ResultScanner scanner = table.getScanner(scan)) {
-      for (Result ignored : scanner) {
+      for (Result result : scanner) {
         count++;
+        if (count % interval == 0) {
+          progressListener.onProgress(count, Bytes.toStringBinary(result.getRow()));
+        }
       }
     }
     return count;
+  }
+
+  /**
+   * Coerces a {@code CACHE_BLOCKS} option value, matching hbase-shell's {@code count} command:
+   * defaults to {@code false} when absent, accepts a real {@link Boolean}, or a {@link String}
+   * whose value is {@code "true"}/{@code "false"} case-insensitively - any other value is
+   * rejected. Deliberately not reusing {@link AttributeCoercion#toBoolean}, which leniently
+   * delegates to {@link Boolean#parseBoolean} and would silently treat any non-"true" string
+   * (e.g. a typo) as {@code false} instead of raising an error.
+   */
+  private static boolean resolveCacheBlocks(Object cacheBlocksOption)
+    throws ShellCommandException {
+    if (cacheBlocksOption == null) {
+      return false;
+    }
+    if (cacheBlocksOption instanceof Boolean) {
+      return (Boolean) cacheBlocksOption;
+    }
+    if (cacheBlocksOption instanceof String) {
+      String value = ((String) cacheBlocksOption).toLowerCase(Locale.ROOT);
+      if (value.equals("true")) {
+        return true;
+      }
+      if (value.equals("false")) {
+        return false;
+      }
+    }
+    throw new ShellCommandException(
+      "Expected CACHE_BLOCKS value to be a boolean or the string 'true' or 'false'");
+  }
+
+  private static long resolveInterval(Object intervalOption) {
+    if (intervalOption == null) {
+      return 1000L;
+    }
+    return ((Number) intervalOption).longValue();
   }
 
   @Override

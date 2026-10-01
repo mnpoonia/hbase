@@ -46,7 +46,7 @@ public class StubShellTable implements ShellTable {
   }
 
   @Override
-  public long count(Map<String, Object> options) {
+  public long count(Map<String, Object> options, CountProgressListener progressListener) {
     throw notNeeded();
   }
 

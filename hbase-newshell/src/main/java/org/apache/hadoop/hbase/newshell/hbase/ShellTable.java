@@ -36,7 +36,22 @@ public interface ShellTable {
 
   ScanResult scan(Map<String, Object> options) throws ShellCommandException, IOException;
 
-  long count(Map<String, Object> options) throws IOException;
+  /**
+   * Counts the rows matching {@code options} (the same {@code COLUMNS}/{@code LIMIT}/
+   * {@code STARTROW}/{@code STOPROW}/{@code VERSIONS}/{@code FILTER} options {@link #scan}
+   * accepts, plus {@code CACHE_BLOCKS} and {@code INTERVAL}). Mirrors hbase-shell's
+   * {@code _count_internal}: every {@code INTERVAL} rows (default {@code 1000}),
+   * {@code progressListener} is invoked with the running count and the row key just counted, so a
+   * long-running count can report progress to the caller.
+   */
+  long count(Map<String, Object> options, CountProgressListener progressListener)
+    throws ShellCommandException, IOException;
+
+  /** Receives periodic progress updates from {@link #count}. */
+  @FunctionalInterface
+  interface CountProgressListener {
+    void onProgress(long count, String row);
+  }
 
   void delete(String row, String column, Long timestamp) throws IOException;
 

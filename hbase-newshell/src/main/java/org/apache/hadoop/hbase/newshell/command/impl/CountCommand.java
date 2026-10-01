@@ -18,6 +18,7 @@
 package org.apache.hadoop.hbase.newshell.command.impl;
 
 import java.io.IOException;
+import java.io.PrintWriter;
 import org.apache.hadoop.hbase.newshell.command.CommandResult;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
 import org.apache.hadoop.hbase.newshell.command.ShellCommand;
@@ -28,9 +29,11 @@ import org.apache.yetus.audience.InterfaceAudience;
 
 /**
  * Ported, minimal slice, from hbase-shell's {@code hbase/table.rb#_count_internal}: a table name
- * plus an optional {@code COLUMNS}/{@code STARTROW}/{@code STOPROW}/{@code VERSIONS} hash literal,
- * reusing {@link ScanCommand}'s scan option support. {@code INTERVAL} progress reporting,
- * {@code CACHE_BLOCKS} and {@code FILTER} are explicitly not ported.
+ * plus an optional {@code COLUMNS}/{@code STARTROW}/{@code STOPROW}/{@code VERSIONS}/
+ * {@code FILTER}/{@code CACHE_BLOCKS}/{@code INTERVAL} hash literal, reusing {@link ScanCommand}'s
+ * scan option support. The legacy "second positional arg is an Integer meaning INTERVAL" syntax
+ * (e.g. {@code count 't1', 100000}) and table-reference chaining (e.g. {@code t.count}) are
+ * explicitly not ported.
  */
 @InterfaceAudience.Private
 public final class CountCommand implements ShellCommand {
@@ -41,7 +44,9 @@ public final class CountCommand implements ShellCommand {
 
   @Override
   public String help() {
-    return "count 'table', {STARTROW => 'r1'} - count the rows in a table";
+    return "count 'table', {STARTROW => 'r1', FILTER => \"...\", CACHE_BLOCKS => true, "
+      + "INTERVAL => 100000} - count the rows in a table, reporting progress every INTERVAL rows "
+      + "(default 1000)";
   }
 
   @Override
@@ -51,7 +56,11 @@ public final class CountCommand implements ShellCommand {
       throw new ShellCommandException("count requires a table name argument");
     }
     String tableName = String.valueOf(command.positionalArgs().get(0));
-    long count = context.tables().forTable(tableName).count(command.options());
+    PrintWriter out = context.out();
+    long count = context.tables().forTable(tableName).count(command.options(), (cnt, row) -> {
+      out.println("Current count: " + cnt + ", row: " + row);
+      out.flush();
+    });
     return TextResult.of(count + " row(s)");
   }
 }

@@ -28,6 +28,7 @@ import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
 import org.apache.hadoop.hbase.newshell.command.ShellCommandException;
 import org.apache.hadoop.hbase.newshell.command.TextResult;
 import org.apache.hadoop.hbase.newshell.hbase.ShellTable;
+import org.apache.hadoop.hbase.newshell.hbase.ShellTable.CountProgressListener;
 import org.apache.hadoop.hbase.newshell.hbase.ShellTableFactory;
 import org.apache.hadoop.hbase.newshell.hbase.StubShellAdmin;
 import org.apache.hadoop.hbase.newshell.hbase.StubShellTable;
@@ -42,10 +43,12 @@ public class CountCommandTest {
 
   private static final class RecordingShellTable extends StubShellTable {
     private Map<String, Object> lastOptions;
+    private CountProgressListener lastProgressListener;
 
     @Override
-    public long count(Map<String, Object> options) {
+    public long count(Map<String, Object> options, CountProgressListener progressListener) {
       this.lastOptions = options;
+      this.lastProgressListener = progressListener;
       return 42L;
     }
   }
@@ -68,8 +71,9 @@ public class CountCommandTest {
   private final CountCommand command = new CountCommand();
   private final RecordingShellTable table = new RecordingShellTable();
   private final RecordingShellTableFactory tables = new RecordingShellTableFactory(table);
+  private final StringWriter outBuffer = new StringWriter();
   private final ExecutionContext context =
-    new ExecutionContext(new StubShellAdmin(), tables, new PrintWriter(new StringWriter()));
+    new ExecutionContext(new StubShellAdmin(), tables, new PrintWriter(outBuffer));
 
   @Test
   public void printsRowCount() throws Exception {
@@ -85,5 +89,15 @@ public class CountCommandTest {
   public void throwsWhenTableNameMissing() throws Exception {
     ParsedCommand parsed = ShellLineParser.parse("count");
     assertThrows(ShellCommandException.class, () -> command.execute(parsed, context));
+  }
+
+  @Test
+  public void progressListenerPrintsCurrentCountLine() throws Exception {
+    ParsedCommand parsed = ShellLineParser.parse("count 't1'");
+    command.execute(parsed, context);
+
+    table.lastProgressListener.onProgress(2L, "r2");
+
+    assertEquals("Current count: 2, row: r2" + System.lineSeparator(), outBuffer.toString());
   }
 }
