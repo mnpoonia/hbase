@@ -117,6 +117,43 @@ public class NewShellMainTest {
     }
   }
 
+  /** Throws an unchecked exception, to verify the dispatch loop's RuntimeException trust boundary. */
+  private static final class UncheckedThrowingCommand implements ShellCommand {
+    @Override
+    public String name() {
+      return "boom";
+    }
+
+    @Override
+    public String help() {
+      return "boom";
+    }
+
+    @Override
+    public CommandResult execute(ParsedCommand command, ExecutionContext context) {
+      throw new IllegalArgumentException("unchecked boom");
+    }
+  }
+
+  /** Throws a {@link ShellCommandException} with a null message. */
+  private static final class NullMessageFailingCommand implements ShellCommand {
+    @Override
+    public String name() {
+      return "boom";
+    }
+
+    @Override
+    public String help() {
+      return "boom";
+    }
+
+    @Override
+    public CommandResult execute(ParsedCommand command, ExecutionContext context)
+      throws ShellCommandException {
+      throw new ShellCommandException(null);
+    }
+  }
+
   private ExecutionContext newContext(PrintWriter out) {
     return new ExecutionContext(new StubShellAdmin(), new StubShellTableFactory(), out);
   }
@@ -205,6 +242,38 @@ public class NewShellMainTest {
     int code = NewShellMain.run(terminal, newContext(terminal.writer()), registry,
       new DefaultFormatter(), true);
     assertEquals(ExitCodes.SUCCESS, code);
+  }
+
+  @Test
+  public void runtimeExceptionFromCommandDoesNotKillSession() throws IOException {
+    FakeShellTerminal terminal = new FakeShellTerminal("boom", "hello", "exit");
+    CommandRegistry registry =
+      new CommandRegistry(java.util.List.of(new SucceedingCommand(), new UncheckedThrowingCommand()));
+    NewShellMain.run(terminal, newContext(terminal.writer()), registry, new DefaultFormatter());
+    String output = terminal.output();
+    assertTrue(output.contains("unchecked boom"));
+    assertTrue(output.contains("hello world"));
+  }
+
+  @Test
+  public void exitOnFirstErrorPropagatesRuntimeFailure() throws IOException {
+    FakeShellTerminal terminal = new FakeShellTerminal("boom", "hello", "exit");
+    CommandRegistry registry =
+      new CommandRegistry(java.util.List.of(new SucceedingCommand(), new UncheckedThrowingCommand()));
+    int code = NewShellMain.run(terminal, newContext(terminal.writer()), registry,
+      new DefaultFormatter(), true);
+    assertEquals(ExitCodes.CLIENT_ERROR, code);
+    assertFalse(terminal.output().contains("hello world"));
+  }
+
+  @Test
+  public void nullMessageShellCommandExceptionFallsBackToClassName() throws IOException {
+    FakeShellTerminal terminal = new FakeShellTerminal("boom", "exit");
+    CommandRegistry registry = new CommandRegistry(java.util.List.of(new NullMessageFailingCommand()));
+    NewShellMain.run(terminal, newContext(terminal.writer()), registry, new DefaultFormatter());
+    String output = terminal.output();
+    assertTrue(output.contains("ShellCommandException"));
+    assertFalse(output.contains("ERROR: null"));
   }
 
   @Test
