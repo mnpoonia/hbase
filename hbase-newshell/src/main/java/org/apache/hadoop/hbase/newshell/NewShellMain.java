@@ -19,6 +19,8 @@ package org.apache.hadoop.hbase.newshell;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.client.Connection;
@@ -42,6 +44,7 @@ import org.apache.hadoop.hbase.newshell.parser.ParsedCommand;
 import org.apache.hadoop.hbase.newshell.parser.ShellLineParser;
 import org.apache.hadoop.hbase.newshell.parser.ShellParseException;
 import org.apache.hadoop.hbase.newshell.spi.ShellTerminal;
+import org.apache.hadoop.hbase.newshell.spi.SupportsHistory;
 import org.apache.hadoop.hbase.newshell.spi.TerminalConfig;
 import org.apache.hadoop.hbase.newshell.spi.TerminalProvider;
 import org.apache.yetus.audience.InterfaceAudience;
@@ -102,6 +105,7 @@ public final class NewShellMain {
       CommandRegistry registry = new CommandRegistry();
       terminal.setCompleter(new CommandNameCompleter(registry));
       exitCode = run(terminal, context, registry, formatter, launch.exitOnFirstError);
+      saveHistoryQuietly(terminal, context.out());
     }
     if (exitCode != ExitCodes.SUCCESS) {
       System.exit(exitCode);
@@ -113,8 +117,28 @@ public final class NewShellMain {
       return new FileScriptTerminal(scriptFile);
     }
     TerminalProvider provider = new TerminalProviderRegistry().resolve();
-    TerminalConfig config = TerminalConfig.builder().appName("newshell").build();
+    TerminalConfig config =
+      TerminalConfig.builder().appName("newshell").historyFile(defaultHistoryFile()).build();
     return provider.open(config);
+  }
+
+  static Path defaultHistoryFile() {
+    return Paths.get(System.getProperty("user.home"), ".hbase-newshell-history");
+  }
+
+  static void saveHistoryIfSupported(ShellTerminal terminal) throws IOException {
+    if (terminal instanceof SupportsHistory) {
+      ((SupportsHistory) terminal).saveHistory();
+    }
+  }
+
+  private static void saveHistoryQuietly(ShellTerminal terminal, PrintWriter out) {
+    try {
+      saveHistoryIfSupported(terminal);
+    } catch (IOException e) {
+      out.println("ERROR: " + e.getMessage());
+      out.flush();
+    }
   }
 
   /** Returns {@link ExitCodes#SUCCESS} unless {@code exitOnFirstError} and a command failed */
