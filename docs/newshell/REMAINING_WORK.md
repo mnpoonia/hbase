@@ -110,6 +110,20 @@ for the JRuby shell.
   keep it in sync with actual scope decisions made along the way (e.g. the
   deferred descriptor-catalog item above).
 
+### Known grammar/syntax limitations (intentional, not planned)
+
+- **No variable assignment / method-chaining on command results.** Old
+  hbase-shell is a full Ruby/IRB REPL, so `t = get_table 't1'` followed by
+  `t.scan(...)`/`t.put(...)` works for free (Ruby variable assignment +
+  method dispatch on any object). `ShellLineParser`
+  (`hbase-newshell/src/main/java/org/apache/hadoop/hbase/newshell/parser/ShellLineParser.java`)
+  only supports the flat grammar `command := IDENT arg*` —
+  `command 'arg', {OPTIONS}` — with no token for `.` or a general `=`
+  assignment in `Lexer.java` (the only `=` usage is inside `--flag=value`
+  parsing). newshell is not a general Ruby interpreter, so this is an
+  intentional, accepted scope limitation of the pilot, not a bug — not
+  something to implement.
+
 ### Machine-facing improvements (borrowed from picocli CLI review)
 
 Ideas worth taking from Nihal Jain's draft `hbase-cli` / picocli PoC
