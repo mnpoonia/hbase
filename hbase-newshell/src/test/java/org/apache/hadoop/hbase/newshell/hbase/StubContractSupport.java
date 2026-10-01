@@ -19,7 +19,7 @@ package org.apache.hadoop.hbase.newshell.hbase;
 
 /**
  * Shared helper for the {@code Stub*Contract} test mixins so the exception-construction isn't
- * duplicated across all ten of them.
+ * duplicated across each of them.
  */
 final class StubContractSupport {
   private StubContractSupport() {

@@ -18,6 +18,7 @@
 package org.apache.hadoop.hbase.newshell.command.impl;
 
 import java.io.IOException;
+import java.util.List;
 import org.apache.hadoop.hbase.newshell.command.ArgParsing;
 import org.apache.hadoop.hbase.newshell.command.CommandResult;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
@@ -47,7 +48,7 @@ public final class SplitormergeSwitchCommand implements ShellCommand {
   @Override
   public CommandResult execute(ParsedCommand command, ExecutionContext context)
     throws ShellCommandException, IOException {
-    java.util.List<Object> positionals = command.positionalArgs();
+    List<Object> positionals = command.positionalArgs();
     if (positionals.size() < 2) {
       throw new ShellCommandException(
         "splitormerge_switch requires a switch type ('SPLIT'|'MERGE') and a true|false argument");

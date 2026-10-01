@@ -18,6 +18,7 @@
 package org.apache.hadoop.hbase.newshell.command.impl;
 
 import java.io.IOException;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import org.apache.hadoop.hbase.newshell.command.CommandResult;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
@@ -57,13 +58,13 @@ public final class AppendPeerExcludeTableCFsCommand implements ShellCommand {
       throw new ShellCommandException("table-cfs argument must be a Hash");
     }
     if (!command.hashLiterals().isEmpty()) {
-      return new java.util.LinkedHashMap<>(command.hashLiterals().get(0));
+      return new LinkedHashMap<>(command.hashLiterals().get(0));
     }
     return null;
   }
 
   private static Map<String, Object> copyMap(Map<?, ?> src) {
-    Map<String, Object> out = new java.util.LinkedHashMap<>();
+    Map<String, Object> out = new LinkedHashMap<>();
     for (Map.Entry<?, ?> e : src.entrySet()) {
       out.put(String.valueOf(e.getKey()), e.getValue());
     }

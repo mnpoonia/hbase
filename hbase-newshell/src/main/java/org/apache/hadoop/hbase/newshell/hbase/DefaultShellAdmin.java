@@ -75,18 +75,15 @@ import org.apache.hadoop.hbase.shaded.protobuf.generated.VisibilityLabelsProtos.
 import org.apache.hadoop.hbase.shaded.protobuf.generated.VisibilityLabelsProtos.VisibilityLabelsResponse;
 
 /**
- * Wraps a real {@link Admin}. Ported, for the pilot commands only, from hbase-shell's
- * {@code hbase/admin.rb} - {@code status} (summary branch only), {@code create} (one or more column
- * families - see {@link ColumnFamilyAttributes} for the supported per-family attributes, and
- * {@link TableAttributes} for the supported table-level attributes including
- * SPLITS/SPLITS_FILE/NUMREGIONS+SPLITALGO/CONFIGURATION/METADATA), {@code disable}, {@code enable}
- * (mirrors {@code disable}'s exists/already-in-that-state guards), {@code drop} (requires the table be
- * disabled first, per {@code admin.rb#drop}), {@code list} (regex-filtered table names, per
- * {@code admin.rb#list}), and {@code describe} (enabled/disabled status, table attributes, and
- * column family descriptions, per {@code shell/commands/describe.rb} - the QUOTAS section is not
- * ported), {@code decommission_regionservers}/{@code recommission_regionserver}/
- * {@code list_decommissioned_regionservers} (per {@code hbase/admin.rb}'s
- * {@code getServerName}/{@code getServerNames} hostname-resolution logic).
+ * Wraps a real {@link Admin}. The full {@link ShellAdmin} implementation, covering all twelve
+ * contract domains it is composed from - {@link TableAdminContract} (including
+ * {@link ColumnFamilyAttributes} for per-family attributes and {@link TableAttributes} for
+ * table-level attributes such as SPLITS/SPLITS_FILE/NUMREGIONS+SPLITALGO/CONFIGURATION/METADATA),
+ * {@link NamespaceAdminContract}, {@link ClusterOpsContract}, {@link ServerLifecycleContract},
+ * {@link SnapshotAdminContract}, {@link ReplicationPeerContract}, {@link SecurityAdminContract},
+ * {@link VisibilityLabelContract}, {@link QuotaAdminContract}, {@link ProcedureAdminContract},
+ * {@link RsGroupAdminContract}, and {@link DiagnosticsContract} - ported from hbase-shell's
+ * {@code hbase/admin.rb} and the corresponding {@code shell/commands/*.rb} files.
  */
 @InterfaceAudience.Private
 public final class DefaultShellAdmin implements ShellAdmin {

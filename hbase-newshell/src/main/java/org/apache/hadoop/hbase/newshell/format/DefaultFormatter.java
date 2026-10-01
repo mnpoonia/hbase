@@ -26,8 +26,8 @@ import org.apache.yetus.audience.InterfaceAudience;
 
 /**
  * Plain-text renderer for the two {@link CommandResult} shapes. Uses {@code instanceof} rather than
- * a pattern-matching {@code switch} because this module's release target is Java 17, where switch
- * pattern matching on sealed types is still a preview feature (stable only from Java 21).
+ * a pattern-matching {@code switch} because this module's release target is Java 8, which has
+ * neither pattern matching nor switch expressions.
  */
 @InterfaceAudience.Private
 public final class DefaultFormatter implements Formatter {
