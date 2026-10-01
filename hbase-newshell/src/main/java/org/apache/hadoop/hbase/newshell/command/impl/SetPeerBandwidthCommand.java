@@ -37,7 +37,13 @@ public final class SetPeerBandwidthCommand implements ShellCommand {
       throw new ShellCommandException("set_peer_bandwidth requires peer id and bandwidth");
     }
     String peerId = String.valueOf(command.positionalArgs().get(0));
-    long bandwidth = Long.parseLong(String.valueOf(command.positionalArgs().get(1)));
+    String bandwidthArg = String.valueOf(command.positionalArgs().get(1));
+    long bandwidth;
+    try {
+      bandwidth = Long.parseLong(bandwidthArg);
+    } catch (NumberFormatException e) {
+      throw new ShellCommandException("Invalid bandwidth value: " + bandwidthArg);
+    }
     context.admin().setPeerBandwidth(peerId, bandwidth);
     return TextResult.of();
   }

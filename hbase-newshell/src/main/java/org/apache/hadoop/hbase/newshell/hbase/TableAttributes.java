@@ -136,7 +136,7 @@ final class TableAttributes {
     int numRegionsValue;
     try {
       numRegionsValue = AttributeCoercion.toInt(numRegions);
-    } catch (ClassCastException e) {
+    } catch (IllegalArgumentException | ClassCastException e) {
       throw new IOException("Invalid value for table attribute 'NUMREGIONS': " + numRegions, e);
     }
     if (numRegionsValue <= 1) {
