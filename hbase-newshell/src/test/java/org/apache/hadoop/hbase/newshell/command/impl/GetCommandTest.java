@@ -22,16 +22,13 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 import java.util.Map;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
 import org.apache.hadoop.hbase.newshell.command.ShellCommandException;
-import org.apache.hadoop.hbase.newshell.command.StreamingTabularResult;
+import org.apache.hadoop.hbase.newshell.command.TabularResult;
 import org.apache.hadoop.hbase.newshell.hbase.CellView;
-import org.apache.hadoop.hbase.newshell.hbase.ScanResult;
-import org.apache.hadoop.hbase.newshell.hbase.ScanRow;
+import org.apache.hadoop.hbase.newshell.hbase.GetResult;
 import org.apache.hadoop.hbase.newshell.hbase.ShellTable;
 import org.apache.hadoop.hbase.newshell.hbase.ShellTableFactory;
 import org.apache.hadoop.hbase.newshell.hbase.StubShellAdmin;
@@ -43,16 +40,17 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 @Tag(SmallTests.TAG)
-public class ScanCommandTest {
+public class GetCommandTest {
 
   private static final class RecordingShellTable extends StubShellTable {
     private Map<String, Object> lastOptions;
+    private String lastRow;
 
     @Override
-    public ScanResult scan(Map<String, Object> options) {
+    public GetResult get(String row, Map<String, Object> options) {
+      this.lastRow = row;
       this.lastOptions = options;
-      return new ScanResult(rowConsumer -> rowConsumer
-        .accept(new ScanRow("r1", Arrays.asList(new CellView("f1", "c1", 123L, "v1")))));
+      return new GetResult(Arrays.asList(new CellView("f1", "c1", 123L, "v1")));
     }
   }
 
@@ -71,41 +69,37 @@ public class ScanCommandTest {
     }
   }
 
-  private final ScanCommand command = new ScanCommand();
+  private final GetCommand command = new GetCommand();
   private final RecordingShellTable table = new RecordingShellTable();
   private final RecordingShellTableFactory tables = new RecordingShellTableFactory(table);
   private final ExecutionContext context =
     new ExecutionContext(new StubShellAdmin(), tables, new PrintWriter(new StringWriter()));
 
   @Test
-  public void scansTable() throws Exception {
-    ParsedCommand parsed = ShellLineParser.parse("scan 't1', {LIMIT => 10}");
-    StreamingTabularResult result = (StreamingTabularResult) command.execute(parsed, context);
-    List<List<String>> rows = new ArrayList<>();
-    result.forEachRow(rows::add);
+  public void getsRow() throws Exception {
+    ParsedCommand parsed = ShellLineParser.parse("get 't1', 'r1', {VERSIONS => 2}");
+    TabularResult result = (TabularResult) command.execute(parsed, context);
 
     assertEquals("t1", tables.lastTableName);
-    assertEquals(10L, table.lastOptions.get("LIMIT"));
-    assertEquals(Arrays.asList("ROW", "COLUMN+CELL"), result.header());
-    assertEquals(1, rows.size());
-    assertEquals("r1", rows.get(0).get(0));
+    assertEquals("r1", table.lastRow);
+    assertEquals(2L, table.lastOptions.get("VERSIONS"));
+    assertEquals(Arrays.asList("COLUMN", "CELL"), result.header());
+    assertEquals(1, result.rows().size());
   }
 
   @Test
   public void passesFilterAndTimerangeOptionsThrough() throws Exception {
-    ParsedCommand parsed =
-      ShellLineParser.parse("scan 't1', {FILTER => \"PrefixFilter('row')\", TIMERANGE => [100, 200]}");
-    StreamingTabularResult result = (StreamingTabularResult) command.execute(parsed, context);
-    result.forEachRow(row -> {
-    });
+    ParsedCommand parsed = ShellLineParser
+      .parse("get 't1', 'r1', {FILTER => \"ValueFilter(=, 'binary:abc')\", TIMERANGE => [100, 200]}");
+    command.execute(parsed, context);
 
-    assertEquals("PrefixFilter('row')", table.lastOptions.get("FILTER"));
+    assertEquals("ValueFilter(=, 'binary:abc')", table.lastOptions.get("FILTER"));
     assertEquals(Arrays.asList(100L, 200L), table.lastOptions.get("TIMERANGE"));
   }
 
   @Test
-  public void throwsWhenTableNameMissing() throws Exception {
-    ParsedCommand parsed = ShellLineParser.parse("scan");
+  public void throwsWhenRowKeyMissing() throws Exception {
+    ParsedCommand parsed = ShellLineParser.parse("get 't1'");
     assertThrows(ShellCommandException.class, () -> command.execute(parsed, context));
   }
 }

@@ -34,9 +34,9 @@ import org.apache.yetus.audience.InterfaceAudience;
 
 /**
  * Ported, minimal slice, from hbase-shell's {@code hbase/table.rb#_get_internal}: table name, row
- * key, and an optional {@code COLUMN}/{@code VERSIONS}/{@code TIMESTAMP} hash literal. FILTER,
- * ATTRIBUTES, AUTHORIZATIONS, CONSISTENCY and TIMERANGE are explicitly not ported for this pilot
- * slice.
+ * key, and an optional {@code COLUMN}/{@code VERSIONS}/{@code TIMESTAMP}/{@code FILTER}/
+ * {@code TIMERANGE} hash literal. ATTRIBUTES, AUTHORIZATIONS and CONSISTENCY are explicitly not
+ * ported for this pilot slice.
  */
 @InterfaceAudience.Private
 public final class GetCommand implements ShellCommand {

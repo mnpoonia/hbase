@@ -34,9 +34,9 @@ import org.apache.yetus.audience.InterfaceAudience;
 
 /**
  * Ported, minimal slice, from hbase-shell's {@code shell/commands/scan.rb}: a table name plus an
- * optional {@code COLUMNS}/{@code LIMIT}/{@code STARTROW}/{@code STOPROW}/{@code VERSIONS} hash
- * literal. TIMERANGE, FILTER, ROWPREFIXFILTER, formatters, metrics, and the other scanner options
- * are explicitly not ported for this pilot slice.
+ * optional {@code COLUMNS}/{@code LIMIT}/{@code STARTROW}/{@code STOPROW}/{@code VERSIONS}/
+ * {@code FILTER}/{@code TIMERANGE} hash literal. ROWPREFIXFILTER, formatters, metrics, and the
+ * other scanner options are explicitly not ported for this pilot slice.
  */
 @InterfaceAudience.Private
 public final class ScanCommand implements ShellCommand {

@@ -18,6 +18,7 @@
 package org.apache.hadoop.hbase.newshell.hbase;
 
 import java.io.IOException;
+import java.nio.charset.CharacterCodingException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -38,6 +39,9 @@ import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.client.Table;
+import org.apache.hadoop.hbase.filter.Filter;
+import org.apache.hadoop.hbase.filter.ParseFilter;
+import org.apache.hadoop.hbase.newshell.command.ShellCommandException;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.yetus.audience.InterfaceAudience;
 
@@ -50,8 +54,10 @@ import org.apache.yetus.audience.InterfaceAudience;
  * reporting, no {@code FILTER}); {@code _delete_internal}/{@code _deleteall_internal}
  * (single-version vs all-versions column delete, plus {@code ROWPREFIXFILTER}/{@code CACHE} batched
  * range delete); {@code _get_counter_internal}/{@code _incr_internal}/ {@code _append_internal};
- * and {@code _get_splits_internal}. FILTER/ATTRIBUTES/AUTHORIZATIONS/ CONSISTENCY/TIMERANGE (for
- * {@code get}), ATTRIBUTES/VISIBILITY/TTL (for {@code put}) are explicitly not ported.
+ * and {@code _get_splits_internal}. {@code FILTER} (via {@link ParseFilter}'s textual filter
+ * grammar) and {@code TIMERANGE} are supported for {@code get} and {@code scan}; ATTRIBUTES/
+ * AUTHORIZATIONS/CONSISTENCY (for {@code get}), ATTRIBUTES/VISIBILITY/TTL (for {@code put}) are
+ * explicitly not ported.
  */
 @InterfaceAudience.Private
 public final class DefaultShellTable implements ShellTable {
@@ -62,7 +68,8 @@ public final class DefaultShellTable implements ShellTable {
   }
 
   @Override
-  public GetResult get(String row, Map<String, Object> options) throws IOException {
+  public GetResult get(String row, Map<String, Object> options)
+    throws ShellCommandException, IOException {
     Get get = new Get(row.getBytes(StandardCharsets.UTF_8));
     Object columns = options.get("COLUMN");
     if (columns != null) {
@@ -77,6 +84,15 @@ public final class DefaultShellTable implements ShellTable {
     Object timestamp = options.get("TIMESTAMP");
     if (timestamp != null) {
       get.setTimestamp(((Number) timestamp).longValue());
+    }
+    Object timerange = options.get("TIMERANGE");
+    if (timerange != null) {
+      long[] range = parseTimeRange(timerange);
+      get.setTimeRange(range[0], range[1]);
+    }
+    Object filter = options.get("FILTER");
+    if (filter instanceof String) {
+      get.setFilter(parseFilterString((String) filter));
     }
     Result result = table.get(get);
     List<CellView> cells = new ArrayList<>();
@@ -112,8 +128,17 @@ public final class DefaultShellTable implements ShellTable {
   }
 
   @Override
-  public ScanResult scan(Map<String, Object> options) throws IOException {
+  public ScanResult scan(Map<String, Object> options) throws ShellCommandException, IOException {
     Scan scan = buildScan(options);
+    Object timerange = options.get("TIMERANGE");
+    if (timerange != null) {
+      long[] range = parseTimeRange(timerange);
+      scan.setTimeRange(range[0], range[1]);
+    }
+    Object filter = options.get("FILTER");
+    if (filter instanceof String) {
+      scan.setFilter(parseFilterString((String) filter));
+    }
     return new ScanResult(rowConsumer -> {
       try (ResultScanner scanner = table.getScanner(scan)) {
         for (Result result : scanner) {
@@ -298,6 +323,37 @@ public final class DefaultShellTable implements ShellTable {
       scan.readVersions(((Number) versions).intValue());
     }
     return scan;
+  }
+
+  /**
+   * Parses a {@code TIMERANGE => [minStamp, maxStamp]} option value into a {@code [min, max]}
+   * {@code long} pair, matching old-shell's plain-array {@code TIMERANGE} semantics.
+   */
+  private static long[] parseTimeRange(Object timerangeOption) throws ShellCommandException {
+    if (!(timerangeOption instanceof List)) {
+      throw new ShellCommandException("TIMERANGE must be a two-element array of [minStamp, maxStamp]");
+    }
+    List<?> range = (List<?>) timerangeOption;
+    if (range.size() != 2) {
+      throw new ShellCommandException(
+        "TIMERANGE must be a two-element array of [minStamp, maxStamp], got " + range.size()
+          + " element(s)");
+    }
+    return new long[] { ((Number) range.get(0)).longValue(), ((Number) range.get(1)).longValue() };
+  }
+
+  /**
+   * Parses a {@code FILTER => "<filter-string>"} option value using {@link ParseFilter}'s textual
+   * filter grammar (HBASE-4176), e.g. {@code "PrefixFilter('row')"}. Raw object-construction
+   * syntax ({@code FILTER => SomeFilter.new(...)}) is not supported.
+   */
+  private static Filter parseFilterString(String filterString) throws ShellCommandException {
+    try {
+      return new ParseFilter().parseFilterString(filterString);
+    } catch (CharacterCodingException | IllegalArgumentException e) {
+      throw new ShellCommandException("Invalid FILTER string '" + filterString + "': " + e.getMessage(),
+        e);
+    }
   }
 
   private static void addScanColumn(Scan scan, String columnSpec) {

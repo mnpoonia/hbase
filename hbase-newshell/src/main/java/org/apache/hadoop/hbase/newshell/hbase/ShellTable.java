@@ -20,6 +20,7 @@ package org.apache.hadoop.hbase.newshell.hbase;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import org.apache.hadoop.hbase.newshell.command.ShellCommandException;
 import org.apache.yetus.audience.InterfaceAudience;
 
 /**
@@ -29,11 +30,11 @@ import org.apache.yetus.audience.InterfaceAudience;
  */
 @InterfaceAudience.Private
 public interface ShellTable {
-  GetResult get(String row, Map<String, Object> options) throws IOException;
+  GetResult get(String row, Map<String, Object> options) throws ShellCommandException, IOException;
 
   void put(String row, String column, String value, Map<String, Object> options) throws IOException;
 
-  ScanResult scan(Map<String, Object> options) throws IOException;
+  ScanResult scan(Map<String, Object> options) throws ShellCommandException, IOException;
 
   long count(Map<String, Object> options) throws IOException;
 

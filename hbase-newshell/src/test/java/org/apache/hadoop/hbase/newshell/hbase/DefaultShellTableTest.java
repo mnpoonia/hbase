@@ -18,6 +18,7 @@
 package org.apache.hadoop.hbase.newshell.hbase;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
@@ -28,21 +29,30 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.client.Table;
+import org.apache.hadoop.hbase.filter.PrefixFilter;
+import org.apache.hadoop.hbase.filter.ValueFilter;
+import org.apache.hadoop.hbase.newshell.command.ShellCommandException;
 import org.apache.hadoop.hbase.testclassification.SmallTests;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 
 @Tag(SmallTests.TAG)
 public class DefaultShellTableTest {
 
   @Test
-  public void scanDoesNotOpenScannerUntilForEachRowIsCalled() throws IOException {
+  public void scanDoesNotOpenScannerUntilForEachRowIsCalled()
+    throws IOException, ShellCommandException {
     Table table = mock(Table.class);
     DefaultShellTable shellTable = new DefaultShellTable(table);
 
@@ -52,7 +62,8 @@ public class DefaultShellTableTest {
   }
 
   @Test
-  public void scanClosesScannerExactlyOnceWhenRowConsumerThrows() throws IOException {
+  public void scanClosesScannerExactlyOnceWhenRowConsumerThrows()
+    throws IOException, ShellCommandException {
     Table table = mock(Table.class);
     ResultScanner scanner = mock(ResultScanner.class);
     Result result = mock(Result.class);
@@ -75,7 +86,8 @@ public class DefaultShellTableTest {
   }
 
   @Test
-  public void scanClosesScannerExactlyOnceOnNormalCompletion() throws IOException {
+  public void scanClosesScannerExactlyOnceOnNormalCompletion()
+    throws IOException, ShellCommandException {
     Table table = mock(Table.class);
     ResultScanner scanner = mock(ResultScanner.class);
     Result result = mock(Result.class);
@@ -95,5 +107,115 @@ public class DefaultShellTableTest {
 
     assertEquals(1, count[0]);
     verify(scanner, times(1)).close();
+  }
+
+  @Test
+  public void scanAppliesFilterOption() throws IOException, ShellCommandException {
+    Table table = mock(Table.class);
+    ResultScanner scanner = mock(ResultScanner.class);
+    when(scanner.iterator()).thenReturn(Collections.emptyIterator());
+    when(table.getScanner(any(Scan.class))).thenReturn(scanner);
+    DefaultShellTable shellTable = new DefaultShellTable(table);
+
+    Map<String, Object> options = new HashMap<>();
+    options.put("FILTER", "PrefixFilter('row')");
+    ScanResult scanResult = shellTable.scan(options);
+    scanResult.forEachRow(row -> {
+    });
+
+    ArgumentCaptor<Scan> captor = ArgumentCaptor.forClass(Scan.class);
+    verify(table).getScanner(captor.capture());
+    assertInstanceOf(PrefixFilter.class, captor.getValue().getFilter());
+  }
+
+  @Test
+  public void scanAppliesTimerangeOption() throws IOException, ShellCommandException {
+    Table table = mock(Table.class);
+    ResultScanner scanner = mock(ResultScanner.class);
+    when(scanner.iterator()).thenReturn(Collections.emptyIterator());
+    when(table.getScanner(any(Scan.class))).thenReturn(scanner);
+    DefaultShellTable shellTable = new DefaultShellTable(table);
+
+    Map<String, Object> options = new HashMap<>();
+    options.put("TIMERANGE", Arrays.asList(100L, 200L));
+    ScanResult scanResult = shellTable.scan(options);
+    scanResult.forEachRow(row -> {
+    });
+
+    ArgumentCaptor<Scan> captor = ArgumentCaptor.forClass(Scan.class);
+    verify(table).getScanner(captor.capture());
+    assertEquals(100L, captor.getValue().getTimeRange().getMin());
+    assertEquals(200L, captor.getValue().getTimeRange().getMax());
+  }
+
+  @Test
+  public void scanThrowsShellCommandExceptionForMalformedFilter() {
+    Table table = mock(Table.class);
+    DefaultShellTable shellTable = new DefaultShellTable(table);
+
+    Map<String, Object> options = new HashMap<>();
+    options.put("FILTER", "NotARealFilter(=, 'binary:abc')");
+    assertThrows(ShellCommandException.class, () -> shellTable.scan(options));
+  }
+
+  @Test
+  public void scanThrowsShellCommandExceptionForWrongTimerangeArity() {
+    Table table = mock(Table.class);
+    DefaultShellTable shellTable = new DefaultShellTable(table);
+
+    Map<String, Object> options = new HashMap<>();
+    options.put("TIMERANGE", Collections.singletonList(100L));
+    assertThrows(ShellCommandException.class, () -> shellTable.scan(options));
+  }
+
+  @Test
+  public void getAppliesFilterOption() throws IOException, ShellCommandException {
+    Table table = mock(Table.class);
+    when(table.get(any(Get.class))).thenReturn(Result.create(Collections.emptyList()));
+    DefaultShellTable shellTable = new DefaultShellTable(table);
+
+    Map<String, Object> options = new HashMap<>();
+    options.put("FILTER", "ValueFilter(=, 'binary:abc')");
+    shellTable.get("r1", options);
+
+    ArgumentCaptor<Get> captor = ArgumentCaptor.forClass(Get.class);
+    verify(table).get(captor.capture());
+    assertInstanceOf(ValueFilter.class, captor.getValue().getFilter());
+  }
+
+  @Test
+  public void getAppliesTimerangeOption() throws IOException, ShellCommandException {
+    Table table = mock(Table.class);
+    when(table.get(any(Get.class))).thenReturn(Result.create(Collections.emptyList()));
+    DefaultShellTable shellTable = new DefaultShellTable(table);
+
+    Map<String, Object> options = new HashMap<>();
+    options.put("TIMERANGE", Arrays.asList(100L, 200L));
+    shellTable.get("r1", options);
+
+    ArgumentCaptor<Get> captor = ArgumentCaptor.forClass(Get.class);
+    verify(table).get(captor.capture());
+    assertEquals(100L, captor.getValue().getTimeRange().getMin());
+    assertEquals(200L, captor.getValue().getTimeRange().getMax());
+  }
+
+  @Test
+  public void getThrowsShellCommandExceptionForMalformedFilter() {
+    Table table = mock(Table.class);
+    DefaultShellTable shellTable = new DefaultShellTable(table);
+
+    Map<String, Object> options = new HashMap<>();
+    options.put("FILTER", "NotARealFilter(=, 'binary:abc')");
+    assertThrows(ShellCommandException.class, () -> shellTable.get("r1", options));
+  }
+
+  @Test
+  public void getThrowsShellCommandExceptionForWrongTimerangeArity() {
+    Table table = mock(Table.class);
+    DefaultShellTable shellTable = new DefaultShellTable(table);
+
+    Map<String, Object> options = new HashMap<>();
+    options.put("TIMERANGE", Arrays.asList(100L, 200L, 300L));
+    assertThrows(ShellCommandException.class, () -> shellTable.get("r1", options));
   }
 }
