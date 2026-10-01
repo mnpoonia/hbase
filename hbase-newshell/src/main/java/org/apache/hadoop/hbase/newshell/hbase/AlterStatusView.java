@@ -17,9 +17,48 @@
  */
 package org.apache.hadoop.hbase.newshell.hbase;
 
+import java.util.Objects;
 import org.apache.yetus.audience.InterfaceAudience;
 
 /** Ports {@code Admin#getAlterStatus}'s pair: regions still pending the new schema, and total. */
 @InterfaceAudience.Private
-public record AlterStatusView(int regionsYetToUpdate, int totalRegions) {
+public final class AlterStatusView {
+  private final int regionsYetToUpdate;
+  private final int totalRegions;
+
+  public AlterStatusView(int regionsYetToUpdate, int totalRegions) {
+    this.regionsYetToUpdate = regionsYetToUpdate;
+    this.totalRegions = totalRegions;
+  }
+
+  public int regionsYetToUpdate() {
+    return regionsYetToUpdate;
+  }
+
+  public int totalRegions() {
+    return totalRegions;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (!(o instanceof AlterStatusView)) {
+      return false;
+    }
+    AlterStatusView other = (AlterStatusView) o;
+    return regionsYetToUpdate == other.regionsYetToUpdate && totalRegions == other.totalRegions;
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(regionsYetToUpdate, totalRegions);
+  }
+
+  @Override
+  public String toString() {
+    return "AlterStatusView[regionsYetToUpdate=" + regionsYetToUpdate + ", totalRegions="
+      + totalRegions + "]";
+  }
 }

@@ -17,6 +17,7 @@
  */
 package org.apache.hadoop.hbase.newshell.hbase;
 
+import java.util.Objects;
 import org.apache.yetus.audience.InterfaceAudience;
 
 /**
@@ -25,5 +26,56 @@ import org.apache.yetus.audience.InterfaceAudience;
  * {@code hbase} wrapper package into the command/format layers.
  */
 @InterfaceAudience.Private
-public record CellView(String family, String qualifier, long timestamp, String value) {
+public final class CellView {
+  private final String family;
+  private final String qualifier;
+  private final long timestamp;
+  private final String value;
+
+  public CellView(String family, String qualifier, long timestamp, String value) {
+    this.family = family;
+    this.qualifier = qualifier;
+    this.timestamp = timestamp;
+    this.value = value;
+  }
+
+  public String family() {
+    return family;
+  }
+
+  public String qualifier() {
+    return qualifier;
+  }
+
+  public long timestamp() {
+    return timestamp;
+  }
+
+  public String value() {
+    return value;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (!(o instanceof CellView)) {
+      return false;
+    }
+    CellView other = (CellView) o;
+    return timestamp == other.timestamp && Objects.equals(family, other.family)
+      && Objects.equals(qualifier, other.qualifier) && Objects.equals(value, other.value);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(family, qualifier, timestamp, value);
+  }
+
+  @Override
+  public String toString() {
+    return "CellView[family=" + family + ", qualifier=" + qualifier + ", timestamp=" + timestamp
+      + ", value=" + value + "]";
+  }
 }

@@ -17,14 +17,61 @@
  */
 package org.apache.hadoop.hbase.newshell.hbase;
 
+import java.util.Objects;
 import org.apache.hadoop.hbase.client.BalanceResponse;
 import org.apache.yetus.audience.InterfaceAudience;
 
 /** Newshell view of one balancer run — keeps {@link BalanceResponse} inside the hbase package. */
 @InterfaceAudience.Private
-public record BalanceResult(boolean ran, int movesCalculated, int movesExecuted) {
+public final class BalanceResult {
+  private final boolean ran;
+  private final int movesCalculated;
+  private final int movesExecuted;
+
+  public BalanceResult(boolean ran, int movesCalculated, int movesExecuted) {
+    this.ran = ran;
+    this.movesCalculated = movesCalculated;
+    this.movesExecuted = movesExecuted;
+  }
+
   public static BalanceResult from(BalanceResponse response) {
     return new BalanceResult(response.isBalancerRan(), response.getMovesCalculated(),
       response.getMovesExecuted());
+  }
+
+  public boolean ran() {
+    return ran;
+  }
+
+  public int movesCalculated() {
+    return movesCalculated;
+  }
+
+  public int movesExecuted() {
+    return movesExecuted;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (!(o instanceof BalanceResult)) {
+      return false;
+    }
+    BalanceResult other = (BalanceResult) o;
+    return ran == other.ran && movesCalculated == other.movesCalculated
+      && movesExecuted == other.movesExecuted;
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(ran, movesCalculated, movesExecuted);
+  }
+
+  @Override
+  public String toString() {
+    return "BalanceResult[ran=" + ran + ", movesCalculated=" + movesCalculated
+      + ", movesExecuted=" + movesExecuted + "]";
   }
 }

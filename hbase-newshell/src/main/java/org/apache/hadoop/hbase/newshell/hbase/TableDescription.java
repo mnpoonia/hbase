@@ -18,9 +18,54 @@
 package org.apache.hadoop.hbase.newshell.hbase;
 
 import java.util.List;
+import java.util.Objects;
 import org.apache.yetus.audience.InterfaceAudience;
 
 @InterfaceAudience.Private
-public record TableDescription(boolean enabled, String tableAttributes,
-  List<String> columnFamilies) {
+public final class TableDescription {
+  private final boolean enabled;
+  private final String tableAttributes;
+  private final List<String> columnFamilies;
+
+  public TableDescription(boolean enabled, String tableAttributes, List<String> columnFamilies) {
+    this.enabled = enabled;
+    this.tableAttributes = tableAttributes;
+    this.columnFamilies = columnFamilies;
+  }
+
+  public boolean enabled() {
+    return enabled;
+  }
+
+  public String tableAttributes() {
+    return tableAttributes;
+  }
+
+  public List<String> columnFamilies() {
+    return columnFamilies;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (!(o instanceof TableDescription)) {
+      return false;
+    }
+    TableDescription other = (TableDescription) o;
+    return enabled == other.enabled && Objects.equals(tableAttributes, other.tableAttributes)
+      && Objects.equals(columnFamilies, other.columnFamilies);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(enabled, tableAttributes, columnFamilies);
+  }
+
+  @Override
+  public String toString() {
+    return "TableDescription[enabled=" + enabled + ", tableAttributes=" + tableAttributes
+      + ", columnFamilies=" + columnFamilies + "]";
+  }
 }

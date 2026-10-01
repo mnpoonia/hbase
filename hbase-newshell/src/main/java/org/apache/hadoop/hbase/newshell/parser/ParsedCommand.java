@@ -19,6 +19,7 @@ package org.apache.hadoop.hbase.newshell.parser;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import org.apache.yetus.audience.InterfaceAudience;
 
 /**
@@ -33,6 +34,59 @@ import org.apache.yetus.audience.InterfaceAudience;
  * collide if flattened into the single {@code options} map.
  */
 @InterfaceAudience.Private
-public record ParsedCommand(String commandName, List<Object> positionalArgs,
-  Map<String, Object> options, List<Map<String, Object>> hashLiterals) {
+public final class ParsedCommand {
+  private final String commandName;
+  private final List<Object> positionalArgs;
+  private final Map<String, Object> options;
+  private final List<Map<String, Object>> hashLiterals;
+
+  public ParsedCommand(String commandName, List<Object> positionalArgs,
+    Map<String, Object> options, List<Map<String, Object>> hashLiterals) {
+    this.commandName = commandName;
+    this.positionalArgs = positionalArgs;
+    this.options = options;
+    this.hashLiterals = hashLiterals;
+  }
+
+  public String commandName() {
+    return commandName;
+  }
+
+  public List<Object> positionalArgs() {
+    return positionalArgs;
+  }
+
+  public Map<String, Object> options() {
+    return options;
+  }
+
+  public List<Map<String, Object>> hashLiterals() {
+    return hashLiterals;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (!(o instanceof ParsedCommand)) {
+      return false;
+    }
+    ParsedCommand other = (ParsedCommand) o;
+    return Objects.equals(commandName, other.commandName)
+      && Objects.equals(positionalArgs, other.positionalArgs)
+      && Objects.equals(options, other.options)
+      && Objects.equals(hashLiterals, other.hashLiterals);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(commandName, positionalArgs, options, hashLiterals);
+  }
+
+  @Override
+  public String toString() {
+    return "ParsedCommand[commandName=" + commandName + ", positionalArgs=" + positionalArgs
+      + ", options=" + options + ", hashLiterals=" + hashLiterals + "]";
+  }
 }

@@ -18,6 +18,7 @@
 package org.apache.hadoop.hbase.newshell.hbase;
 
 import java.util.List;
+import java.util.Objects;
 import org.apache.yetus.audience.InterfaceAudience;
 
 /**
@@ -25,5 +26,42 @@ import org.apache.yetus.audience.InterfaceAudience;
  * "Can not find all details for region: …" messages when region metrics are missing.
  */
 @InterfaceAudience.Private
-public record ListRegionsView(List<String> warnings, List<List<String>> rows) {
+public final class ListRegionsView {
+  private final List<String> warnings;
+  private final List<List<String>> rows;
+
+  public ListRegionsView(List<String> warnings, List<List<String>> rows) {
+    this.warnings = warnings;
+    this.rows = rows;
+  }
+
+  public List<String> warnings() {
+    return warnings;
+  }
+
+  public List<List<String>> rows() {
+    return rows;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (!(o instanceof ListRegionsView)) {
+      return false;
+    }
+    ListRegionsView other = (ListRegionsView) o;
+    return Objects.equals(warnings, other.warnings) && Objects.equals(rows, other.rows);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(warnings, rows);
+  }
+
+  @Override
+  public String toString() {
+    return "ListRegionsView[warnings=" + warnings + ", rows=" + rows + "]";
+  }
 }

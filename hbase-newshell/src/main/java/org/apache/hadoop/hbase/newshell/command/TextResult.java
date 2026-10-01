@@ -18,12 +18,45 @@
 package org.apache.hadoop.hbase.newshell.command;
 
 import java.util.List;
+import java.util.Objects;
 import org.apache.yetus.audience.InterfaceAudience;
 
 /** Pre-formatted lines of text - e.g. {@code status}'s summary or {@code create}'s confirmation. */
 @InterfaceAudience.Private
-public record TextResult(List<String> lines) implements CommandResult {
+public final class TextResult implements CommandResult {
+  private final List<String> lines;
+
+  public TextResult(List<String> lines) {
+    this.lines = lines;
+  }
+
   public static TextResult of(String... lines) {
     return new TextResult(List.of(lines));
+  }
+
+  public List<String> lines() {
+    return lines;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (!(o instanceof TextResult)) {
+      return false;
+    }
+    TextResult other = (TextResult) o;
+    return Objects.equals(lines, other.lines);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(lines);
+  }
+
+  @Override
+  public String toString() {
+    return "TextResult[lines=" + lines + "]";
   }
 }

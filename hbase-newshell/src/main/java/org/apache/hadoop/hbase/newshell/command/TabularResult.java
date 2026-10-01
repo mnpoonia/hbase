@@ -18,9 +18,47 @@
 package org.apache.hadoop.hbase.newshell.command;
 
 import java.util.List;
+import java.util.Objects;
 import org.apache.yetus.audience.InterfaceAudience;
 
 /** A header row plus data rows - e.g. {@code get}'s COLUMN/CELL table. */
 @InterfaceAudience.Private
-public record TabularResult(List<String> header, List<List<String>> rows) implements CommandResult {
+public final class TabularResult implements CommandResult {
+  private final List<String> header;
+  private final List<List<String>> rows;
+
+  public TabularResult(List<String> header, List<List<String>> rows) {
+    this.header = header;
+    this.rows = rows;
+  }
+
+  public List<String> header() {
+    return header;
+  }
+
+  public List<List<String>> rows() {
+    return rows;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (!(o instanceof TabularResult)) {
+      return false;
+    }
+    TabularResult other = (TabularResult) o;
+    return Objects.equals(header, other.header) && Objects.equals(rows, other.rows);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(header, rows);
+  }
+
+  @Override
+  public String toString() {
+    return "TabularResult[header=" + header + ", rows=" + rows + "]";
+  }
 }

@@ -18,8 +18,40 @@
 package org.apache.hadoop.hbase.newshell.hbase;
 
 import java.util.List;
+import java.util.Objects;
 import org.apache.yetus.audience.InterfaceAudience;
 
 @InterfaceAudience.Private
-public record ScanResult(List<ScanRow> rows) {
+public final class ScanResult {
+  private final List<ScanRow> rows;
+
+  public ScanResult(List<ScanRow> rows) {
+    this.rows = rows;
+  }
+
+  public List<ScanRow> rows() {
+    return rows;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (!(o instanceof ScanResult)) {
+      return false;
+    }
+    ScanResult other = (ScanResult) o;
+    return Objects.equals(rows, other.rows);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(rows);
+  }
+
+  @Override
+  public String toString() {
+    return "ScanResult[rows=" + rows + "]";
+  }
 }

@@ -18,9 +18,47 @@
 package org.apache.hadoop.hbase.newshell.hbase;
 
 import java.util.List;
+import java.util.Objects;
 import org.apache.yetus.audience.InterfaceAudience;
 
 /** A plain-Java view of one RegionServer group's servers and tables. */
 @InterfaceAudience.Private
-public record RsGroupView(List<String> servers, List<String> tables) {
+public final class RsGroupView {
+  private final List<String> servers;
+  private final List<String> tables;
+
+  public RsGroupView(List<String> servers, List<String> tables) {
+    this.servers = servers;
+    this.tables = tables;
+  }
+
+  public List<String> servers() {
+    return servers;
+  }
+
+  public List<String> tables() {
+    return tables;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (!(o instanceof RsGroupView)) {
+      return false;
+    }
+    RsGroupView other = (RsGroupView) o;
+    return Objects.equals(servers, other.servers) && Objects.equals(tables, other.tables);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(servers, tables);
+  }
+
+  @Override
+  public String toString() {
+    return "RsGroupView[servers=" + servers + ", tables=" + tables + "]";
+  }
 }

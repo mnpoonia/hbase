@@ -27,5 +27,5 @@ import org.apache.yetus.audience.InterfaceAudience;
  * sealed subtype rather than generalizing this ahead of need.
  */
 @InterfaceAudience.Private
-public sealed interface CommandResult permits TextResult, TabularResult {
+public interface CommandResult {
 }

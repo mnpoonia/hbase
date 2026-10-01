@@ -17,8 +17,60 @@
  */
 package org.apache.hadoop.hbase.newshell.hbase;
 
+import java.util.Objects;
 import org.apache.yetus.audience.InterfaceAudience;
 
 @InterfaceAudience.Private
-public record SnapshotInfo(String name, String tableName, long creationTime, long ttl) {
+public final class SnapshotInfo {
+  private final String name;
+  private final String tableName;
+  private final long creationTime;
+  private final long ttl;
+
+  public SnapshotInfo(String name, String tableName, long creationTime, long ttl) {
+    this.name = name;
+    this.tableName = tableName;
+    this.creationTime = creationTime;
+    this.ttl = ttl;
+  }
+
+  public String name() {
+    return name;
+  }
+
+  public String tableName() {
+    return tableName;
+  }
+
+  public long creationTime() {
+    return creationTime;
+  }
+
+  public long ttl() {
+    return ttl;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (!(o instanceof SnapshotInfo)) {
+      return false;
+    }
+    SnapshotInfo other = (SnapshotInfo) o;
+    return creationTime == other.creationTime && ttl == other.ttl
+      && Objects.equals(name, other.name) && Objects.equals(tableName, other.tableName);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(name, tableName, creationTime, ttl);
+  }
+
+  @Override
+  public String toString() {
+    return "SnapshotInfo[name=" + name + ", tableName=" + tableName + ", creationTime="
+      + creationTime + ", ttl=" + ttl + "]";
+  }
 }

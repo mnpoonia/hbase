@@ -18,8 +18,40 @@
 package org.apache.hadoop.hbase.newshell.hbase;
 
 import java.util.List;
+import java.util.Objects;
 import org.apache.yetus.audience.InterfaceAudience;
 
 @InterfaceAudience.Private
-public record GetResult(List<CellView> cells) {
+public final class GetResult {
+  private final List<CellView> cells;
+
+  public GetResult(List<CellView> cells) {
+    this.cells = cells;
+  }
+
+  public List<CellView> cells() {
+    return cells;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (!(o instanceof GetResult)) {
+      return false;
+    }
+    GetResult other = (GetResult) o;
+    return Objects.equals(cells, other.cells);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(cells);
+  }
+
+  @Override
+  public String toString() {
+    return "GetResult[cells=" + cells + "]";
+  }
 }
