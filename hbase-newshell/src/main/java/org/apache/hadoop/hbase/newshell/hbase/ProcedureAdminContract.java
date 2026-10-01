@@ -17,19 +17,19 @@
  */
 package org.apache.hadoop.hbase.newshell.hbase;
 
+import java.io.IOException;
+import java.util.List;
 import org.apache.yetus.audience.InterfaceAudience;
 
 /**
- * Narrow, newshell-specific facade over the admin-plane operations the pilot commands need. Command
- * implementations depend on this interface, never on {@code org.apache.hadoop.hbase.client.Admin}
- * directly - {@link DefaultShellAdmin} is the only class that does.
- * <p>
- * Composed of cohesive per-domain sub-interfaces rather than declaring ~155 methods directly, so
- * each domain's contract can be read, tested, and (if ever needed) implemented independently of
- * the others.
+ * Procedure and lock listing operations. Mirrors the method set delegated internally by
+ * {@link DefaultShellAdmin} to {@code ProcedureAdminOps}; named {@code ProcedureAdminContract}
+ * (not {@code ProcedureAdminOps}) to avoid a same-package name collision with that implementation
+ * class.
  */
 @InterfaceAudience.Private
-public interface ShellAdmin extends TableAdminContract, NamespaceAdminContract,
-  SnapshotAdminContract, ReplicationPeerContract, RsGroupAdminContract, ClusterOpsContract,
-  SecurityAdminContract, VisibilityLabelContract, QuotaAdminContract, ProcedureAdminContract {
+public interface ProcedureAdminContract {
+  List<List<String>> listProcedures() throws IOException;
+
+  List<String> listLocks() throws IOException;
 }

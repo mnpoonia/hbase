@@ -17,19 +17,25 @@
  */
 package org.apache.hadoop.hbase.newshell.hbase;
 
+import java.io.IOException;
+import java.util.List;
+import java.util.Map;
 import org.apache.yetus.audience.InterfaceAudience;
 
-/**
- * Narrow, newshell-specific facade over the admin-plane operations the pilot commands need. Command
- * implementations depend on this interface, never on {@code org.apache.hadoop.hbase.client.Admin}
- * directly - {@link DefaultShellAdmin} is the only class that does.
- * <p>
- * Composed of cohesive per-domain sub-interfaces rather than declaring ~155 methods directly, so
- * each domain's contract can be read, tested, and (if ever needed) implemented independently of
- * the others.
- */
+/** Namespace lifecycle operations. */
 @InterfaceAudience.Private
-public interface ShellAdmin extends TableAdminContract, NamespaceAdminContract,
-  SnapshotAdminContract, ReplicationPeerContract, RsGroupAdminContract, ClusterOpsContract,
-  SecurityAdminContract, VisibilityLabelContract, QuotaAdminContract, ProcedureAdminContract {
+public interface NamespaceAdminContract {
+  void createNamespace(String namespace, Map<String, Object> properties) throws IOException;
+
+  void dropNamespace(String namespace) throws IOException;
+
+  void alterNamespace(String namespace, Map<String, Object> properties) throws IOException;
+
+  String describeNamespace(String namespace) throws IOException;
+
+  List<String> listNamespaces(String regex) throws IOException;
+
+  List<String> listNamespaceTables(String namespace) throws IOException;
+
+  String getNamespaceRsGroup(String namespace) throws IOException;
 }

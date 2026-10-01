@@ -17,19 +17,28 @@
  */
 package org.apache.hadoop.hbase.newshell.hbase;
 
+import java.io.IOException;
+import java.util.List;
+import java.util.Map;
 import org.apache.yetus.audience.InterfaceAudience;
 
 /**
- * Narrow, newshell-specific facade over the admin-plane operations the pilot commands need. Command
- * implementations depend on this interface, never on {@code org.apache.hadoop.hbase.client.Admin}
- * directly - {@link DefaultShellAdmin} is the only class that does.
- * <p>
- * Composed of cohesive per-domain sub-interfaces rather than declaring ~155 methods directly, so
- * each domain's contract can be read, tested, and (if ever needed) implemented independently of
- * the others.
+ * Visibility label operations. Named distinctly from the existing {@code VisibilityOps} helper
+ * class ({@link DefaultShellAdmin} delegates {@code setVisibility} to its static methods) to avoid
+ * a same-package name collision.
  */
 @InterfaceAudience.Private
-public interface ShellAdmin extends TableAdminContract, NamespaceAdminContract,
-  SnapshotAdminContract, ReplicationPeerContract, RsGroupAdminContract, ClusterOpsContract,
-  SecurityAdminContract, VisibilityLabelContract, QuotaAdminContract, ProcedureAdminContract {
+public interface VisibilityLabelContract {
+  void addLabels(List<String> labels) throws IOException;
+
+  List<String> listLabels(String regex) throws IOException;
+
+  void setAuths(String user, List<String> labels) throws IOException;
+
+  List<String> getAuths(String user) throws IOException;
+
+  void clearAuths(String user, List<String> labels) throws IOException;
+
+  long setVisibility(String tableName, String visibility, Map<String, Object> scanOptions)
+    throws IOException;
 }

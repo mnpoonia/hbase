@@ -17,19 +17,30 @@
  */
 package org.apache.hadoop.hbase.newshell.hbase;
 
+import java.io.IOException;
+import java.util.List;
 import org.apache.yetus.audience.InterfaceAudience;
 
-/**
- * Narrow, newshell-specific facade over the admin-plane operations the pilot commands need. Command
- * implementations depend on this interface, never on {@code org.apache.hadoop.hbase.client.Admin}
- * directly - {@link DefaultShellAdmin} is the only class that does.
- * <p>
- * Composed of cohesive per-domain sub-interfaces rather than declaring ~155 methods directly, so
- * each domain's contract can be read, tested, and (if ever needed) implemented independently of
- * the others.
- */
+/** Snapshot create/delete/list/clone/restore operations. */
 @InterfaceAudience.Private
-public interface ShellAdmin extends TableAdminContract, NamespaceAdminContract,
-  SnapshotAdminContract, ReplicationPeerContract, RsGroupAdminContract, ClusterOpsContract,
-  SecurityAdminContract, VisibilityLabelContract, QuotaAdminContract, ProcedureAdminContract {
+public interface SnapshotAdminContract {
+  void snapshot(String tableName, String snapshotName) throws IOException;
+
+  void deleteSnapshot(String snapshotName) throws IOException;
+
+  void deleteAllSnapshots(String regex) throws IOException;
+
+  List<SnapshotInfo> listSnapshots(String regex) throws IOException;
+
+  List<SnapshotInfo> listTableSnapshots(String tableNameRegex, String snapshotNameRegex)
+    throws IOException;
+
+  void cloneSnapshot(String snapshotName, String tableName, boolean restoreAcl, String cloneSft)
+    throws IOException;
+
+  void restoreSnapshot(String snapshotName, boolean restoreAcl) throws IOException;
+
+  boolean snapshotCleanupSwitch(boolean enabled) throws IOException;
+
+  boolean snapshotCleanupEnabled() throws IOException;
 }

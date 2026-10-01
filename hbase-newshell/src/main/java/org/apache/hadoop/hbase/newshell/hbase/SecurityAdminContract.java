@@ -17,19 +17,20 @@
  */
 package org.apache.hadoop.hbase.newshell.hbase;
 
+import java.io.IOException;
+import java.util.List;
 import org.apache.yetus.audience.InterfaceAudience;
 
-/**
- * Narrow, newshell-specific facade over the admin-plane operations the pilot commands need. Command
- * implementations depend on this interface, never on {@code org.apache.hadoop.hbase.client.Admin}
- * directly - {@link DefaultShellAdmin} is the only class that does.
- * <p>
- * Composed of cohesive per-domain sub-interfaces rather than declaring ~155 methods directly, so
- * each domain's contract can be read, tested, and (if ever needed) implemented independently of
- * the others.
- */
+/** Access control grant/revoke and security capability operations. */
 @InterfaceAudience.Private
-public interface ShellAdmin extends TableAdminContract, NamespaceAdminContract,
-  SnapshotAdminContract, ReplicationPeerContract, RsGroupAdminContract, ClusterOpsContract,
-  SecurityAdminContract, VisibilityLabelContract, QuotaAdminContract, ProcedureAdminContract {
+public interface SecurityAdminContract {
+  void grant(String userOrGroup, String actions, String tableName, String family, String qualifier,
+    String namespace) throws IOException;
+
+  void revoke(String userOrGroup, String tableName, String family, String qualifier,
+    String namespace) throws IOException;
+
+  List<List<String>> userPermission(String tableOrNamespaceRegex) throws IOException;
+
+  List<String> listSecurityCapabilities() throws IOException;
 }
