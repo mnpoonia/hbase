@@ -23,6 +23,7 @@ import java.util.List;
 
 import org.apache.hbase.thirdparty.com.google.gson.Gson;
 import org.apache.hbase.thirdparty.com.google.gson.JsonArray;
+import org.apache.hbase.thirdparty.com.google.gson.JsonElement;
 import org.apache.hbase.thirdparty.com.google.gson.JsonObject;
 import org.apache.hbase.thirdparty.com.google.gson.JsonParser;
 
@@ -39,7 +40,7 @@ final class ProcedureAdminOps {
   List<List<String>> listProcedures() throws IOException {
     JsonArray procedures = JsonParser.parseString(admin.getProcedures()).getAsJsonArray();
     List<List<String>> rows = new ArrayList<>();
-    for (var element : procedures) {
+    for (JsonElement element : procedures) {
       JsonObject proc = element.getAsJsonObject();
       rows.add(List.of(getAsString(proc, "procId"), getAsString(proc, "className"),
         getAsString(proc, "state"), getAsString(proc, "submittedTime"),
@@ -52,14 +53,14 @@ final class ProcedureAdminOps {
     if (!object.has(member) || object.get(member).isJsonNull()) {
       return "";
     }
-    var element = object.get(member);
+    JsonElement element = object.get(member);
     return element.isJsonPrimitive() ? element.getAsString() : element.toString();
   }
 
   List<String> listLocks() throws IOException {
     JsonArray locks = JsonParser.parseString(admin.getLocks()).getAsJsonArray();
     List<String> lines = new ArrayList<>();
-    for (var element : locks) {
+    for (JsonElement element : locks) {
       JsonObject lock = element.getAsJsonObject();
       lines.add(getAsString(lock, "resourceType") + "(" + getAsString(lock, "resourceName") + ")");
       String lockType = getAsString(lock, "lockType");
@@ -70,7 +71,7 @@ final class ProcedureAdminOps {
         lines.add("Lock type: " + lockType + ", count: " + getAsString(lock, "sharedLockCount"));
       }
       if (lock.has("waitingProcedures") && lock.get("waitingProcedures").isJsonArray()) {
-        for (var waiting : lock.getAsJsonArray("waitingProcedures")) {
+        for (JsonElement waiting : lock.getAsJsonArray("waitingProcedures")) {
           lines.add("    " + waiting.getAsString());
         }
       }

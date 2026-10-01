@@ -33,7 +33,7 @@ public final class AlterRsgroupConfigCommand implements ShellCommand {
     String group = String.valueOf(command.positionalArgs().get(0));
     Map<String, Object> args = new LinkedHashMap<>();
     if (command.positionalArgs().size()>1 && command.positionalArgs().get(1) instanceof Map) {
-      for (var e : ((Map<?,?>)command.positionalArgs().get(1)).entrySet()) {
+      for (Map.Entry<?,?> e : ((Map<?,?>)command.positionalArgs().get(1)).entrySet()) {
         args.put(String.valueOf(e.getKey()), e.getValue());
       }
     } else if (!command.hashLiterals().isEmpty()) {

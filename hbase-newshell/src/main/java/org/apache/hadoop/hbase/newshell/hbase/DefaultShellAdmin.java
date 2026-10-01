@@ -179,7 +179,7 @@ public final class DefaultShellAdmin implements ShellAdmin {
    */
   private static String tableAttributesString(TableDescriptor descriptor) {
     try {
-      var method = descriptor.getClass().getMethod("toStringTableAttributes");
+      java.lang.reflect.Method method = descriptor.getClass().getMethod("toStringTableAttributes");
       method.setAccessible(true);
       return (String) method.invoke(descriptor);
     } catch (ReflectiveOperationException e) {
@@ -535,7 +535,8 @@ public final class DefaultShellAdmin implements ShellAdmin {
     if (!admin.tableExists(table)) {
       throw new IOException("Table '" + tableName + "' does not exist");
     }
-    var regionStatus = admin.getClusterMetrics().getTableRegionStatesCount().get(table);
+    org.apache.hadoop.hbase.client.RegionStatesCount regionStatus =
+      admin.getClusterMetrics().getTableRegionStatesCount().get(table);
     if (regionStatus == null || regionStatus.getTotalRegions() == 0) {
       return new AlterStatusView(0, 0);
     }
@@ -554,8 +555,9 @@ public final class DefaultShellAdmin implements ShellAdmin {
 
   @Override
   public RegionLocationView locateRegion(String tableName, String rowKey) throws IOException {
-    var location = admin.getConnection().getRegionLocator(TableName.valueOf(tableName))
-      .getRegionLocation(Bytes.toBytes(rowKey));
+    org.apache.hadoop.hbase.HRegionLocation location =
+      admin.getConnection().getRegionLocator(TableName.valueOf(tableName))
+        .getRegionLocation(Bytes.toBytes(rowKey));
     // Ruby locate_region prints RegionInfo#toString (ENCODED/NAME/STARTKEY/ENDKEY dict).
     return new RegionLocationView(location.getHostnamePort(), location.getRegion().toString());
   }
@@ -569,11 +571,13 @@ public final class DefaultShellAdmin implements ShellAdmin {
     ClusterMetrics clusterMetrics = admin.getClusterMetrics();
     List<String> warnings = new ArrayList<>();
     List<List<String>> rows = new ArrayList<>();
-    for (var location : admin.getConnection().getRegionLocator(table).getAllRegionLocations()) {
-      var regionInfo = location.getRegion();
+    for (org.apache.hadoop.hbase.HRegionLocation location : admin.getConnection()
+      .getRegionLocator(table).getAllRegionLocations()) {
+      RegionInfo regionInfo = location.getRegion();
       ServerName serverName = location.getServerName();
-      var serverMetrics = clusterMetrics.getLiveServerMetrics().get(serverName);
-      var regionMetrics = serverMetrics == null
+      org.apache.hadoop.hbase.ServerMetrics serverMetrics =
+        clusterMetrics.getLiveServerMetrics().get(serverName);
+      org.apache.hadoop.hbase.RegionMetrics regionMetrics = serverMetrics == null
         ? null
         : serverMetrics.getRegionMetrics().get(regionInfo.getRegionName());
       String regionName = regionInfo.getRegionNameAsString().strip();
@@ -595,7 +599,8 @@ public final class DefaultShellAdmin implements ShellAdmin {
 
   @Override
   public void createNamespace(String namespace, Map<String, Object> properties) throws IOException {
-    var builder = org.apache.hadoop.hbase.NamespaceDescriptor.create(namespace);
+    org.apache.hadoop.hbase.NamespaceDescriptor.Builder builder =
+      org.apache.hadoop.hbase.NamespaceDescriptor.create(namespace);
     for (Map.Entry<String, Object> entry : properties.entrySet()) {
       builder.addConfiguration(entry.getKey(), String.valueOf(entry.getValue()));
     }
@@ -609,8 +614,9 @@ public final class DefaultShellAdmin implements ShellAdmin {
 
   @Override
   public void alterNamespace(String namespace, Map<String, Object> properties) throws IOException {
-    var existing = admin.getNamespaceDescriptor(namespace);
-    var builder = org.apache.hadoop.hbase.NamespaceDescriptor.create(existing);
+    org.apache.hadoop.hbase.NamespaceDescriptor existing = admin.getNamespaceDescriptor(namespace);
+    org.apache.hadoop.hbase.NamespaceDescriptor.Builder builder =
+      org.apache.hadoop.hbase.NamespaceDescriptor.create(existing);
     String method = String.valueOf(properties.get("METHOD"));
     if ("unset".equalsIgnoreCase(method)) {
       Object name = properties.get("NAME");
@@ -638,7 +644,7 @@ public final class DefaultShellAdmin implements ShellAdmin {
   public List<String> listNamespaces(String regex) throws IOException {
     Pattern pattern = Pattern.compile(regex);
     List<String> result = new ArrayList<>();
-    for (var descriptor : admin.listNamespaceDescriptors()) {
+    for (org.apache.hadoop.hbase.NamespaceDescriptor descriptor : admin.listNamespaceDescriptors()) {
       if (pattern.matcher(descriptor.getName()).matches()) {
         result.add(descriptor.getName());
       }
@@ -792,7 +798,8 @@ public final class DefaultShellAdmin implements ShellAdmin {
       throw new IOException("DISABLED: Visibility labels feature is not available");
     }
     List<String> labels = new ArrayList<>();
-    for (var label : response.getLabelList()) {
+    for (org.apache.hbase.thirdparty.com.google.protobuf.ByteString label : response
+      .getLabelList()) {
       labels.add(Bytes.toStringBinary(label.toByteArray()));
     }
     return labels;
@@ -829,7 +836,8 @@ public final class DefaultShellAdmin implements ShellAdmin {
       throw new IOException("DISABLED: Visibility labels feature is not available");
     }
     List<String> labels = new ArrayList<>();
-    for (var auth : response.getAuthList()) {
+    for (org.apache.hbase.thirdparty.com.google.protobuf.ByteString auth : response
+      .getAuthList()) {
       labels.add(Bytes.toStringBinary(auth.toByteArray()));
     }
     return labels;
@@ -872,7 +880,8 @@ public final class DefaultShellAdmin implements ShellAdmin {
       throw new IOException("DISABLED: Visibility labels feature is not available");
     }
     StringBuilder failures = new StringBuilder();
-    for (var result : response.getResultList()) {
+    for (org.apache.hadoop.hbase.shaded.protobuf.generated.ClientProtos.RegionActionResult result
+      : response.getResultList()) {
       if (result.hasException()) {
         failures.append(result.getException().getValue().toStringUtf8());
       }
@@ -1028,7 +1037,7 @@ public final class DefaultShellAdmin implements ShellAdmin {
 
   @Override
   public String getNamespaceRsGroup(String namespace) throws IOException {
-    var nsd = admin.getNamespaceDescriptor(namespace);
+    org.apache.hadoop.hbase.NamespaceDescriptor nsd = admin.getNamespaceDescriptor(namespace);
     return nsd.getConfigurationValue("hbase.rsgroup.name");
   }
 

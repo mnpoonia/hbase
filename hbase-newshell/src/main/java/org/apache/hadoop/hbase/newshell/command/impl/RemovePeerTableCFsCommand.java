@@ -64,7 +64,7 @@ public final class RemovePeerTableCFsCommand implements ShellCommand {
 
   private static Map<String, Object> copyMap(Map<?, ?> src) {
     Map<String, Object> out = new java.util.LinkedHashMap<>();
-    for (var e : src.entrySet()) {
+    for (java.util.Map.Entry<?, ?> e : src.entrySet()) {
       out.put(String.valueOf(e.getKey()), e.getValue());
     }
     return out;

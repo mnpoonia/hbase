@@ -49,7 +49,7 @@ public final class StatusCommand implements ShellCommand {
   @Override
   public CommandResult execute(ParsedCommand command, ExecutionContext context)
     throws ShellCommandException, IOException {
-    var positionals = command.positionalArgs();
+    java.util.List<Object> positionals = command.positionalArgs();
     String format = positionals.isEmpty() ? "summary" : String.valueOf(positionals.get(0));
     StatusView status = context.admin().status();
     if (format.equalsIgnoreCase(DETAILED)) {

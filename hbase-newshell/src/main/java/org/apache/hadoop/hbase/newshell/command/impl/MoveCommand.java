@@ -46,7 +46,7 @@ public final class MoveCommand implements ShellCommand {
   @Override
   public CommandResult execute(ParsedCommand command, ExecutionContext context)
     throws ShellCommandException, IOException {
-    var positionals = command.positionalArgs();
+    java.util.List<Object> positionals = command.positionalArgs();
     if (positionals.isEmpty()) {
       throw new ShellCommandException("move requires an encoded region name argument");
     }
