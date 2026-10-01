@@ -22,9 +22,11 @@ import org.apache.yetus.audience.InterfaceAudience;
 /**
  * The result of executing a {@link ShellCommand}, rendered by a
  * {@code org.apache.hadoop.hbase.newshell.format.Formatter}. Deliberately a small, closed set of
- * shapes - the two output shapes the pilot commands actually need - rather than a general "any
- * object graph" result type. If a third fundamentally different shape is needed later, add a third
- * implementation rather than generalizing this ahead of need.
+ * shapes - {@link TextResult} and {@link TabularResult} for the pilot commands' in-memory results,
+ * plus {@link StreamingTabularResult} for producers (like {@code scan}) that must not buffer their
+ * full result set - rather than a general "any object graph" result type. If a fourth
+ * fundamentally different shape is needed later, add a fourth implementation rather than
+ * generalizing this ahead of need.
  */
 @InterfaceAudience.Private
 public interface CommandResult {
