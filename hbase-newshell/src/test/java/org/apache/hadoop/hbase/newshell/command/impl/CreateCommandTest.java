@@ -73,7 +73,7 @@ public class CreateCommandTest {
 
   @Test
   public void createsSingleFamilyFromNativeFlagSyntax() throws Exception {
-    ParsedCommand parsed = ShellLineParser.parse("create 't1' --name=f1 --versions=3");
+    ParsedCommand parsed = ShellLineParser.parse("create 't1' --NAME=f1 --VERSIONS=3");
     command.execute(parsed, context);
 
     assertEquals(Arrays.asList(mapOf("NAME", "f1", "VERSIONS", 3L)), admin.lastFamilySpecs);

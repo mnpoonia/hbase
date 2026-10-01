@@ -121,7 +121,7 @@ public final class ShellLineParser {
 
   private void parseFlag(Map<String, Object> options) throws ShellParseException {
     Token flag = advance();
-    String key = flag.text().toUpperCase(Locale.ROOT);
+    String key = flag.text();
     Object value;
     if (check(TokenType.EQUALS)) {
       advance();
@@ -149,7 +149,7 @@ public final class ShellLineParser {
   private void parseHashEntry(Map<String, Object> options) throws ShellParseException {
     String key = readHashKeyAndArrow();
     Object value = parseValue();
-    options.put(key.toUpperCase(Locale.ROOT), value);
+    options.put(key, value);
   }
 
   /**

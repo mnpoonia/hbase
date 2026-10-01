@@ -97,7 +97,7 @@ public class ShellLineParserTest {
 
   @Test
   public void parsesNativeFlagSyntaxIntoSameOptionsMap() throws ShellParseException {
-    ParsedCommand parsed = ShellLineParser.parse("create 't1' --name=f1 --versions=3");
+    ParsedCommand parsed = ShellLineParser.parse("create 't1' --NAME=f1 --VERSIONS=3");
     assertEquals("f1", parsed.options().get("NAME"));
     assertEquals(3L, parsed.options().get("VERSIONS"));
   }

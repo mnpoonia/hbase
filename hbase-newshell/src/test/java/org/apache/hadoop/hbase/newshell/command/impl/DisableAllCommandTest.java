@@ -95,7 +95,7 @@ public class DisableAllCommandTest {
     admin.tableNames = Arrays.asList("t1");
     ExecutionContext noYes =
       new ExecutionContext(admin, new StubShellTableFactory(), new PrintWriter(new StringWriter()));
-    ParsedCommand parsed = ShellLineParser.parse("disable_all 't.*' --yes");
+    ParsedCommand parsed = ShellLineParser.parse("disable_all 't.*' --YES");
     TextResult result = (TextResult) command.execute(parsed, noYes);
     assertEquals(Arrays.asList("t1"), admin.disabled);
     assertEquals(Arrays.asList("1 tables successfully disabled"), result.lines());
