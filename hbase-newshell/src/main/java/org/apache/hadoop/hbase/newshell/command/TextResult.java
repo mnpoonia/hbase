@@ -17,6 +17,7 @@
  */
 package org.apache.hadoop.hbase.newshell.command;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import org.apache.yetus.audience.InterfaceAudience;
@@ -31,7 +32,7 @@ public final class TextResult implements CommandResult {
   }
 
   public static TextResult of(String... lines) {
-    return new TextResult(List.of(lines));
+    return new TextResult(Arrays.asList(lines));
   }
 
   public List<String> lines() {

@@ -23,6 +23,7 @@ import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import org.apache.hadoop.hbase.newshell.command.CommandResult;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
@@ -68,8 +69,8 @@ public final class ListTableSnapshotsCommand implements ShellCommand {
     for (SnapshotInfo snapshot : snapshots) {
       String creationTime = CREATION_TIME_FORMAT
         .format(Instant.ofEpochMilli(snapshot.creationTime()).atZone(ZoneOffset.systemDefault()));
-      rows.add(List.of(snapshot.name(), snapshot.tableName() + " (" + creationTime + ")"));
+      rows.add(Arrays.asList(snapshot.name(), snapshot.tableName() + " (" + creationTime + ")"));
     }
-    return new TabularResult(List.of("SNAPSHOT", "TABLE + CREATION TIME"), rows);
+    return new TabularResult(Arrays.asList("SNAPSHOT", "TABLE + CREATION TIME"), rows);
   }
 }

@@ -19,6 +19,7 @@
 package org.apache.hadoop.hbase.newshell.command.impl;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import org.apache.hadoop.hbase.newshell.command.CommandResult;
@@ -51,6 +52,6 @@ public final class ListQuotaSnapshotsCommand implements ShellCommand {
     Map<String, Object> args =
       command.hashLiterals().isEmpty() ? command.options() : command.hashLiterals().get(0);
     List<List<String>> rows = context.admin().listQuotaSnapshots(args);
-    return new TabularResult(List.of("TABLE", "USAGE", "LIMIT", "IN_VIOLATION", "POLICY"), rows);
+    return new TabularResult(Arrays.asList("TABLE", "USAGE", "LIMIT", "IN_VIOLATION", "POLICY"), rows);
   }
 }

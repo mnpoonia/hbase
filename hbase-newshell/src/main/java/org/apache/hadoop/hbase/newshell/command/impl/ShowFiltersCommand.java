@@ -18,6 +18,7 @@
 package org.apache.hadoop.hbase.newshell.command.impl;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import org.apache.hadoop.hbase.filter.ParseFilter;
 import org.apache.hadoop.hbase.newshell.command.CommandResult;
@@ -48,6 +49,6 @@ public final class ShowFiltersCommand implements ShellCommand {
   @Override
   public CommandResult execute(ParsedCommand command, ExecutionContext context)
     throws ShellCommandException, IOException {
-    return new TextResult(List.copyOf(new ParseFilter().getSupportedFilters()));
+    return new TextResult(new ArrayList<>(new ParseFilter().getSupportedFilters()));
   }
 }

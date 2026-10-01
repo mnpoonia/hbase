@@ -19,6 +19,8 @@ package org.apache.hadoop.hbase.newshell.command.impl;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import org.apache.hadoop.hbase.newshell.command.CommandResult;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
@@ -57,7 +59,7 @@ public final class RecommissionRegionServerCommand implements ShellCommand {
     }
     String hostOrServer = String.valueOf(positionals.get(0));
     List<String> encodedRegionNames =
-      positionals.size() > 1 ? toStringList(positionals.get(1)) : List.of();
+      positionals.size() > 1 ? toStringList(positionals.get(1)) : Collections.emptyList();
     context.admin().recommissionRegionServer(hostOrServer, encodedRegionNames);
     return TextResult.of();
   }
@@ -71,6 +73,6 @@ public final class RecommissionRegionServerCommand implements ShellCommand {
       }
       return result;
     }
-    return List.of(String.valueOf(value));
+    return Arrays.asList(String.valueOf(value));
   }
 }

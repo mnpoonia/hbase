@@ -18,6 +18,7 @@
 package org.apache.hadoop.hbase.newshell.command.impl;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
 import org.apache.hadoop.hbase.newshell.command.CommandResult;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
@@ -48,6 +49,6 @@ public final class ListProceduresCommand implements ShellCommand {
     throws ShellCommandException, IOException {
     List<List<String>> rows = context.admin().listProcedures();
     return new TabularResult(
-      List.of("PID", "Name", "State", "Submitted", "Last_Update", "Parameters"), rows);
+      Arrays.asList("PID", "Name", "State", "Submitted", "Last_Update", "Parameters"), rows);
   }
 }

@@ -22,6 +22,7 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -588,7 +589,7 @@ public final class DefaultShellAdmin implements ShellAdmin {
       RegionMetrics regionMetrics = serverMetrics == null
         ? null
         : serverMetrics.getRegionMetrics().get(regionInfo.getRegionName());
-      String regionName = regionInfo.getRegionNameAsString().strip();
+      String regionName = regionInfo.getRegionNameAsString().trim();
       if (regionMetrics == null) {
         warnings.add("Can not find all details for region: " + regionName
           + " , it may be disabled or in transition");
@@ -597,10 +598,10 @@ public final class DefaultShellAdmin implements ShellAdmin {
       String req = regionMetrics == null ? "" : String.valueOf(regionMetrics.getRequestCount());
       String locality =
         regionMetrics == null ? "" : String.valueOf(regionMetrics.getDataLocality());
-      rows.add(List.of(serverName == null ? "" : serverName.toString().strip(), regionName,
-        Bytes.toStringBinary(regionInfo.getStartKey()).strip(),
-        Bytes.toStringBinary(regionInfo.getEndKey()).strip(), size.strip(), req.strip(),
-        locality.strip()));
+      rows.add(Arrays.asList(serverName == null ? "" : serverName.toString().trim(), regionName,
+        Bytes.toStringBinary(regionInfo.getStartKey()).trim(),
+        Bytes.toStringBinary(regionInfo.getEndKey()).trim(), size.trim(), req.trim(),
+        locality.trim()));
     }
     return new ListRegionsView(warnings, rows);
   }
@@ -766,7 +767,7 @@ public final class DefaultShellAdmin implements ShellAdmin {
         AccessControlClient.getUserPermissions(admin.getConnection(), tableOrNamespaceRegex);
       List<List<String>> rows = new ArrayList<>();
       for (UserPermission permission : permissions) {
-        rows.add(List.of(permission.getUser(), permission.getPermission().toString()));
+        rows.add(Arrays.asList(permission.getUser(), permission.getPermission().toString()));
       }
       return rows;
     } catch (Throwable t) {
@@ -1038,7 +1039,7 @@ public final class DefaultShellAdmin implements ShellAdmin {
     }
     List<List<String>> rows = new ArrayList<>();
     for (Map.Entry<String, String> e : group.getConfiguration().entrySet()) {
-      rows.add(List.of(e.getKey(), e.getValue()));
+      rows.add(Arrays.asList(e.getKey(), e.getValue()));
     }
     return rows;
   }
@@ -1294,7 +1295,7 @@ public final class DefaultShellAdmin implements ShellAdmin {
     if (filterArgs != null && !filterArgs.isEmpty()) {
       if (filterArgs.containsKey("TABLE_NAME")) {
         Object tableName = filterArgs.get("TABLE_NAME");
-        builder.tableNames(List.of(TableName.valueOf(String.valueOf(tableName))));
+        builder.tableNames(Arrays.asList(TableName.valueOf(String.valueOf(tableName))));
       } else if (filterArgs.containsKey("TABLE_NAMES")) {
         Object tableNames = filterArgs.get("TABLE_NAMES");
         if (!(tableNames instanceof List)) {
@@ -1486,7 +1487,7 @@ public final class DefaultShellAdmin implements ShellAdmin {
     boolean largeLog) throws IOException {
     Set<ServerName> servers;
     if (serverNames != null && serverNames.size() == 1 && "*".equals(serverNames.get(0))) {
-      servers = resolveLogServers(List.of(), true);
+      servers = resolveLogServers(Collections.emptyList(), true);
     } else {
       servers = resolveLogServers(serverNames, false);
     }
@@ -1628,7 +1629,7 @@ public final class DefaultShellAdmin implements ShellAdmin {
       if (allIfEmpty) {
         return new HashSet<>(liveServers);
       }
-      return Set.of();
+      return Collections.emptySet();
     }
     Set<ServerName> resolved = new HashSet<>();
     for (String hostOrServer : serverNames) {

@@ -17,6 +17,7 @@
  */
 package org.apache.hadoop.hbase.newshell;
 
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.ServiceLoader;
@@ -46,7 +47,15 @@ public final class TerminalProviderRegistry {
   }
 
   TerminalProviderRegistry(ServiceLoader<TerminalProvider> serviceLoader) {
-    this(serviceLoader.stream().map(ServiceLoader.Provider::get).collect(Collectors.toList()));
+    this(toList(serviceLoader));
+  }
+
+  private static List<TerminalProvider> toList(ServiceLoader<TerminalProvider> serviceLoader) {
+    List<TerminalProvider> result = new ArrayList<>();
+    for (TerminalProvider provider : serviceLoader) {
+      result.add(provider);
+    }
+    return result;
   }
 
   TerminalProviderRegistry(List<TerminalProvider> providers) {

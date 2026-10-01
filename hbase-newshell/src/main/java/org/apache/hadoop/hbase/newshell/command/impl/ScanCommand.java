@@ -19,6 +19,7 @@ package org.apache.hadoop.hbase.newshell.command.impl;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import org.apache.hadoop.hbase.newshell.command.CommandResult;
@@ -41,7 +42,7 @@ import org.apache.yetus.audience.InterfaceAudience;
  */
 @InterfaceAudience.Private
 public final class ScanCommand implements ShellCommand {
-  private static final List<String> HEADER = List.of("ROW", "COLUMN+CELL");
+  private static final List<String> HEADER = Arrays.asList("ROW", "COLUMN+CELL");
 
   @Override
   public String name() {
@@ -65,7 +66,7 @@ public final class ScanCommand implements ShellCommand {
     List<List<String>> rows = new ArrayList<>();
     for (ScanRow row : result.rows()) {
       for (CellView cell : row.cells()) {
-        rows.add(List.of(row.row(), CellViews.column(cell) + " " + CellViews.formatCell(cell)));
+        rows.add(Arrays.asList(row.row(), CellViews.column(cell) + " " + CellViews.formatCell(cell)));
       }
     }
     return new TabularResult(HEADER, rows);

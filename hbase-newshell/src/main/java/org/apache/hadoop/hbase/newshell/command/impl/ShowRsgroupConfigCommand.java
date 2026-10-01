@@ -18,6 +18,7 @@
 
 package org.apache.hadoop.hbase.newshell.command.impl;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
 import org.apache.hadoop.hbase.newshell.command.*;
 import org.apache.hadoop.hbase.newshell.parser.ParsedCommand;
@@ -29,7 +30,7 @@ public final class ShowRsgroupConfigCommand implements ShellCommand {
   @Override public CommandResult execute(ParsedCommand command, ExecutionContext context)
     throws ShellCommandException, IOException {
     if (command.positionalArgs().isEmpty()) throw new ShellCommandException("show_rsgroup_config requires a group name");
-    return new TabularResult(List.of("KEY","VALUE"),
+    return new TabularResult(Arrays.asList("KEY","VALUE"),
       context.admin().showRsGroupConfig(String.valueOf(command.positionalArgs().get(0))));
   }
 }

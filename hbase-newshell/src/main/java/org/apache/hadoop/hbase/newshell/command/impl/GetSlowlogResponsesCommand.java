@@ -19,6 +19,7 @@ package org.apache.hadoop.hbase.newshell.command.impl;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -78,6 +79,6 @@ public final class GetSlowlogResponsesCommand implements ShellCommand {
       }
       return result;
     }
-    return List.of(String.valueOf(value));
+    return Arrays.asList(String.valueOf(value));
   }
 }

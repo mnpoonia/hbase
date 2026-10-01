@@ -19,6 +19,7 @@ package org.apache.hadoop.hbase.newshell.command.impl;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import org.apache.hadoop.hbase.newshell.command.CommandResult;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
@@ -51,8 +52,8 @@ public final class ListDecommissionedRegionServersCommand implements ShellComman
     List<String> serverNames = context.admin().listDecommissionedRegionServers();
     List<List<String>> rows = new ArrayList<>();
     for (String serverName : serverNames) {
-      rows.add(List.of(serverName));
+      rows.add(Arrays.asList(serverName));
     }
-    return new TabularResult(List.of("DECOMMISSIONED REGION SERVERS"), rows);
+    return new TabularResult(Arrays.asList("DECOMMISSIONED REGION SERVERS"), rows);
   }
 }

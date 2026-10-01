@@ -18,6 +18,7 @@
 package org.apache.hadoop.hbase.newshell.command.impl;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.Map;
 import org.apache.hadoop.hbase.newshell.command.CommandResult;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
@@ -51,7 +52,7 @@ public final class CreateNamespaceCommand implements ShellCommand {
     }
     String namespace = String.valueOf(command.positionalArgs().get(0));
     Map<String, Object> properties =
-      command.hashLiterals().isEmpty() ? Map.of() : command.hashLiterals().get(0);
+      command.hashLiterals().isEmpty() ? Collections.emptyMap() : command.hashLiterals().get(0);
     context.admin().createNamespace(namespace, properties);
     return TextResult.of();
   }

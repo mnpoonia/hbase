@@ -18,6 +18,7 @@
 package org.apache.hadoop.hbase.newshell.hbase;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import org.apache.hadoop.hbase.ClusterMetrics;
@@ -45,7 +46,7 @@ public final class StatusView {
   }
 
   public List<String> summaryLines() {
-    return List.of("1 active master, " + metrics.getBackupMasterNames().size() + " backup masters,",
+    return Arrays.asList("1 active master, " + metrics.getBackupMasterNames().size() + " backup masters,",
       "              " + metrics.getLiveServerMetrics().size() + " servers,",
       "              " + metrics.getDecommissionedServerNames().size() + " decommissioned,",
       "              " + metrics.getDeadServerNames().size() + " dead,",

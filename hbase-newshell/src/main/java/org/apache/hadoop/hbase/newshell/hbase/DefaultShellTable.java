@@ -20,6 +20,7 @@ package org.apache.hadoop.hbase.newshell.hbase;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import org.apache.hadoop.hbase.Cell;
@@ -334,6 +335,6 @@ public final class DefaultShellTable implements ShellTable {
     if (columns instanceof List) {
       return (List<Object>) columns;
     }
-    return List.of(columns);
+    return Arrays.asList(columns);
   }
 }

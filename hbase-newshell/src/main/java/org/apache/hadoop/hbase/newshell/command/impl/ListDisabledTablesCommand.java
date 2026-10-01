@@ -19,6 +19,7 @@ package org.apache.hadoop.hbase.newshell.command.impl;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import org.apache.hadoop.hbase.newshell.command.CommandResult;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
@@ -47,8 +48,8 @@ public final class ListDisabledTablesCommand implements ShellCommand {
     List<String> tableNames = context.admin().listTablesByState(false);
     List<List<String>> rows = new ArrayList<>();
     for (String tableName : tableNames) {
-      rows.add(List.of(tableName));
+      rows.add(Arrays.asList(tableName));
     }
-    return new TabularResult(List.of("TABLE"), rows);
+    return new TabularResult(Arrays.asList("TABLE"), rows);
   }
 }

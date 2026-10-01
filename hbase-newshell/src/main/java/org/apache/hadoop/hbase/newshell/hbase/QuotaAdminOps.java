@@ -19,6 +19,8 @@ package org.apache.hadoop.hbase.newshell.hbase;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -207,7 +209,7 @@ final class QuotaAdminOps {
       }
       String ownerString = owner.entrySet().stream()
         .map(entry -> entry.getKey() + " => " + entry.getValue()).collect(Collectors.joining(", "));
-      rows.add(List.of(ownerString, settings.toString()));
+      rows.add(Arrays.asList(ownerString, settings.toString()));
     }
     return rows;
   }
@@ -215,13 +217,13 @@ final class QuotaAdminOps {
   List<List<String>> listQuotaTableSizes() throws IOException {
     List<List<String>> rows = new ArrayList<>();
     for (Map.Entry<TableName, Long> entry : admin.getSpaceQuotaTableSizes().entrySet()) {
-      rows.add(List.of(entry.getKey().toString(), String.valueOf(entry.getValue())));
+      rows.add(Arrays.asList(entry.getKey().toString(), String.valueOf(entry.getValue())));
     }
     return rows;
   }
 
   List<List<String>> listQuotaSnapshots(Map<String, Object> filterArgs) throws IOException {
-    Map<String, Object> args = filterArgs == null ? Map.of() : filterArgs;
+    Map<String, Object> args = filterArgs == null ? Collections.emptyMap() : filterArgs;
     Object desiredTable = args.get("TABLE");
     Object desiredNamespace = args.get("NAMESPACE");
     Object desiredRegionServer = args.get("REGIONSERVER");
@@ -244,7 +246,7 @@ final class QuotaAdminOps {
       if (status.isInViolation() && status.getPolicy().isPresent()) {
         policy = status.getPolicy().get().name();
       }
-      rows.add(List.of(tableName.toString(), String.valueOf(snapshot.getUsage()),
+      rows.add(Arrays.asList(tableName.toString(), String.valueOf(snapshot.getUsage()),
         String.valueOf(snapshot.getLimit()), String.valueOf(status.isInViolation()), policy));
     }
     return rows;
@@ -267,7 +269,7 @@ final class QuotaAdminOps {
     List<List<String>> rows = new ArrayList<>();
     for (Map.Entry<String, Long> entry : QuotaTableUtil.getObservedSnapshotSizes(admin.getConnection())
       .entrySet()) {
-      rows.add(List.of(entry.getKey(), String.valueOf(entry.getValue())));
+      rows.add(Arrays.asList(entry.getKey(), String.valueOf(entry.getValue())));
     }
     return rows;
   }

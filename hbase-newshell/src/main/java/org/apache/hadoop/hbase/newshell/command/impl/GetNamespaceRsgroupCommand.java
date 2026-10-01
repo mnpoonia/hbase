@@ -19,6 +19,8 @@
 package org.apache.hadoop.hbase.newshell.command.impl;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import org.apache.hadoop.hbase.newshell.command.*;
 import org.apache.hadoop.hbase.newshell.parser.ParsedCommand;
@@ -33,8 +35,8 @@ public final class GetNamespaceRsgroupCommand implements ShellCommand {
     String group = context.admin().getNamespaceRsGroup(String.valueOf(command.positionalArgs().get(0)));
     List<List<String>> rows = new ArrayList<>();
     if (group != null) {
-      rows.add(List.of(group));
+      rows.add(Arrays.asList(group));
     }
-    return new TabularResult(List.of(), rows);
+    return new TabularResult(Collections.emptyList(), rows);
   }
 }

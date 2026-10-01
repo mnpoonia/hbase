@@ -18,6 +18,7 @@
 package org.apache.hadoop.hbase.newshell.command.impl;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
 import org.apache.hadoop.hbase.newshell.command.CommandResult;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
@@ -52,6 +53,6 @@ public final class DescribeNamespaceCommand implements ShellCommand {
     }
     String namespace = String.valueOf(command.positionalArgs().get(0));
     String description = context.admin().describeNamespace(namespace);
-    return new TextResult(List.of("DESCRIPTION", description, "Quota is disabled"));
+    return new TextResult(Arrays.asList("DESCRIPTION", description, "Quota is disabled"));
   }
 }

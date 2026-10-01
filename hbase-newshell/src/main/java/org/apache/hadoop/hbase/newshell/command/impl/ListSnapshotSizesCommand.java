@@ -19,6 +19,7 @@
 package org.apache.hadoop.hbase.newshell.command.impl;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
 import org.apache.hadoop.hbase.newshell.command.CommandResult;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
@@ -47,6 +48,6 @@ public final class ListSnapshotSizesCommand implements ShellCommand {
   public CommandResult execute(ParsedCommand command, ExecutionContext context)
     throws ShellCommandException, IOException {
     List<List<String>> rows = context.admin().listSnapshotSizes();
-    return new TabularResult(List.of("SNAPSHOT", "SIZE"), rows);
+    return new TabularResult(Arrays.asList("SNAPSHOT", "SIZE"), rows);
   }
 }

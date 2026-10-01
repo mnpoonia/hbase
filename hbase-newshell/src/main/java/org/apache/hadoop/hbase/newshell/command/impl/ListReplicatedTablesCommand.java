@@ -18,6 +18,7 @@
 package org.apache.hadoop.hbase.newshell.command.impl;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
 import org.apache.hadoop.hbase.newshell.command.CommandResult;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
@@ -39,6 +40,6 @@ public final class ListReplicatedTablesCommand implements ShellCommand {
       regex = String.valueOf(command.positionalArgs().get(0));
     }
     List<List<String>> rows = context.admin().listReplicatedTables(regex);
-    return new TabularResult(List.of("TABLE:COLUMNFAMILY", "ReplicationType"), rows);
+    return new TabularResult(Arrays.asList("TABLE:COLUMNFAMILY", "ReplicationType"), rows);
   }
 }

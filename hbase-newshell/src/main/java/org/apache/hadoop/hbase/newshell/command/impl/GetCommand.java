@@ -19,6 +19,7 @@ package org.apache.hadoop.hbase.newshell.command.impl;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import org.apache.hadoop.hbase.newshell.command.CommandResult;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
@@ -39,7 +40,7 @@ import org.apache.yetus.audience.InterfaceAudience;
  */
 @InterfaceAudience.Private
 public final class GetCommand implements ShellCommand {
-  private static final List<String> HEADER = List.of("COLUMN", "CELL");
+  private static final List<String> HEADER = Arrays.asList("COLUMN", "CELL");
 
   @Override
   public String name() {
@@ -62,7 +63,7 @@ public final class GetCommand implements ShellCommand {
     GetResult result = context.tables().forTable(tableName).get(row, command.options());
     List<List<String>> rows = new ArrayList<>();
     for (CellView cell : result.cells()) {
-      rows.add(List.of(CellViews.column(cell), CellViews.formatCell(cell)));
+      rows.add(Arrays.asList(CellViews.column(cell), CellViews.formatCell(cell)));
     }
     return new TabularResult(HEADER, rows);
   }

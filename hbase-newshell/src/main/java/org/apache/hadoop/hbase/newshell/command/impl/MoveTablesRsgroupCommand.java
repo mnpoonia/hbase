@@ -18,6 +18,8 @@
 
 package org.apache.hadoop.hbase.newshell.command.impl;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import org.apache.hadoop.hbase.newshell.command.*;
 import org.apache.hadoop.hbase.newshell.parser.ParsedCommand;
@@ -36,12 +38,12 @@ public final class MoveTablesRsgroupCommand implements ShellCommand {
 
   private static List<String> toStringList(Object value) {
     if (value instanceof List) {
-      List<String> result = new java.util.ArrayList<>();
+      List<String> result = new ArrayList<>();
       for (Object element : (List<?>) value) {
         result.add(String.valueOf(element));
       }
       return result;
     }
-    return List.of(String.valueOf(value));
+    return Arrays.asList(String.valueOf(value));
   }
 }

@@ -18,6 +18,7 @@
 
 package org.apache.hadoop.hbase.newshell.command.impl;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
 import org.apache.hadoop.hbase.newshell.command.*;
 import org.apache.hadoop.hbase.newshell.hbase.BalanceResult;
@@ -40,7 +41,7 @@ public final class BalanceRsgroupCommand implements ShellCommand {
     }
     BalanceResult response = context.admin().balanceRsGroup(group, dryRun, ignoreRit);
     if (response.ran()) {
-      return new TextResult(List.of("Balancer ran",
+      return new TextResult(Arrays.asList("Balancer ran",
         "Moves calculated: "+response.movesCalculated()+", moves executed: "+response.movesExecuted()));
     }
     return TextResult.of("Balancer did not run. See logs for details.");

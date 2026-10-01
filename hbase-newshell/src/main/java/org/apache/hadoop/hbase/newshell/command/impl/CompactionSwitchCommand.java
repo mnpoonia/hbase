@@ -19,6 +19,7 @@ package org.apache.hadoop.hbase.newshell.command.impl;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import org.apache.hadoop.hbase.newshell.command.ArgParsing;
@@ -63,9 +64,9 @@ public final class CompactionSwitchCommand implements ShellCommand {
     Map<String, Boolean> previousStates = context.admin().compactionSwitch(enabled, serverNames);
     List<List<String>> rows = new ArrayList<>();
     for (Map.Entry<String, Boolean> entry : previousStates.entrySet()) {
-      rows.add(List.of(entry.getKey(), String.valueOf(entry.getValue())));
+      rows.add(Arrays.asList(entry.getKey(), String.valueOf(entry.getValue())));
     }
-    return new TabularResult(List.of("SERVER", "PREV_STATE"), rows);
+    return new TabularResult(Arrays.asList("SERVER", "PREV_STATE"), rows);
   }
 
 }

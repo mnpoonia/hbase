@@ -19,6 +19,7 @@ package org.apache.hadoop.hbase.newshell.command.impl;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import org.apache.hadoop.hbase.newshell.command.CommandResult;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
@@ -50,8 +51,8 @@ public final class ListUnknownserversCommand implements ShellCommand {
     List<String> servers = context.admin().listUnknownServers();
     List<List<String>> rows = new ArrayList<>();
     for (String server : servers) {
-      rows.add(List.of(server));
+      rows.add(Arrays.asList(server));
     }
-    return new TabularResult(List.of("SERVERNAME"), rows);
+    return new TabularResult(Arrays.asList("SERVERNAME"), rows);
   }
 }

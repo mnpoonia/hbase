@@ -17,6 +17,7 @@
  */
 package org.apache.hadoop.hbase.newshell.command;
 
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -38,8 +39,15 @@ public final class CommandRegistry {
   private final Map<String, ShellCommand> commandsByName;
 
   public CommandRegistry() {
-    this(ServiceLoader.load(ShellCommand.class).stream().map(ServiceLoader.Provider::get)
-      .collect(Collectors.toList()));
+    this(loadCommands());
+  }
+
+  private static List<ShellCommand> loadCommands() {
+    List<ShellCommand> result = new ArrayList<>();
+    for (ShellCommand command : ServiceLoader.load(ShellCommand.class)) {
+      result.add(command);
+    }
+    return result;
   }
 
   public CommandRegistry(List<ShellCommand> commands) {

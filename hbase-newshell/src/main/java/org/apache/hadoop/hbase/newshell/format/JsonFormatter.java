@@ -18,6 +18,7 @@
 package org.apache.hadoop.hbase.newshell.format;
 
 import java.io.PrintWriter;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -45,7 +46,7 @@ public final class JsonFormatter implements Formatter {
         if (commandName != null) {
           envelope.put("command", commandName);
         }
-        envelope.put("data", Map.of("lines", textResult.lines()));
+        envelope.put("data", Collections.singletonMap("lines", textResult.lines()));
         out.println(JsonMapper.writeObjectAsString(envelope));
       } else if (result instanceof TabularResult) {
         TabularResult tabularResult = (TabularResult) result;

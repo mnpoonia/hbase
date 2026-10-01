@@ -19,9 +19,12 @@ package org.apache.hadoop.hbase.newshell.command.impl;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 import org.apache.hadoop.hbase.newshell.command.CommandResult;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
 import org.apache.hadoop.hbase.newshell.command.ShellCommand;
@@ -40,7 +43,7 @@ import org.apache.yetus.audience.InterfaceAudience;
 @InterfaceAudience.Private
 public final class ListRegionsCommand implements ShellCommand {
   private static final List<String> COLUMNS =
-    List.of("SERVER_NAME", "REGION_NAME", "START_KEY", "END_KEY", "SIZE", "REQ", "LOCALITY");
+    Arrays.asList("SERVER_NAME", "REGION_NAME", "START_KEY", "END_KEY", "SIZE", "REQ", "LOCALITY");
   private static final int[] DEFAULT_WIDTHS = { 12, 12, 10, 10, 5, 5, 10 };
 
   @Override
@@ -78,9 +81,10 @@ public final class ListRegionsCommand implements ShellCommand {
     }
 
     List<String> lines = new ArrayList<>(view.warnings());
-    lines.add(formatPipeRow(COLUMNS.stream().map(col -> pad(col, widths.get(col))).toList()));
+    lines.add(formatPipeRow(COLUMNS.stream().map(col -> pad(col, widths.get(col))).collect(Collectors.toList())));
     lines.add(formatPipeRow(
-      COLUMNS.stream().map(col -> "-".repeat(widths.get(col))).toList()));
+      COLUMNS.stream().map(col -> String.join("", Collections.nCopies(widths.get(col), "-")))
+        .collect(Collectors.toList())));
     for (List<String> row : view.rows()) {
       List<String> cells = new ArrayList<>(COLUMNS.size());
       for (int i = 0; i < COLUMNS.size(); i++) {
@@ -106,6 +110,6 @@ public final class ListRegionsCommand implements ShellCommand {
     if (value.length() >= width) {
       return value;
     }
-    return " ".repeat(width - value.length()) + value;
+    return String.join("", Collections.nCopies(width - value.length(), " ")) + value;
   }
 }

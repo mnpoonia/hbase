@@ -18,6 +18,7 @@
 package org.apache.hadoop.hbase.newshell.command.impl;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.List;
 import org.apache.hadoop.hbase.newshell.command.CommandResult;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
@@ -39,6 +40,6 @@ public final class GetPeerConfigCommand implements ShellCommand {
     }
     List<List<String>> rows =
       context.admin().getPeerConfigRows(String.valueOf(command.positionalArgs().get(0)));
-    return new TabularResult(List.of(), rows);
+    return new TabularResult(Collections.emptyList(), rows);
   }
 }

@@ -19,6 +19,7 @@ package org.apache.hadoop.hbase.newshell.command.impl;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -64,7 +65,7 @@ public final class CreateCommand implements ShellCommand {
     // just a NAME, mirroring hbase-shell's admin.rb#create treating a String arg as a family.
     for (Object extraPositional : command.positionalArgs().subList(1,
       command.positionalArgs().size())) {
-      familySpecs.add(Map.of("NAME", String.valueOf(extraPositional)));
+      familySpecs.add(Collections.singletonMap("NAME", String.valueOf(extraPositional)));
     }
     // Only hash literals with a NAME are families; a hash literal without one (e.g.
     // SPLITS => [...]) is a table-level attribute (mirrors admin.rb#create's NAME check).

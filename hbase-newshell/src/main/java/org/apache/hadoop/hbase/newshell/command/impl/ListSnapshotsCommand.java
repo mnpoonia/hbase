@@ -22,6 +22,7 @@ import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import org.apache.hadoop.hbase.newshell.command.CommandResult;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
@@ -65,8 +66,8 @@ public final class ListSnapshotsCommand implements ShellCommand {
         .format(Instant.ofEpochMilli(snapshot.creationTime()).atZone(ZoneOffset.UTC));
       String ttlInfo = snapshot.ttl() == 0 ? "FOREVER" : String.valueOf(snapshot.ttl());
       String info = snapshot.tableName() + " (" + creationTime + ") " + ttlInfo;
-      rows.add(List.of(snapshot.name(), info));
+      rows.add(Arrays.asList(snapshot.name(), info));
     }
-    return new TabularResult(List.of("SNAPSHOT", "TABLE + CREATION TIME + TTL(Sec)"), rows);
+    return new TabularResult(Arrays.asList("SNAPSHOT", "TABLE + CREATION TIME + TTL(Sec)"), rows);
   }
 }

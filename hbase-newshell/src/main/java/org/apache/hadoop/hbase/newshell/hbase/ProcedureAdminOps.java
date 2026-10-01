@@ -19,6 +19,7 @@ package org.apache.hadoop.hbase.newshell.hbase;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import org.apache.hbase.thirdparty.com.google.gson.Gson;
@@ -42,7 +43,7 @@ final class ProcedureAdminOps {
     List<List<String>> rows = new ArrayList<>();
     for (JsonElement element : procedures) {
       JsonObject proc = element.getAsJsonObject();
-      rows.add(List.of(getAsString(proc, "procId"), getAsString(proc, "className"),
+      rows.add(Arrays.asList(getAsString(proc, "procId"), getAsString(proc, "className"),
         getAsString(proc, "state"), getAsString(proc, "submittedTime"),
         getAsString(proc, "lastUpdate"), getAsString(proc, "stateMessage")));
     }

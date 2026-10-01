@@ -19,6 +19,8 @@ package org.apache.hadoop.hbase.newshell.hbase;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -125,7 +127,7 @@ final class ReplicationAdminOps {
   void setPeerNamespaces(String peerId, List<String> namespaces) throws IOException {
     ReplicationPeerConfig rpc = admin.getReplicationPeerConfig(peerId);
     admin.updateReplicationPeerConfig(peerId, ReplicationPeerConfig.newBuilder(rpc)
-      .setNamespaces(namespaces == null ? Set.of() : new HashSet<>(namespaces)).build());
+      .setNamespaces(namespaces == null ? Collections.emptySet() : new HashSet<>(namespaces)).build());
   }
 
   void appendPeerNamespaces(String peerId, List<String> namespaces) throws IOException {
@@ -199,7 +201,7 @@ final class ReplicationAdminOps {
   void setPeerTableCFs(String peerId, Map<String, Object> tableCFs) throws IOException {
     ReplicationPeerConfig rpc = admin.getReplicationPeerConfig(peerId);
     Map<TableName, List<String>> map =
-      tableCFs == null ? Map.of() : toTableCfsMap(tableCFs);
+      tableCFs == null ? Collections.emptyMap() : toTableCfsMap(tableCFs);
     admin.updateReplicationPeerConfig(peerId,
       ReplicationPeerConfig.newBuilder(rpc).setTableCFsMap(map).build());
   }
@@ -285,7 +287,7 @@ final class ReplicationAdminOps {
         } else {
           type = "UNKNOWN";
         }
-        rows.add(List.of(tableCFs.getTable().getNameAsString() + ":" + cf.getKey(), type));
+        rows.add(Arrays.asList(tableCFs.getTable().getNameAsString() + ":" + cf.getKey(), type));
       }
     }
     return rows;
@@ -306,9 +308,9 @@ final class ReplicationAdminOps {
   List<List<String>> listPeerConfigRows() throws IOException {
     List<List<String>> rows = new ArrayList<>();
     for (ReplicationPeerDescription peer : admin.listReplicationPeers()) {
-      rows.add(List.of("PeerId", peer.getPeerId()));
+      rows.add(Arrays.asList("PeerId", peer.getPeerId()));
       rows.addAll(formatPeerConfig(peer.getPeerConfig()));
-      rows.add(List.of(" "));
+      rows.add(Arrays.asList(" "));
     }
     return rows;
   }
@@ -360,14 +362,14 @@ final class ReplicationAdminOps {
   private static List<List<String>> formatPeerConfig(ReplicationPeerConfig peerConfig) {
     List<List<String>> rows = new ArrayList<>();
     if (peerConfig.getClusterKey() != null) {
-      rows.add(List.of("Cluster Key", peerConfig.getClusterKey()));
+      rows.add(Arrays.asList("Cluster Key", peerConfig.getClusterKey()));
     }
     if (peerConfig.getReplicationEndpointImpl() != null) {
-      rows.add(List.of("Replication Endpoint", peerConfig.getReplicationEndpointImpl()));
+      rows.add(Arrays.asList("Replication Endpoint", peerConfig.getReplicationEndpointImpl()));
     }
     if (peerConfig.getConfiguration() != null) {
       for (Map.Entry<String, String> entry : peerConfig.getConfiguration().entrySet()) {
-        rows.add(List.of(entry.getKey(), entry.getValue()));
+        rows.add(Arrays.asList(entry.getKey(), entry.getValue()));
       }
     }
     return rows;
@@ -377,7 +379,7 @@ final class ReplicationAdminOps {
     Map<TableName, List<String>> map = new LinkedHashMap<>();
     for (Map.Entry<?, ?> entry : tableCFs.entrySet()) {
       List<String> cfs = entry.getValue() == null
-        ? List.of()
+        ? Collections.emptyList()
         : ((List<?>) entry.getValue()).stream().map(String::valueOf).collect(Collectors.toList());
       map.put(TableName.valueOf(String.valueOf(entry.getKey())), cfs);
     }

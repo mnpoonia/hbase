@@ -19,6 +19,7 @@ package org.apache.hadoop.hbase.newshell.command.impl;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import org.apache.hadoop.hbase.newshell.command.CommandResult;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
@@ -56,17 +57,17 @@ public final class ListRsgroupsCommand implements ShellCommand {
     for (RsGroupSummary group : context.admin().listRsGroups(regex)) {
       boolean nameWritten = false;
       for (String server : group.servers()) {
-        rows.add(List.of(nameWritten ? "" : group.name(), "server " + server));
+        rows.add(Arrays.asList(nameWritten ? "" : group.name(), "server " + server));
         nameWritten = true;
       }
       for (String table : group.tables()) {
-        rows.add(List.of(nameWritten ? "" : group.name(), "table " + table));
+        rows.add(Arrays.asList(nameWritten ? "" : group.name(), "table " + table));
         nameWritten = true;
       }
       if (!nameWritten) {
-        rows.add(List.of(group.name(), ""));
+        rows.add(Arrays.asList(group.name(), ""));
       }
     }
-    return new TabularResult(List.of("NAME", "SERVER / TABLE"), rows);
+    return new TabularResult(Arrays.asList("NAME", "SERVER / TABLE"), rows);
   }
 }

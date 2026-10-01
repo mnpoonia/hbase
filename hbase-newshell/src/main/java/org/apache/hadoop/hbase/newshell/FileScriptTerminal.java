@@ -18,8 +18,10 @@
 package org.apache.hadoop.hbase.newshell;
 
 import java.io.BufferedReader;
-import java.io.FileReader;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
 import org.apache.hadoop.hbase.newshell.spi.Completer;
@@ -35,10 +37,12 @@ import org.apache.yetus.audience.InterfaceAudience;
 @InterfaceAudience.Private
 final class FileScriptTerminal implements ShellTerminal {
   private final BufferedReader reader;
-  private final PrintWriter writer = new PrintWriter(System.out, true, StandardCharsets.UTF_8);
+  private final PrintWriter writer =
+    new PrintWriter(new OutputStreamWriter(System.out, StandardCharsets.UTF_8), true);
 
   FileScriptTerminal(String path) throws IOException {
-    this.reader = new BufferedReader(new FileReader(path, StandardCharsets.UTF_8));
+    this.reader =
+      new BufferedReader(new InputStreamReader(new FileInputStream(path), StandardCharsets.UTF_8));
   }
 
   @Override

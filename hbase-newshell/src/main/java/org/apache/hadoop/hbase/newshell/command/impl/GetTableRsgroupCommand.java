@@ -18,6 +18,8 @@
 
 package org.apache.hadoop.hbase.newshell.command.impl;
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import org.apache.hadoop.hbase.newshell.command.*;
 import org.apache.hadoop.hbase.newshell.parser.ParsedCommand;
@@ -30,6 +32,6 @@ public final class GetTableRsgroupCommand implements ShellCommand {
     throws ShellCommandException, IOException {
     if (command.positionalArgs().isEmpty()) throw new ShellCommandException("get_table_rsgroup requires an argument");
     String group = context.admin().getRsGroupOfTable(String.valueOf(command.positionalArgs().get(0)));
-    return new TabularResult(List.of(), List.of(List.of(group)));
+    return new TabularResult(Collections.emptyList(), Arrays.asList(Arrays.asList(group)));
   }
 }

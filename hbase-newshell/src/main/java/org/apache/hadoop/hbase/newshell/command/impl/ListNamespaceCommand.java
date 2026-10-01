@@ -19,6 +19,7 @@ package org.apache.hadoop.hbase.newshell.command.impl;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import org.apache.hadoop.hbase.newshell.command.CommandResult;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
@@ -53,8 +54,8 @@ public final class ListNamespaceCommand implements ShellCommand {
     List<String> namespaces = context.admin().listNamespaces(regex);
     List<List<String>> rows = new ArrayList<>();
     for (String namespace : namespaces) {
-      rows.add(List.of(namespace));
+      rows.add(Arrays.asList(namespace));
     }
-    return new TabularResult(List.of("NAMESPACE"), rows);
+    return new TabularResult(Arrays.asList("NAMESPACE"), rows);
   }
 }

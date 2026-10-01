@@ -19,6 +19,7 @@ package org.apache.hadoop.hbase.newshell.command.impl;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import org.apache.hadoop.hbase.newshell.command.CommandResult;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
@@ -70,7 +71,7 @@ public final class DecommissionRegionServersCommand implements ShellCommand {
       }
       return result;
     }
-    return List.of(String.valueOf(value));
+    return Arrays.asList(String.valueOf(value));
   }
 
   private static boolean parseBoolean(Object value) {

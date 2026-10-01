@@ -19,6 +19,8 @@ package org.apache.hadoop.hbase.newshell.hbase;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import org.apache.hadoop.hbase.Cell;
@@ -39,7 +41,7 @@ final class VisibilityOps {
 
   static long setVisibility(Connection connection, String tableName, String visibility,
     Map<String, Object> options) throws IOException {
-    Scan scan = buildScan(options == null ? Map.of() : options);
+    Scan scan = buildScan(options == null ? Collections.emptyMap() : options);
     long count = 0;
     try (Table table = connection.getTable(TableName.valueOf(tableName));
       ResultScanner scanner = table.getScanner(scan)) {
@@ -124,6 +126,6 @@ final class VisibilityOps {
     if (columns instanceof List) {
       return (List<Object>) columns;
     }
-    return List.of(columns);
+    return Arrays.asList(columns);
   }
 }

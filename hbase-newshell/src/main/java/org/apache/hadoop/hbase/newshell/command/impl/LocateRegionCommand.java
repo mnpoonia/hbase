@@ -18,6 +18,7 @@
 package org.apache.hadoop.hbase.newshell.command.impl;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
 import org.apache.hadoop.hbase.newshell.command.CommandResult;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
@@ -53,7 +54,7 @@ public final class LocateRegionCommand implements ShellCommand {
     String tableName = String.valueOf(command.positionalArgs().get(0));
     String rowKey = String.valueOf(command.positionalArgs().get(1));
     RegionLocationView location = context.admin().locateRegion(tableName, rowKey);
-    return new TabularResult(List.of("HOST", "REGION"),
-      List.of(List.of(location.hostnamePort(), location.regionName())));
+    return new TabularResult(Arrays.asList("HOST", "REGION"),
+      Arrays.asList(Arrays.asList(location.hostnamePort(), location.regionName())));
   }
 }

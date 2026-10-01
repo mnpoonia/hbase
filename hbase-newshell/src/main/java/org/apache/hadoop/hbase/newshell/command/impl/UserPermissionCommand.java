@@ -18,6 +18,7 @@
 package org.apache.hadoop.hbase.newshell.command.impl;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
 import org.apache.hadoop.hbase.newshell.command.CommandResult;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
@@ -50,6 +51,6 @@ public final class UserPermissionCommand implements ShellCommand {
     List<Object> positionals = command.positionalArgs();
     String regex = positionals.isEmpty() ? null : String.valueOf(positionals.get(0));
     List<List<String>> rows = context.admin().userPermission(regex);
-    return new TabularResult(List.of("User", "Namespace,Table,Family,Qualifier:Permission"), rows);
+    return new TabularResult(Arrays.asList("User", "Namespace,Table,Family,Qualifier:Permission"), rows);
   }
 }
