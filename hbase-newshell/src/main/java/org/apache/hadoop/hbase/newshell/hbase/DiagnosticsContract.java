@@ -17,20 +17,27 @@
  */
 package org.apache.hadoop.hbase.newshell.hbase;
 
+import java.io.IOException;
+import java.util.List;
+import java.util.Map;
 import org.apache.yetus.audience.InterfaceAudience;
 
-/**
- * Narrow, newshell-specific facade over the admin-plane operations the pilot commands need. Command
- * implementations depend on this interface, never on {@code org.apache.hadoop.hbase.client.Admin}
- * directly - {@link DefaultShellAdmin} is the only class that does.
- * <p>
- * Composed of cohesive per-domain sub-interfaces rather than declaring ~155 methods directly, so
- * each domain's contract can be read, tested, and (if ever needed) implemented independently of
- * the others.
- */
+/** Cluster diagnostics: slow-log responses, balancer decisions/rejections, ZooKeeper dump. */
 @InterfaceAudience.Private
-public interface ShellAdmin extends TableAdminContract, NamespaceAdminContract,
-  SnapshotAdminContract, ReplicationPeerContract, RsGroupAdminContract, ClusterOpsContract,
-  ServerLifecycleContract, DiagnosticsContract, SecurityAdminContract, VisibilityLabelContract,
-  QuotaAdminContract, ProcedureAdminContract {
+public interface DiagnosticsContract {
+  /** Returns summary message of how many RegionServers were cleared */
+  String clearSlowLogResponses(List<String> serverNames) throws IOException;
+
+  List<String> getBalancerDecisions(Map<String, Object> args) throws IOException;
+
+  List<String> getBalancerRejections(Map<String, Object> args) throws IOException;
+
+  /**
+   * @param serverNames {@code null} or empty with {@code allServers=true} meaning all live RS;
+   *                    otherwise host/port/startcode strings (or a single {@code "*"})
+   */
+  List<String> getSlowLogResponses(List<String> serverNames, Map<String, Object> args,
+    boolean largeLog) throws IOException;
+
+  String zkDump() throws IOException;
 }

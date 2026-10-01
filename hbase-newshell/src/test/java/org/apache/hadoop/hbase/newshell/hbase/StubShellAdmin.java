@@ -25,6 +25,7 @@ package org.apache.hadoop.hbase.newshell.hbase;
  */
 public class StubShellAdmin implements ShellAdmin, StubTableAdminContract,
   StubNamespaceAdminContract, StubSnapshotAdminContract, StubReplicationPeerContract,
-  StubRsGroupAdminContract, StubClusterOpsContract, StubSecurityAdminContract,
-  StubVisibilityLabelContract, StubQuotaAdminContract, StubProcedureAdminContract {
+  StubRsGroupAdminContract, StubClusterOpsContract, StubServerLifecycleContract,
+  StubDiagnosticsContract, StubSecurityAdminContract, StubVisibilityLabelContract,
+  StubQuotaAdminContract, StubProcedureAdminContract {
 }

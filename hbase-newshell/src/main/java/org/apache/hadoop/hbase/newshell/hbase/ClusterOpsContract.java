@@ -22,16 +22,9 @@ import java.util.List;
 import java.util.Map;
 import org.apache.yetus.audience.InterfaceAudience;
 
-/** Cluster-wide and per-server administrative switches, chores, and server lifecycle operations. */
+/** Cluster-wide operational switches, chore triggers, and config-reload RPCs. */
 @InterfaceAudience.Private
 public interface ClusterOpsContract {
-  void decommissionRegionServers(List<String> hostOrServers, boolean offload) throws IOException;
-
-  void recommissionRegionServer(String hostOrServer, List<String> encodedRegionNames)
-    throws IOException;
-
-  List<String> listDecommissionedRegionServers() throws IOException;
-
   boolean balancerSwitch(boolean enabled) throws IOException;
 
   boolean normalizerSwitch(boolean enabled) throws IOException;
@@ -80,32 +73,4 @@ public interface ClusterOpsContract {
   void walRollAll() throws IOException;
 
   long refreshMeta() throws IOException;
-
-  void stopMaster() throws IOException;
-
-  void stopRegionServer(String hostPort) throws IOException;
-
-  List<String> listDeadServers() throws IOException;
-
-  List<String> listLiveServers() throws IOException;
-
-  List<String> listUnknownServers() throws IOException;
-
-  List<String> clearDeadServers(List<String> serverNames) throws IOException;
-
-  /** Returns summary message of how many RegionServers were cleared */
-  String clearSlowLogResponses(List<String> serverNames) throws IOException;
-
-  List<String> getBalancerDecisions(Map<String, Object> args) throws IOException;
-
-  List<String> getBalancerRejections(Map<String, Object> args) throws IOException;
-
-  /**
-   * @param serverNames {@code null} or empty with {@code allServers=true} meaning all live RS;
-   *                    otherwise host/port/startcode strings (or a single {@code "*"})
-   */
-  List<String> getSlowLogResponses(List<String> serverNames, Map<String, Object> args,
-    boolean largeLog) throws IOException;
-
-  String zkDump() throws IOException;
 }

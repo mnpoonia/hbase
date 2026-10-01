@@ -17,20 +17,29 @@
  */
 package org.apache.hadoop.hbase.newshell.hbase;
 
+import java.io.IOException;
+import java.util.List;
 import org.apache.yetus.audience.InterfaceAudience;
 
-/**
- * Narrow, newshell-specific facade over the admin-plane operations the pilot commands need. Command
- * implementations depend on this interface, never on {@code org.apache.hadoop.hbase.client.Admin}
- * directly - {@link DefaultShellAdmin} is the only class that does.
- * <p>
- * Composed of cohesive per-domain sub-interfaces rather than declaring ~155 methods directly, so
- * each domain's contract can be read, tested, and (if ever needed) implemented independently of
- * the others.
- */
+/** RegionServer and Master lifecycle: decommission/recommission, stop, and liveness listing. */
 @InterfaceAudience.Private
-public interface ShellAdmin extends TableAdminContract, NamespaceAdminContract,
-  SnapshotAdminContract, ReplicationPeerContract, RsGroupAdminContract, ClusterOpsContract,
-  ServerLifecycleContract, DiagnosticsContract, SecurityAdminContract, VisibilityLabelContract,
-  QuotaAdminContract, ProcedureAdminContract {
+public interface ServerLifecycleContract {
+  void decommissionRegionServers(List<String> hostOrServers, boolean offload) throws IOException;
+
+  void recommissionRegionServer(String hostOrServer, List<String> encodedRegionNames)
+    throws IOException;
+
+  List<String> listDecommissionedRegionServers() throws IOException;
+
+  void stopMaster() throws IOException;
+
+  void stopRegionServer(String hostPort) throws IOException;
+
+  List<String> listDeadServers() throws IOException;
+
+  List<String> listLiveServers() throws IOException;
+
+  List<String> listUnknownServers() throws IOException;
+
+  List<String> clearDeadServers(List<String> serverNames) throws IOException;
 }

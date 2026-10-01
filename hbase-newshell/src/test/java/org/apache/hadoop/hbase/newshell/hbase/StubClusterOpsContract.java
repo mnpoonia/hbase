@@ -28,23 +28,6 @@ import java.util.Map;
  */
 public interface StubClusterOpsContract extends ClusterOpsContract {
   @Override
-  default void decommissionRegionServers(List<String> hostOrServers, boolean offload)
-    throws IOException {
-    throw StubContractSupport.notNeeded();
-  }
-
-  @Override
-  default void recommissionRegionServer(String hostOrServer, List<String> encodedRegionNames)
-    throws IOException {
-    throw StubContractSupport.notNeeded();
-  }
-
-  @Override
-  default List<String> listDecommissionedRegionServers() throws IOException {
-    throw StubContractSupport.notNeeded();
-  }
-
-  @Override
   default boolean balancerSwitch(boolean enabled) throws IOException {
     throw StubContractSupport.notNeeded();
   }
@@ -163,62 +146,6 @@ public interface StubClusterOpsContract extends ClusterOpsContract {
 
   @Override
   default long refreshMeta() throws IOException {
-    throw StubContractSupport.notNeeded();
-  }
-
-  @Override
-  default void stopMaster() throws IOException {
-    throw StubContractSupport.notNeeded();
-  }
-
-  @Override
-  default void stopRegionServer(String hostPort) throws IOException {
-    throw StubContractSupport.notNeeded();
-  }
-
-  @Override
-  default List<String> listDeadServers() throws IOException {
-    throw StubContractSupport.notNeeded();
-  }
-
-  @Override
-  default List<String> listLiveServers() throws IOException {
-    throw StubContractSupport.notNeeded();
-  }
-
-  @Override
-  default List<String> listUnknownServers() throws IOException {
-    throw StubContractSupport.notNeeded();
-  }
-
-  @Override
-  default List<String> clearDeadServers(List<String> serverNames) throws IOException {
-    throw StubContractSupport.notNeeded();
-  }
-
-  @Override
-  default String clearSlowLogResponses(List<String> serverNames) throws IOException {
-    throw StubContractSupport.notNeeded();
-  }
-
-  @Override
-  default List<String> getBalancerDecisions(Map<String, Object> args) throws IOException {
-    throw StubContractSupport.notNeeded();
-  }
-
-  @Override
-  default List<String> getBalancerRejections(Map<String, Object> args) throws IOException {
-    throw StubContractSupport.notNeeded();
-  }
-
-  @Override
-  default List<String> getSlowLogResponses(List<String> serverNames, Map<String, Object> args,
-    boolean largeLog) throws IOException {
-    throw StubContractSupport.notNeeded();
-  }
-
-  @Override
-  default String zkDump() throws IOException {
     throw StubContractSupport.notNeeded();
   }
 }
