@@ -32,6 +32,7 @@ import org.apache.hadoop.hbase.newshell.parser.ShellLineParser;
 import org.apache.hadoop.hbase.testclassification.SmallTests;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.apache.hadoop.hbase.newshell.parser.ParsedCommand;
 
 @Tag(SmallTests.TAG)
 public class ExistsCommandTest {
@@ -53,7 +54,7 @@ public class ExistsCommandTest {
   @Test
   public void reportsTableExists() throws Exception {
     admin.exists = true;
-    var parsed = ShellLineParser.parse("exists 't1'");
+    ParsedCommand parsed = ShellLineParser.parse("exists 't1'");
     TextResult result = (TextResult) command.execute(parsed, context);
 
     assertEquals(List.of("Table t1 does exist"), result.lines());
@@ -62,7 +63,7 @@ public class ExistsCommandTest {
   @Test
   public void reportsTableDoesNotExist() throws Exception {
     admin.exists = false;
-    var parsed = ShellLineParser.parse("exists 't1'");
+    ParsedCommand parsed = ShellLineParser.parse("exists 't1'");
     TextResult result = (TextResult) command.execute(parsed, context);
 
     assertEquals(List.of("Table t1 does not exist"), result.lines());
@@ -70,7 +71,7 @@ public class ExistsCommandTest {
 
   @Test
   public void throwsWhenTableNameMissing() throws Exception {
-    var parsed = ShellLineParser.parse("exists");
+    ParsedCommand parsed = ShellLineParser.parse("exists");
     assertThrows(ShellCommandException.class, () -> command.execute(parsed, context));
   }
 }

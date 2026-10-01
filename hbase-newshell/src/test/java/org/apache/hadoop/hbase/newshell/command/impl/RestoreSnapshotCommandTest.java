@@ -32,6 +32,7 @@ import org.apache.hadoop.hbase.newshell.parser.ShellLineParser;
 import org.apache.hadoop.hbase.testclassification.SmallTests;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.apache.hadoop.hbase.newshell.parser.ParsedCommand;
 
 @Tag(SmallTests.TAG)
 public class RestoreSnapshotCommandTest {
@@ -54,7 +55,7 @@ public class RestoreSnapshotCommandTest {
 
   @Test
   public void restoresWithoutOptions() throws Exception {
-    var parsed = ShellLineParser.parse("restore_snapshot 'snap1'");
+    ParsedCommand parsed = ShellLineParser.parse("restore_snapshot 'snap1'");
     command.execute(parsed, context);
 
     assertEquals("snap1", admin.lastSnapshotName);
@@ -63,7 +64,7 @@ public class RestoreSnapshotCommandTest {
 
   @Test
   public void restoresWithRestoreAcl() throws Exception {
-    var parsed = ShellLineParser.parse("restore_snapshot 'snap1', {RESTORE_ACL=>true}");
+    ParsedCommand parsed = ShellLineParser.parse("restore_snapshot 'snap1', {RESTORE_ACL=>true}");
     command.execute(parsed, context);
 
     assertTrue(admin.lastRestoreAcl);
@@ -71,7 +72,7 @@ public class RestoreSnapshotCommandTest {
 
   @Test
   public void throwsWhenSnapshotNameMissing() throws Exception {
-    var parsed = ShellLineParser.parse("restore_snapshot");
+    ParsedCommand parsed = ShellLineParser.parse("restore_snapshot");
     assertThrows(ShellCommandException.class, () -> command.execute(parsed, context));
   }
 }

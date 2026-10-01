@@ -35,6 +35,7 @@ import org.apache.hadoop.hbase.newshell.parser.ShellLineParser;
 import org.apache.hadoop.hbase.testclassification.SmallTests;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.apache.hadoop.hbase.newshell.parser.ParsedCommand;
 
 @Tag(SmallTests.TAG)
 public class PutCommandTest {
@@ -78,7 +79,7 @@ public class PutCommandTest {
 
   @Test
   public void putsSingleCell() throws Exception {
-    var parsed = ShellLineParser.parse("put 't1', 'r1', 'f1:c1', 'v1'");
+    ParsedCommand parsed = ShellLineParser.parse("put 't1', 'r1', 'f1:c1', 'v1'");
     TextResult result = (TextResult) command.execute(parsed, context);
 
     assertEquals("t1", tables.lastTableName);
@@ -90,7 +91,7 @@ public class PutCommandTest {
 
   @Test
   public void putsSingleCellWithTimestamp() throws Exception {
-    var parsed = ShellLineParser.parse("put 't1', 'r1', 'f1:c1', 'v1', {TIMESTAMP => 123}");
+    ParsedCommand parsed = ShellLineParser.parse("put 't1', 'r1', 'f1:c1', 'v1', {TIMESTAMP => 123}");
     command.execute(parsed, context);
 
     assertEquals(123L, table.lastOptions.get("TIMESTAMP"));
@@ -98,7 +99,7 @@ public class PutCommandTest {
 
   @Test
   public void throwsWhenValueMissing() throws Exception {
-    var parsed = ShellLineParser.parse("put 't1', 'r1', 'f1:c1'");
+    ParsedCommand parsed = ShellLineParser.parse("put 't1', 'r1', 'f1:c1'");
     assertThrows(ShellCommandException.class, () -> command.execute(parsed, context));
   }
 }

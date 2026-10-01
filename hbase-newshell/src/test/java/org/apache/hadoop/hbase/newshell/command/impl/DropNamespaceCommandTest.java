@@ -28,6 +28,7 @@ import org.apache.hadoop.hbase.newshell.parser.ShellLineParser;
 import org.apache.hadoop.hbase.testclassification.SmallTests;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.apache.hadoop.hbase.newshell.parser.ParsedCommand;
 
 @Tag(SmallTests.TAG)
 public class DropNamespaceCommandTest {
@@ -48,7 +49,7 @@ public class DropNamespaceCommandTest {
 
   @Test
   public void dropsNamedNamespace() throws Exception {
-    var parsed = ShellLineParser.parse("drop_namespace 'ns1'");
+    ParsedCommand parsed = ShellLineParser.parse("drop_namespace 'ns1'");
     command.execute(parsed, context);
 
     assertEquals("ns1", admin.lastNamespace);

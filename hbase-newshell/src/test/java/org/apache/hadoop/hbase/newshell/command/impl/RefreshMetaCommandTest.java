@@ -30,6 +30,7 @@ import org.apache.hadoop.hbase.newshell.parser.ShellLineParser;
 import org.apache.hadoop.hbase.testclassification.SmallTests;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.apache.hadoop.hbase.newshell.command.CommandResult;
 
 @Tag(SmallTests.TAG)
 public class RefreshMetaCommandTest {
@@ -50,7 +51,7 @@ public class RefreshMetaCommandTest {
 
   @Test
   public void refreshes() throws Exception {
-    var result = command.execute(ShellLineParser.parse("refresh_meta"), context);
+    CommandResult result = command.execute(ShellLineParser.parse("refresh_meta"), context);
     assertTrue(admin.called);
     assertEquals("Refresh meta procedure submitted. Procedure ID: 42",
       ((TextResult) result).lines().get(0));

@@ -32,6 +32,7 @@ import org.apache.hadoop.hbase.newshell.parser.ShellLineParser;
 import org.apache.hadoop.hbase.testclassification.SmallTests;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.apache.hadoop.hbase.newshell.parser.ParsedCommand;
 
 @Tag(SmallTests.TAG)
 public class MajorCompactCommandTest {
@@ -56,7 +57,7 @@ public class MajorCompactCommandTest {
 
   @Test
   public void majorCompactsTable() throws Exception {
-    var parsed = ShellLineParser.parse("major_compact 't1'");
+    ParsedCommand parsed = ShellLineParser.parse("major_compact 't1'");
     TextResult result = (TextResult) command.execute(parsed, context);
 
     assertEquals("t1", admin.lastTableOrRegionName);
@@ -65,7 +66,7 @@ public class MajorCompactCommandTest {
 
   @Test
   public void throwsWhenTableOrRegionNameMissing() throws Exception {
-    var parsed = ShellLineParser.parse("major_compact");
+    ParsedCommand parsed = ShellLineParser.parse("major_compact");
     assertThrows(ShellCommandException.class, () -> command.execute(parsed, context));
   }
 }

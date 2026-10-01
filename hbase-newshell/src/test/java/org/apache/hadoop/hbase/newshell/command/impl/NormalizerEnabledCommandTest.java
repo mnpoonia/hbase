@@ -30,6 +30,7 @@ import org.apache.hadoop.hbase.newshell.parser.ShellLineParser;
 import org.apache.hadoop.hbase.testclassification.SmallTests;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.apache.hadoop.hbase.newshell.parser.ParsedCommand;
 
 @Tag(SmallTests.TAG)
 public class NormalizerEnabledCommandTest {
@@ -48,7 +49,7 @@ public class NormalizerEnabledCommandTest {
 
   @Test
   public void reportsNormalizerState() throws Exception {
-    var parsed = ShellLineParser.parse("normalizer_enabled");
+    ParsedCommand parsed = ShellLineParser.parse("normalizer_enabled");
     TextResult result = (TextResult) command.execute(parsed, context);
 
     assertEquals(List.of("true"), result.lines());

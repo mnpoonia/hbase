@@ -48,8 +48,8 @@ public class EnableExceedThrottleQuotaCommandTest {
 
   @Test
   public void enables() throws Exception {
-    var admin = new RecordingShellAdmin();
-    var context =
+    RecordingShellAdmin admin = new RecordingShellAdmin();
+    ExecutionContext context =
       new ExecutionContext(admin, new StubShellTableFactory(), new PrintWriter(new StringWriter()));
     TextResult result = (TextResult) new EnableExceedThrottleQuotaCommand()
       .execute(ShellLineParser.parse("enable_exceed_throttle_quota"), context);

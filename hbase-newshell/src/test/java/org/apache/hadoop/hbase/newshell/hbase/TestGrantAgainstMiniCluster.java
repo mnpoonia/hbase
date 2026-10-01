@@ -38,6 +38,7 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.apache.hadoop.conf.Configuration;
 
 /**
  * End-to-end verification of {@link DefaultShellAdmin#grant} against a real minicluster with the
@@ -52,7 +53,7 @@ public class TestGrantAgainstMiniCluster {
 
   @BeforeAll
   public static void setUpBeforeClass() throws Exception {
-    var conf = TEST_UTIL.getConfiguration();
+    Configuration conf = TEST_UTIL.getConfiguration();
     conf.set(CoprocessorHost.MASTER_COPROCESSOR_CONF_KEY, AccessController.class.getName());
     conf.set(CoprocessorHost.REGION_COPROCESSOR_CONF_KEY, AccessController.class.getName());
     conf.set(CoprocessorHost.REGIONSERVER_COPROCESSOR_CONF_KEY, AccessController.class.getName());

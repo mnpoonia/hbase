@@ -33,6 +33,7 @@ import org.apache.hadoop.hbase.newshell.parser.ShellLineParser;
 import org.apache.hadoop.hbase.testclassification.SmallTests;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.apache.hadoop.hbase.newshell.parser.ParsedCommand;
 
 @Tag(SmallTests.TAG)
 public class DeleteCommandTest {
@@ -73,7 +74,7 @@ public class DeleteCommandTest {
 
   @Test
   public void deletesSingleCellVersion() throws Exception {
-    var parsed = ShellLineParser.parse("delete 't1', 'r1', 'f1:c1'");
+    ParsedCommand parsed = ShellLineParser.parse("delete 't1', 'r1', 'f1:c1'");
     command.execute(parsed, context);
 
     assertEquals("t1", tables.lastTableName);
@@ -84,7 +85,7 @@ public class DeleteCommandTest {
 
   @Test
   public void deletesWithExplicitTimestamp() throws Exception {
-    var parsed = ShellLineParser.parse("delete 't1', 'r1', 'f1:c1', 123");
+    ParsedCommand parsed = ShellLineParser.parse("delete 't1', 'r1', 'f1:c1', 123");
     command.execute(parsed, context);
 
     assertEquals(123L, table.lastTimestamp);
@@ -92,7 +93,7 @@ public class DeleteCommandTest {
 
   @Test
   public void throwsWhenColumnMissing() throws Exception {
-    var parsed = ShellLineParser.parse("delete 't1', 'r1'");
+    ParsedCommand parsed = ShellLineParser.parse("delete 't1', 'r1'");
     assertThrows(ShellCommandException.class, () -> command.execute(parsed, context));
   }
 }

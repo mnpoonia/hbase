@@ -30,6 +30,7 @@ import org.apache.hadoop.hbase.newshell.parser.ShellLineParser;
 import org.apache.hadoop.hbase.testclassification.SmallTests;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.apache.hadoop.hbase.newshell.parser.ParsedCommand;
 
 @Tag(SmallTests.TAG)
 public class UpdateConfigCommandTest {
@@ -50,7 +51,7 @@ public class UpdateConfigCommandTest {
 
   @Test
   public void updatesServerConfig() throws Exception {
-    var parsed = ShellLineParser.parse("update_config 'host1,60020,1'");
+    ParsedCommand parsed = ShellLineParser.parse("update_config 'host1,60020,1'");
     command.execute(parsed, context);
 
     assertEquals("host1,60020,1", admin.lastServerName);
@@ -58,7 +59,7 @@ public class UpdateConfigCommandTest {
 
   @Test
   public void throwsWhenServerNameMissing() throws Exception {
-    var parsed = ShellLineParser.parse("update_config");
+    ParsedCommand parsed = ShellLineParser.parse("update_config");
     assertThrows(ShellCommandException.class, () -> command.execute(parsed, context));
   }
 }

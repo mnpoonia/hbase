@@ -31,6 +31,8 @@ import org.apache.hadoop.hbase.newshell.parser.ShellLineParser;
 import org.apache.hadoop.hbase.testclassification.SmallTests;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.apache.hadoop.hbase.newshell.parser.ParsedCommand;
+import org.apache.hadoop.hbase.newshell.command.CommandResult;
 
 @Tag(SmallTests.TAG)
 public class NormalizeCommandTest {
@@ -51,15 +53,15 @@ public class NormalizeCommandTest {
 
   @Test
   public void normalizeNoArgs() throws Exception {
-    var parsed = ShellLineParser.parse("normalize");
-    var result = command.execute(parsed, context);
+    ParsedCommand parsed = ShellLineParser.parse("normalize");
+    CommandResult result = command.execute(parsed, context);
     assertEquals("true", ((TextResult) result).lines().get(0));
     assertTrue(admin.lastFilters.isEmpty());
   }
 
   @Test
   public void normalizeWithTableName() throws Exception {
-    var parsed = ShellLineParser.parse("normalize TABLE_NAME => 't1'");
+    ParsedCommand parsed = ShellLineParser.parse("normalize TABLE_NAME => 't1'");
     command.execute(parsed, context);
     assertEquals("t1", String.valueOf(admin.lastFilters.get("TABLE_NAME")));
   }

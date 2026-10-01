@@ -29,6 +29,7 @@ import org.apache.hadoop.hbase.newshell.parser.ShellLineParser;
 import org.apache.hadoop.hbase.testclassification.SmallTests;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.apache.hadoop.hbase.newshell.parser.ParsedCommand;
 
 @Tag(SmallTests.TAG)
 public class ShowFiltersCommandTest {
@@ -39,7 +40,7 @@ public class ShowFiltersCommandTest {
 
   @Test
   public void listsKnownFilters() throws Exception {
-    var parsed = ShellLineParser.parse("show_filters");
+    ParsedCommand parsed = ShellLineParser.parse("show_filters");
     TextResult result = (TextResult) command.execute(parsed, context);
 
     assertTrue(result.lines().contains("PageFilter"));

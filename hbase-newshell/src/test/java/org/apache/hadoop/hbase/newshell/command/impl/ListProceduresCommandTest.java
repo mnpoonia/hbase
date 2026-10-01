@@ -30,6 +30,7 @@ import org.apache.hadoop.hbase.newshell.parser.ShellLineParser;
 import org.apache.hadoop.hbase.testclassification.SmallTests;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.apache.hadoop.hbase.newshell.parser.ParsedCommand;
 
 @Tag(SmallTests.TAG)
 public class ListProceduresCommandTest {
@@ -48,7 +49,7 @@ public class ListProceduresCommandTest {
 
   @Test
   public void listsProcedures() throws Exception {
-    var parsed = ShellLineParser.parse("list_procedures");
+    ParsedCommand parsed = ShellLineParser.parse("list_procedures");
     TabularResult result = (TabularResult) command.execute(parsed, context);
 
     assertEquals(List.of("PID", "Name", "State", "Submitted", "Last_Update", "Parameters"),

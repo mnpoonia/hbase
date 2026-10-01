@@ -33,6 +33,7 @@ import org.apache.hadoop.hbase.newshell.parser.ShellLineParser;
 import org.apache.hadoop.hbase.testclassification.SmallTests;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.apache.hadoop.hbase.newshell.parser.ParsedCommand;
 
 @Tag(SmallTests.TAG)
 public class CreateCommandTest {
@@ -59,7 +60,7 @@ public class CreateCommandTest {
 
   @Test
   public void createsSingleFamilyFromLegacyHashLiteral() throws Exception {
-    var parsed = ShellLineParser.parse("create 't1', {NAME => 'f1', VERSIONS => 3}");
+    ParsedCommand parsed = ShellLineParser.parse("create 't1', {NAME => 'f1', VERSIONS => 3}");
     TextResult result = (TextResult) command.execute(parsed, context);
 
     assertEquals("t1", admin.lastTableName);
@@ -69,7 +70,7 @@ public class CreateCommandTest {
 
   @Test
   public void createsSingleFamilyFromNativeFlagSyntax() throws Exception {
-    var parsed = ShellLineParser.parse("create 't1' --name=f1 --versions=3");
+    ParsedCommand parsed = ShellLineParser.parse("create 't1' --name=f1 --versions=3");
     command.execute(parsed, context);
 
     assertEquals(List.of(Map.of("NAME", "f1", "VERSIONS", 3L)), admin.lastFamilySpecs);
@@ -77,7 +78,7 @@ public class CreateCommandTest {
 
   @Test
   public void createsFamilyFromBarewordName() throws Exception {
-    var parsed = ShellLineParser.parse("create 't1', 'f1'");
+    ParsedCommand parsed = ShellLineParser.parse("create 't1', 'f1'");
     command.execute(parsed, context);
 
     assertEquals("t1", admin.lastTableName);
@@ -86,7 +87,7 @@ public class CreateCommandTest {
 
   @Test
   public void createsMultipleFamiliesFromBarewordNames() throws Exception {
-    var parsed = ShellLineParser.parse("create 't1', 'f1', 'f2'");
+    ParsedCommand parsed = ShellLineParser.parse("create 't1', 'f1', 'f2'");
     command.execute(parsed, context);
 
     assertEquals(List.of(Map.of("NAME", "f1"), Map.of("NAME", "f2")), admin.lastFamilySpecs);
@@ -94,7 +95,7 @@ public class CreateCommandTest {
 
   @Test
   public void createsMultipleFamiliesFromMultipleHashLiterals() throws Exception {
-    var parsed =
+    ParsedCommand parsed =
       ShellLineParser.parse("create 't1', {NAME => 'f1'}, {NAME => 'f2', VERSIONS => 5}");
     command.execute(parsed, context);
 
@@ -105,7 +106,7 @@ public class CreateCommandTest {
 
   @Test
   public void bareTrailingAttributeHashWithoutNameBecomesTableAttribute() throws Exception {
-    var parsed = ShellLineParser.parse("create 't1', {NAME => 'f1'}, SPLITS => ['1000', '2000']");
+    ParsedCommand parsed = ShellLineParser.parse("create 't1', {NAME => 'f1'}, SPLITS => ['1000', '2000']");
     command.execute(parsed, context);
 
     assertEquals("t1", admin.lastTableName);
@@ -115,13 +116,13 @@ public class CreateCommandTest {
 
   @Test
   public void throwsWhenTableNameMissing() throws Exception {
-    var parsed = ShellLineParser.parse("create");
+    ParsedCommand parsed = ShellLineParser.parse("create");
     assertThrows(ShellCommandException.class, () -> command.execute(parsed, context));
   }
 
   @Test
   public void throwsWhenNoFamilySpecGiven() throws Exception {
-    var parsed = ShellLineParser.parse("create 't1'");
+    ParsedCommand parsed = ShellLineParser.parse("create 't1'");
     assertThrows(ShellCommandException.class, () -> command.execute(parsed, context));
   }
 }

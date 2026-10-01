@@ -31,6 +31,7 @@ import org.apache.hadoop.hbase.newshell.parser.ShellLineParser;
 import org.apache.hadoop.hbase.testclassification.SmallTests;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.apache.hadoop.hbase.newshell.parser.ParsedCommand;
 
 @Tag(SmallTests.TAG)
 public class UpdateRsgroupConfigCommandTest {
@@ -51,14 +52,14 @@ public class UpdateRsgroupConfigCommandTest {
 
   @Test
   public void updatesGroup() throws Exception {
-    var parsed = ShellLineParser.parse("update_rsgroup_config 'default'");
+    ParsedCommand parsed = ShellLineParser.parse("update_rsgroup_config 'default'");
     command.execute(parsed, context);
     assertEquals("default", admin.groupName);
   }
 
   @Test
   public void throwsWhenGroupMissing() throws Exception {
-    var parsed = ShellLineParser.parse("update_rsgroup_config");
+    ParsedCommand parsed = ShellLineParser.parse("update_rsgroup_config");
     assertThrows(ShellCommandException.class, () -> command.execute(parsed, context));
   }
 }

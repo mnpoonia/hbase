@@ -34,6 +34,7 @@ import org.apache.hadoop.hbase.newshell.parser.ShellLineParser;
 import org.apache.hadoop.hbase.testclassification.SmallTests;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.apache.hadoop.hbase.newshell.parser.ParsedCommand;
 
 @Tag(SmallTests.TAG)
 public class IncrCommandTest {
@@ -68,7 +69,7 @@ public class IncrCommandTest {
 
   @Test
   public void defaultsToIncrementingByOne() throws Exception {
-    var parsed = ShellLineParser.parse("incr 't1', 'r1', 'f1:c1'");
+    ParsedCommand parsed = ShellLineParser.parse("incr 't1', 'r1', 'f1:c1'");
     TextResult result = (TextResult) command.execute(parsed, context);
 
     assertEquals(1L, table.lastAmount);
@@ -77,7 +78,7 @@ public class IncrCommandTest {
 
   @Test
   public void incrementsByExplicitAmount() throws Exception {
-    var parsed = ShellLineParser.parse("incr 't1', 'r1', 'f1:c1', 5");
+    ParsedCommand parsed = ShellLineParser.parse("incr 't1', 'r1', 'f1:c1', 5");
     command.execute(parsed, context);
 
     assertEquals(5L, table.lastAmount);
@@ -85,7 +86,7 @@ public class IncrCommandTest {
 
   @Test
   public void throwsWhenColumnMissing() throws Exception {
-    var parsed = ShellLineParser.parse("incr 't1', 'r1'");
+    ParsedCommand parsed = ShellLineParser.parse("incr 't1', 'r1'");
     assertThrows(ShellCommandException.class, () -> command.execute(parsed, context));
   }
 }

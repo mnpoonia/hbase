@@ -48,7 +48,7 @@ public class PeerModificationSwitchCommandTest {
     new ExecutionContext(admin, new StubShellTableFactory(), new PrintWriter(new StringWriter()));
   @Test
   public void runs() throws Exception {
-    var result = (TextResult) command.execute(ShellLineParser.parse("peer_modification_switch true, true"), context);
+    TextResult result = (TextResult) command.execute(ShellLineParser.parse("peer_modification_switch true, true"), context);
     assertTrue(admin.en);
     assertTrue(admin.drain);
     assertEquals("Previous peer modification state : false", result.lines().get(0));

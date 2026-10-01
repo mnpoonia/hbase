@@ -37,6 +37,7 @@ import org.apache.hadoop.hbase.newshell.parser.ShellLineParser;
 import org.apache.hadoop.hbase.testclassification.SmallTests;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.apache.hadoop.hbase.newshell.parser.ParsedCommand;
 
 @Tag(SmallTests.TAG)
 public class StatusCommandTest {
@@ -69,7 +70,7 @@ public class StatusCommandTest {
       .setMasterTasks(List.of()).setLiveServerMetrics(Map.of()).setDeadServerNames(List.of())
       .build();
 
-    var parsed = ShellLineParser.parse("status 'detailed'");
+    ParsedCommand parsed = ShellLineParser.parse("status 'detailed'");
     TextResult result = (TextResult) command.execute(parsed, contextFor(metrics));
 
     assertTrue(result.lines().contains("active master:  master.example.com:16000 1"));
@@ -84,7 +85,7 @@ public class StatusCommandTest {
       .setMasterCoprocessorNames(List.of()).setMasterTasks(List.of()).setLiveServerMetrics(Map.of())
       .setDeadServerNames(List.of()).build();
 
-    var parsed = ShellLineParser.parse("status 'detailed'");
+    ParsedCommand parsed = ShellLineParser.parse("status 'detailed'");
     TextResult result = (TextResult) command.execute(parsed, contextFor(metrics));
     List<String> lines = result.lines();
 
@@ -104,7 +105,7 @@ public class StatusCommandTest {
       .setLiveServerMetrics(Map.of(live, org.apache.hadoop.hbase.ServerMetricsBuilder.of(live)))
       .setDeadServerNames(List.of()).build();
 
-    var parsed = ShellLineParser.parse("status");
+    ParsedCommand parsed = ShellLineParser.parse("status");
     TextResult result = (TextResult) command.execute(parsed, contextFor(metrics));
 
     assertTrue(result.lines().get(0).startsWith("1 active master, 0 backup masters,"));
@@ -120,7 +121,7 @@ public class StatusCommandTest {
       .setBackerMasterNames(List.of()).setMasterCoprocessorNames(List.of())
       .setLiveServerMetrics(Map.of()).setDeadServerNames(List.of()).build();
 
-    var parsed = ShellLineParser.parse("status 'replication'");
+    ParsedCommand parsed = ShellLineParser.parse("status 'replication'");
     assertThrows(ShellCommandException.class, () -> command.execute(parsed, contextFor(metrics)));
   }
 }

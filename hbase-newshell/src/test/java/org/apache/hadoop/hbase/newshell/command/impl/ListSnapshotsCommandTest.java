@@ -34,6 +34,7 @@ import org.apache.hadoop.hbase.newshell.parser.ShellLineParser;
 import org.apache.hadoop.hbase.testclassification.SmallTests;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.apache.hadoop.hbase.newshell.parser.ParsedCommand;
 
 @Tag(SmallTests.TAG)
 public class ListSnapshotsCommandTest {
@@ -55,7 +56,7 @@ public class ListSnapshotsCommandTest {
 
   @Test
   public void listsSnapshotsWithDefaultRegex() throws Exception {
-    var parsed = ShellLineParser.parse("list_snapshots");
+    ParsedCommand parsed = ShellLineParser.parse("list_snapshots");
     TabularResult result = (TabularResult) command.execute(parsed, context);
 
     assertEquals(".*", admin.lastRegex);
@@ -69,7 +70,7 @@ public class ListSnapshotsCommandTest {
 
   @Test
   public void listsSnapshotsWithExplicitRegex() throws Exception {
-    var parsed = ShellLineParser.parse("list_snapshots 'snap.*'");
+    ParsedCommand parsed = ShellLineParser.parse("list_snapshots 'snap.*'");
     command.execute(parsed, context);
 
     assertEquals("snap.*", admin.lastRegex);

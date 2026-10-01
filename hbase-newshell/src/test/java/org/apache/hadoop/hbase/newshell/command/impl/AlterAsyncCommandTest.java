@@ -30,6 +30,7 @@ import org.apache.hadoop.hbase.newshell.parser.ShellLineParser;
 import org.apache.hadoop.hbase.testclassification.SmallTests;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.apache.hadoop.hbase.newshell.parser.ParsedCommand;
 
 @Tag(SmallTests.TAG)
 public class AlterAsyncCommandTest {
@@ -52,7 +53,7 @@ public class AlterAsyncCommandTest {
 
   @Test
   public void altersWithoutWaiting() throws Exception {
-    var parsed = ShellLineParser.parse("alter_async 't1', {NAME => 'f1', VERSIONS => 5}");
+    ParsedCommand parsed = ShellLineParser.parse("alter_async 't1', {NAME => 'f1', VERSIONS => 5}");
     command.execute(parsed, context);
 
     assertEquals("t1", admin.lastTableName);

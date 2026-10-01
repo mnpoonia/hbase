@@ -32,6 +32,7 @@ import org.apache.hadoop.hbase.newshell.parser.ShellLineParser;
 import org.apache.hadoop.hbase.testclassification.SmallTests;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.apache.hadoop.hbase.newshell.parser.ParsedCommand;
 
 @Tag(SmallTests.TAG)
 public class CatalogjanitorSwitchCommandTest {
@@ -53,7 +54,7 @@ public class CatalogjanitorSwitchCommandTest {
 
   @Test
   public void switchesCatalogJanitorAndReturnsPreviousState() throws Exception {
-    var parsed = ShellLineParser.parse("catalogjanitor_switch false");
+    ParsedCommand parsed = ShellLineParser.parse("catalogjanitor_switch false");
     TextResult result = (TextResult) command.execute(parsed, context);
 
     assertEquals(false, admin.lastEnabled);
@@ -62,7 +63,7 @@ public class CatalogjanitorSwitchCommandTest {
 
   @Test
   public void throwsWhenArgumentMissing() throws Exception {
-    var parsed = ShellLineParser.parse("catalogjanitor_switch");
+    ParsedCommand parsed = ShellLineParser.parse("catalogjanitor_switch");
     assertThrows(ShellCommandException.class, () -> command.execute(parsed, context));
   }
 }

@@ -30,6 +30,7 @@ import org.apache.hadoop.hbase.newshell.parser.ShellLineParser;
 import org.apache.hadoop.hbase.testclassification.SmallTests;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.apache.hadoop.hbase.newshell.parser.ParsedCommand;
 
 @Tag(SmallTests.TAG)
 public class ListDecommissionedRegionServersCommandTest {
@@ -52,7 +53,7 @@ public class ListDecommissionedRegionServersCommandTest {
   @Test
   public void listsDecommissionedServers() throws Exception {
     admin.decommissionedServers = List.of("host1,60020,123", "host2,60020,456");
-    var parsed = ShellLineParser.parse("list_decommissioned_regionservers");
+    ParsedCommand parsed = ShellLineParser.parse("list_decommissioned_regionservers");
     TabularResult result = (TabularResult) command.execute(parsed, context);
 
     assertEquals(List.of("DECOMMISSIONED REGION SERVERS"), result.header());
@@ -61,7 +62,7 @@ public class ListDecommissionedRegionServersCommandTest {
 
   @Test
   public void returnsEmptyTableWhenNoneDecommissioned() throws Exception {
-    var parsed = ShellLineParser.parse("list_decommissioned_regionservers");
+    ParsedCommand parsed = ShellLineParser.parse("list_decommissioned_regionservers");
     TabularResult result = (TabularResult) command.execute(parsed, context);
 
     assertEquals(List.of(), result.rows());

@@ -30,6 +30,7 @@ import org.apache.hadoop.hbase.newshell.parser.ShellLineParser;
 import org.apache.hadoop.hbase.testclassification.SmallTests;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.apache.hadoop.hbase.newshell.parser.ParsedCommand;
 
 @Tag(SmallTests.TAG)
 public class AssignCommandTest {
@@ -50,7 +51,7 @@ public class AssignCommandTest {
 
   @Test
   public void assignsRegion() throws Exception {
-    var parsed = ShellLineParser.parse("assign 'abcdef1234567890'");
+    ParsedCommand parsed = ShellLineParser.parse("assign 'abcdef1234567890'");
     command.execute(parsed, context);
 
     assertEquals("abcdef1234567890", admin.lastRegionName);
@@ -58,7 +59,7 @@ public class AssignCommandTest {
 
   @Test
   public void throwsWhenRegionNameMissing() throws Exception {
-    var parsed = ShellLineParser.parse("assign");
+    ParsedCommand parsed = ShellLineParser.parse("assign");
     assertThrows(ShellCommandException.class, () -> command.execute(parsed, context));
   }
 }

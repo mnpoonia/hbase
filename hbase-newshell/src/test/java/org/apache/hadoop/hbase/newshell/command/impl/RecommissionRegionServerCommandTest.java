@@ -32,6 +32,7 @@ import org.apache.hadoop.hbase.newshell.parser.ShellLineParser;
 import org.apache.hadoop.hbase.testclassification.SmallTests;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.apache.hadoop.hbase.newshell.parser.ParsedCommand;
 
 @Tag(SmallTests.TAG)
 public class RecommissionRegionServerCommandTest {
@@ -54,7 +55,7 @@ public class RecommissionRegionServerCommandTest {
 
   @Test
   public void recommissionsServerWithNoRegions() throws Exception {
-    var parsed = ShellLineParser.parse("recommission_regionserver 'host1,60020,123'");
+    ParsedCommand parsed = ShellLineParser.parse("recommission_regionserver 'host1,60020,123'");
     TextResult result = (TextResult) command.execute(parsed, context);
 
     assertEquals("host1,60020,123", admin.lastHostOrServer);
@@ -64,7 +65,7 @@ public class RecommissionRegionServerCommandTest {
 
   @Test
   public void recommissionsServerWithRegions() throws Exception {
-    var parsed = ShellLineParser.parse("recommission_regionserver 'host1', ['region1', 'region2']");
+    ParsedCommand parsed = ShellLineParser.parse("recommission_regionserver 'host1', ['region1', 'region2']");
     command.execute(parsed, context);
 
     assertEquals("host1", admin.lastHostOrServer);
@@ -73,7 +74,7 @@ public class RecommissionRegionServerCommandTest {
 
   @Test
   public void throwsWhenServerNameMissing() throws Exception {
-    var parsed = ShellLineParser.parse("recommission_regionserver");
+    ParsedCommand parsed = ShellLineParser.parse("recommission_regionserver");
     assertThrows(ShellCommandException.class, () -> command.execute(parsed, context));
   }
 }

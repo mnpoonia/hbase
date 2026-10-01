@@ -34,6 +34,7 @@ import org.apache.hadoop.hbase.newshell.parser.ShellLineParser;
 import org.apache.hadoop.hbase.testclassification.SmallTests;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.apache.hadoop.hbase.newshell.parser.ParsedCommand;
 
 @Tag(SmallTests.TAG)
 public class GetSplitsCommandTest {
@@ -68,7 +69,7 @@ public class GetSplitsCommandTest {
 
   @Test
   public void printsTotalSplitsAndPoints() throws Exception {
-    var parsed = ShellLineParser.parse("get_splits 't1'");
+    ParsedCommand parsed = ShellLineParser.parse("get_splits 't1'");
     TextResult result = (TextResult) command.execute(parsed, context);
 
     assertEquals("t1", tables.lastTableName);
@@ -77,7 +78,7 @@ public class GetSplitsCommandTest {
 
   @Test
   public void throwsWhenTableNameMissing() throws Exception {
-    var parsed = ShellLineParser.parse("get_splits");
+    ParsedCommand parsed = ShellLineParser.parse("get_splits");
     assertThrows(ShellCommandException.class, () -> command.execute(parsed, context));
   }
 }

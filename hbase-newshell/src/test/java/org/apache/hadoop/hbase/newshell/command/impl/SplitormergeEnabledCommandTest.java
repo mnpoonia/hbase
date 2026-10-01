@@ -32,6 +32,7 @@ import org.apache.hadoop.hbase.newshell.parser.ShellLineParser;
 import org.apache.hadoop.hbase.testclassification.SmallTests;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.apache.hadoop.hbase.newshell.parser.ParsedCommand;
 
 @Tag(SmallTests.TAG)
 public class SplitormergeEnabledCommandTest {
@@ -53,7 +54,7 @@ public class SplitormergeEnabledCommandTest {
 
   @Test
   public void reportsSplitState() throws Exception {
-    var parsed = ShellLineParser.parse("splitormerge_enabled 'SPLIT'");
+    ParsedCommand parsed = ShellLineParser.parse("splitormerge_enabled 'SPLIT'");
     TextResult result = (TextResult) command.execute(parsed, context);
 
     assertEquals("SPLIT", admin.lastSwitchType);
@@ -62,7 +63,7 @@ public class SplitormergeEnabledCommandTest {
 
   @Test
   public void throwsWhenArgumentMissing() throws Exception {
-    var parsed = ShellLineParser.parse("splitormerge_enabled");
+    ParsedCommand parsed = ShellLineParser.parse("splitormerge_enabled");
     assertThrows(ShellCommandException.class, () -> command.execute(parsed, context));
   }
 }

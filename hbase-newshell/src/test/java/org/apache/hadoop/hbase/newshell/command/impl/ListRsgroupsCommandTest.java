@@ -31,6 +31,7 @@ import org.apache.hadoop.hbase.newshell.parser.ShellLineParser;
 import org.apache.hadoop.hbase.testclassification.SmallTests;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.apache.hadoop.hbase.newshell.parser.ParsedCommand;
 
 @Tag(SmallTests.TAG)
 public class ListRsgroupsCommandTest {
@@ -53,7 +54,7 @@ public class ListRsgroupsCommandTest {
 
   @Test
   public void listsGroupsWithServersAndTables() throws Exception {
-    var parsed = ShellLineParser.parse("list_rsgroups");
+    ParsedCommand parsed = ShellLineParser.parse("list_rsgroups");
     TabularResult result = (TabularResult) command.execute(parsed, context);
 
     assertEquals(".*", admin.lastRegex);

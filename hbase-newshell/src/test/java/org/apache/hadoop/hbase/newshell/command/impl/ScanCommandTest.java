@@ -38,6 +38,7 @@ import org.apache.hadoop.hbase.newshell.parser.ShellLineParser;
 import org.apache.hadoop.hbase.testclassification.SmallTests;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.apache.hadoop.hbase.newshell.parser.ParsedCommand;
 
 @Tag(SmallTests.TAG)
 public class ScanCommandTest {
@@ -76,7 +77,7 @@ public class ScanCommandTest {
 
   @Test
   public void scansTable() throws Exception {
-    var parsed = ShellLineParser.parse("scan 't1', {LIMIT => 10}");
+    ParsedCommand parsed = ShellLineParser.parse("scan 't1', {LIMIT => 10}");
     TabularResult result = (TabularResult) command.execute(parsed, context);
 
     assertEquals("t1", tables.lastTableName);
@@ -88,7 +89,7 @@ public class ScanCommandTest {
 
   @Test
   public void throwsWhenTableNameMissing() throws Exception {
-    var parsed = ShellLineParser.parse("scan");
+    ParsedCommand parsed = ShellLineParser.parse("scan");
     assertThrows(ShellCommandException.class, () -> command.execute(parsed, context));
   }
 }

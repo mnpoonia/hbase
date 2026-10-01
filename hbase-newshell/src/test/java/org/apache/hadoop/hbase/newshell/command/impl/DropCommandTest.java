@@ -32,6 +32,7 @@ import org.apache.hadoop.hbase.newshell.parser.ShellLineParser;
 import org.apache.hadoop.hbase.testclassification.SmallTests;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.apache.hadoop.hbase.newshell.parser.ParsedCommand;
 
 @Tag(SmallTests.TAG)
 public class DropCommandTest {
@@ -52,7 +53,7 @@ public class DropCommandTest {
 
   @Test
   public void dropsNamedTable() throws Exception {
-    var parsed = ShellLineParser.parse("drop 't1'");
+    ParsedCommand parsed = ShellLineParser.parse("drop 't1'");
     TextResult result = (TextResult) command.execute(parsed, context);
 
     assertEquals("t1", admin.lastDroppedTable);
@@ -61,7 +62,7 @@ public class DropCommandTest {
 
   @Test
   public void throwsWhenTableNameMissing() throws Exception {
-    var parsed = ShellLineParser.parse("drop");
+    ParsedCommand parsed = ShellLineParser.parse("drop");
     assertThrows(ShellCommandException.class, () -> command.execute(parsed, context));
   }
 }

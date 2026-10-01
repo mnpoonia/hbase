@@ -42,7 +42,7 @@ public class ShowRsgroupConfigCommandTest {
     @Override public List<List<String>> showRsGroupConfig(String g){ return List.of(List.of("k","v")); }
   }
   @Test public void runs() throws Exception {
-    var r=(TabularResult)new ShowRsgroupConfigCommand().execute(ShellLineParser.parse("show_rsgroup_config 'g'"),
+    TabularResult r=(TabularResult)new ShowRsgroupConfigCommand().execute(ShellLineParser.parse("show_rsgroup_config 'g'"),
       new ExecutionContext(new Rec(),new StubShellTableFactory(),new PrintWriter(new StringWriter())));
     assertEquals(List.of(List.of("k","v")), r.rows());
   }

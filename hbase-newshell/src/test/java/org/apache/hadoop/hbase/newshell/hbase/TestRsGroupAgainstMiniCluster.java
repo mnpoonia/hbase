@@ -35,6 +35,7 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.apache.hadoop.conf.Configuration;
 
 /**
  * End-to-end verification of {@link DefaultShellAdmin#getRsGroup} and
@@ -48,7 +49,7 @@ public class TestRsGroupAgainstMiniCluster {
 
   @BeforeAll
   public static void setUpBeforeClass() throws Exception {
-    var conf = TEST_UTIL.getConfiguration();
+    Configuration conf = TEST_UTIL.getConfiguration();
     conf.set("hbase.master.loadbalancer.class", RSGroupBasedLoadBalancer.class.getName());
     conf.setBoolean(RSGroupUtil.RS_GROUP_ENABLED, true);
     conf.set("hbase.coprocessor.master.classes", RSGroupAdminEndpoint.class.getName());

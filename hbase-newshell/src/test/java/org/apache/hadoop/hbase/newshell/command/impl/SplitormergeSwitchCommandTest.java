@@ -32,6 +32,7 @@ import org.apache.hadoop.hbase.newshell.parser.ShellLineParser;
 import org.apache.hadoop.hbase.testclassification.SmallTests;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.apache.hadoop.hbase.newshell.parser.ParsedCommand;
 
 @Tag(SmallTests.TAG)
 public class SplitormergeSwitchCommandTest {
@@ -55,7 +56,7 @@ public class SplitormergeSwitchCommandTest {
 
   @Test
   public void switchesSplitAndReturnsPreviousState() throws Exception {
-    var parsed = ShellLineParser.parse("splitormerge_switch 'SPLIT', false");
+    ParsedCommand parsed = ShellLineParser.parse("splitormerge_switch 'SPLIT', false");
     TextResult result = (TextResult) command.execute(parsed, context);
 
     assertEquals("SPLIT", admin.lastSwitchType);
@@ -65,7 +66,7 @@ public class SplitormergeSwitchCommandTest {
 
   @Test
   public void throwsWhenArgumentMissing() throws Exception {
-    var parsed = ShellLineParser.parse("splitormerge_switch 'SPLIT'");
+    ParsedCommand parsed = ShellLineParser.parse("splitormerge_switch 'SPLIT'");
     assertThrows(ShellCommandException.class, () -> command.execute(parsed, context));
   }
 }

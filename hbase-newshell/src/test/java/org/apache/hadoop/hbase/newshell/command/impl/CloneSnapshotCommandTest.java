@@ -33,6 +33,7 @@ import org.apache.hadoop.hbase.newshell.parser.ShellLineParser;
 import org.apache.hadoop.hbase.testclassification.SmallTests;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.apache.hadoop.hbase.newshell.parser.ParsedCommand;
 
 @Tag(SmallTests.TAG)
 public class CloneSnapshotCommandTest {
@@ -60,7 +61,7 @@ public class CloneSnapshotCommandTest {
 
   @Test
   public void clonesWithoutOptions() throws Exception {
-    var parsed = ShellLineParser.parse("clone_snapshot 'snap1', 't1'");
+    ParsedCommand parsed = ShellLineParser.parse("clone_snapshot 'snap1', 't1'");
     command.execute(parsed, context);
 
     assertEquals("snap1", admin.lastSnapshotName);
@@ -71,7 +72,7 @@ public class CloneSnapshotCommandTest {
 
   @Test
   public void clonesWithRestoreAclAndCloneSft() throws Exception {
-    var parsed =
+    ParsedCommand parsed =
       ShellLineParser.parse("clone_snapshot 'snap1', 't1', {RESTORE_ACL=>true, CLONE_SFT=>'FILE'}");
     command.execute(parsed, context);
 
@@ -81,7 +82,7 @@ public class CloneSnapshotCommandTest {
 
   @Test
   public void throwsWhenTableNameMissing() throws Exception {
-    var parsed = ShellLineParser.parse("clone_snapshot 'snap1'");
+    ParsedCommand parsed = ShellLineParser.parse("clone_snapshot 'snap1'");
     assertThrows(ShellCommandException.class, () -> command.execute(parsed, context));
   }
 }

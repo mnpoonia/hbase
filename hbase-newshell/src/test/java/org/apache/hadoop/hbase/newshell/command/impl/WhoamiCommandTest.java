@@ -31,6 +31,7 @@ import org.apache.hadoop.hbase.security.User;
 import org.apache.hadoop.hbase.testclassification.SmallTests;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.apache.hadoop.hbase.newshell.parser.ParsedCommand;
 
 @Tag(SmallTests.TAG)
 public class WhoamiCommandTest {
@@ -40,7 +41,7 @@ public class WhoamiCommandTest {
 
   @Test
   public void printsCurrentUser() throws Exception {
-    var parsed = ShellLineParser.parse("whoami");
+    ParsedCommand parsed = ShellLineParser.parse("whoami");
     TextResult result = (TextResult) command.execute(parsed, context);
 
     assertTrue(result.lines().get(0).contains(User.getCurrent().getName()));

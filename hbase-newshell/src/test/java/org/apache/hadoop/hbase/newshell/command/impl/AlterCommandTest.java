@@ -33,6 +33,7 @@ import org.apache.hadoop.hbase.newshell.parser.ShellLineParser;
 import org.apache.hadoop.hbase.testclassification.SmallTests;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.apache.hadoop.hbase.newshell.parser.ParsedCommand;
 
 @Tag(SmallTests.TAG)
 public class AlterCommandTest {
@@ -55,7 +56,7 @@ public class AlterCommandTest {
 
   @Test
   public void altersColumnFamilyAttributes() throws Exception {
-    var parsed = ShellLineParser.parse("alter 't1', {NAME => 'f1', TTL => 100}");
+    ParsedCommand parsed = ShellLineParser.parse("alter 't1', {NAME => 'f1', TTL => 100}");
     TextResult result = (TextResult) command.execute(parsed, context);
 
     assertEquals("t1", admin.lastAlteredTable);
@@ -66,7 +67,7 @@ public class AlterCommandTest {
 
   @Test
   public void altersMultipleColumnFamilies() throws Exception {
-    var parsed = ShellLineParser
+    ParsedCommand parsed = ShellLineParser
       .parse("alter 't1', {NAME => 'f1', TTL => 100}, {NAME => 'f2', VERSIONS => 3}");
     command.execute(parsed, context);
 
@@ -75,7 +76,7 @@ public class AlterCommandTest {
 
   @Test
   public void throwsWhenNoFamilySpecGiven() throws Exception {
-    var parsed = ShellLineParser.parse("alter 't1'");
+    ParsedCommand parsed = ShellLineParser.parse("alter 't1'");
     assertThrows(ShellCommandException.class, () -> command.execute(parsed, context));
   }
 }

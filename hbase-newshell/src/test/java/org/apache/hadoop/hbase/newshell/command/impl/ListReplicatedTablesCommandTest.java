@@ -47,7 +47,7 @@ public class ListReplicatedTablesCommandTest {
     new ExecutionContext(admin, new StubShellTableFactory(), new PrintWriter(new StringWriter()));
   @Test
   public void runs() throws Exception {
-    var result = (TabularResult) command.execute(ShellLineParser.parse("list_replicated_tables"), context);
+    TabularResult result = (TabularResult) command.execute(ShellLineParser.parse("list_replicated_tables"), context);
     assertEquals(List.of(List.of("t:cf", "GLOBAL")), result.rows());
   }
 }

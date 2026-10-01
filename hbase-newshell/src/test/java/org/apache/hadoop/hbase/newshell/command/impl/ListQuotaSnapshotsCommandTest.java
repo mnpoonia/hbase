@@ -48,9 +48,9 @@ public class ListQuotaSnapshotsCommandTest {
 
   @Test
   public void listsSnapshotsWithFilter() throws Exception {
-    var command = new ListQuotaSnapshotsCommand();
-    var admin = new RecordingShellAdmin();
-    var context =
+    ListQuotaSnapshotsCommand command = new ListQuotaSnapshotsCommand();
+    RecordingShellAdmin admin = new RecordingShellAdmin();
+    ExecutionContext context =
       new ExecutionContext(admin, new StubShellTableFactory(), new PrintWriter(new StringWriter()));
     TabularResult result = (TabularResult) command
       .execute(ShellLineParser.parse("list_quota_snapshots {TABLE => 't1'}"), context);

@@ -46,7 +46,7 @@ public class ListDeadserversCommandTest {
 
   @Test
   public void lists() throws Exception {
-    var result =
+    TabularResult result =
       (TabularResult) command.execute(ShellLineParser.parse("list_deadservers"), context);
     assertEquals(List.of("SERVERNAME"), result.header());
     assertEquals(List.of(List.of("s1")), result.rows());

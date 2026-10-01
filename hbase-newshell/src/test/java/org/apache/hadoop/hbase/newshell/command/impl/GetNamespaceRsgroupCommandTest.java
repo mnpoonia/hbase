@@ -42,7 +42,7 @@ public class GetNamespaceRsgroupCommandTest {
     @Override public String getNamespaceRsGroup(String ns){ return "g1"; }
   }
   @Test public void runs() throws Exception {
-    var r=(TabularResult)new GetNamespaceRsgroupCommand().execute(ShellLineParser.parse("get_namespace_rsgroup 'ns1'"),
+    TabularResult r=(TabularResult)new GetNamespaceRsgroupCommand().execute(ShellLineParser.parse("get_namespace_rsgroup 'ns1'"),
       new ExecutionContext(new Rec(),new StubShellTableFactory(),new PrintWriter(new StringWriter())));
     assertEquals(List.of(List.of("g1")), r.rows());
   }

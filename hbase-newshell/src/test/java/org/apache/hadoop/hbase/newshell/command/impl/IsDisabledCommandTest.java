@@ -30,6 +30,7 @@ import org.apache.hadoop.hbase.newshell.parser.ShellLineParser;
 import org.apache.hadoop.hbase.testclassification.SmallTests;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.apache.hadoop.hbase.newshell.parser.ParsedCommand;
 
 @Tag(SmallTests.TAG)
 public class IsDisabledCommandTest {
@@ -53,7 +54,7 @@ public class IsDisabledCommandTest {
   @Test
   public void reportsDisabled() throws Exception {
     admin.disabled = true;
-    var parsed = ShellLineParser.parse("is_disabled 't1'");
+    ParsedCommand parsed = ShellLineParser.parse("is_disabled 't1'");
     TextResult result = (TextResult) command.execute(parsed, context);
 
     assertEquals("t1", admin.lastTableName);
@@ -63,7 +64,7 @@ public class IsDisabledCommandTest {
   @Test
   public void reportsEnabled() throws Exception {
     admin.disabled = false;
-    var parsed = ShellLineParser.parse("is_disabled 't1'");
+    ParsedCommand parsed = ShellLineParser.parse("is_disabled 't1'");
     TextResult result = (TextResult) command.execute(parsed, context);
 
     assertEquals(List.of("false"), result.lines());

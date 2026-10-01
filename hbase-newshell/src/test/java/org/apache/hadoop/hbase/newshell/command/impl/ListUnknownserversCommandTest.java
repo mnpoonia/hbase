@@ -46,7 +46,7 @@ public class ListUnknownserversCommandTest {
 
   @Test
   public void lists() throws Exception {
-    var result =
+    TabularResult result =
       (TabularResult) command.execute(ShellLineParser.parse("list_unknownservers"), context);
     assertEquals(List.of(List.of("u1")), result.rows());
   }

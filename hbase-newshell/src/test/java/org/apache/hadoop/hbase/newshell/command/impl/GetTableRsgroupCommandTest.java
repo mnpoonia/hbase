@@ -42,7 +42,7 @@ public class GetTableRsgroupCommandTest {
     @Override public String getRsGroupOfTable(String n){ return "g1"; }
   }
   @Test public void runs() throws Exception {
-    var r=(TabularResult)new GetTableRsgroupCommand().execute(ShellLineParser.parse("get_table_rsgroup 'x'"),
+    TabularResult r=(TabularResult)new GetTableRsgroupCommand().execute(ShellLineParser.parse("get_table_rsgroup 'x'"),
       new ExecutionContext(new Rec(),new StubShellTableFactory(),new PrintWriter(new StringWriter())));
     assertEquals(List.of(List.of("g1")), r.rows());
   }

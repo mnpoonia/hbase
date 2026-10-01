@@ -34,6 +34,7 @@ import org.apache.hadoop.hbase.newshell.parser.ShellLineParser;
 import org.apache.hadoop.hbase.testclassification.SmallTests;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.apache.hadoop.hbase.newshell.parser.ParsedCommand;
 
 @Tag(SmallTests.TAG)
 public class ListTableSnapshotsCommandTest {
@@ -57,7 +58,7 @@ public class ListTableSnapshotsCommandTest {
 
   @Test
   public void listsWithDefaultSnapshotRegex() throws Exception {
-    var parsed = ShellLineParser.parse("list_table_snapshots 't.*'");
+    ParsedCommand parsed = ShellLineParser.parse("list_table_snapshots 't.*'");
     TabularResult result = (TabularResult) command.execute(parsed, context);
     assertEquals("t.*", admin.tableRegex);
     assertEquals(".*", admin.snapshotRegex);
@@ -67,7 +68,7 @@ public class ListTableSnapshotsCommandTest {
 
   @Test
   public void listsWithExplicitSnapshotRegex() throws Exception {
-    var parsed = ShellLineParser.parse("list_table_snapshots 't.*', 's.*'");
+    ParsedCommand parsed = ShellLineParser.parse("list_table_snapshots 't.*', 's.*'");
     command.execute(parsed, context);
     assertEquals("t.*", admin.tableRegex);
     assertEquals("s.*", admin.snapshotRegex);
@@ -75,7 +76,7 @@ public class ListTableSnapshotsCommandTest {
 
   @Test
   public void throwsWhenTableRegexMissing() throws Exception {
-    var parsed = ShellLineParser.parse("list_table_snapshots");
+    ParsedCommand parsed = ShellLineParser.parse("list_table_snapshots");
     assertThrows(ShellCommandException.class, () -> command.execute(parsed, context));
   }
 }

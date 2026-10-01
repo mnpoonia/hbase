@@ -32,6 +32,7 @@ import org.apache.hadoop.hbase.newshell.parser.ShellLineParser;
 import org.apache.hadoop.hbase.testclassification.SmallTests;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.apache.hadoop.hbase.newshell.parser.ParsedCommand;
 
 @Tag(SmallTests.TAG)
 public class ChangeSftAllCommandTest {
@@ -59,7 +60,7 @@ public class ChangeSftAllCommandTest {
 
   @Test
   public void changesSftForAllMatchingTables() throws Exception {
-    var parsed = ShellLineParser.parse("change_sft_all 't.*', 'FILE'");
+    ParsedCommand parsed = ShellLineParser.parse("change_sft_all 't.*', 'FILE'");
     command.execute(parsed, context);
 
     assertEquals("t.*", admin.lastTableRegex);
@@ -68,7 +69,7 @@ public class ChangeSftAllCommandTest {
 
   @Test
   public void throwsWhenArgCountWrong() throws Exception {
-    var parsed = ShellLineParser.parse("change_sft_all 't.*'");
+    ParsedCommand parsed = ShellLineParser.parse("change_sft_all 't.*'");
     assertThrows(ShellCommandException.class, () -> command.execute(parsed, context));
   }
 }

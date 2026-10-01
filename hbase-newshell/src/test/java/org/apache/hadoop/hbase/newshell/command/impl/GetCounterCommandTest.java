@@ -34,6 +34,7 @@ import org.apache.hadoop.hbase.newshell.parser.ShellLineParser;
 import org.apache.hadoop.hbase.testclassification.SmallTests;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.apache.hadoop.hbase.newshell.parser.ParsedCommand;
 
 @Tag(SmallTests.TAG)
 public class GetCounterCommandTest {
@@ -68,7 +69,7 @@ public class GetCounterCommandTest {
   @Test
   public void printsCounterValue() throws Exception {
     table.counter = 5L;
-    var parsed = ShellLineParser.parse("get_counter 't1', 'r1', 'f1:c1'");
+    ParsedCommand parsed = ShellLineParser.parse("get_counter 't1', 'r1', 'f1:c1'");
     TextResult result = (TextResult) command.execute(parsed, context);
 
     assertEquals(List.of("COUNTER VALUE = 5"), result.lines());
@@ -77,7 +78,7 @@ public class GetCounterCommandTest {
   @Test
   public void printsNoCounterFoundWhenMissing() throws Exception {
     table.counter = null;
-    var parsed = ShellLineParser.parse("get_counter 't1', 'r1', 'f1:c1'");
+    ParsedCommand parsed = ShellLineParser.parse("get_counter 't1', 'r1', 'f1:c1'");
     TextResult result = (TextResult) command.execute(parsed, context);
 
     assertEquals(List.of("No counter found at specified coordinates"), result.lines());
@@ -85,7 +86,7 @@ public class GetCounterCommandTest {
 
   @Test
   public void throwsWhenColumnMissing() throws Exception {
-    var parsed = ShellLineParser.parse("get_counter 't1', 'r1'");
+    ParsedCommand parsed = ShellLineParser.parse("get_counter 't1', 'r1'");
     assertThrows(ShellCommandException.class, () -> command.execute(parsed, context));
   }
 }

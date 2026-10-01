@@ -31,6 +31,7 @@ import org.apache.hadoop.hbase.newshell.parser.ShellLineParser;
 import org.apache.hadoop.hbase.testclassification.SmallTests;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.apache.hadoop.hbase.newshell.command.CommandResult;
 
 @Tag(SmallTests.TAG)
 public class ClearDeadserversCommandTest {
@@ -51,7 +52,7 @@ public class ClearDeadserversCommandTest {
 
   @Test
   public void clearsAll() throws Exception {
-    var result = command.execute(ShellLineParser.parse("clear_deadservers"), context);
+    CommandResult result = command.execute(ShellLineParser.parse("clear_deadservers"), context);
     assertTrue(admin.last.isEmpty());
     assertEquals("true", ((TextResult) result).lines().get(0));
   }

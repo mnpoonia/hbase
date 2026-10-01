@@ -48,8 +48,8 @@ public class DisableRpcThrottleCommandTest {
 
   @Test
   public void disables() throws Exception {
-    var admin = new RecordingShellAdmin();
-    var context =
+    RecordingShellAdmin admin = new RecordingShellAdmin();
+    ExecutionContext context =
       new ExecutionContext(admin, new StubShellTableFactory(), new PrintWriter(new StringWriter()));
     TextResult result = (TextResult) new DisableRpcThrottleCommand()
       .execute(ShellLineParser.parse("disable_rpc_throttle"), context);

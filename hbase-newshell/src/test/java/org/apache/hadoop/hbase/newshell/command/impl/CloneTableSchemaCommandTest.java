@@ -30,6 +30,7 @@ import org.apache.hadoop.hbase.newshell.parser.ShellLineParser;
 import org.apache.hadoop.hbase.testclassification.SmallTests;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.apache.hadoop.hbase.newshell.parser.ParsedCommand;
 
 @Tag(SmallTests.TAG)
 public class CloneTableSchemaCommandTest {
@@ -54,7 +55,7 @@ public class CloneTableSchemaCommandTest {
 
   @Test
   public void defaultsToPreservingSplits() throws Exception {
-    var parsed = ShellLineParser.parse("clone_table_schema 't1', 't2'");
+    ParsedCommand parsed = ShellLineParser.parse("clone_table_schema 't1', 't2'");
     command.execute(parsed, context);
 
     assertEquals("t1", admin.lastTableName);
@@ -64,7 +65,7 @@ public class CloneTableSchemaCommandTest {
 
   @Test
   public void canDisablePreservingSplits() throws Exception {
-    var parsed = ShellLineParser.parse("clone_table_schema 't1', 't2', false");
+    ParsedCommand parsed = ShellLineParser.parse("clone_table_schema 't1', 't2', false");
     command.execute(parsed, context);
 
     assertFalse(admin.lastPreserveSplits);

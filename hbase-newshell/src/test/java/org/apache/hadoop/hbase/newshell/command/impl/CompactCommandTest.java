@@ -33,6 +33,7 @@ import org.apache.hadoop.hbase.newshell.parser.ShellLineParser;
 import org.apache.hadoop.hbase.testclassification.SmallTests;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.apache.hadoop.hbase.newshell.parser.ParsedCommand;
 
 @Tag(SmallTests.TAG)
 public class CompactCommandTest {
@@ -57,7 +58,7 @@ public class CompactCommandTest {
 
   @Test
   public void compactsTableWithNoFamilyOrType() throws Exception {
-    var parsed = ShellLineParser.parse("compact 't1'");
+    ParsedCommand parsed = ShellLineParser.parse("compact 't1'");
     TextResult result = (TextResult) command.execute(parsed, context);
 
     assertEquals("t1", admin.lastTableOrRegionName);
@@ -68,7 +69,7 @@ public class CompactCommandTest {
 
   @Test
   public void compactsFamilyWithType() throws Exception {
-    var parsed = ShellLineParser.parse("compact 't1', 'c1', 'MOB'");
+    ParsedCommand parsed = ShellLineParser.parse("compact 't1', 'c1', 'MOB'");
     command.execute(parsed, context);
 
     assertEquals("t1", admin.lastTableOrRegionName);
@@ -78,7 +79,7 @@ public class CompactCommandTest {
 
   @Test
   public void throwsWhenTableOrRegionNameMissing() throws Exception {
-    var parsed = ShellLineParser.parse("compact");
+    ParsedCommand parsed = ShellLineParser.parse("compact");
     assertThrows(ShellCommandException.class, () -> command.execute(parsed, context));
   }
 }

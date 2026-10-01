@@ -32,6 +32,7 @@ import org.apache.hadoop.hbase.newshell.parser.ShellLineParser;
 import org.apache.hadoop.hbase.testclassification.SmallTests;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.apache.hadoop.hbase.newshell.parser.ParsedCommand;
 
 @Tag(SmallTests.TAG)
 public class ListRegionsCommandTest {
@@ -56,7 +57,7 @@ public class ListRegionsCommandTest {
   public void reportsPipeAlignedRegionRows() throws Exception {
     admin.view = new ListRegionsView(List.of(),
       List.of(List.of("host1:1234", "t1,,123.abc.", "", "", "0", "0", "1.0")));
-    var parsed = ShellLineParser.parse("list_regions 't1'");
+    ParsedCommand parsed = ShellLineParser.parse("list_regions 't1'");
     TextResult result = (TextResult) command.execute(parsed, context);
 
     assertEquals("t1", admin.lastTableName);
@@ -74,7 +75,7 @@ public class ListRegionsCommandTest {
     admin.view = new ListRegionsView(
       List.of("Can not find all details for region: t1,,123.abc. , it may be disabled or in transition"),
       List.of(List.of("host1:1234", "t1,,123.abc.", "", "", "", "", "")));
-    var parsed = ShellLineParser.parse("list_regions 't1'");
+    ParsedCommand parsed = ShellLineParser.parse("list_regions 't1'");
     TextResult result = (TextResult) command.execute(parsed, context);
 
     assertTrue(result.lines().get(0).startsWith("Can not find all details"));

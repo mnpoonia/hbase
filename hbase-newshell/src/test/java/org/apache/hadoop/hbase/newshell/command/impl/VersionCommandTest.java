@@ -31,6 +31,7 @@ import org.apache.hadoop.hbase.testclassification.SmallTests;
 import org.apache.hadoop.hbase.util.VersionInfo;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.apache.hadoop.hbase.newshell.parser.ParsedCommand;
 
 @Tag(SmallTests.TAG)
 public class VersionCommandTest {
@@ -40,7 +41,7 @@ public class VersionCommandTest {
 
   @Test
   public void printsClientVersion() throws Exception {
-    var parsed = ShellLineParser.parse("version");
+    ParsedCommand parsed = ShellLineParser.parse("version");
     TextResult result = (TextResult) command.execute(parsed, context);
 
     assertEquals(1, result.lines().size());

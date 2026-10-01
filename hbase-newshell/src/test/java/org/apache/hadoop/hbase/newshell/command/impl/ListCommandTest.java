@@ -30,6 +30,7 @@ import org.apache.hadoop.hbase.newshell.parser.ShellLineParser;
 import org.apache.hadoop.hbase.testclassification.SmallTests;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.apache.hadoop.hbase.newshell.parser.ParsedCommand;
 
 @Tag(SmallTests.TAG)
 public class ListCommandTest {
@@ -53,7 +54,7 @@ public class ListCommandTest {
   @Test
   public void listsAllTablesWhenNoRegexGiven() throws Exception {
     admin.tableNames = List.of("t1", "t2");
-    var parsed = ShellLineParser.parse("list");
+    ParsedCommand parsed = ShellLineParser.parse("list");
     TabularResult result = (TabularResult) command.execute(parsed, context);
 
     assertEquals(".*", admin.lastRegex);
@@ -64,7 +65,7 @@ public class ListCommandTest {
   @Test
   public void passesRegexThrough() throws Exception {
     admin.tableNames = List.of("abc1");
-    var parsed = ShellLineParser.parse("list 'abc.*'");
+    ParsedCommand parsed = ShellLineParser.parse("list 'abc.*'");
     command.execute(parsed, context);
 
     assertEquals("abc.*", admin.lastRegex);

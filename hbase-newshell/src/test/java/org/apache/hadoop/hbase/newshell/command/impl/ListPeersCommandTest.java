@@ -31,6 +31,7 @@ import org.apache.hadoop.hbase.newshell.parser.ShellLineParser;
 import org.apache.hadoop.hbase.testclassification.SmallTests;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.apache.hadoop.hbase.newshell.parser.ParsedCommand;
 
 @Tag(SmallTests.TAG)
 public class ListPeersCommandTest {
@@ -50,7 +51,7 @@ public class ListPeersCommandTest {
 
   @Test
   public void listsConfiguredPeers() throws Exception {
-    var parsed = ShellLineParser.parse("list_peers");
+    ParsedCommand parsed = ShellLineParser.parse("list_peers");
     TabularResult result = (TabularResult) command.execute(parsed, context);
 
     assertEquals(List.of("PEER_ID", "CLUSTER_KEY", "ENDPOINT_CLASSNAME", "REMOTE_ROOT_DIR",

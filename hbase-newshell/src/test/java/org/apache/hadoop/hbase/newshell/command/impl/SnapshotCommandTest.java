@@ -32,6 +32,7 @@ import org.apache.hadoop.hbase.newshell.parser.ShellLineParser;
 import org.apache.hadoop.hbase.testclassification.SmallTests;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.apache.hadoop.hbase.newshell.parser.ParsedCommand;
 
 @Tag(SmallTests.TAG)
 public class SnapshotCommandTest {
@@ -54,7 +55,7 @@ public class SnapshotCommandTest {
 
   @Test
   public void takesSnapshotOfTable() throws Exception {
-    var parsed = ShellLineParser.parse("snapshot 't1', 'snap1'");
+    ParsedCommand parsed = ShellLineParser.parse("snapshot 't1', 'snap1'");
     TextResult result = (TextResult) command.execute(parsed, context);
 
     assertEquals("t1", admin.lastTableName);
@@ -64,7 +65,7 @@ public class SnapshotCommandTest {
 
   @Test
   public void throwsWhenSnapshotNameMissing() throws Exception {
-    var parsed = ShellLineParser.parse("snapshot 't1'");
+    ParsedCommand parsed = ShellLineParser.parse("snapshot 't1'");
     assertThrows(ShellCommandException.class, () -> command.execute(parsed, context));
   }
 }

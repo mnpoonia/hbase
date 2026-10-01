@@ -46,7 +46,7 @@ public class ListLiveserversCommandTest {
 
   @Test
   public void lists() throws Exception {
-    var result =
+    TabularResult result =
       (TabularResult) command.execute(ShellLineParser.parse("list_liveservers"), context);
     assertEquals(List.of(List.of("live1")), result.rows());
   }

@@ -30,6 +30,7 @@ import org.apache.hadoop.hbase.newshell.parser.ShellLineParser;
 import org.apache.hadoop.hbase.testclassification.SmallTests;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.apache.hadoop.hbase.newshell.parser.ParsedCommand;
 
 @Tag(SmallTests.TAG)
 public class ListLabelsCommandTest {
@@ -51,7 +52,7 @@ public class ListLabelsCommandTest {
 
   @Test
   public void listsLabelsWithDefaultRegex() throws Exception {
-    var parsed = ShellLineParser.parse("list_labels");
+    ParsedCommand parsed = ShellLineParser.parse("list_labels");
     TextResult result = (TextResult) command.execute(parsed, context);
 
     assertEquals(".*", admin.lastRegex);
@@ -60,7 +61,7 @@ public class ListLabelsCommandTest {
 
   @Test
   public void listsLabelsWithRegex() throws Exception {
-    var parsed = ShellLineParser.parse("list_labels 'secret.*'");
+    ParsedCommand parsed = ShellLineParser.parse("list_labels 'secret.*'");
     command.execute(parsed, context);
 
     assertEquals("secret.*", admin.lastRegex);

@@ -32,6 +32,7 @@ import org.apache.hadoop.hbase.newshell.parser.ShellLineParser;
 import org.apache.hadoop.hbase.testclassification.SmallTests;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.apache.hadoop.hbase.newshell.parser.ParsedCommand;
 
 @Tag(SmallTests.TAG)
 public class DeleteSnapshotCommandTest {
@@ -52,7 +53,7 @@ public class DeleteSnapshotCommandTest {
 
   @Test
   public void deletesSnapshot() throws Exception {
-    var parsed = ShellLineParser.parse("delete_snapshot 'snap1'");
+    ParsedCommand parsed = ShellLineParser.parse("delete_snapshot 'snap1'");
     TextResult result = (TextResult) command.execute(parsed, context);
 
     assertEquals("snap1", admin.lastSnapshotName);
@@ -61,7 +62,7 @@ public class DeleteSnapshotCommandTest {
 
   @Test
   public void throwsWhenSnapshotNameMissing() throws Exception {
-    var parsed = ShellLineParser.parse("delete_snapshot");
+    ParsedCommand parsed = ShellLineParser.parse("delete_snapshot");
     assertThrows(ShellCommandException.class, () -> command.execute(parsed, context));
   }
 }

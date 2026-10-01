@@ -33,6 +33,7 @@ import org.apache.hadoop.hbase.newshell.parser.ShellLineParser;
 import org.apache.hadoop.hbase.testclassification.SmallTests;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.apache.hadoop.hbase.newshell.parser.ParsedCommand;
 
 @Tag(SmallTests.TAG)
 public class TruncatePreserveCommandTest {
@@ -61,7 +62,7 @@ public class TruncatePreserveCommandTest {
 
   @Test
   public void truncatesPreservingSplitsAndEmitsProgress() throws Exception {
-    var parsed = ShellLineParser.parse("truncate_preserve 't1'");
+    ParsedCommand parsed = ShellLineParser.parse("truncate_preserve 't1'");
     TextResult result = (TextResult) command.execute(parsed, context);
 
     assertEquals("t1", admin.lastTableName);
@@ -72,7 +73,7 @@ public class TruncatePreserveCommandTest {
 
   @Test
   public void throwsWhenTableNameMissing() throws Exception {
-    var parsed = ShellLineParser.parse("truncate_preserve");
+    ParsedCommand parsed = ShellLineParser.parse("truncate_preserve");
     assertThrows(ShellCommandException.class, () -> command.execute(parsed, context));
   }
 }

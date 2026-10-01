@@ -32,6 +32,7 @@ import org.apache.hadoop.hbase.newshell.parser.ShellLineParser;
 import org.apache.hadoop.hbase.testclassification.SmallTests;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.apache.hadoop.hbase.newshell.parser.ParsedCommand;
 
 @Tag(SmallTests.TAG)
 public class RemovePeerCommandTest {
@@ -52,7 +53,7 @@ public class RemovePeerCommandTest {
 
   @Test
   public void removesPeer() throws Exception {
-    var parsed = ShellLineParser.parse("remove_peer '1'");
+    ParsedCommand parsed = ShellLineParser.parse("remove_peer '1'");
     TextResult result = (TextResult) command.execute(parsed, context);
 
     assertEquals("1", admin.lastPeerId);
@@ -61,7 +62,7 @@ public class RemovePeerCommandTest {
 
   @Test
   public void throwsWhenPeerIdMissing() throws Exception {
-    var parsed = ShellLineParser.parse("remove_peer");
+    ParsedCommand parsed = ShellLineParser.parse("remove_peer");
     assertThrows(ShellCommandException.class, () -> command.execute(parsed, context));
   }
 }

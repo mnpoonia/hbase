@@ -29,6 +29,7 @@ import org.apache.hadoop.hbase.newshell.parser.ShellLineParser;
 import org.apache.hadoop.hbase.testclassification.SmallTests;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.apache.hadoop.hbase.newshell.command.CommandResult;
 
 @Tag(SmallTests.TAG)
 public class IsInMaintenanceModeCommandTest {
@@ -45,7 +46,7 @@ public class IsInMaintenanceModeCommandTest {
 
   @Test
   public void reportsState() throws Exception {
-    var result = command.execute(ShellLineParser.parse("is_in_maintenance_mode"), context);
+    CommandResult result = command.execute(ShellLineParser.parse("is_in_maintenance_mode"), context);
     assertEquals("true", ((TextResult) result).lines().get(0));
   }
 }

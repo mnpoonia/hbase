@@ -31,6 +31,7 @@ import org.apache.hadoop.hbase.newshell.parser.ShellLineParser;
 import org.apache.hadoop.hbase.testclassification.SmallTests;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.apache.hadoop.hbase.newshell.parser.ParsedCommand;
 
 @Tag(SmallTests.TAG)
 public class FlushCommandTest {
@@ -53,7 +54,7 @@ public class FlushCommandTest {
 
   @Test
   public void flushesTableWithoutFamily() throws Exception {
-    var parsed = ShellLineParser.parse("flush 't1'");
+    ParsedCommand parsed = ShellLineParser.parse("flush 't1'");
     command.execute(parsed, context);
 
     assertEquals("t1", admin.lastName);
@@ -62,7 +63,7 @@ public class FlushCommandTest {
 
   @Test
   public void flushesWithFamily() throws Exception {
-    var parsed = ShellLineParser.parse("flush 't1', 'f1'");
+    ParsedCommand parsed = ShellLineParser.parse("flush 't1', 'f1'");
     command.execute(parsed, context);
 
     assertEquals("t1", admin.lastName);
@@ -71,7 +72,7 @@ public class FlushCommandTest {
 
   @Test
   public void throwsWhenNameMissing() throws Exception {
-    var parsed = ShellLineParser.parse("flush");
+    ParsedCommand parsed = ShellLineParser.parse("flush");
     assertThrows(ShellCommandException.class, () -> command.execute(parsed, context));
   }
 }

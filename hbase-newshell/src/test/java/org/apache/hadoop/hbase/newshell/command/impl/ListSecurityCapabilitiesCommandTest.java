@@ -44,7 +44,7 @@ public class ListSecurityCapabilitiesCommandTest {
 
   @Test
   public void listsCapabilities() throws Exception {
-    var context = new ExecutionContext(new RecordingShellAdmin(), new StubShellTableFactory(),
+    ExecutionContext context = new ExecutionContext(new RecordingShellAdmin(), new StubShellTableFactory(),
       new PrintWriter(new StringWriter()));
     TextResult result = (TextResult) new ListSecurityCapabilitiesCommand()
       .execute(ShellLineParser.parse("list_security_capabilities"), context);

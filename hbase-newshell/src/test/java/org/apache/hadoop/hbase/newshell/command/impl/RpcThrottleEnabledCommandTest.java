@@ -44,7 +44,7 @@ public class RpcThrottleEnabledCommandTest {
 
   @Test
   public void reportsState() throws Exception {
-    var context = new ExecutionContext(new RecordingShellAdmin(), new StubShellTableFactory(),
+    ExecutionContext context = new ExecutionContext(new RecordingShellAdmin(), new StubShellTableFactory(),
       new PrintWriter(new StringWriter()));
     TextResult result = (TextResult) new RpcThrottleEnabledCommand()
       .execute(ShellLineParser.parse("rpc_throttle_enabled"), context);

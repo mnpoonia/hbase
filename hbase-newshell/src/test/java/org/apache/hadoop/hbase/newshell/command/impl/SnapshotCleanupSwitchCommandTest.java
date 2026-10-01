@@ -29,6 +29,7 @@ import org.apache.hadoop.hbase.newshell.parser.ShellLineParser;
 import org.apache.hadoop.hbase.testclassification.SmallTests;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.apache.hadoop.hbase.newshell.command.CommandResult;
 
 @Tag(SmallTests.TAG)
 public class SnapshotCleanupSwitchCommandTest {
@@ -49,7 +50,7 @@ public class SnapshotCleanupSwitchCommandTest {
 
   @Test
   public void switches() throws Exception {
-    var result = command.execute(ShellLineParser.parse("snapshot_cleanup_switch false"), context);
+    CommandResult result = command.execute(ShellLineParser.parse("snapshot_cleanup_switch false"), context);
     assertEquals(Boolean.FALSE, admin.last);
     assertEquals("Previous snapshot cleanup state : true", ((TextResult) result).lines().get(0));
   }

@@ -32,6 +32,7 @@ import org.apache.hadoop.hbase.newshell.parser.ShellLineParser;
 import org.apache.hadoop.hbase.testclassification.SmallTests;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.apache.hadoop.hbase.newshell.parser.ParsedCommand;
 
 @Tag(SmallTests.TAG)
 public class DecommissionRegionServersCommandTest {
@@ -54,7 +55,7 @@ public class DecommissionRegionServersCommandTest {
 
   @Test
   public void decommissionsSingleServerWithDefaultOffload() throws Exception {
-    var parsed = ShellLineParser.parse("decommission_regionservers 'host1,60020,123'");
+    ParsedCommand parsed = ShellLineParser.parse("decommission_regionservers 'host1,60020,123'");
     TextResult result = (TextResult) command.execute(parsed, context);
 
     assertEquals(List.of("host1,60020,123"), admin.lastHostOrServers);
@@ -64,7 +65,7 @@ public class DecommissionRegionServersCommandTest {
 
   @Test
   public void decommissionsMultipleServersWithOffload() throws Exception {
-    var parsed = ShellLineParser.parse("decommission_regionservers ['host1', 'host2'], true");
+    ParsedCommand parsed = ShellLineParser.parse("decommission_regionservers ['host1', 'host2'], true");
     TextResult result = (TextResult) command.execute(parsed, context);
 
     assertEquals(List.of("host1", "host2"), admin.lastHostOrServers);
@@ -74,7 +75,7 @@ public class DecommissionRegionServersCommandTest {
 
   @Test
   public void throwsWhenServerNameMissing() throws Exception {
-    var parsed = ShellLineParser.parse("decommission_regionservers");
+    ParsedCommand parsed = ShellLineParser.parse("decommission_regionservers");
     assertThrows(ShellCommandException.class, () -> command.execute(parsed, context));
   }
 }

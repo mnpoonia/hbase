@@ -34,6 +34,7 @@ import org.apache.hadoop.hbase.newshell.parser.ShellLineParser;
 import org.apache.hadoop.hbase.testclassification.SmallTests;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.apache.hadoop.hbase.newshell.parser.ParsedCommand;
 
 @Tag(SmallTests.TAG)
 public class DisableAllCommandTest {
@@ -61,7 +62,7 @@ public class DisableAllCommandTest {
   @Test
   public void disablesEveryMatch() throws Exception {
     admin.tableNames = List.of("t1", "t2");
-    var parsed = ShellLineParser.parse("disable_all 't.*'");
+    ParsedCommand parsed = ShellLineParser.parse("disable_all 't.*'");
     TextResult result = (TextResult) command.execute(parsed, context);
 
     assertEquals(List.of("t1", "t2"), admin.disabled);
@@ -71,7 +72,7 @@ public class DisableAllCommandTest {
   @Test
   public void reportsNoMatches() throws Exception {
     admin.tableNames = List.of();
-    var parsed = ShellLineParser.parse("disable_all 'nope.*'");
+    ParsedCommand parsed = ShellLineParser.parse("disable_all 'nope.*'");
     TextResult result = (TextResult) command.execute(parsed, context);
 
     assertEquals(List.of("No tables matched the regex nope.*"), result.lines());
@@ -82,7 +83,7 @@ public class DisableAllCommandTest {
     admin.tableNames = List.of("t1");
     ExecutionContext noYes =
       new ExecutionContext(admin, new StubShellTableFactory(), new PrintWriter(new StringWriter()));
-    var parsed = ShellLineParser.parse("disable_all 't.*'");
+    ParsedCommand parsed = ShellLineParser.parse("disable_all 't.*'");
     assertThrows(UserAbortException.class, () -> command.execute(parsed, noYes));
     assertEquals(List.of(), admin.disabled);
   }
@@ -92,7 +93,7 @@ public class DisableAllCommandTest {
     admin.tableNames = List.of("t1");
     ExecutionContext noYes =
       new ExecutionContext(admin, new StubShellTableFactory(), new PrintWriter(new StringWriter()));
-    var parsed = ShellLineParser.parse("disable_all 't.*' --yes");
+    ParsedCommand parsed = ShellLineParser.parse("disable_all 't.*' --yes");
     TextResult result = (TextResult) command.execute(parsed, noYes);
     assertEquals(List.of("t1"), admin.disabled);
     assertEquals(List.of("1 tables successfully disabled"), result.lines());

@@ -31,6 +31,7 @@ import org.apache.hadoop.hbase.newshell.parser.ShellLineParser;
 import org.apache.hadoop.hbase.testclassification.SmallTests;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.apache.hadoop.hbase.newshell.parser.ParsedCommand;
 
 @Tag(SmallTests.TAG)
 public class AddLabelsCommandTest {
@@ -51,7 +52,7 @@ public class AddLabelsCommandTest {
 
   @Test
   public void addsArrayOfLabels() throws Exception {
-    var parsed = ShellLineParser.parse("add_labels ['SECRET', 'PRIVATE']");
+    ParsedCommand parsed = ShellLineParser.parse("add_labels ['SECRET', 'PRIVATE']");
     command.execute(parsed, context);
 
     assertEquals(List.of("SECRET", "PRIVATE"), admin.lastLabels);
@@ -59,7 +60,7 @@ public class AddLabelsCommandTest {
 
   @Test
   public void addsSingleLabel() throws Exception {
-    var parsed = ShellLineParser.parse("add_labels 'SECRET'");
+    ParsedCommand parsed = ShellLineParser.parse("add_labels 'SECRET'");
     command.execute(parsed, context);
 
     assertEquals(List.of("SECRET"), admin.lastLabels);
@@ -67,7 +68,7 @@ public class AddLabelsCommandTest {
 
   @Test
   public void throwsWhenLabelsMissing() throws Exception {
-    var parsed = ShellLineParser.parse("add_labels");
+    ParsedCommand parsed = ShellLineParser.parse("add_labels");
     assertThrows(ShellCommandException.class, () -> command.execute(parsed, context));
   }
 }

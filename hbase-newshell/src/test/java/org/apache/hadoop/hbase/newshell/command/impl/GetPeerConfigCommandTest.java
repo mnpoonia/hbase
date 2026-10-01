@@ -47,7 +47,7 @@ public class GetPeerConfigCommandTest {
     new ExecutionContext(admin, new StubShellTableFactory(), new PrintWriter(new StringWriter()));
   @Test
   public void runs() throws Exception {
-    var result = (TabularResult) command.execute(ShellLineParser.parse("get_peer_config '1'"), context);
+    TabularResult result = (TabularResult) command.execute(ShellLineParser.parse("get_peer_config '1'"), context);
     assertEquals(List.of(List.of("Cluster Key", "ck")), result.rows());
   }
 }

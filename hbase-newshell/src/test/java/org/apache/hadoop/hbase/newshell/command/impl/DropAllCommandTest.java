@@ -32,6 +32,7 @@ import org.apache.hadoop.hbase.newshell.parser.ShellLineParser;
 import org.apache.hadoop.hbase.testclassification.SmallTests;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.apache.hadoop.hbase.newshell.parser.ParsedCommand;
 
 @Tag(SmallTests.TAG)
 public class DropAllCommandTest {
@@ -59,7 +60,7 @@ public class DropAllCommandTest {
   @Test
   public void dropsEveryMatch() throws Exception {
     admin.tableNames = List.of("t1", "t2");
-    var parsed = ShellLineParser.parse("drop_all 't.*'");
+    ParsedCommand parsed = ShellLineParser.parse("drop_all 't.*'");
     TextResult result = (TextResult) command.execute(parsed, context);
 
     assertEquals(List.of("t1", "t2"), admin.dropped);

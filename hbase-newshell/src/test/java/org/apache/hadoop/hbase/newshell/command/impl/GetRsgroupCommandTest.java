@@ -33,6 +33,7 @@ import org.apache.hadoop.hbase.newshell.parser.ShellLineParser;
 import org.apache.hadoop.hbase.testclassification.SmallTests;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.apache.hadoop.hbase.newshell.parser.ParsedCommand;
 
 @Tag(SmallTests.TAG)
 public class GetRsgroupCommandTest {
@@ -54,7 +55,7 @@ public class GetRsgroupCommandTest {
 
   @Test
   public void reportsServersAndTables() throws Exception {
-    var parsed = ShellLineParser.parse("get_rsgroup 'default'");
+    ParsedCommand parsed = ShellLineParser.parse("get_rsgroup 'default'");
     TextResult result = (TextResult) command.execute(parsed, context);
 
     assertEquals("default", admin.lastGroupName);
@@ -65,7 +66,7 @@ public class GetRsgroupCommandTest {
 
   @Test
   public void throwsWhenGroupNameMissing() throws Exception {
-    var parsed = ShellLineParser.parse("get_rsgroup");
+    ParsedCommand parsed = ShellLineParser.parse("get_rsgroup");
     assertThrows(ShellCommandException.class, () -> command.execute(parsed, context));
   }
 }

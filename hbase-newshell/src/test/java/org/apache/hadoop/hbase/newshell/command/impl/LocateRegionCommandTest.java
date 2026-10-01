@@ -31,6 +31,7 @@ import org.apache.hadoop.hbase.newshell.parser.ShellLineParser;
 import org.apache.hadoop.hbase.testclassification.SmallTests;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.apache.hadoop.hbase.newshell.parser.ParsedCommand;
 
 @Tag(SmallTests.TAG)
 public class LocateRegionCommandTest {
@@ -55,7 +56,7 @@ public class LocateRegionCommandTest {
 
   @Test
   public void reportsHostAndRegion() throws Exception {
-    var parsed = ShellLineParser.parse("locate_region 't1', 'row0'");
+    ParsedCommand parsed = ShellLineParser.parse("locate_region 't1', 'row0'");
     TabularResult result = (TabularResult) command.execute(parsed, context);
 
     assertEquals("t1", admin.lastTableName);

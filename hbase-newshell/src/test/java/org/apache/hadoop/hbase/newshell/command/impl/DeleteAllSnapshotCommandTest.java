@@ -37,6 +37,7 @@ import org.apache.hadoop.hbase.newshell.parser.ShellLineParser;
 import org.apache.hadoop.hbase.testclassification.SmallTests;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.apache.hadoop.hbase.newshell.parser.ParsedCommand;
 
 @Tag(SmallTests.TAG)
 public class DeleteAllSnapshotCommandTest {
@@ -66,7 +67,7 @@ public class DeleteAllSnapshotCommandTest {
   @Test
   public void deletesMatchingSnapshotsWithYes() throws Exception {
     admin.snapshots.add(new SnapshotInfo("snap1", "t1", 0L, 0L));
-    var parsed = ShellLineParser.parse("delete_all_snapshot 's.*'");
+    ParsedCommand parsed = ShellLineParser.parse("delete_all_snapshot 's.*'");
     TextResult result = (TextResult) command.execute(parsed, context);
     assertEquals("s.*", admin.deletedRegex);
     assertEquals(List.of("1 snapshots successfully deleted."), result.lines());
@@ -74,7 +75,7 @@ public class DeleteAllSnapshotCommandTest {
 
   @Test
   public void reportsNoMatch() throws Exception {
-    var parsed = ShellLineParser.parse("delete_all_snapshot 's.*'");
+    ParsedCommand parsed = ShellLineParser.parse("delete_all_snapshot 's.*'");
     TextResult result = (TextResult) command.execute(parsed, context);
     assertEquals(List.of("No snapshots matched the regex s.*"), result.lines());
   }
@@ -84,13 +85,13 @@ public class DeleteAllSnapshotCommandTest {
     admin.snapshots.add(new SnapshotInfo("snap1", "t1", 0L, 0L));
     ExecutionContext noYes = new ExecutionContext(admin, new StubShellTableFactory(),
       new PrintWriter(new StringWriter()), SessionOptions.defaults());
-    var parsed = ShellLineParser.parse("delete_all_snapshot 's.*'");
+    ParsedCommand parsed = ShellLineParser.parse("delete_all_snapshot 's.*'");
     assertThrows(UserAbortException.class, () -> command.execute(parsed, noYes));
   }
 
   @Test
   public void throwsWhenRegexMissing() throws Exception {
-    var parsed = ShellLineParser.parse("delete_all_snapshot");
+    ParsedCommand parsed = ShellLineParser.parse("delete_all_snapshot");
     assertThrows(ShellCommandException.class, () -> command.execute(parsed, context));
   }
 }

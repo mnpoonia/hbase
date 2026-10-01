@@ -47,7 +47,7 @@ public class ShowPeerTableCFsCommandTest {
     new ExecutionContext(admin, new StubShellTableFactory(), new PrintWriter(new StringWriter()));
   @Test
   public void runs() throws Exception {
-    var result = (TextResult) command.execute(ShellLineParser.parse("show_peer_tableCFs '1'"), context);
+    TextResult result = (TextResult) command.execute(ShellLineParser.parse("show_peer_tableCFs '1'"), context);
     assertEquals(List.of("t1"), result.lines());
   }
 }

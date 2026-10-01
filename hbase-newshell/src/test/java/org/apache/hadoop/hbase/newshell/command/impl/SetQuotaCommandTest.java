@@ -31,6 +31,7 @@ import org.apache.hadoop.hbase.newshell.parser.ShellLineParser;
 import org.apache.hadoop.hbase.testclassification.SmallTests;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.apache.hadoop.hbase.newshell.parser.ParsedCommand;
 
 @Tag(SmallTests.TAG)
 public class SetQuotaCommandTest {
@@ -51,7 +52,7 @@ public class SetQuotaCommandTest {
 
   @Test
   public void setsThrottleQuota() throws Exception {
-    var parsed =
+    ParsedCommand parsed =
       ShellLineParser.parse("set_quota TYPE => THROTTLE, USER => 'u1', LIMIT => '10req/sec'");
     command.execute(parsed, context);
 
@@ -62,7 +63,7 @@ public class SetQuotaCommandTest {
 
   @Test
   public void throwsWhenTypeMissing() throws Exception {
-    var parsed = ShellLineParser.parse("set_quota");
+    ParsedCommand parsed = ShellLineParser.parse("set_quota");
     assertThrows(ShellCommandException.class, () -> command.execute(parsed, context));
   }
 }

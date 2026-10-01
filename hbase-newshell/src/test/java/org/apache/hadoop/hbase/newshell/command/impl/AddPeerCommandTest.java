@@ -33,6 +33,7 @@ import org.apache.hadoop.hbase.newshell.parser.ShellLineParser;
 import org.apache.hadoop.hbase.testclassification.SmallTests;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.apache.hadoop.hbase.newshell.parser.ParsedCommand;
 
 @Tag(SmallTests.TAG)
 public class AddPeerCommandTest {
@@ -55,7 +56,7 @@ public class AddPeerCommandTest {
 
   @Test
   public void addsPeerWithClusterKey() throws Exception {
-    var parsed = ShellLineParser.parse("add_peer '1', CLUSTER_KEY => 'zk1,zk2:2181:/hbase'");
+    ParsedCommand parsed = ShellLineParser.parse("add_peer '1', CLUSTER_KEY => 'zk1,zk2:2181:/hbase'");
     TextResult result = (TextResult) command.execute(parsed, context);
 
     assertEquals("1", admin.lastPeerId);
@@ -65,7 +66,7 @@ public class AddPeerCommandTest {
 
   @Test
   public void addsPeerWithNestedTableCfsMap() throws Exception {
-    var parsed = ShellLineParser.parse("add_peer '1', CLUSTER_KEY => 'zk1,zk2:2181:/hbase', "
+    ParsedCommand parsed = ShellLineParser.parse("add_peer '1', CLUSTER_KEY => 'zk1,zk2:2181:/hbase', "
       + "TABLE_CFS => {'ns:tab' => ['cf1', 'cf2']}");
     command.execute(parsed, context);
 
@@ -76,7 +77,7 @@ public class AddPeerCommandTest {
 
   @Test
   public void throwsWhenPeerIdMissing() throws Exception {
-    var parsed = ShellLineParser.parse("add_peer");
+    ParsedCommand parsed = ShellLineParser.parse("add_peer");
     assertThrows(ShellCommandException.class, () -> command.execute(parsed, context));
   }
 }

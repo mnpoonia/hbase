@@ -33,6 +33,7 @@ import org.apache.hadoop.hbase.newshell.parser.ShellLineParser;
 import org.apache.hadoop.hbase.testclassification.SmallTests;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.apache.hadoop.hbase.newshell.parser.ParsedCommand;
 
 @Tag(SmallTests.TAG)
 public class BalancerCommandTest {
@@ -57,7 +58,7 @@ public class BalancerCommandTest {
 
   @Test
   public void runsBalancerWithNoArguments() throws Exception {
-    var parsed = ShellLineParser.parse("balancer");
+    ParsedCommand parsed = ShellLineParser.parse("balancer");
     TextResult result = (TextResult) command.execute(parsed, context);
 
     assertEquals(false, admin.lastDryRun);
@@ -67,7 +68,7 @@ public class BalancerCommandTest {
 
   @Test
   public void parsesDryRunAndIgnoreRitArguments() throws Exception {
-    var parsed = ShellLineParser.parse("balancer 'dry_run', 'ignore_rit'");
+    ParsedCommand parsed = ShellLineParser.parse("balancer 'dry_run', 'ignore_rit'");
     command.execute(parsed, context);
 
     assertEquals(true, admin.lastDryRun);
@@ -77,7 +78,7 @@ public class BalancerCommandTest {
   @Test
   public void reportsWhenBalancerDidNotRun() throws Exception {
     admin.response = new BalanceResult(false, 0, 0);
-    var parsed = ShellLineParser.parse("balancer");
+    ParsedCommand parsed = ShellLineParser.parse("balancer");
     TextResult result = (TextResult) command.execute(parsed, context);
 
     assertEquals(List.of("Balancer did not run. See logs for details."), result.lines());
@@ -85,7 +86,7 @@ public class BalancerCommandTest {
 
   @Test
   public void throwsOnUnknownArgument() throws Exception {
-    var parsed = ShellLineParser.parse("balancer 'bogus'");
+    ParsedCommand parsed = ShellLineParser.parse("balancer 'bogus'");
     assertThrows(ShellCommandException.class, () -> command.execute(parsed, context));
   }
 }

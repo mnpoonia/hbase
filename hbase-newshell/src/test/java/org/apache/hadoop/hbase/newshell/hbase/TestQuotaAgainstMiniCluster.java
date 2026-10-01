@@ -31,6 +31,7 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.apache.hadoop.conf.Configuration;
 
 /**
  * End-to-end verification of quota shell APIs against a real minicluster with quota support
@@ -44,7 +45,7 @@ public class TestQuotaAgainstMiniCluster {
 
   @BeforeAll
   public static void setUpBeforeClass() throws Exception {
-    var conf = TEST_UTIL.getConfiguration();
+    Configuration conf = TEST_UTIL.getConfiguration();
     conf.setBoolean("hbase.quota.enabled", true);
     TEST_UTIL.startMiniCluster(1);
     connection = TEST_UTIL.getConnection();

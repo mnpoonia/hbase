@@ -32,6 +32,7 @@ import org.apache.hadoop.hbase.newshell.parser.ShellLineParser;
 import org.apache.hadoop.hbase.testclassification.SmallTests;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.apache.hadoop.hbase.newshell.parser.ParsedCommand;
 
 @Tag(SmallTests.TAG)
 public class MoveServersRsgroupCommandTest {
@@ -54,7 +55,7 @@ public class MoveServersRsgroupCommandTest {
 
   @Test
   public void movesServers() throws Exception {
-    var parsed =
+    ParsedCommand parsed =
       ShellLineParser.parse("move_servers_rsgroup 'dest',['server1:1000','server2:1000']");
     TextResult result = (TextResult) command.execute(parsed, context);
 
@@ -65,7 +66,7 @@ public class MoveServersRsgroupCommandTest {
 
   @Test
   public void throwsWhenServersMissing() throws Exception {
-    var parsed = ShellLineParser.parse("move_servers_rsgroup 'dest'");
+    ParsedCommand parsed = ShellLineParser.parse("move_servers_rsgroup 'dest'");
     assertThrows(ShellCommandException.class, () -> command.execute(parsed, context));
   }
 }

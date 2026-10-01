@@ -44,7 +44,7 @@ public class BalanceRsgroupCommandTest {
     }
   }
   @Test public void runs() throws Exception {
-    var r=(TextResult)new BalanceRsgroupCommand().execute(ShellLineParser.parse("balance_rsgroup 'g1'"),
+    TextResult r=(TextResult)new BalanceRsgroupCommand().execute(ShellLineParser.parse("balance_rsgroup 'g1'"),
       new ExecutionContext(new Rec(),new StubShellTableFactory(),new PrintWriter(new StringWriter())));
     assertEquals("Balancer ran", r.lines().get(0));
   }

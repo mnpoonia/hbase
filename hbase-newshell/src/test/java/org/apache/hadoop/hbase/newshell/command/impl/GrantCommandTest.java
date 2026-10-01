@@ -33,6 +33,7 @@ import org.apache.hadoop.hbase.newshell.parser.ShellLineParser;
 import org.apache.hadoop.hbase.testclassification.SmallTests;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.apache.hadoop.hbase.newshell.parser.ParsedCommand;
 
 @Tag(SmallTests.TAG)
 public class GrantCommandTest {
@@ -64,7 +65,7 @@ public class GrantCommandTest {
 
   @Test
   public void grantsGlobalPermissions() throws Exception {
-    var parsed = ShellLineParser.parse("grant 'bobsmith', 'RWXCA'");
+    ParsedCommand parsed = ShellLineParser.parse("grant 'bobsmith', 'RWXCA'");
     TextResult result = (TextResult) command.execute(parsed, context);
 
     assertEquals("bobsmith", admin.lastUserOrGroup);
@@ -76,7 +77,7 @@ public class GrantCommandTest {
 
   @Test
   public void grantsNamespacePermissions() throws Exception {
-    var parsed = ShellLineParser.parse("grant 'bobsmith', 'RWXCA', '@ns1'");
+    ParsedCommand parsed = ShellLineParser.parse("grant 'bobsmith', 'RWXCA', '@ns1'");
     command.execute(parsed, context);
 
     assertEquals("ns1", admin.lastNamespace);
@@ -85,7 +86,7 @@ public class GrantCommandTest {
 
   @Test
   public void grantsTableFamilyQualifierPermissions() throws Exception {
-    var parsed = ShellLineParser.parse("grant 'bobsmith', 'RW', 't1', 'f1', 'col1'");
+    ParsedCommand parsed = ShellLineParser.parse("grant 'bobsmith', 'RW', 't1', 'f1', 'col1'");
     command.execute(parsed, context);
 
     assertEquals("t1", admin.lastTableName);
@@ -96,7 +97,7 @@ public class GrantCommandTest {
 
   @Test
   public void throwsWhenPermissionsMissing() throws Exception {
-    var parsed = ShellLineParser.parse("grant 'bobsmith'");
+    ParsedCommand parsed = ShellLineParser.parse("grant 'bobsmith'");
     assertThrows(ShellCommandException.class, () -> command.execute(parsed, context));
   }
 }

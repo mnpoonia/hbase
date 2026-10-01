@@ -30,6 +30,7 @@ import org.apache.hadoop.hbase.newshell.parser.ShellLineParser;
 import org.apache.hadoop.hbase.testclassification.SmallTests;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.apache.hadoop.hbase.newshell.parser.ParsedCommand;
 
 @Tag(SmallTests.TAG)
 public class ListNamespaceCommandTest {
@@ -51,7 +52,7 @@ public class ListNamespaceCommandTest {
 
   @Test
   public void defaultsToMatchAllRegex() throws Exception {
-    var parsed = ShellLineParser.parse("list_namespace");
+    ParsedCommand parsed = ShellLineParser.parse("list_namespace");
     TabularResult result = (TabularResult) command.execute(parsed, context);
 
     assertEquals(".*", admin.lastRegex);
@@ -61,7 +62,7 @@ public class ListNamespaceCommandTest {
 
   @Test
   public void passesThroughExplicitRegex() throws Exception {
-    var parsed = ShellLineParser.parse("list_namespace 'ns.*'");
+    ParsedCommand parsed = ShellLineParser.parse("list_namespace 'ns.*'");
     command.execute(parsed, context);
 
     assertEquals("ns.*", admin.lastRegex);

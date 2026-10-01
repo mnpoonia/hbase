@@ -37,6 +37,7 @@ import org.apache.hadoop.hbase.newshell.parser.ShellLineParser;
 import org.apache.hadoop.hbase.testclassification.SmallTests;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.apache.hadoop.hbase.newshell.parser.ParsedCommand;
 
 @Tag(SmallTests.TAG)
 public class DeleteTableSnapshotsCommandTest {
@@ -65,7 +66,7 @@ public class DeleteTableSnapshotsCommandTest {
   public void deletesEachSnapshot() throws Exception {
     admin.snapshots.add(new SnapshotInfo("snap1", "t1", 0L, 0L));
     admin.snapshots.add(new SnapshotInfo("snap2", "t1", 0L, 0L));
-    var parsed = ShellLineParser.parse("delete_table_snapshots 't.*'");
+    ParsedCommand parsed = ShellLineParser.parse("delete_table_snapshots 't.*'");
     TextResult result = (TextResult) command.execute(parsed, context);
     assertEquals(List.of("snap1", "snap2"), admin.deleted);
     assertTrue(result.lines().get(0).contains("Successfully deleted snapshot: snap1"));
@@ -73,7 +74,7 @@ public class DeleteTableSnapshotsCommandTest {
 
   @Test
   public void throwsWhenTableRegexMissing() throws Exception {
-    var parsed = ShellLineParser.parse("delete_table_snapshots");
+    ParsedCommand parsed = ShellLineParser.parse("delete_table_snapshots");
     assertThrows(ShellCommandException.class, () -> command.execute(parsed, context));
   }
 }

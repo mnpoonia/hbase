@@ -44,8 +44,8 @@ public class ListSnapshotSizesCommandTest {
 
   @Test
   public void listsSizes() throws Exception {
-    var command = new ListSnapshotSizesCommand();
-    var context = new ExecutionContext(new RecordingShellAdmin(), new StubShellTableFactory(),
+    ListSnapshotSizesCommand command = new ListSnapshotSizesCommand();
+    ExecutionContext context = new ExecutionContext(new RecordingShellAdmin(), new StubShellTableFactory(),
       new PrintWriter(new StringWriter()));
     TabularResult result =
       (TabularResult) command.execute(ShellLineParser.parse("list_snapshot_sizes"), context);

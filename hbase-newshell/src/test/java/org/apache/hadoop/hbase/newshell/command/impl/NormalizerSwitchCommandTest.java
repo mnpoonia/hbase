@@ -32,6 +32,7 @@ import org.apache.hadoop.hbase.newshell.parser.ShellLineParser;
 import org.apache.hadoop.hbase.testclassification.SmallTests;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.apache.hadoop.hbase.newshell.parser.ParsedCommand;
 
 @Tag(SmallTests.TAG)
 public class NormalizerSwitchCommandTest {
@@ -53,7 +54,7 @@ public class NormalizerSwitchCommandTest {
 
   @Test
   public void switchesNormalizerAndReturnsPreviousState() throws Exception {
-    var parsed = ShellLineParser.parse("normalizer_switch true");
+    ParsedCommand parsed = ShellLineParser.parse("normalizer_switch true");
     TextResult result = (TextResult) command.execute(parsed, context);
 
     assertEquals(true, admin.lastEnabled);
@@ -62,7 +63,7 @@ public class NormalizerSwitchCommandTest {
 
   @Test
   public void throwsWhenArgumentMissing() throws Exception {
-    var parsed = ShellLineParser.parse("normalizer_switch");
+    ParsedCommand parsed = ShellLineParser.parse("normalizer_switch");
     assertThrows(ShellCommandException.class, () -> command.execute(parsed, context));
   }
 }

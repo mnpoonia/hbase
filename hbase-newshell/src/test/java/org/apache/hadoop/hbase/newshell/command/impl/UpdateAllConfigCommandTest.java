@@ -28,6 +28,7 @@ import org.apache.hadoop.hbase.newshell.parser.ShellLineParser;
 import org.apache.hadoop.hbase.testclassification.SmallTests;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.apache.hadoop.hbase.newshell.parser.ParsedCommand;
 
 @Tag(SmallTests.TAG)
 public class UpdateAllConfigCommandTest {
@@ -48,7 +49,7 @@ public class UpdateAllConfigCommandTest {
 
   @Test
   public void updatesAllServerConfigs() throws Exception {
-    var parsed = ShellLineParser.parse("update_all_config");
+    ParsedCommand parsed = ShellLineParser.parse("update_all_config");
     command.execute(parsed, context);
 
     assertTrue(admin.called);

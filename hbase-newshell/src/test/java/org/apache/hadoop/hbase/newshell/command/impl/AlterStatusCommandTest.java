@@ -31,6 +31,7 @@ import org.apache.hadoop.hbase.newshell.parser.ShellLineParser;
 import org.apache.hadoop.hbase.testclassification.SmallTests;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.apache.hadoop.hbase.newshell.parser.ParsedCommand;
 
 @Tag(SmallTests.TAG)
 public class AlterStatusCommandTest {
@@ -52,7 +53,7 @@ public class AlterStatusCommandTest {
   @Test
   public void reportsPartialProgress() throws Exception {
     admin.status = new AlterStatusView(2, 10);
-    var parsed = ShellLineParser.parse("alter_status 't1'");
+    ParsedCommand parsed = ShellLineParser.parse("alter_status 't1'");
     TextResult result = (TextResult) command.execute(parsed, context);
 
     assertEquals(List.of("8/10 regions updated.", "Done."), result.lines());
@@ -61,7 +62,7 @@ public class AlterStatusCommandTest {
   @Test
   public void reportsAllUpdatedWhenNoRegions() throws Exception {
     admin.status = new AlterStatusView(0, 0);
-    var parsed = ShellLineParser.parse("alter_status 't1'");
+    ParsedCommand parsed = ShellLineParser.parse("alter_status 't1'");
     TextResult result = (TextResult) command.execute(parsed, context);
 
     assertEquals(List.of("All regions updated.", "Done."), result.lines());

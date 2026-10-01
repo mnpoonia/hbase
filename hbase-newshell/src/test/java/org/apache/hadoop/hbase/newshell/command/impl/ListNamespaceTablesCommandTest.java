@@ -30,6 +30,7 @@ import org.apache.hadoop.hbase.newshell.parser.ShellLineParser;
 import org.apache.hadoop.hbase.testclassification.SmallTests;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.apache.hadoop.hbase.newshell.parser.ParsedCommand;
 
 @Tag(SmallTests.TAG)
 public class ListNamespaceTablesCommandTest {
@@ -51,7 +52,7 @@ public class ListNamespaceTablesCommandTest {
 
   @Test
   public void reportsTablesInNamespace() throws Exception {
-    var parsed = ShellLineParser.parse("list_namespace_tables 'ns1'");
+    ParsedCommand parsed = ShellLineParser.parse("list_namespace_tables 'ns1'");
     TabularResult result = (TabularResult) command.execute(parsed, context);
 
     assertEquals("ns1", admin.lastNamespace);

@@ -40,6 +40,7 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.apache.hadoop.conf.Configuration;
 
 /**
  * End-to-end verification of visibility-label shell APIs against a real minicluster with the
@@ -53,7 +54,7 @@ public class TestVisibilityLabelsAgainstMiniCluster {
 
   @BeforeAll
   public static void setUpBeforeClass() throws Exception {
-    var conf = TEST_UTIL.getConfiguration();
+    Configuration conf = TEST_UTIL.getConfiguration();
     conf.setInt("hfile.format.version", 3);
     conf.setBoolean(User.HBASE_SECURITY_AUTHORIZATION_CONF_KEY, true);
     conf.set(CoprocessorHost.MASTER_COPROCESSOR_CONF_KEY, VisibilityController.class.getName());

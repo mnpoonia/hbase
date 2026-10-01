@@ -31,6 +31,7 @@ import org.apache.hadoop.hbase.newshell.parser.ShellLineParser;
 import org.apache.hadoop.hbase.testclassification.SmallTests;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.apache.hadoop.hbase.newshell.parser.ParsedCommand;
 
 @Tag(SmallTests.TAG)
 public class ListQuotasCommandTest {
@@ -52,7 +53,7 @@ public class ListQuotasCommandTest {
 
   @Test
   public void listsQuotasWithFilter() throws Exception {
-    var parsed = ShellLineParser.parse("list_quotas USER => 'u1'");
+    ParsedCommand parsed = ShellLineParser.parse("list_quotas USER => 'u1'");
     TabularResult result = (TabularResult) command.execute(parsed, context);
 
     assertEquals("u1", admin.lastFilterArgs.get("USER"));

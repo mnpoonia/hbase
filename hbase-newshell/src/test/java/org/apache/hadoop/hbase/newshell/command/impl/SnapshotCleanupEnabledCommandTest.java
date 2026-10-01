@@ -29,6 +29,7 @@ import org.apache.hadoop.hbase.newshell.parser.ShellLineParser;
 import org.apache.hadoop.hbase.testclassification.SmallTests;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.apache.hadoop.hbase.newshell.command.CommandResult;
 
 @Tag(SmallTests.TAG)
 public class SnapshotCleanupEnabledCommandTest {
@@ -45,7 +46,7 @@ public class SnapshotCleanupEnabledCommandTest {
 
   @Test
   public void reports() throws Exception {
-    var result = command.execute(ShellLineParser.parse("snapshot_cleanup_enabled"), context);
+    CommandResult result = command.execute(ShellLineParser.parse("snapshot_cleanup_enabled"), context);
     assertEquals("false", ((TextResult) result).lines().get(0));
   }
 }

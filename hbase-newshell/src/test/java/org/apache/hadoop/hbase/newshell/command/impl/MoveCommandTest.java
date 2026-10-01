@@ -31,6 +31,7 @@ import org.apache.hadoop.hbase.newshell.parser.ShellLineParser;
 import org.apache.hadoop.hbase.testclassification.SmallTests;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.apache.hadoop.hbase.newshell.parser.ParsedCommand;
 
 @Tag(SmallTests.TAG)
 public class MoveCommandTest {
@@ -53,7 +54,7 @@ public class MoveCommandTest {
 
   @Test
   public void movesRegionToRandomServerWhenNoTargetGiven() throws Exception {
-    var parsed = ShellLineParser.parse("move 'abcdef1234567890'");
+    ParsedCommand parsed = ShellLineParser.parse("move 'abcdef1234567890'");
     command.execute(parsed, context);
 
     assertEquals("abcdef1234567890", admin.lastEncodedRegionName);
@@ -62,7 +63,7 @@ public class MoveCommandTest {
 
   @Test
   public void movesRegionToSpecificServer() throws Exception {
-    var parsed =
+    ParsedCommand parsed =
       ShellLineParser.parse("move 'abcdef1234567890', 'host187.example.com,60020,1289493121758'");
     command.execute(parsed, context);
 
@@ -72,7 +73,7 @@ public class MoveCommandTest {
 
   @Test
   public void throwsWhenRegionNameMissing() throws Exception {
-    var parsed = ShellLineParser.parse("move");
+    ParsedCommand parsed = ShellLineParser.parse("move");
     assertThrows(ShellCommandException.class, () -> command.execute(parsed, context));
   }
 }

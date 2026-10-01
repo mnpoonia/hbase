@@ -47,7 +47,7 @@ public class ListPeerConfigsCommandTest {
     new ExecutionContext(admin, new StubShellTableFactory(), new PrintWriter(new StringWriter()));
   @Test
   public void runs() throws Exception {
-    var result = (TabularResult) command.execute(ShellLineParser.parse("list_peer_configs"), context);
+    TabularResult result = (TabularResult) command.execute(ShellLineParser.parse("list_peer_configs"), context);
     assertEquals(List.of(List.of("PeerId", "1")), result.rows());
   }
 }

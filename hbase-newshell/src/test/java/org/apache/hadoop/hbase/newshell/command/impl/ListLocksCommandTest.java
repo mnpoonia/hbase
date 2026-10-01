@@ -30,6 +30,7 @@ import org.apache.hadoop.hbase.newshell.parser.ShellLineParser;
 import org.apache.hadoop.hbase.testclassification.SmallTests;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.apache.hadoop.hbase.newshell.parser.ParsedCommand;
 
 @Tag(SmallTests.TAG)
 public class ListLocksCommandTest {
@@ -48,7 +49,7 @@ public class ListLocksCommandTest {
 
   @Test
   public void listsLocks() throws Exception {
-    var parsed = ShellLineParser.parse("list_locks");
+    ParsedCommand parsed = ShellLineParser.parse("list_locks");
     TextResult result = (TextResult) command.execute(parsed, context);
 
     assertEquals(3, result.lines().size());

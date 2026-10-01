@@ -29,6 +29,7 @@ import org.apache.hadoop.hbase.newshell.parser.ShellLineParser;
 import org.apache.hadoop.hbase.testclassification.SmallTests;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.apache.hadoop.hbase.newshell.parser.ParsedCommand;
 
 @Tag(SmallTests.TAG)
 public class CreateNamespaceCommandTest {
@@ -51,7 +52,7 @@ public class CreateNamespaceCommandTest {
 
   @Test
   public void createsWithoutProperties() throws Exception {
-    var parsed = ShellLineParser.parse("create_namespace 'ns1'");
+    ParsedCommand parsed = ShellLineParser.parse("create_namespace 'ns1'");
     command.execute(parsed, context);
 
     assertEquals("ns1", admin.lastNamespace);
@@ -60,7 +61,7 @@ public class CreateNamespaceCommandTest {
 
   @Test
   public void createsWithProperties() throws Exception {
-    var parsed =
+    ParsedCommand parsed =
       ShellLineParser.parse("create_namespace 'ns1', {'PROPERTY_NAME'=>'PROPERTY_VALUE'}");
     command.execute(parsed, context);
 

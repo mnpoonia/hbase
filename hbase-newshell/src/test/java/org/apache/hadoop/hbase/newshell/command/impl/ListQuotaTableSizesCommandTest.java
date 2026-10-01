@@ -44,8 +44,8 @@ public class ListQuotaTableSizesCommandTest {
 
   @Test
   public void listsSizes() throws Exception {
-    var command = new ListQuotaTableSizesCommand();
-    var context = new ExecutionContext(new RecordingShellAdmin(), new StubShellTableFactory(),
+    ListQuotaTableSizesCommand command = new ListQuotaTableSizesCommand();
+    ExecutionContext context = new ExecutionContext(new RecordingShellAdmin(), new StubShellTableFactory(),
       new PrintWriter(new StringWriter()));
     TabularResult result =
       (TabularResult) command.execute(ShellLineParser.parse("list_quota_table_sizes"), context);

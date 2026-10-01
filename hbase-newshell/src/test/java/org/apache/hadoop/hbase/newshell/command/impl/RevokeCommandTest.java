@@ -31,6 +31,7 @@ import org.apache.hadoop.hbase.newshell.parser.ShellLineParser;
 import org.apache.hadoop.hbase.testclassification.SmallTests;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.apache.hadoop.hbase.newshell.parser.ParsedCommand;
 
 @Tag(SmallTests.TAG)
 public class RevokeCommandTest {
@@ -60,7 +61,7 @@ public class RevokeCommandTest {
 
   @Test
   public void revokesGlobalPermissions() throws Exception {
-    var parsed = ShellLineParser.parse("revoke 'bobsmith'");
+    ParsedCommand parsed = ShellLineParser.parse("revoke 'bobsmith'");
     command.execute(parsed, context);
 
     assertEquals("bobsmith", admin.lastUserOrGroup);
@@ -70,7 +71,7 @@ public class RevokeCommandTest {
 
   @Test
   public void revokesNamespacePermissions() throws Exception {
-    var parsed = ShellLineParser.parse("revoke 'bobsmith', '@ns1'");
+    ParsedCommand parsed = ShellLineParser.parse("revoke 'bobsmith', '@ns1'");
     command.execute(parsed, context);
 
     assertEquals("ns1", admin.lastNamespace);
@@ -79,7 +80,7 @@ public class RevokeCommandTest {
 
   @Test
   public void revokesTableFamilyQualifierPermissions() throws Exception {
-    var parsed = ShellLineParser.parse("revoke 'bobsmith', 't1', 'f1', 'col1'");
+    ParsedCommand parsed = ShellLineParser.parse("revoke 'bobsmith', 't1', 'f1', 'col1'");
     command.execute(parsed, context);
 
     assertEquals("t1", admin.lastTableName);
@@ -89,7 +90,7 @@ public class RevokeCommandTest {
 
   @Test
   public void throwsWhenUserMissing() throws Exception {
-    var parsed = ShellLineParser.parse("revoke");
+    ParsedCommand parsed = ShellLineParser.parse("revoke");
     assertThrows(ShellCommandException.class, () -> command.execute(parsed, context));
   }
 }

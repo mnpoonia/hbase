@@ -31,6 +31,7 @@ import org.apache.hadoop.hbase.newshell.parser.ShellLineParser;
 import org.apache.hadoop.hbase.testclassification.SmallTests;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.apache.hadoop.hbase.newshell.parser.ParsedCommand;
 
 @Tag(SmallTests.TAG)
 public class ChangeSftCommandTest {
@@ -55,7 +56,7 @@ public class ChangeSftCommandTest {
 
   @Test
   public void changesTableSftWithTwoArgs() throws Exception {
-    var parsed = ShellLineParser.parse("change_sft 't1', 'FILE'");
+    ParsedCommand parsed = ShellLineParser.parse("change_sft 't1', 'FILE'");
     command.execute(parsed, context);
 
     assertEquals("t1", admin.lastTableName);
@@ -65,7 +66,7 @@ public class ChangeSftCommandTest {
 
   @Test
   public void changesFamilySftWithThreeArgs() throws Exception {
-    var parsed = ShellLineParser.parse("change_sft 't1', 'f1', 'FILE'");
+    ParsedCommand parsed = ShellLineParser.parse("change_sft 't1', 'f1', 'FILE'");
     command.execute(parsed, context);
 
     assertEquals("t1", admin.lastTableName);
@@ -75,7 +76,7 @@ public class ChangeSftCommandTest {
 
   @Test
   public void throwsWhenArgCountWrong() throws Exception {
-    var parsed = ShellLineParser.parse("change_sft 't1'");
+    ParsedCommand parsed = ShellLineParser.parse("change_sft 't1'");
     assertThrows(ShellCommandException.class, () -> command.execute(parsed, context));
   }
 }

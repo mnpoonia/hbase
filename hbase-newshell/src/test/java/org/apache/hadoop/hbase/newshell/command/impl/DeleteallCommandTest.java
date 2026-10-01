@@ -34,6 +34,7 @@ import org.apache.hadoop.hbase.newshell.parser.ShellLineParser;
 import org.apache.hadoop.hbase.testclassification.SmallTests;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.apache.hadoop.hbase.newshell.parser.ParsedCommand;
 
 @Tag(SmallTests.TAG)
 public class DeleteallCommandTest {
@@ -76,7 +77,7 @@ public class DeleteallCommandTest {
 
   @Test
   public void deletesWholeRowWhenColumnOmitted() throws Exception {
-    var parsed = ShellLineParser.parse("deleteall 't1', 'r1'");
+    ParsedCommand parsed = ShellLineParser.parse("deleteall 't1', 'r1'");
     command.execute(parsed, context);
 
     assertEquals("t1", tables.lastTableName);
@@ -86,7 +87,7 @@ public class DeleteallCommandTest {
 
   @Test
   public void deletesAllVersionsOfAColumn() throws Exception {
-    var parsed = ShellLineParser.parse("deleteall 't1', 'r1', 'f1:c1'");
+    ParsedCommand parsed = ShellLineParser.parse("deleteall 't1', 'r1', 'f1:c1'");
     command.execute(parsed, context);
 
     assertEquals("f1:c1", table.lastColumn);
@@ -94,7 +95,7 @@ public class DeleteallCommandTest {
 
   @Test
   public void deletesByRowPrefixFilterWithoutARowArgument() throws Exception {
-    var parsed = ShellLineParser.parse("deleteall 't1', {ROWPREFIXFILTER => 'prefix'}, 'f1:c1'");
+    ParsedCommand parsed = ShellLineParser.parse("deleteall 't1', {ROWPREFIXFILTER => 'prefix'}, 'f1:c1'");
     command.execute(parsed, context);
 
     assertNull(table.lastRow);
@@ -104,7 +105,7 @@ public class DeleteallCommandTest {
 
   @Test
   public void throwsWhenRowMissingAndNoPrefixFilter() throws Exception {
-    var parsed = ShellLineParser.parse("deleteall 't1'");
+    ParsedCommand parsed = ShellLineParser.parse("deleteall 't1'");
     assertThrows(ShellCommandException.class, () -> command.execute(parsed, context));
   }
 }

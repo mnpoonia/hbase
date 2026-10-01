@@ -33,6 +33,7 @@ import org.apache.hadoop.hbase.newshell.parser.ShellLineParser;
 import org.apache.hadoop.hbase.testclassification.SmallTests;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.apache.hadoop.hbase.newshell.parser.ParsedCommand;
 
 @Tag(SmallTests.TAG)
 public class CompactionSwitchCommandTest {
@@ -56,7 +57,7 @@ public class CompactionSwitchCommandTest {
 
   @Test
   public void switchesCompactionOnSpecifiedServers() throws Exception {
-    var parsed = ShellLineParser.parse("compaction_switch true, 'server1', 'server2'");
+    ParsedCommand parsed = ShellLineParser.parse("compaction_switch true, 'server1', 'server2'");
     TabularResult result = (TabularResult) command.execute(parsed, context);
 
     assertEquals(true, admin.lastEnabled);
@@ -67,7 +68,7 @@ public class CompactionSwitchCommandTest {
 
   @Test
   public void switchesCompactionOnAllServersWhenNoneGiven() throws Exception {
-    var parsed = ShellLineParser.parse("compaction_switch false");
+    ParsedCommand parsed = ShellLineParser.parse("compaction_switch false");
     command.execute(parsed, context);
 
     assertEquals(false, admin.lastEnabled);
@@ -76,7 +77,7 @@ public class CompactionSwitchCommandTest {
 
   @Test
   public void throwsWhenArgumentMissing() throws Exception {
-    var parsed = ShellLineParser.parse("compaction_switch");
+    ParsedCommand parsed = ShellLineParser.parse("compaction_switch");
     assertThrows(ShellCommandException.class, () -> command.execute(parsed, context));
   }
 }
