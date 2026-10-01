@@ -21,6 +21,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -76,7 +78,7 @@ public class TestVisibilityLabelsAgainstMiniCluster {
     String label = "newshell_label_" + UUID.randomUUID().toString().replace("-", "");
     ShellAdmin admin = new DefaultShellAdmin(connection.getAdmin());
 
-    admin.addLabels(List.of(label));
+    admin.addLabels(Arrays.asList(label));
 
     List<String> labels = admin.listLabels(".*");
     assertTrue(labels.contains(label));
@@ -87,7 +89,7 @@ public class TestVisibilityLabelsAgainstMiniCluster {
     String label = "newshell_regex_label_" + UUID.randomUUID().toString().replace("-", "");
     ShellAdmin admin = new DefaultShellAdmin(connection.getAdmin());
 
-    admin.addLabels(List.of(label));
+    admin.addLabels(Arrays.asList(label));
 
     assertTrue(admin.listLabels(label).contains(label));
     assertTrue(admin.listLabels("no_such_label_.*").isEmpty());
@@ -99,15 +101,15 @@ public class TestVisibilityLabelsAgainstMiniCluster {
     String user = "newshell_auth_user_" + UUID.randomUUID().toString().replace("-", "");
     ShellAdmin admin = new DefaultShellAdmin(connection.getAdmin());
 
-    admin.addLabels(List.of(label));
+    admin.addLabels(Arrays.asList(label));
     int before = admin.getAuths(user).size();
 
-    admin.setAuths(user, List.of(label));
+    admin.setAuths(user, Arrays.asList(label));
     List<String> afterSet = admin.getAuths(user);
     assertEquals(before + 1, afterSet.size());
     assertTrue(afterSet.contains(label));
 
-    admin.clearAuths(user, List.of(label));
+    admin.clearAuths(user, Arrays.asList(label));
     assertEquals(before, admin.getAuths(user).size());
     assertFalse(admin.getAuths(user).contains(label));
   }
@@ -117,7 +119,7 @@ public class TestVisibilityLabelsAgainstMiniCluster {
     String label = "newshell_vis_label_" + UUID.randomUUID().toString().replace("-", "");
     String tableName = "newshell_set_visibility_" + UUID.randomUUID().toString().replace("-", "");
     ShellAdmin admin = new DefaultShellAdmin(connection.getAdmin());
-    admin.addLabels(List.of(label));
+    admin.addLabels(Arrays.asList(label));
 
     TEST_UTIL.createTable(TableName.valueOf(tableName), Bytes.toBytes("cf"));
     try (Table table = connection.getTable(TableName.valueOf(tableName))) {
@@ -125,7 +127,7 @@ public class TestVisibilityLabelsAgainstMiniCluster {
         Bytes.toBytes("v1")));
     }
 
-    long count = admin.setVisibility(tableName, label, Map.of("COLUMNS", List.of("cf:c1")));
+    long count = admin.setVisibility(tableName, label, Collections.singletonMap("COLUMNS", Arrays.asList("cf:c1")));
     assertEquals(1L, count);
   }
 

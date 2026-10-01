@@ -22,6 +22,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.Arrays;
 import java.util.List;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
 import org.apache.hadoop.hbase.newshell.command.ShellCommandException;
@@ -58,7 +59,7 @@ public class SplitormergeEnabledCommandTest {
     TextResult result = (TextResult) command.execute(parsed, context);
 
     assertEquals("SPLIT", admin.lastSwitchType);
-    assertEquals(List.of("true"), result.lines());
+    assertEquals(Arrays.asList("true"), result.lines());
   }
 
   @Test

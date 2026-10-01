@@ -22,6 +22,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.Arrays;
 import java.util.List;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
 import org.apache.hadoop.hbase.newshell.command.ShellCommandException;
@@ -56,12 +57,12 @@ public class DescribeCommandTest {
 
   @Test
   public void describesNamedTable() throws Exception {
-    admin.description = new TableDescription(true, ", {attr}", List.of("{NAME => 'f1'}"));
+    admin.description = new TableDescription(true, ", {attr}", Arrays.asList("{NAME => 'f1'}"));
     ParsedCommand parsed = ShellLineParser.parse("describe 't1'");
     TextResult result = (TextResult) command.execute(parsed, context);
 
     assertEquals("t1", admin.lastDescribedTable);
-    assertEquals(List.of("Table t1 is ENABLED", "t1, {attr}", "COLUMN FAMILIES DESCRIPTION",
+    assertEquals(Arrays.asList("Table t1 is ENABLED", "t1, {attr}", "COLUMN FAMILIES DESCRIPTION",
       "{NAME => 'f1'}", "", "1 row(s)", "Quota is disabled"), result.lines());
   }
 

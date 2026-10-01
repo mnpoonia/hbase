@@ -23,6 +23,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
@@ -63,8 +64,8 @@ public class SetVisibilityCommandTest {
       .execute(ShellLineParser.parse("set_visibility 't1', 'A|B', {COLUMNS => ['c1']}"), context);
     assertEquals("t1", admin.tableName);
     assertEquals("A|B", admin.visibility);
-    assertEquals(List.of("c1"), admin.options.get("COLUMNS"));
-    assertEquals(List.of("3 row(s)"), result.lines());
+    assertEquals(Arrays.asList("c1"), admin.options.get("COLUMNS"));
+    assertEquals(Arrays.asList("3 row(s)"), result.lines());
   }
 
   @Test

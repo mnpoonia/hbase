@@ -22,6 +22,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.Collections;
 import java.util.List;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
 import org.apache.hadoop.hbase.newshell.command.ShellCommandException;
@@ -60,7 +61,7 @@ public class SnapshotCommandTest {
 
     assertEquals("t1", admin.lastTableName);
     assertEquals("snap1", admin.lastSnapshotName);
-    assertEquals(List.of(), result.lines());
+    assertEquals(Collections.emptyList(), result.lines());
   }
 
   @Test

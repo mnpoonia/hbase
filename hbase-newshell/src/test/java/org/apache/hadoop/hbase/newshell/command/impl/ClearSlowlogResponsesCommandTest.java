@@ -23,6 +23,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
@@ -59,6 +60,6 @@ public class ClearSlowlogResponsesCommandTest {
   @Test
   public void clearsNamed() throws Exception {
     command.execute(ShellLineParser.parse("clear_slowlog_responses ['s1','s2']"), context);
-    assertEquals(List.of("s1", "s2"), admin.last);
+    assertEquals(Arrays.asList("s1", "s2"), admin.last);
   }
 }

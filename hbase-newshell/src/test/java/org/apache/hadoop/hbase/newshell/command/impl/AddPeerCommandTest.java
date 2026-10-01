@@ -22,6 +22,8 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
@@ -61,7 +63,7 @@ public class AddPeerCommandTest {
 
     assertEquals("1", admin.lastPeerId);
     assertEquals("zk1,zk2:2181:/hbase", admin.lastPeerConfigSpec.get("CLUSTER_KEY"));
-    assertEquals(List.of(), result.lines());
+    assertEquals(Collections.emptyList(), result.lines());
   }
 
   @Test
@@ -72,7 +74,7 @@ public class AddPeerCommandTest {
 
     @SuppressWarnings("unchecked")
     Map<String, Object> tableCfs = (Map<String, Object>) admin.lastPeerConfigSpec.get("TABLE_CFS");
-    assertEquals(List.of("cf1", "cf2"), tableCfs.get("ns:tab"));
+    assertEquals(Arrays.asList("cf1", "cf2"), tableCfs.get("ns:tab"));
   }
 
   @Test

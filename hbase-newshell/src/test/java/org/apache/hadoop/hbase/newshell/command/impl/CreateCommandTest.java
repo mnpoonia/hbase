@@ -22,6 +22,9 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
@@ -64,8 +67,8 @@ public class CreateCommandTest {
     TextResult result = (TextResult) command.execute(parsed, context);
 
     assertEquals("t1", admin.lastTableName);
-    assertEquals(List.of(Map.of("NAME", "f1", "VERSIONS", 3L)), admin.lastFamilySpecs);
-    assertEquals(List.of("Created table t1"), result.lines());
+    assertEquals(Arrays.asList(mapOf("NAME", "f1", "VERSIONS", 3L)), admin.lastFamilySpecs);
+    assertEquals(Arrays.asList("Created table t1"), result.lines());
   }
 
   @Test
@@ -73,7 +76,7 @@ public class CreateCommandTest {
     ParsedCommand parsed = ShellLineParser.parse("create 't1' --name=f1 --versions=3");
     command.execute(parsed, context);
 
-    assertEquals(List.of(Map.of("NAME", "f1", "VERSIONS", 3L)), admin.lastFamilySpecs);
+    assertEquals(Arrays.asList(mapOf("NAME", "f1", "VERSIONS", 3L)), admin.lastFamilySpecs);
   }
 
   @Test
@@ -82,7 +85,7 @@ public class CreateCommandTest {
     command.execute(parsed, context);
 
     assertEquals("t1", admin.lastTableName);
-    assertEquals(List.of(Map.of("NAME", "f1")), admin.lastFamilySpecs);
+    assertEquals(Arrays.asList(Collections.singletonMap("NAME", "f1")), admin.lastFamilySpecs);
   }
 
   @Test
@@ -90,7 +93,7 @@ public class CreateCommandTest {
     ParsedCommand parsed = ShellLineParser.parse("create 't1', 'f1', 'f2'");
     command.execute(parsed, context);
 
-    assertEquals(List.of(Map.of("NAME", "f1"), Map.of("NAME", "f2")), admin.lastFamilySpecs);
+    assertEquals(Arrays.asList(Collections.singletonMap("NAME", "f1"), Collections.singletonMap("NAME", "f2")), admin.lastFamilySpecs);
   }
 
   @Test
@@ -100,7 +103,7 @@ public class CreateCommandTest {
     command.execute(parsed, context);
 
     assertEquals("t1", admin.lastTableName);
-    assertEquals(List.of(Map.of("NAME", "f1"), Map.of("NAME", "f2", "VERSIONS", 5L)),
+    assertEquals(Arrays.asList(Collections.singletonMap("NAME", "f1"), mapOf("NAME", "f2", "VERSIONS", 5L)),
       admin.lastFamilySpecs);
   }
 
@@ -110,8 +113,8 @@ public class CreateCommandTest {
     command.execute(parsed, context);
 
     assertEquals("t1", admin.lastTableName);
-    assertEquals(List.of(Map.of("NAME", "f1")), admin.lastFamilySpecs);
-    assertEquals(List.of("1000", "2000"), admin.lastTableAttributes.get("SPLITS"));
+    assertEquals(Arrays.asList(Collections.singletonMap("NAME", "f1")), admin.lastFamilySpecs);
+    assertEquals(Arrays.asList("1000", "2000"), admin.lastTableAttributes.get("SPLITS"));
   }
 
   @Test
@@ -124,5 +127,13 @@ public class CreateCommandTest {
   public void throwsWhenNoFamilySpecGiven() throws Exception {
     ParsedCommand parsed = ShellLineParser.parse("create 't1'");
     assertThrows(ShellCommandException.class, () -> command.execute(parsed, context));
+  }
+
+  private static Map<String, Object> mapOf(Object... keyValuePairs) {
+    Map<String, Object> map = new LinkedHashMap<>();
+    for (int i = 0; i < keyValuePairs.length; i += 2) {
+      map.put((String) keyValuePairs[i], keyValuePairs[i + 1]);
+    }
+    return map;
   }
 }

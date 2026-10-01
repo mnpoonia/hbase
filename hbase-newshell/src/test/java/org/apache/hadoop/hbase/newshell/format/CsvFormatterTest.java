@@ -21,6 +21,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.Arrays;
 import java.util.List;
 import org.apache.hadoop.hbase.newshell.command.TabularResult;
 import org.apache.hadoop.hbase.testclassification.SmallTests;
@@ -33,7 +34,7 @@ public class CsvFormatterTest {
   public void emitsHeaderAndRows() {
     StringWriter buf = new StringWriter();
     TabularResult result =
-      new TabularResult(List.of("A", "B"), List.of(List.of("1", "x,y"), List.of("2", "z")));
+      new TabularResult(Arrays.asList("A", "B"), Arrays.asList(Arrays.asList("1", "x,y"), Arrays.asList("2", "z")));
     new CsvFormatter().format("list", result, new PrintWriter(buf));
     assertEquals("A,B\n1,\"x,y\"\n2,z\n", buf.toString());
   }

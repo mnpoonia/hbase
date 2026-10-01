@@ -23,6 +23,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.Arrays;
 import java.util.List;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
 import org.apache.hadoop.hbase.newshell.command.ShellCommandException;
@@ -67,7 +68,7 @@ public class TruncateCommandTest {
 
     assertEquals("t1", admin.lastTableName);
     assertFalse(admin.lastPreserveSplits);
-    assertEquals(List.of("Truncating 't1' table (it may take a while):", "Disabling table...",
+    assertEquals(Arrays.asList("Truncating 't1' table (it may take a while):", "Disabling table...",
       "Truncating table..."), result.lines());
   }
 
@@ -77,7 +78,7 @@ public class TruncateCommandTest {
     ParsedCommand parsed = ShellLineParser.parse("truncate 't1'");
     TextResult result = (TextResult) command.execute(parsed, context);
 
-    assertEquals(List.of("Truncating 't1' table (it may take a while):", "Truncating table..."),
+    assertEquals(Arrays.asList("Truncating 't1' table (it may take a while):", "Truncating table..."),
       result.lines());
   }
 

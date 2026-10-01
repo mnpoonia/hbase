@@ -23,6 +23,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.Arrays;
 import java.util.List;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
 import org.apache.hadoop.hbase.newshell.command.ShellCommandException;
@@ -67,7 +68,7 @@ public class TruncatePreserveCommandTest {
 
     assertEquals("t1", admin.lastTableName);
     assertTrue(admin.lastPreserveSplits);
-    assertEquals(List.of("Truncating 't1' table (it may take a while):", "Disabling table...",
+    assertEquals(Arrays.asList("Truncating 't1' table (it may take a while):", "Disabling table...",
       "Truncating table..."), result.lines());
   }
 

@@ -23,6 +23,8 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
 import org.apache.hadoop.hbase.newshell.command.SessionOptions;
@@ -40,7 +42,7 @@ import org.apache.hadoop.hbase.newshell.parser.ParsedCommand;
 public class DisableAllCommandTest {
 
   private static final class RecordingShellAdmin extends StubShellAdmin {
-    private List<String> tableNames = List.of();
+    private List<String> tableNames = Collections.emptyList();
     private final List<String> disabled = new ArrayList<>();
 
     @Override
@@ -61,41 +63,41 @@ public class DisableAllCommandTest {
 
   @Test
   public void disablesEveryMatch() throws Exception {
-    admin.tableNames = List.of("t1", "t2");
+    admin.tableNames = Arrays.asList("t1", "t2");
     ParsedCommand parsed = ShellLineParser.parse("disable_all 't.*'");
     TextResult result = (TextResult) command.execute(parsed, context);
 
-    assertEquals(List.of("t1", "t2"), admin.disabled);
-    assertEquals(List.of("2 tables successfully disabled"), result.lines());
+    assertEquals(Arrays.asList("t1", "t2"), admin.disabled);
+    assertEquals(Arrays.asList("2 tables successfully disabled"), result.lines());
   }
 
   @Test
   public void reportsNoMatches() throws Exception {
-    admin.tableNames = List.of();
+    admin.tableNames = Collections.emptyList();
     ParsedCommand parsed = ShellLineParser.parse("disable_all 'nope.*'");
     TextResult result = (TextResult) command.execute(parsed, context);
 
-    assertEquals(List.of("No tables matched the regex nope.*"), result.lines());
+    assertEquals(Arrays.asList("No tables matched the regex nope.*"), result.lines());
   }
 
   @Test
   public void abortsWithoutYesWhenNonInteractive() throws Exception {
-    admin.tableNames = List.of("t1");
+    admin.tableNames = Arrays.asList("t1");
     ExecutionContext noYes =
       new ExecutionContext(admin, new StubShellTableFactory(), new PrintWriter(new StringWriter()));
     ParsedCommand parsed = ShellLineParser.parse("disable_all 't.*'");
     assertThrows(UserAbortException.class, () -> command.execute(parsed, noYes));
-    assertEquals(List.of(), admin.disabled);
+    assertEquals(Collections.emptyList(), admin.disabled);
   }
 
   @Test
   public void acceptsInlineYesFlag() throws Exception {
-    admin.tableNames = List.of("t1");
+    admin.tableNames = Arrays.asList("t1");
     ExecutionContext noYes =
       new ExecutionContext(admin, new StubShellTableFactory(), new PrintWriter(new StringWriter()));
     ParsedCommand parsed = ShellLineParser.parse("disable_all 't.*' --yes");
     TextResult result = (TextResult) command.execute(parsed, noYes);
-    assertEquals(List.of("t1"), admin.disabled);
-    assertEquals(List.of("1 tables successfully disabled"), result.lines());
+    assertEquals(Arrays.asList("t1"), admin.disabled);
+    assertEquals(Arrays.asList("1 tables successfully disabled"), result.lines());
   }
 }

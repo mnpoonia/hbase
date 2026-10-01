@@ -21,6 +21,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.Arrays;
 import java.util.List;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
 import org.apache.hadoop.hbase.newshell.command.TabularResult;
@@ -36,7 +37,7 @@ public class ListDeadserversCommandTest {
   private static final class RecordingShellAdmin extends StubShellAdmin {
     @Override
     public List<String> listDeadServers() {
-      return List.of("s1");
+      return Arrays.asList("s1");
     }
   }
 
@@ -48,7 +49,7 @@ public class ListDeadserversCommandTest {
   public void lists() throws Exception {
     TabularResult result =
       (TabularResult) command.execute(ShellLineParser.parse("list_deadservers"), context);
-    assertEquals(List.of("SERVERNAME"), result.header());
-    assertEquals(List.of(List.of("s1")), result.rows());
+    assertEquals(Arrays.asList("SERVERNAME"), result.header());
+    assertEquals(Arrays.asList(Arrays.asList("s1")), result.rows());
   }
 }

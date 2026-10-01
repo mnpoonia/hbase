@@ -21,6 +21,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
 import org.apache.hadoop.hbase.newshell.command.TabularResult;
@@ -36,7 +38,7 @@ import org.apache.hadoop.hbase.newshell.parser.ParsedCommand;
 public class ListDecommissionedRegionServersCommandTest {
 
   private static final class RecordingShellAdmin extends StubShellAdmin {
-    private List<String> decommissionedServers = List.of();
+    private List<String> decommissionedServers = Collections.emptyList();
 
     @Override
     public List<String> listDecommissionedRegionServers() {
@@ -52,12 +54,12 @@ public class ListDecommissionedRegionServersCommandTest {
 
   @Test
   public void listsDecommissionedServers() throws Exception {
-    admin.decommissionedServers = List.of("host1,60020,123", "host2,60020,456");
+    admin.decommissionedServers = Arrays.asList("host1,60020,123", "host2,60020,456");
     ParsedCommand parsed = ShellLineParser.parse("list_decommissioned_regionservers");
     TabularResult result = (TabularResult) command.execute(parsed, context);
 
-    assertEquals(List.of("DECOMMISSIONED REGION SERVERS"), result.header());
-    assertEquals(List.of(List.of("host1,60020,123"), List.of("host2,60020,456")), result.rows());
+    assertEquals(Arrays.asList("DECOMMISSIONED REGION SERVERS"), result.header());
+    assertEquals(Arrays.asList(Arrays.asList("host1,60020,123"), Arrays.asList("host2,60020,456")), result.rows());
   }
 
   @Test
@@ -65,6 +67,6 @@ public class ListDecommissionedRegionServersCommandTest {
     ParsedCommand parsed = ShellLineParser.parse("list_decommissioned_regionservers");
     TabularResult result = (TabularResult) command.execute(parsed, context);
 
-    assertEquals(List.of(), result.rows());
+    assertEquals(Collections.emptyList(), result.rows());
   }
 }

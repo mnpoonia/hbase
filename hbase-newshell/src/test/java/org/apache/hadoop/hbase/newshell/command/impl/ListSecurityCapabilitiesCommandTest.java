@@ -22,6 +22,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.Arrays;
 import java.util.List;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
 import org.apache.hadoop.hbase.newshell.command.TextResult;
@@ -38,7 +39,7 @@ public class ListSecurityCapabilitiesCommandTest {
   private static final class RecordingShellAdmin extends StubShellAdmin {
     @Override
     public List<String> listSecurityCapabilities() {
-      return List.of("AUTHORIZATION", "CELL_VISIBILITY");
+      return Arrays.asList("AUTHORIZATION", "CELL_VISIBILITY");
     }
   }
 
@@ -48,6 +49,6 @@ public class ListSecurityCapabilitiesCommandTest {
       new PrintWriter(new StringWriter()));
     TextResult result = (TextResult) new ListSecurityCapabilitiesCommand()
       .execute(ShellLineParser.parse("list_security_capabilities"), context);
-    assertEquals(List.of("AUTHORIZATION", "CELL_VISIBILITY"), result.lines());
+    assertEquals(Arrays.asList("AUTHORIZATION", "CELL_VISIBILITY"), result.lines());
   }
 }

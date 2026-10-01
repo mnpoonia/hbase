@@ -22,6 +22,8 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
 import org.apache.hadoop.hbase.newshell.command.ShellCommandException;
@@ -59,8 +61,8 @@ public class RecommissionRegionServerCommandTest {
     TextResult result = (TextResult) command.execute(parsed, context);
 
     assertEquals("host1,60020,123", admin.lastHostOrServer);
-    assertEquals(List.of(), admin.lastEncodedRegionNames);
-    assertEquals(List.of(), result.lines());
+    assertEquals(Collections.emptyList(), admin.lastEncodedRegionNames);
+    assertEquals(Collections.emptyList(), result.lines());
   }
 
   @Test
@@ -69,7 +71,7 @@ public class RecommissionRegionServerCommandTest {
     command.execute(parsed, context);
 
     assertEquals("host1", admin.lastHostOrServer);
-    assertEquals(List.of("region1", "region2"), admin.lastEncodedRegionNames);
+    assertEquals(Arrays.asList("region1", "region2"), admin.lastEncodedRegionNames);
   }
 
   @Test

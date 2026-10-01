@@ -21,6 +21,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
 import org.apache.hadoop.hbase.newshell.spi.NoAvailableTerminalProviderException;
 import org.apache.hadoop.hbase.newshell.spi.ShellTerminal;
@@ -74,14 +75,14 @@ public class TerminalProviderRegistryTest {
   @Test
   public void picksHighestPriorityAvailableProvider() {
     TerminalProviderRegistry registry = new TerminalProviderRegistry(
-      List.of(new FakeProvider("low", 1, true), new FakeProvider("high", 100, true)));
+      Arrays.asList(new FakeProvider("low", 1, true), new FakeProvider("high", 100, true)));
     assertEquals("high", registry.resolve().name());
   }
 
   @Test
   public void skipsUnavailableProviders() {
     TerminalProviderRegistry registry =
-      new TerminalProviderRegistry(List.of(new FakeProvider("unavailable-high", 100, false),
+      new TerminalProviderRegistry(Arrays.asList(new FakeProvider("unavailable-high", 100, false),
         new FakeProvider("available-low", 1, true)));
     assertEquals("available-low", registry.resolve().name());
   }
@@ -90,7 +91,7 @@ public class TerminalProviderRegistryTest {
   public void honorsExplicitOverrideProperty() {
     System.setProperty(TerminalProviderRegistry.PROVIDER_OVERRIDE_PROPERTY, "low");
     TerminalProviderRegistry registry = new TerminalProviderRegistry(
-      List.of(new FakeProvider("low", 1, true), new FakeProvider("high", 100, true)));
+      Arrays.asList(new FakeProvider("low", 1, true), new FakeProvider("high", 100, true)));
     assertEquals("low", registry.resolve().name());
   }
 
@@ -98,14 +99,14 @@ public class TerminalProviderRegistryTest {
   public void throwsWhenOverrideNamesUnavailableProvider() {
     System.setProperty(TerminalProviderRegistry.PROVIDER_OVERRIDE_PROPERTY, "missing");
     TerminalProviderRegistry registry =
-      new TerminalProviderRegistry(List.of(new FakeProvider("high", 100, true)));
+      new TerminalProviderRegistry(Arrays.asList(new FakeProvider("high", 100, true)));
     assertThrows(NoAvailableTerminalProviderException.class, registry::resolve);
   }
 
   @Test
   public void throwsWhenNoProvidersAvailable() {
     TerminalProviderRegistry registry =
-      new TerminalProviderRegistry(List.of(new FakeProvider("high", 100, false)));
+      new TerminalProviderRegistry(Arrays.asList(new FakeProvider("high", 100, false)));
     assertThrows(NoAvailableTerminalProviderException.class, registry::resolve);
   }
 }

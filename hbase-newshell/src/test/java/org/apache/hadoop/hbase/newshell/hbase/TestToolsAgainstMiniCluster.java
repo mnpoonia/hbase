@@ -22,6 +22,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -221,7 +224,7 @@ public class TestToolsAgainstMiniCluster {
     String peerId = "newshell_toggle_peer_" + UUID.randomUUID().toString().replace("-", "");
     ShellAdmin admin = new DefaultShellAdmin(connection.getAdmin());
 
-    admin.addPeer(peerId, Map.of("CLUSTER_KEY", TEST_UTIL.getClusterKey(), "ENDPOINT_CLASSNAME",
+    admin.addPeer(peerId, mapOf("CLUSTER_KEY", TEST_UTIL.getClusterKey(), "ENDPOINT_CLASSNAME",
       SelfReplicationEndpointForTest.class.getName()));
 
     admin.disablePeer(peerId);
@@ -250,7 +253,7 @@ public class TestToolsAgainstMiniCluster {
     assertDoesNotThrow(admin::cleanerChoreRun);
     assertDoesNotThrow(admin::hbckChoreRun);
     assertDoesNotThrow(admin::flushMasterStore);
-    assertDoesNotThrow(() -> admin.normalize(Map.of()));
+    assertDoesNotThrow(() -> admin.normalize(Collections.emptyMap()));
     assertDoesNotThrow(admin::zkDump);
     assertDoesNotThrow(admin::walRollAll);
     assertDoesNotThrow(admin::refreshMeta);
@@ -276,14 +279,14 @@ public class TestToolsAgainstMiniCluster {
   public void peerConfigMutatorsRoundTrip() throws Exception {
     String peerId = "newshell_peer_cfg_" + UUID.randomUUID().toString().replace("-", "");
     ShellAdmin admin = new DefaultShellAdmin(connection.getAdmin());
-    admin.addPeer(peerId, Map.of("CLUSTER_KEY", TEST_UTIL.getClusterKey(), "ENDPOINT_CLASSNAME",
+    admin.addPeer(peerId, mapOf("CLUSTER_KEY", TEST_UTIL.getClusterKey(), "ENDPOINT_CLASSNAME",
       SelfReplicationEndpointForTest.class.getName()));
 
     admin.setPeerReplicateAll(peerId, false);
     admin.setPeerSerial(peerId, true);
-    admin.setPeerNamespaces(peerId, List.of("default"));
-    admin.appendPeerNamespaces(peerId, List.of("hbase"));
-    admin.removePeerNamespaces(peerId, List.of("hbase"));
+    admin.setPeerNamespaces(peerId, Arrays.asList("default"));
+    admin.appendPeerNamespaces(peerId, Arrays.asList("hbase"));
+    admin.removePeerNamespaces(peerId, Arrays.asList("hbase"));
     admin.setPeerBandwidth(peerId, 1024L * 1024L);
     assertDoesNotThrow(() -> admin.showPeerTableCFs(peerId));
     assertFalse(admin.getPeerConfigRows(peerId).isEmpty());
@@ -300,7 +303,7 @@ public class TestToolsAgainstMiniCluster {
     TEST_UTIL.createTable(TableName.valueOf(tableName), Bytes.toBytes("f1"));
     ShellAdmin admin = new DefaultShellAdmin(connection.getAdmin());
     // enableTableReplication requires at least one peer to sync CF scopes against.
-    admin.addPeer(peerId, Map.of("CLUSTER_KEY", TEST_UTIL.getClusterKey(), "ENDPOINT_CLASSNAME",
+    admin.addPeer(peerId, mapOf("CLUSTER_KEY", TEST_UTIL.getClusterKey(), "ENDPOINT_CLASSNAME",
       SelfReplicationEndpointForTest.class.getName()));
     try {
       assertDoesNotThrow(() -> admin.enableTableReplication(tableName));
@@ -308,5 +311,13 @@ public class TestToolsAgainstMiniCluster {
     } finally {
       admin.removePeer(peerId);
     }
+  }
+
+  private static Map<String, Object> mapOf(Object... keyValuePairs) {
+    Map<String, Object> map = new LinkedHashMap<>();
+    for (int i = 0; i < keyValuePairs.length; i += 2) {
+      map.put((String) keyValuePairs[i], keyValuePairs[i + 1]);
+    }
+    return map;
   }
 }

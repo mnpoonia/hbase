@@ -22,6 +22,8 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
 import org.apache.hadoop.hbase.newshell.command.ShellCommandException;
@@ -58,9 +60,9 @@ public class DecommissionRegionServersCommandTest {
     ParsedCommand parsed = ShellLineParser.parse("decommission_regionservers 'host1,60020,123'");
     TextResult result = (TextResult) command.execute(parsed, context);
 
-    assertEquals(List.of("host1,60020,123"), admin.lastHostOrServers);
+    assertEquals(Arrays.asList("host1,60020,123"), admin.lastHostOrServers);
     assertEquals(false, admin.lastOffload);
-    assertEquals(List.of(), result.lines());
+    assertEquals(Collections.emptyList(), result.lines());
   }
 
   @Test
@@ -68,9 +70,9 @@ public class DecommissionRegionServersCommandTest {
     ParsedCommand parsed = ShellLineParser.parse("decommission_regionservers ['host1', 'host2'], true");
     TextResult result = (TextResult) command.execute(parsed, context);
 
-    assertEquals(List.of("host1", "host2"), admin.lastHostOrServers);
+    assertEquals(Arrays.asList("host1", "host2"), admin.lastHostOrServers);
     assertEquals(true, admin.lastOffload);
-    assertEquals(List.of(), result.lines());
+    assertEquals(Collections.emptyList(), result.lines());
   }
 
   @Test

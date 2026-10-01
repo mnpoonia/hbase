@@ -23,6 +23,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
@@ -48,6 +49,6 @@ public class PeerModificationEnabledCommandTest {
   @Test
   public void runs() throws Exception {
     TextResult result = (TextResult) command.execute(ShellLineParser.parse("peer_modification_enabled"), context);
-    assertEquals(List.of("true"), result.lines());
+    assertEquals(Arrays.asList("true"), result.lines());
   }
 }

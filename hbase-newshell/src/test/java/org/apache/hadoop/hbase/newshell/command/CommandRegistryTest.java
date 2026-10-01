@@ -23,6 +23,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
 import org.apache.hadoop.hbase.newshell.parser.ParsedCommand;
 import org.apache.hadoop.hbase.testclassification.SmallTests;
@@ -58,20 +59,20 @@ public class CommandRegistryTest {
 
   @Test
   public void looksUpCommandByNameCaseInsensitively() {
-    CommandRegistry registry = new CommandRegistry(List.of(new FakeCommand("status")));
+    CommandRegistry registry = new CommandRegistry(Arrays.asList(new FakeCommand("status")));
     assertTrue(registry.lookup("STATUS").isPresent());
     assertEquals("status", registry.lookup("status").get().name());
   }
 
   @Test
   public void returnsEmptyForUnknownCommand() {
-    CommandRegistry registry = new CommandRegistry(List.of(new FakeCommand("status")));
+    CommandRegistry registry = new CommandRegistry(Arrays.asList(new FakeCommand("status")));
     assertFalse(registry.lookup("nope").isPresent());
   }
 
   @Test
   public void throwsOnDuplicateCommandName() {
     assertThrows(IllegalStateException.class,
-      () -> new CommandRegistry(List.of(new FakeCommand("status"), new FakeCommand("STATUS"))));
+      () -> new CommandRegistry(Arrays.asList(new FakeCommand("status"), new FakeCommand("STATUS"))));
   }
 }

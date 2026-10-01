@@ -21,7 +21,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 import org.apache.hadoop.hbase.newshell.parser.ParsedCommand;
 import org.apache.hadoop.hbase.testclassification.SmallTests;
 import org.junit.jupiter.api.Tag;
@@ -56,7 +58,8 @@ public class CommandNameCompleterTest {
 
   private static CommandNameCompleter completerFor(String... names) {
     List<ShellCommand> commands =
-      List.of(names).stream().<ShellCommand> map(FakeCommand::new).toList();
+      Arrays.asList(names).stream().<ShellCommand> map(FakeCommand::new)
+        .collect(Collectors.toList());
     return new CommandNameCompleter(new CommandRegistry(commands));
   }
 
@@ -64,19 +67,19 @@ public class CommandNameCompleterTest {
   public void completesPrefixOfFirstToken() {
     CommandNameCompleter completer = completerFor("status", "scan", "split");
     List<String> candidates = completer.complete("s", 1);
-    assertEquals(List.of("scan", "split", "status"), candidates);
+    assertEquals(Arrays.asList("scan", "split", "status"), candidates);
   }
 
   @Test
   public void completesCaseInsensitively() {
     CommandNameCompleter completer = completerFor("status");
-    assertEquals(List.of("status"), completer.complete("STA", 3));
+    assertEquals(Arrays.asList("status"), completer.complete("STA", 3));
   }
 
   @Test
   public void returnsAllCommandsForEmptyPrefix() {
     CommandNameCompleter completer = completerFor("status", "list");
-    assertEquals(List.of("list", "status"), completer.complete("", 0));
+    assertEquals(Arrays.asList("list", "status"), completer.complete("", 0));
   }
 
   @Test

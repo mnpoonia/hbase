@@ -22,6 +22,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.Arrays;
 import java.util.List;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
 import org.apache.hadoop.hbase.newshell.command.TabularResult;
@@ -38,7 +39,7 @@ public class ListSnapshotSizesCommandTest {
   private static final class RecordingShellAdmin extends StubShellAdmin {
     @Override
     public List<List<String>> listSnapshotSizes() {
-      return List.of(List.of("snap1", "42"));
+      return Arrays.asList(Arrays.asList("snap1", "42"));
     }
   }
 
@@ -49,6 +50,6 @@ public class ListSnapshotSizesCommandTest {
       new PrintWriter(new StringWriter()));
     TabularResult result =
       (TabularResult) command.execute(ShellLineParser.parse("list_snapshot_sizes"), context);
-    assertEquals(List.of(List.of("snap1", "42")), result.rows());
+    assertEquals(Arrays.asList(Arrays.asList("snap1", "42")), result.rows());
   }
 }

@@ -21,6 +21,7 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.Arrays;
 import java.util.List;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.hadoop.hbase.client.Admin;
@@ -82,15 +83,15 @@ public class TestRsGroupAgainstMiniCluster {
     String hostPort = defaultGroup.getServers().iterator().next().toString();
 
     ShellAdmin admin = new DefaultShellAdmin(realAdmin);
-    admin.moveServersToRsGroup(List.of(hostPort), groupName);
+    admin.moveServersToRsGroup(Arrays.asList(hostPort), groupName);
 
     RsGroupView movedGroup = admin.getRsGroup(groupName);
-    assertEquals(List.of(hostPort), movedGroup.servers());
+    assertEquals(Arrays.asList(hostPort), movedGroup.servers());
 
     RsGroupView remainingDefault = admin.getRsGroup(RSGroupInfo.DEFAULT_GROUP);
     assertEquals(1, remainingDefault.servers().size());
 
-    admin.moveServersToRsGroup(List.of(hostPort), RSGroupInfo.DEFAULT_GROUP);
+    admin.moveServersToRsGroup(Arrays.asList(hostPort), RSGroupInfo.DEFAULT_GROUP);
     realAdmin.removeRSGroup(groupName);
   }
 

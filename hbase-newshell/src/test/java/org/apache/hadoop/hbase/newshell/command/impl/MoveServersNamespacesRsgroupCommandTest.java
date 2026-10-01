@@ -23,6 +23,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
@@ -44,6 +45,6 @@ public class MoveServersNamespacesRsgroupCommandTest {
     Rec a=new Rec();
     new MoveServersNamespacesRsgroupCommand().execute(ShellLineParser.parse("move_servers_namespaces_rsgroup 'dest', ['h:1'], ['ns1']"),
       new ExecutionContext(a,new StubShellTableFactory(),new PrintWriter(new StringWriter())));
-    assertEquals("dest", a.g); assertEquals(List.of("h:1"), a.s); assertEquals(List.of("ns1"), a.n);
+    assertEquals("dest", a.g); assertEquals(Arrays.asList("h:1"), a.s); assertEquals(Arrays.asList("ns1"), a.n);
   }
 }

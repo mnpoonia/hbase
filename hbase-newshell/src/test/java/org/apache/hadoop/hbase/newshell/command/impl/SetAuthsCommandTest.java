@@ -23,6 +23,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.Arrays;
 import java.util.List;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
 import org.apache.hadoop.hbase.newshell.command.ShellCommandException;
@@ -56,7 +57,7 @@ public class SetAuthsCommandTest {
   public void setsAuths() throws Exception {
     command.execute(ShellLineParser.parse("set_auths 'user1', ['SECRET', 'PRIVATE']"), context);
     assertEquals("user1", admin.user);
-    assertEquals(List.of("SECRET", "PRIVATE"), admin.labels);
+    assertEquals(Arrays.asList("SECRET", "PRIVATE"), admin.labels);
   }
 
   @Test

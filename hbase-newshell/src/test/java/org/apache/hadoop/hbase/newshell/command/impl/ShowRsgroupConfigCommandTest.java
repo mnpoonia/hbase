@@ -23,6 +23,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
@@ -39,11 +40,11 @@ import org.junit.jupiter.api.Test;
 @Tag(SmallTests.TAG)
 public class ShowRsgroupConfigCommandTest {
   static final class Rec extends StubShellAdmin {
-    @Override public List<List<String>> showRsGroupConfig(String g){ return List.of(List.of("k","v")); }
+    @Override public List<List<String>> showRsGroupConfig(String g){ return Arrays.asList(Arrays.asList("k","v")); }
   }
   @Test public void runs() throws Exception {
     TabularResult r=(TabularResult)new ShowRsgroupConfigCommand().execute(ShellLineParser.parse("show_rsgroup_config 'g'"),
       new ExecutionContext(new Rec(),new StubShellTableFactory(),new PrintWriter(new StringWriter())));
-    assertEquals(List.of(List.of("k","v")), r.rows());
+    assertEquals(Arrays.asList(Arrays.asList("k","v")), r.rows());
   }
 }

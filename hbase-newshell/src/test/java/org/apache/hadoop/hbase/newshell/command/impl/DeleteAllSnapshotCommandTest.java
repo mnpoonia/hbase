@@ -24,6 +24,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
 import org.apache.hadoop.hbase.newshell.command.SessionOptions;
@@ -48,7 +49,7 @@ public class DeleteAllSnapshotCommandTest {
 
     @Override
     public List<SnapshotInfo> listSnapshots(String regex) {
-      return List.copyOf(snapshots);
+      return new ArrayList<>(snapshots);
     }
 
     @Override
@@ -70,14 +71,14 @@ public class DeleteAllSnapshotCommandTest {
     ParsedCommand parsed = ShellLineParser.parse("delete_all_snapshot 's.*'");
     TextResult result = (TextResult) command.execute(parsed, context);
     assertEquals("s.*", admin.deletedRegex);
-    assertEquals(List.of("1 snapshots successfully deleted."), result.lines());
+    assertEquals(Arrays.asList("1 snapshots successfully deleted."), result.lines());
   }
 
   @Test
   public void reportsNoMatch() throws Exception {
     ParsedCommand parsed = ShellLineParser.parse("delete_all_snapshot 's.*'");
     TextResult result = (TextResult) command.execute(parsed, context);
-    assertEquals(List.of("No snapshots matched the regex s.*"), result.lines());
+    assertEquals(Arrays.asList("No snapshots matched the regex s.*"), result.lines());
   }
 
   @Test

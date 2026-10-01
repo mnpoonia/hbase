@@ -21,6 +21,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.Collections;
 import java.util.Map;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
 import org.apache.hadoop.hbase.newshell.hbase.StubShellAdmin;
@@ -56,7 +57,7 @@ public class CreateNamespaceCommandTest {
     command.execute(parsed, context);
 
     assertEquals("ns1", admin.lastNamespace);
-    assertEquals(Map.of(), admin.lastProperties);
+    assertEquals(Collections.emptyMap(), admin.lastProperties);
   }
 
   @Test

@@ -22,6 +22,8 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
 import org.apache.hadoop.hbase.newshell.command.ShellCommandException;
@@ -75,7 +77,7 @@ public class AppendCommandTest {
     TextResult result = (TextResult) command.execute(parsed, context);
 
     assertEquals("b", table.lastValue);
-    assertEquals(List.of("CURRENT VALUE = ab"), result.lines());
+    assertEquals(Arrays.asList("CURRENT VALUE = ab"), result.lines());
   }
 
   @Test
@@ -84,7 +86,7 @@ public class AppendCommandTest {
     ParsedCommand parsed = ShellLineParser.parse("append 't1', 'r1', 'f1:c1', 'b'");
     TextResult result = (TextResult) command.execute(parsed, context);
 
-    assertEquals(List.of(), result.lines());
+    assertEquals(Collections.emptyList(), result.lines());
   }
 
   @Test

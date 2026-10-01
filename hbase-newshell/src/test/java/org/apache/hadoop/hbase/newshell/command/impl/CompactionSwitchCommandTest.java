@@ -22,6 +22,8 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
@@ -46,7 +48,7 @@ public class CompactionSwitchCommandTest {
     public Map<String, Boolean> compactionSwitch(boolean enabled, List<String> serverNames) {
       this.lastEnabled = enabled;
       this.lastServerNames = serverNames;
-      return Map.of("server1,60020,1000", true);
+      return Collections.singletonMap("server1,60020,1000", true);
     }
   }
 
@@ -61,9 +63,9 @@ public class CompactionSwitchCommandTest {
     TabularResult result = (TabularResult) command.execute(parsed, context);
 
     assertEquals(true, admin.lastEnabled);
-    assertEquals(List.of("server1", "server2"), admin.lastServerNames);
-    assertEquals(List.of("SERVER", "PREV_STATE"), result.header());
-    assertEquals(List.of(List.of("server1,60020,1000", "true")), result.rows());
+    assertEquals(Arrays.asList("server1", "server2"), admin.lastServerNames);
+    assertEquals(Arrays.asList("SERVER", "PREV_STATE"), result.header());
+    assertEquals(Arrays.asList(Arrays.asList("server1,60020,1000", "true")), result.rows());
   }
 
   @Test
@@ -72,7 +74,7 @@ public class CompactionSwitchCommandTest {
     command.execute(parsed, context);
 
     assertEquals(false, admin.lastEnabled);
-    assertEquals(List.of(), admin.lastServerNames);
+    assertEquals(Collections.emptyList(), admin.lastServerNames);
   }
 
   @Test

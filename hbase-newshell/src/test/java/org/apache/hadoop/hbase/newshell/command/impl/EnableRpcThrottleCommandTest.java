@@ -23,6 +23,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.Arrays;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
 import org.apache.hadoop.hbase.newshell.command.TextResult;
 import org.apache.hadoop.hbase.newshell.hbase.StubShellAdmin;
@@ -53,6 +54,6 @@ public class EnableRpcThrottleCommandTest {
     TextResult result = (TextResult) new EnableRpcThrottleCommand()
       .execute(ShellLineParser.parse("enable_rpc_throttle"), context);
     assertTrue(admin.enabled);
-    assertEquals(java.util.List.of("Previous rpc throttle state : false"), result.lines());
+    assertEquals(java.util.Arrays.asList("Previous rpc throttle state : false"), result.lines());
   }
 }

@@ -23,6 +23,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
@@ -44,6 +45,6 @@ public class GetNamespaceRsgroupCommandTest {
   @Test public void runs() throws Exception {
     TabularResult r=(TabularResult)new GetNamespaceRsgroupCommand().execute(ShellLineParser.parse("get_namespace_rsgroup 'ns1'"),
       new ExecutionContext(new Rec(),new StubShellTableFactory(),new PrintWriter(new StringWriter())));
-    assertEquals(List.of(List.of("g1")), r.rows());
+    assertEquals(Arrays.asList(Arrays.asList("g1")), r.rows());
   }
 }

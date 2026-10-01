@@ -21,6 +21,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.Arrays;
 import java.util.List;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
 import org.apache.hadoop.hbase.newshell.command.TabularResult;
@@ -39,7 +40,7 @@ public class ListPeersCommandTest {
   private static final class RecordingShellAdmin extends StubShellAdmin {
     @Override
     public List<PeerDescription> listPeers() {
-      return List.of(new PeerDescription("1", "zk1,zk2:2181:/hbase", "nil", "nil", "NONE", true,
+      return Arrays.asList(new PeerDescription("1", "zk1,zk2:2181:/hbase", "nil", "nil", "NONE", true,
         true, "", "", 0L, false));
     }
   }
@@ -54,11 +55,11 @@ public class ListPeersCommandTest {
     ParsedCommand parsed = ShellLineParser.parse("list_peers");
     TabularResult result = (TabularResult) command.execute(parsed, context);
 
-    assertEquals(List.of("PEER_ID", "CLUSTER_KEY", "ENDPOINT_CLASSNAME", "REMOTE_ROOT_DIR",
+    assertEquals(Arrays.asList("PEER_ID", "CLUSTER_KEY", "ENDPOINT_CLASSNAME", "REMOTE_ROOT_DIR",
       "SYNC_REPLICATION_STATE", "STATE", "REPLICATE_ALL", "NAMESPACES", "TABLE_CFS", "BANDWIDTH",
       "SERIAL"), result.header());
     assertEquals(1, result.rows().size());
-    assertEquals(List.of("1", "zk1,zk2:2181:/hbase", "nil", "nil", "NONE", "ENABLED", "true", "",
+    assertEquals(Arrays.asList("1", "zk1,zk2:2181:/hbase", "nil", "nil", "NONE", "ENABLED", "true", "",
       "", "0", "false"), result.rows().get(0));
   }
 }

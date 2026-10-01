@@ -21,6 +21,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.Arrays;
 import java.util.List;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
 import org.apache.hadoop.hbase.newshell.command.TabularResult;
@@ -41,7 +42,7 @@ public class ListNamespaceTablesCommandTest {
     @Override
     public List<String> listNamespaceTables(String namespace) {
       this.lastNamespace = namespace;
-      return List.of("t1", "t2");
+      return Arrays.asList("t1", "t2");
     }
   }
 
@@ -56,7 +57,7 @@ public class ListNamespaceTablesCommandTest {
     TabularResult result = (TabularResult) command.execute(parsed, context);
 
     assertEquals("ns1", admin.lastNamespace);
-    assertEquals(List.of("TABLE"), result.header());
-    assertEquals(List.of(List.of("t1"), List.of("t2")), result.rows());
+    assertEquals(Arrays.asList("TABLE"), result.header());
+    assertEquals(Arrays.asList(Arrays.asList("t1"), Arrays.asList("t2")), result.rows());
   }
 }

@@ -21,6 +21,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
 import org.apache.hadoop.hbase.newshell.command.TabularResult;
@@ -42,8 +44,8 @@ public class ListRsgroupsCommandTest {
     @Override
     public List<RsGroupSummary> listRsGroups(String regex) {
       this.lastRegex = regex;
-      return List.of(new RsGroupSummary("default", List.of("host1:1000"), List.of("t1")),
-        new RsGroupSummary("empty", List.of(), List.of()));
+      return Arrays.asList(new RsGroupSummary("default", Arrays.asList("host1:1000"), Arrays.asList("t1")),
+        new RsGroupSummary("empty", Collections.emptyList(), Collections.emptyList()));
     }
   }
 
@@ -58,8 +60,8 @@ public class ListRsgroupsCommandTest {
     TabularResult result = (TabularResult) command.execute(parsed, context);
 
     assertEquals(".*", admin.lastRegex);
-    assertEquals(List.of("NAME", "SERVER / TABLE"), result.header());
-    assertEquals(List.of(List.of("default", "server host1:1000"), List.of("", "table t1"),
-      List.of("empty", "")), result.rows());
+    assertEquals(Arrays.asList("NAME", "SERVER / TABLE"), result.header());
+    assertEquals(Arrays.asList(Arrays.asList("default", "server host1:1000"), Arrays.asList("", "table t1"),
+      Arrays.asList("empty", "")), result.rows());
   }
 }

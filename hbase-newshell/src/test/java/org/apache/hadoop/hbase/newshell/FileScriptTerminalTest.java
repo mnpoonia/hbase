@@ -21,6 +21,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import org.apache.hadoop.hbase.testclassification.SmallTests;
@@ -33,7 +34,7 @@ public class FileScriptTerminalTest {
   @Test
   public void readsLinesInOrderThenReturnsNullAtEndOfFile() throws IOException {
     Path script = Files.createTempFile("newshell-script-test", ".txt");
-    Files.writeString(script, "status\nexit\n");
+    Files.write(script, "status\nexit\n".getBytes(StandardCharsets.UTF_8));
     try (FileScriptTerminal terminal = new FileScriptTerminal(script.toString())) {
       assertEquals("status", terminal.readLine("newshell> "));
       assertEquals("exit", terminal.readLine("newshell> "));

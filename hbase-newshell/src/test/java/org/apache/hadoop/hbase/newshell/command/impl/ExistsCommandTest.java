@@ -22,6 +22,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.Arrays;
 import java.util.List;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
 import org.apache.hadoop.hbase.newshell.command.ShellCommandException;
@@ -57,7 +58,7 @@ public class ExistsCommandTest {
     ParsedCommand parsed = ShellLineParser.parse("exists 't1'");
     TextResult result = (TextResult) command.execute(parsed, context);
 
-    assertEquals(List.of("Table t1 does exist"), result.lines());
+    assertEquals(Arrays.asList("Table t1 does exist"), result.lines());
   }
 
   @Test
@@ -66,7 +67,7 @@ public class ExistsCommandTest {
     ParsedCommand parsed = ShellLineParser.parse("exists 't1'");
     TextResult result = (TextResult) command.execute(parsed, context);
 
-    assertEquals(List.of("Table t1 does not exist"), result.lines());
+    assertEquals(Arrays.asList("Table t1 does not exist"), result.lines());
   }
 
   @Test

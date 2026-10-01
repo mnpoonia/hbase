@@ -22,6 +22,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.Arrays;
 import java.util.List;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
 import org.apache.hadoop.hbase.newshell.command.TabularResult;
@@ -42,7 +43,7 @@ public class UserPermissionCommandTest {
     @Override
     public List<List<String>> userPermission(String tableOrNamespaceRegex) {
       this.lastRegex = tableOrNamespaceRegex;
-      return List.of(List.of("bobsmith", "t1,f1,col1: [Permission: actions=READ]"));
+      return Arrays.asList(Arrays.asList("bobsmith", "t1,f1,col1: [Permission: actions=READ]"));
     }
   }
 

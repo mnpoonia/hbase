@@ -21,6 +21,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.Arrays;
 import java.util.List;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
 import org.apache.hadoop.hbase.newshell.command.TextResult;
@@ -56,7 +57,7 @@ public class AlterStatusCommandTest {
     ParsedCommand parsed = ShellLineParser.parse("alter_status 't1'");
     TextResult result = (TextResult) command.execute(parsed, context);
 
-    assertEquals(List.of("8/10 regions updated.", "Done."), result.lines());
+    assertEquals(Arrays.asList("8/10 regions updated.", "Done."), result.lines());
   }
 
   @Test
@@ -65,6 +66,6 @@ public class AlterStatusCommandTest {
     ParsedCommand parsed = ShellLineParser.parse("alter_status 't1'");
     TextResult result = (TextResult) command.execute(parsed, context);
 
-    assertEquals(List.of("All regions updated.", "Done."), result.lines());
+    assertEquals(Arrays.asList("All regions updated.", "Done."), result.lines());
   }
 }

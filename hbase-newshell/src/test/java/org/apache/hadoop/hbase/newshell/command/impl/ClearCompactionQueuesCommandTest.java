@@ -23,6 +23,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
@@ -58,6 +59,6 @@ public class ClearCompactionQueuesCommandTest {
   @Test
   public void clearsNamed() throws Exception {
     command.execute(ShellLineParser.parse("clear_compaction_queues 'host,1', 'long'"), context);
-    assertEquals(List.of("long"), admin.queues);
+    assertEquals(Arrays.asList("long"), admin.queues);
   }
 }

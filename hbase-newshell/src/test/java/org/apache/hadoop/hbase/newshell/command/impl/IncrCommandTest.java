@@ -22,6 +22,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.Arrays;
 import java.util.List;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
 import org.apache.hadoop.hbase.newshell.command.ShellCommandException;
@@ -73,7 +74,7 @@ public class IncrCommandTest {
     TextResult result = (TextResult) command.execute(parsed, context);
 
     assertEquals(1L, table.lastAmount);
-    assertEquals(List.of("COUNTER VALUE = 1"), result.lines());
+    assertEquals(Arrays.asList("COUNTER VALUE = 1"), result.lines());
   }
 
   @Test

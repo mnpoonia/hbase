@@ -21,6 +21,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.Arrays;
 import java.util.List;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
 import org.apache.hadoop.hbase.newshell.command.TextResult;
@@ -38,7 +39,7 @@ public class ListLocksCommandTest {
   private static final class RecordingShellAdmin extends StubShellAdmin {
     @Override
     public List<String> listLocks() {
-      return List.of("SERVER(host1,60020,1)", "Lock type: EXCLUSIVE, procedure: 1", "");
+      return Arrays.asList("SERVER(host1,60020,1)", "Lock type: EXCLUSIVE, procedure: 1", "");
     }
   }
 

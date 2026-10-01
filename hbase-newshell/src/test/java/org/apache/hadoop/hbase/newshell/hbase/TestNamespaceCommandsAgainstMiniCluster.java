@@ -21,6 +21,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -65,7 +68,7 @@ public class TestNamespaceCommandsAgainstMiniCluster {
     String namespace = "newshell_ns_" + UUID.randomUUID().toString().replace("-", "");
     ShellAdmin admin = new DefaultShellAdmin(connection.getAdmin());
 
-    admin.createNamespace(namespace, Map.of());
+    admin.createNamespace(namespace, Collections.emptyMap());
     assertTrue(admin.listNamespaces(".*").contains(namespace));
 
     admin.dropNamespace(namespace);
@@ -77,7 +80,7 @@ public class TestNamespaceCommandsAgainstMiniCluster {
     String namespace = "newshell_ns_props_" + UUID.randomUUID().toString().replace("-", "");
     ShellAdmin admin = new DefaultShellAdmin(connection.getAdmin());
 
-    admin.createNamespace(namespace, Map.of("PROPERTY_NAME", "PROPERTY_VALUE"));
+    admin.createNamespace(namespace, Collections.singletonMap("PROPERTY_NAME", "PROPERTY_VALUE"));
 
     Admin realAdmin = connection.getAdmin();
     assertEquals("PROPERTY_VALUE",
@@ -90,13 +93,13 @@ public class TestNamespaceCommandsAgainstMiniCluster {
   public void alterNamespaceSetsAndUnsetsProperties() throws Exception {
     String namespace = "newshell_ns_alter_" + UUID.randomUUID().toString().replace("-", "");
     ShellAdmin admin = new DefaultShellAdmin(connection.getAdmin());
-    admin.createNamespace(namespace, Map.of());
+    admin.createNamespace(namespace, Collections.emptyMap());
 
-    admin.alterNamespace(namespace, Map.of("METHOD", "set", "PROP", "VAL"));
+    admin.alterNamespace(namespace, mapOf("METHOD", "set", "PROP", "VAL"));
     Admin realAdmin = connection.getAdmin();
     assertEquals("VAL", realAdmin.getNamespaceDescriptor(namespace).getConfigurationValue("PROP"));
 
-    admin.alterNamespace(namespace, Map.of("METHOD", "unset", "NAME", "PROP"));
+    admin.alterNamespace(namespace, mapOf("METHOD", "unset", "NAME", "PROP"));
     assertEquals(null, realAdmin.getNamespaceDescriptor(namespace).getConfigurationValue("PROP"));
 
     admin.dropNamespace(namespace);
@@ -106,7 +109,7 @@ public class TestNamespaceCommandsAgainstMiniCluster {
   public void describeNamespaceIncludesNamespaceName() throws Exception {
     String namespace = "newshell_ns_describe_" + UUID.randomUUID().toString().replace("-", "");
     ShellAdmin admin = new DefaultShellAdmin(connection.getAdmin());
-    admin.createNamespace(namespace, Map.of());
+    admin.createNamespace(namespace, Collections.emptyMap());
 
     assertTrue(admin.describeNamespace(namespace).contains(namespace));
 
@@ -118,14 +121,22 @@ public class TestNamespaceCommandsAgainstMiniCluster {
     String namespace = "newshell_ns_tables_" + UUID.randomUUID().toString().replace("-", "");
     Admin realAdmin = connection.getAdmin();
     ShellAdmin admin = new DefaultShellAdmin(realAdmin);
-    admin.createNamespace(namespace, Map.of());
+    admin.createNamespace(namespace, Collections.emptyMap());
     String tableName = namespace + ":t1";
     TEST_UTIL.createTable(TableName.valueOf(tableName), Bytes.toBytes("f1"));
 
-    assertEquals(List.of("t1"), admin.listNamespaceTables(namespace));
+    assertEquals(Arrays.asList("t1"), admin.listNamespaceTables(namespace));
 
     realAdmin.disableTable(TableName.valueOf(tableName));
     realAdmin.deleteTable(TableName.valueOf(tableName));
     admin.dropNamespace(namespace);
+  }
+
+  private static Map<String, Object> mapOf(Object... keyValuePairs) {
+    Map<String, Object> map = new LinkedHashMap<>();
+    for (int i = 0; i < keyValuePairs.length; i += 2) {
+      map.put((String) keyValuePairs[i], keyValuePairs[i + 1]);
+    }
+    return map;
   }
 }

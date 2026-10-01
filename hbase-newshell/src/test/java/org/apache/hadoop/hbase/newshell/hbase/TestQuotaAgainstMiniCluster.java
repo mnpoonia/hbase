@@ -21,6 +21,8 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
@@ -63,13 +65,13 @@ public class TestQuotaAgainstMiniCluster {
     String user = "newshell_quota_user";
 
     admin.setQuota(
-      Map.of("TYPE", "THROTTLE", "USER", user, "THROTTLE_TYPE", "REQUEST", "LIMIT", "10req/sec"));
+      mapOf("TYPE", "THROTTLE", "USER", user, "THROTTLE_TYPE", "REQUEST", "LIMIT", "10req/sec"));
 
-    List<List<String>> rows = admin.listQuotas(Map.of("USER", user));
+    List<List<String>> rows = admin.listQuotas(Collections.singletonMap("USER", user));
     assertTrue(rows.stream().anyMatch(row -> row.get(0).contains(user)));
 
-    admin.setQuota(Map.of("TYPE", "THROTTLE", "USER", user, "LIMIT", "NONE"));
-    List<List<String>> afterUnthrottle = admin.listQuotas(Map.of("USER", user));
+    admin.setQuota(mapOf("TYPE", "THROTTLE", "USER", user, "LIMIT", "NONE"));
+    List<List<String>> afterUnthrottle = admin.listQuotas(Collections.singletonMap("USER", user));
     assertFalse(afterUnthrottle.stream().anyMatch(row -> row.get(0).contains(user)));
   }
 
@@ -80,12 +82,12 @@ public class TestQuotaAgainstMiniCluster {
     connection.getAdmin()
       .createNamespace(org.apache.hadoop.hbase.NamespaceDescriptor.create(namespace).build());
 
-    admin.setQuota(Map.of("TYPE", "THROTTLE", "NAMESPACE", namespace, "LIMIT", "1000000b/sec"));
+    admin.setQuota(mapOf("TYPE", "THROTTLE", "NAMESPACE", namespace, "LIMIT", "1000000b/sec"));
 
-    List<List<String>> rows = admin.listQuotas(Map.of("NAMESPACE", namespace));
+    List<List<String>> rows = admin.listQuotas(Collections.singletonMap("NAMESPACE", namespace));
     assertTrue(rows.stream().anyMatch(row -> row.get(0).contains(namespace)));
 
-    admin.setQuota(Map.of("TYPE", "THROTTLE", "NAMESPACE", namespace, "LIMIT", "NONE"));
+    admin.setQuota(mapOf("TYPE", "THROTTLE", "NAMESPACE", namespace, "LIMIT", "NONE"));
   }
 
   @Test
@@ -108,9 +110,9 @@ public class TestQuotaAgainstMiniCluster {
     ShellAdmin admin = new DefaultShellAdmin(connection.getAdmin());
 
     // Enabling exceed-throttle requires region-server READ+WRITE quotas in seconds.
-    admin.setQuota(Map.of("TYPE", "THROTTLE", "REGIONSERVER", "all", "THROTTLE_TYPE", "WRITE",
+    admin.setQuota(mapOf("TYPE", "THROTTLE", "REGIONSERVER", "all", "THROTTLE_TYPE", "WRITE",
       "LIMIT", "100req/sec"));
-    admin.setQuota(Map.of("TYPE", "THROTTLE", "REGIONSERVER", "all", "THROTTLE_TYPE", "READ",
+    admin.setQuota(mapOf("TYPE", "THROTTLE", "REGIONSERVER", "all", "THROTTLE_TYPE", "READ",
       "LIMIT", "20req/sec"));
 
     assertFalse(admin.switchExceedThrottleQuota(true));
@@ -118,7 +120,7 @@ public class TestQuotaAgainstMiniCluster {
     assertTrue(admin.switchExceedThrottleQuota(false));
     assertFalse(admin.switchExceedThrottleQuota(false));
 
-    admin.setQuota(Map.of("TYPE", "THROTTLE", "REGIONSERVER", "all", "LIMIT", "NONE"));
+    admin.setQuota(mapOf("TYPE", "THROTTLE", "REGIONSERVER", "all", "LIMIT", "NONE"));
   }
 
   @Test
@@ -126,7 +128,15 @@ public class TestQuotaAgainstMiniCluster {
     ShellAdmin admin = new DefaultShellAdmin(connection.getAdmin());
 
     assertDoesNotThrow(admin::listQuotaTableSizes);
-    assertDoesNotThrow(() -> admin.listQuotaSnapshots(Map.of()));
+    assertDoesNotThrow(() -> admin.listQuotaSnapshots(Collections.emptyMap()));
     assertDoesNotThrow(admin::listSnapshotSizes);
+  }
+
+  private static Map<String, Object> mapOf(Object... keyValuePairs) {
+    Map<String, Object> map = new LinkedHashMap<>();
+    for (int i = 0; i < keyValuePairs.length; i += 2) {
+      map.put((String) keyValuePairs[i], keyValuePairs[i + 1]);
+    }
+    return map;
   }
 }

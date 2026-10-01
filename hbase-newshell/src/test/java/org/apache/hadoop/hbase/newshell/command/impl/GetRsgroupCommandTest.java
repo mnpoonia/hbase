@@ -22,6 +22,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.Arrays;
 import java.util.List;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
 import org.apache.hadoop.hbase.newshell.command.ShellCommandException;
@@ -44,7 +45,7 @@ public class GetRsgroupCommandTest {
     @Override
     public RsGroupView getRsGroup(String groupName) {
       this.lastGroupName = groupName;
-      return new RsGroupView(List.of("host1:1000", "host2:1000"), List.of("t1", "t2"));
+      return new RsGroupView(Arrays.asList("host1:1000", "host2:1000"), Arrays.asList("t1", "t2"));
     }
   }
 
@@ -60,7 +61,7 @@ public class GetRsgroupCommandTest {
 
     assertEquals("default", admin.lastGroupName);
     assertEquals(
-      List.of("SERVERS", "    host1:1000", "    host2:1000", "TABLES", "    t1", "    t2"),
+      Arrays.asList("SERVERS", "    host1:1000", "    host2:1000", "TABLES", "    t1", "    t2"),
       result.lines());
   }
 

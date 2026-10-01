@@ -23,6 +23,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
@@ -48,6 +49,6 @@ public class ShowPeerTableCFsCommandTest {
   @Test
   public void runs() throws Exception {
     TextResult result = (TextResult) command.execute(ShellLineParser.parse("show_peer_tableCFs '1'"), context);
-    assertEquals(List.of("t1"), result.lines());
+    assertEquals(Arrays.asList("t1"), result.lines());
   }
 }

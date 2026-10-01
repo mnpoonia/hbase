@@ -23,9 +23,13 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.hadoop.hbase.ServerName;
 import org.apache.hadoop.hbase.TableName;
@@ -76,7 +80,7 @@ public class TestPilotCommandsAgainstMiniCluster {
   public void createBuildsTableWithNamedFamily() throws Exception {
     String tableName = "newshell_create_test";
     ShellAdmin admin = new DefaultShellAdmin(connection.getAdmin());
-    admin.createTable(tableName, List.of(Map.of("NAME", "f1")), Map.of());
+    admin.createTable(tableName, Arrays.asList(Collections.singletonMap("NAME", "f1")), Collections.emptyMap());
 
     Admin realAdmin = connection.getAdmin();
     assertTrue(realAdmin.tableExists(TableName.valueOf(tableName)));
@@ -89,7 +93,7 @@ public class TestPilotCommandsAgainstMiniCluster {
     String tableName = "newshell_create_multi_family_test";
     ShellAdmin admin = new DefaultShellAdmin(connection.getAdmin());
     admin.createTable(tableName,
-      List.of(Map.of("NAME", "f1"), Map.of("NAME", "f2", "VERSIONS", 5L)), Map.of());
+      Arrays.asList(Collections.singletonMap("NAME", "f1"), mapOf("NAME", "f2", "VERSIONS", 5L)), Collections.emptyMap());
 
     Admin realAdmin = connection.getAdmin();
     assertTrue(realAdmin.tableExists(TableName.valueOf(tableName)));
@@ -103,8 +107,8 @@ public class TestPilotCommandsAgainstMiniCluster {
   public void createAppliesTableLevelSplitsAndAttributes() throws Exception {
     String tableName = "newshell_create_table_attrs_test";
     ShellAdmin admin = new DefaultShellAdmin(connection.getAdmin());
-    admin.createTable(tableName, List.of(Map.of("NAME", "f1")),
-      Map.of("SPLITS", List.of("1000", "2000"), "REGION_REPLICATION", 2L));
+    admin.createTable(tableName, Arrays.asList(Collections.singletonMap("NAME", "f1")),
+      mapOf("SPLITS", Arrays.asList("1000", "2000"), "REGION_REPLICATION", 2L));
 
     Admin realAdmin = connection.getAdmin();
     TableDescriptor descriptor = realAdmin.getDescriptor(TableName.valueOf(tableName));
@@ -137,7 +141,7 @@ public class TestPilotCommandsAgainstMiniCluster {
     }
 
     ShellTableFactory factory = new DefaultShellTableFactory(connection);
-    GetResult result = factory.forTable(tableName).get("r1", Map.of("COLUMN", "f1:c1"));
+    GetResult result = factory.forTable(tableName).get("r1", Collections.singletonMap("COLUMN", "f1:c1"));
 
     List<CellView> cells = result.cells();
     assertEquals(1, cells.size());
@@ -161,7 +165,7 @@ public class TestPilotCommandsAgainstMiniCluster {
 
     ShellTableFactory factory = new DefaultShellTableFactory(connection);
     GetResult result =
-      factory.forTable(tableName).get("r1", Map.of("COLUMN", List.of("f1:c1", "f1:c2", "f2:c1")));
+      factory.forTable(tableName).get("r1", Collections.singletonMap("COLUMN", Arrays.asList("f1:c1", "f1:c2", "f2:c1")));
 
     List<CellView> cells = result.cells();
     assertEquals(3, cells.size());
@@ -173,7 +177,7 @@ public class TestPilotCommandsAgainstMiniCluster {
     TEST_UTIL.createTable(TableName.valueOf(tableName), Bytes.toBytes("f1"));
 
     ShellTableFactory factory = new DefaultShellTableFactory(connection);
-    GetResult result = factory.forTable(tableName).get("missing-row", Map.of());
+    GetResult result = factory.forTable(tableName).get("missing-row", Collections.emptyMap());
     assertTrue(result.cells().isEmpty());
   }
 
@@ -207,9 +211,9 @@ public class TestPilotCommandsAgainstMiniCluster {
     TEST_UTIL.createTable(TableName.valueOf(tableName), Bytes.toBytes("f1"));
 
     ShellTableFactory factory = new DefaultShellTableFactory(connection);
-    factory.forTable(tableName).put("r1", "f1:c1", "v1", Map.of());
+    factory.forTable(tableName).put("r1", "f1:c1", "v1", Collections.emptyMap());
 
-    GetResult result = factory.forTable(tableName).get("r1", Map.of());
+    GetResult result = factory.forTable(tableName).get("r1", Collections.emptyMap());
     assertEquals(1, result.cells().size());
     assertEquals("v1", result.cells().get(0).value());
   }
@@ -248,10 +252,10 @@ public class TestPilotCommandsAgainstMiniCluster {
       realAdmin.getClusterMetrics().getLiveServerMetrics().keySet().iterator().next();
 
     ShellAdmin admin = new DefaultShellAdmin(realAdmin);
-    admin.decommissionRegionServers(List.of(liveServer.getHostname()), false);
+    admin.decommissionRegionServers(Arrays.asList(liveServer.getHostname()), false);
     assertTrue(admin.listDecommissionedRegionServers().contains(liveServer.getServerName()));
 
-    admin.recommissionRegionServer(liveServer.getHostname(), List.of());
+    admin.recommissionRegionServer(liveServer.getHostname(), Collections.emptyList());
     assertTrue(!admin.listDecommissionedRegionServers().contains(liveServer.getServerName()));
   }
 
@@ -261,7 +265,7 @@ public class TestPilotCommandsAgainstMiniCluster {
     TEST_UTIL.createTable(TableName.valueOf(tableName), Bytes.toBytes("f1"));
 
     ShellAdmin admin = new DefaultShellAdmin(connection.getAdmin());
-    admin.alterTable(tableName, List.of(Map.of("NAME", "f1", "TTL", 100)));
+    admin.alterTable(tableName, Arrays.asList(mapOf("NAME", "f1", "TTL", 100)));
 
     TableDescriptor descriptor = connection.getAdmin().getDescriptor(TableName.valueOf(tableName));
     assertEquals(100, descriptor.getColumnFamily(Bytes.toBytes("f1")).getTimeToLive());
@@ -309,7 +313,7 @@ public class TestPilotCommandsAgainstMiniCluster {
     String peerId = "newshell_peer_" + UUID.randomUUID().toString().replace("-", "");
     ShellAdmin admin = new DefaultShellAdmin(connection.getAdmin());
 
-    admin.addPeer(peerId, Map.of("CLUSTER_KEY", TEST_UTIL.getClusterKey(), "ENDPOINT_CLASSNAME",
+    admin.addPeer(peerId, mapOf("CLUSTER_KEY", TEST_UTIL.getClusterKey(), "ENDPOINT_CLASSNAME",
       SelfReplicationEndpointForTest.class.getName()));
     assertTrue(admin.listPeers().stream().anyMatch(peer -> peer.peerId().equals(peerId)));
 
@@ -362,10 +366,10 @@ public class TestPilotCommandsAgainstMiniCluster {
   public void compactionSwitchTogglesAllRegionServers() throws Exception {
     ShellAdmin admin = new DefaultShellAdmin(connection.getAdmin());
 
-    Map<String, Boolean> previousStates = admin.compactionSwitch(false, List.of());
+    Map<String, Boolean> previousStates = admin.compactionSwitch(false, Collections.emptyList());
     assertFalse(previousStates.isEmpty());
 
-    admin.compactionSwitch(true, List.of());
+    admin.compactionSwitch(true, Collections.emptyList());
   }
 
   @Test
@@ -395,11 +399,11 @@ public class TestPilotCommandsAgainstMiniCluster {
       put1.addColumn(Bytes.toBytes("f1"), Bytes.toBytes("c1"), Bytes.toBytes("v1"));
       Put put2 = new Put(Bytes.toBytes("r2"));
       put2.addColumn(Bytes.toBytes("f1"), Bytes.toBytes("c1"), Bytes.toBytes("v2"));
-      table.put(List.of(put1, put2));
+      table.put(Arrays.asList(put1, put2));
     }
 
     ShellTableFactory factory = new DefaultShellTableFactory(connection);
-    ScanResult result = factory.forTable(tableName).scan(Map.of());
+    ScanResult result = factory.forTable(tableName).scan(Collections.emptyMap());
 
     assertEquals(2, result.rows().size());
     assertEquals("r1", result.rows().get(0).row());
@@ -412,7 +416,7 @@ public class TestPilotCommandsAgainstMiniCluster {
     String tableName = "newshell_scan_range_test";
     TEST_UTIL.createTable(TableName.valueOf(tableName), Bytes.toBytes("f1"));
     try (Table table = connection.getTable(TableName.valueOf(tableName))) {
-      for (String row : List.of("r1", "r2", "r3", "r4")) {
+      for (String row : Arrays.asList("r1", "r2", "r3", "r4")) {
         Put put = new Put(Bytes.toBytes(row));
         put.addColumn(Bytes.toBytes("f1"), Bytes.toBytes("c1"), Bytes.toBytes("v"));
         table.put(put);
@@ -420,12 +424,12 @@ public class TestPilotCommandsAgainstMiniCluster {
     }
 
     ShellTableFactory factory = new DefaultShellTableFactory(connection);
-    ScanResult limited = factory.forTable(tableName).scan(Map.of("LIMIT", 1L));
+    ScanResult limited = factory.forTable(tableName).scan(Collections.singletonMap("LIMIT", 1L));
     assertEquals(1, limited.rows().size());
     assertEquals("r1", limited.rows().get(0).row());
 
-    ScanResult ranged = factory.forTable(tableName).scan(Map.of("STARTROW", "r2", "STOPROW", "r4"));
-    assertEquals(List.of("r2", "r3"), ranged.rows().stream().map(ScanRow::row).toList());
+    ScanResult ranged = factory.forTable(tableName).scan(mapOf("STARTROW", "r2", "STOPROW", "r4"));
+    assertEquals(Arrays.asList("r2", "r3"), ranged.rows().stream().map(ScanRow::row).collect(Collectors.toList()));
   }
 
   @Test
@@ -441,7 +445,7 @@ public class TestPilotCommandsAgainstMiniCluster {
     }
 
     ShellTableFactory factory = new DefaultShellTableFactory(connection);
-    ScanResult result = factory.forTable(tableName).scan(Map.of("COLUMNS", "f1"));
+    ScanResult result = factory.forTable(tableName).scan(Collections.singletonMap("COLUMNS", "f1"));
 
     assertEquals(1, result.rows().size());
     assertEquals(1, result.rows().get(0).cells().size());
@@ -453,7 +457,7 @@ public class TestPilotCommandsAgainstMiniCluster {
     String tableName = "newshell_count_test";
     TEST_UTIL.createTable(TableName.valueOf(tableName), Bytes.toBytes("f1"));
     try (Table table = connection.getTable(TableName.valueOf(tableName))) {
-      for (String row : List.of("r1", "r2", "r3")) {
+      for (String row : Arrays.asList("r1", "r2", "r3")) {
         Put put = new Put(Bytes.toBytes(row));
         put.addColumn(Bytes.toBytes("f1"), Bytes.toBytes("c1"), Bytes.toBytes("v"));
         table.put(put);
@@ -461,7 +465,7 @@ public class TestPilotCommandsAgainstMiniCluster {
     }
 
     ShellTableFactory factory = new DefaultShellTableFactory(connection);
-    assertEquals(3L, factory.forTable(tableName).count(Map.of()));
+    assertEquals(3L, factory.forTable(tableName).count(Collections.emptyMap()));
   }
 
   @Test
@@ -478,7 +482,7 @@ public class TestPilotCommandsAgainstMiniCluster {
     ShellTableFactory factory = new DefaultShellTableFactory(connection);
     factory.forTable(tableName).delete("r1", "f1:c1", null);
 
-    GetResult result = factory.forTable(tableName).get("r1", Map.of());
+    GetResult result = factory.forTable(tableName).get("r1", Collections.emptyMap());
     assertEquals(1, result.cells().size());
     assertEquals("c2", result.cells().get(0).qualifier());
   }
@@ -494,9 +498,9 @@ public class TestPilotCommandsAgainstMiniCluster {
     }
 
     ShellTableFactory factory = new DefaultShellTableFactory(connection);
-    factory.forTable(tableName).deleteAll("r1", null, null, Map.of());
+    factory.forTable(tableName).deleteAll("r1", null, null, Collections.emptyMap());
 
-    GetResult result = factory.forTable(tableName).get("r1", Map.of());
+    GetResult result = factory.forTable(tableName).get("r1", Collections.emptyMap());
     assertTrue(result.cells().isEmpty());
   }
 
@@ -505,7 +509,7 @@ public class TestPilotCommandsAgainstMiniCluster {
     String tableName = "newshell_deleteall_prefix_test";
     TEST_UTIL.createTable(TableName.valueOf(tableName), Bytes.toBytes("f1"));
     try (Table table = connection.getTable(TableName.valueOf(tableName))) {
-      for (String row : List.of("prefix-1", "prefix-2", "other-1")) {
+      for (String row : Arrays.asList("prefix-1", "prefix-2", "other-1")) {
         Put put = new Put(Bytes.toBytes(row));
         put.addColumn(Bytes.toBytes("f1"), Bytes.toBytes("c1"), Bytes.toBytes("v"));
         table.put(put);
@@ -514,10 +518,10 @@ public class TestPilotCommandsAgainstMiniCluster {
 
     ShellTableFactory factory = new DefaultShellTableFactory(connection);
     factory.forTable(tableName).deleteAll(null, null, null,
-      Map.of("ROWPREFIXFILTER", "prefix-", "CACHE", 1L));
+      mapOf("ROWPREFIXFILTER", "prefix-", "CACHE", 1L));
 
-    ScanResult remaining = factory.forTable(tableName).scan(Map.of());
-    assertEquals(List.of("other-1"), remaining.rows().stream().map(ScanRow::row).toList());
+    ScanResult remaining = factory.forTable(tableName).scan(Collections.emptyMap());
+    assertEquals(Arrays.asList("other-1"), remaining.rows().stream().map(ScanRow::row).collect(Collectors.toList()));
   }
 
   @Test
@@ -563,11 +567,11 @@ public class TestPilotCommandsAgainstMiniCluster {
   public void getSplitsExcludesTheFirstEmptyStartKey() throws Exception {
     String tableName = "newshell_get_splits_test";
     ShellAdmin admin = new DefaultShellAdmin(connection.getAdmin());
-    admin.createTable(tableName, List.of(Map.of("NAME", "f1")),
-      Map.of("SPLITS", List.of("1000", "2000")));
+    admin.createTable(tableName, Arrays.asList(Collections.singletonMap("NAME", "f1")),
+      Collections.singletonMap("SPLITS", Arrays.asList("1000", "2000")));
 
     ShellTableFactory factory = new DefaultShellTableFactory(connection);
-    assertEquals(List.of("1000", "2000"), factory.forTable(tableName).getSplits());
+    assertEquals(Arrays.asList("1000", "2000"), factory.forTable(tableName).getSplits());
   }
 
   @Test
@@ -584,15 +588,15 @@ public class TestPilotCommandsAgainstMiniCluster {
     admin.truncateTable(tableName, false);
 
     ShellTableFactory factory = new DefaultShellTableFactory(connection);
-    assertTrue(factory.forTable(tableName).scan(Map.of()).rows().isEmpty());
+    assertTrue(factory.forTable(tableName).scan(Collections.emptyMap()).rows().isEmpty());
   }
 
   @Test
   public void truncatePreserveKeepsSplitsAfterTruncate() throws Exception {
     String tableName = "newshell_truncate_preserve_test";
     ShellAdmin admin = new DefaultShellAdmin(connection.getAdmin());
-    admin.createTable(tableName, List.of(Map.of("NAME", "f1")),
-      Map.of("SPLITS", List.of("1000", "2000")));
+    admin.createTable(tableName, Arrays.asList(Collections.singletonMap("NAME", "f1")),
+      Collections.singletonMap("SPLITS", Arrays.asList("1000", "2000")));
 
     admin.truncateTable(tableName, true);
 
@@ -639,7 +643,7 @@ public class TestPilotCommandsAgainstMiniCluster {
     TEST_UTIL.createTable(TableName.valueOf(tableName), Bytes.toBytes("f1"));
 
     ShellAdmin admin = new DefaultShellAdmin(connection.getAdmin());
-    admin.alterTable(tableName, List.of(Map.of("NAME", "f1", "TTL", 100)));
+    admin.alterTable(tableName, Arrays.asList(mapOf("NAME", "f1", "TTL", 100)));
 
     AlterStatusView status = admin.alterStatus(tableName);
     assertEquals(status.totalRegions(), status.totalRegions() - status.regionsYetToUpdate());
@@ -664,7 +668,7 @@ public class TestPilotCommandsAgainstMiniCluster {
     assertTrue(realAdmin.getDescriptor(TableName.valueOf(newTableName))
       .hasColumnFamily(Bytes.toBytes("f1")));
     ShellTableFactory factory = new DefaultShellTableFactory(connection);
-    assertTrue(factory.forTable(newTableName).scan(Map.of()).rows().isEmpty());
+    assertTrue(factory.forTable(newTableName).scan(Collections.emptyMap()).rows().isEmpty());
   }
 
   @Test
@@ -683,11 +687,19 @@ public class TestPilotCommandsAgainstMiniCluster {
   public void listRegionsReturnsOneRowPerRegion() throws Exception {
     String tableName = "newshell_list_regions_test";
     ShellAdmin admin = new DefaultShellAdmin(connection.getAdmin());
-    admin.createTable(tableName, List.of(Map.of("NAME", "f1")),
-      Map.of("SPLITS", List.of("1000", "2000")));
+    admin.createTable(tableName, Arrays.asList(Collections.singletonMap("NAME", "f1")),
+      Collections.singletonMap("SPLITS", Arrays.asList("1000", "2000")));
 
     ListRegionsView view = admin.listRegions(tableName);
     assertEquals(3, view.rows().size());
     assertTrue(view.rows().get(0).get(1).startsWith(tableName));
+  }
+
+  private static Map<String, Object> mapOf(Object... keyValuePairs) {
+    Map<String, Object> map = new LinkedHashMap<>();
+    for (int i = 0; i < keyValuePairs.length; i += 2) {
+      map.put((String) keyValuePairs[i], keyValuePairs[i + 1]);
+    }
+    return map;
   }
 }

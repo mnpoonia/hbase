@@ -22,6 +22,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.Arrays;
 import java.util.List;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
 import org.apache.hadoop.hbase.newshell.command.ShellCommandException;
@@ -55,7 +56,7 @@ public class AddLabelsCommandTest {
     ParsedCommand parsed = ShellLineParser.parse("add_labels ['SECRET', 'PRIVATE']");
     command.execute(parsed, context);
 
-    assertEquals(List.of("SECRET", "PRIVATE"), admin.lastLabels);
+    assertEquals(Arrays.asList("SECRET", "PRIVATE"), admin.lastLabels);
   }
 
   @Test
@@ -63,7 +64,7 @@ public class AddLabelsCommandTest {
     ParsedCommand parsed = ShellLineParser.parse("add_labels 'SECRET'");
     command.execute(parsed, context);
 
-    assertEquals(List.of("SECRET"), admin.lastLabels);
+    assertEquals(Arrays.asList("SECRET"), admin.lastLabels);
   }
 
   @Test

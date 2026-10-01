@@ -24,6 +24,7 @@ import java.io.StringWriter;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
+import java.util.Arrays;
 import java.util.List;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
 import org.apache.hadoop.hbase.newshell.command.TabularResult;
@@ -45,7 +46,7 @@ public class ListSnapshotsCommandTest {
     @Override
     public List<SnapshotInfo> listSnapshots(String regex) {
       this.lastRegex = regex;
-      return List.of(new SnapshotInfo("snap1", "t1", 1000L, 0L));
+      return Arrays.asList(new SnapshotInfo("snap1", "t1", 1000L, 0L));
     }
   }
 
@@ -60,7 +61,7 @@ public class ListSnapshotsCommandTest {
     TabularResult result = (TabularResult) command.execute(parsed, context);
 
     assertEquals(".*", admin.lastRegex);
-    assertEquals(List.of("SNAPSHOT", "TABLE + CREATION TIME + TTL(Sec)"), result.header());
+    assertEquals(Arrays.asList("SNAPSHOT", "TABLE + CREATION TIME + TTL(Sec)"), result.header());
     assertEquals(1, result.rows().size());
     assertEquals("snap1", result.rows().get(0).get(0));
     String creationTime = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss 'UTC'")

@@ -23,6 +23,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
@@ -44,6 +45,6 @@ public class MoveTablesRsgroupCommandTest {
     Rec a=new Rec();
     new MoveTablesRsgroupCommand().execute(ShellLineParser.parse("move_tables_rsgroup 'dest', ['t1','t2']"),
       new ExecutionContext(a,new StubShellTableFactory(),new PrintWriter(new StringWriter())));
-    assertEquals("dest", a.g); assertEquals(List.of("t1","t2"), a.t);
+    assertEquals("dest", a.g); assertEquals(Arrays.asList("t1","t2"), a.t);
   }
 }

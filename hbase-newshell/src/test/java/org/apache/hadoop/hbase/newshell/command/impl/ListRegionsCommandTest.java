@@ -22,6 +22,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
 import org.apache.hadoop.hbase.newshell.command.TextResult;
@@ -39,7 +41,7 @@ public class ListRegionsCommandTest {
 
   private static final class RecordingShellAdmin extends StubShellAdmin {
     private String lastTableName;
-    private ListRegionsView view = new ListRegionsView(List.of(), List.of());
+    private ListRegionsView view = new ListRegionsView(Collections.emptyList(), Collections.emptyList());
 
     @Override
     public ListRegionsView listRegions(String tableName) {
@@ -55,8 +57,8 @@ public class ListRegionsCommandTest {
 
   @Test
   public void reportsPipeAlignedRegionRows() throws Exception {
-    admin.view = new ListRegionsView(List.of(),
-      List.of(List.of("host1:1234", "t1,,123.abc.", "", "", "0", "0", "1.0")));
+    admin.view = new ListRegionsView(Collections.emptyList(),
+      Arrays.asList(Arrays.asList("host1:1234", "t1,,123.abc.", "", "", "0", "0", "1.0")));
     ParsedCommand parsed = ShellLineParser.parse("list_regions 't1'");
     TextResult result = (TextResult) command.execute(parsed, context);
 
@@ -73,8 +75,8 @@ public class ListRegionsCommandTest {
   @Test
   public void prependsMissingMetricsWarnings() throws Exception {
     admin.view = new ListRegionsView(
-      List.of("Can not find all details for region: t1,,123.abc. , it may be disabled or in transition"),
-      List.of(List.of("host1:1234", "t1,,123.abc.", "", "", "", "", "")));
+      Arrays.asList("Can not find all details for region: t1,,123.abc. , it may be disabled or in transition"),
+      Arrays.asList(Arrays.asList("host1:1234", "t1,,123.abc.", "", "", "", "", "")));
     ParsedCommand parsed = ShellLineParser.parse("list_regions 't1'");
     TextResult result = (TextResult) command.execute(parsed, context);
 

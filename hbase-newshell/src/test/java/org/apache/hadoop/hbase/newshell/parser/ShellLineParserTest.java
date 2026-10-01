@@ -21,6 +21,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import org.apache.hadoop.hbase.testclassification.SmallTests;
@@ -48,14 +49,14 @@ public class ShellLineParserTest {
   public void parsesPositionalStringArgument() throws ShellParseException {
     ParsedCommand parsed = ShellLineParser.parse("disable 't1'");
     assertEquals("disable", parsed.commandName());
-    assertEquals(List.of("t1"), parsed.positionalArgs());
+    assertEquals(Arrays.asList("t1"), parsed.positionalArgs());
   }
 
   @Test
   public void parsesLegacyHashLiteralWithScalarValue() throws ShellParseException {
     ParsedCommand parsed = ShellLineParser.parse("create 't1', {NAME => 'f1', VERSIONS => 3}");
     assertEquals("create", parsed.commandName());
-    assertEquals(List.of("t1"), parsed.positionalArgs());
+    assertEquals(Arrays.asList("t1"), parsed.positionalArgs());
     assertEquals("f1", parsed.options().get("NAME"));
     assertEquals(3L, parsed.options().get("VERSIONS"));
   }
@@ -65,7 +66,7 @@ public class ShellLineParserTest {
     ParsedCommand parsed =
       ShellLineParser.parse("create 't1', {NAME => 'f1'}, {NAME => 'f2', VERSIONS => 5}");
     assertEquals("create", parsed.commandName());
-    assertEquals(List.of("t1"), parsed.positionalArgs());
+    assertEquals(Arrays.asList("t1"), parsed.positionalArgs());
     assertEquals(2, parsed.hashLiterals().size());
     assertEquals("f1", parsed.hashLiterals().get(0).get("NAME"));
     assertEquals("f2", parsed.hashLiterals().get(1).get("NAME"));
@@ -80,10 +81,10 @@ public class ShellLineParserTest {
     ParsedCommand parsed =
       ShellLineParser.parse("create 't1', {NAME => 'f1'}, SPLITS => ['1000', '2000']");
     assertEquals("create", parsed.commandName());
-    assertEquals(List.of("t1"), parsed.positionalArgs());
+    assertEquals(Arrays.asList("t1"), parsed.positionalArgs());
     assertEquals(2, parsed.hashLiterals().size());
     assertEquals("f1", parsed.hashLiterals().get(0).get("NAME"));
-    assertEquals(List.of("1000", "2000"), parsed.hashLiterals().get(1).get("SPLITS"));
+    assertEquals(Arrays.asList("1000", "2000"), parsed.hashLiterals().get(1).get("SPLITS"));
   }
 
   @Test
@@ -91,7 +92,7 @@ public class ShellLineParserTest {
     ParsedCommand parsed =
       ShellLineParser.parse("create 't1', 'f1', SPLITS => ['1000'], REGION_REPLICATION => 3");
     assertEquals(1, parsed.hashLiterals().size());
-    assertEquals(List.of("1000"), parsed.hashLiterals().get(0).get("SPLITS"));
+    assertEquals(Arrays.asList("1000"), parsed.hashLiterals().get(0).get("SPLITS"));
     assertEquals(3L, parsed.hashLiterals().get(0).get("REGION_REPLICATION"));
   }
 
@@ -106,8 +107,8 @@ public class ShellLineParserTest {
   public void parsesHashLiteralWithArrayValue() throws ShellParseException {
     ParsedCommand parsed = ShellLineParser.parse("get 't1', 'r1', {COLUMN => ['c1', 'c2']}");
     assertEquals("get", parsed.commandName());
-    assertEquals(List.of("t1", "r1"), parsed.positionalArgs());
-    assertEquals(List.of("c1", "c2"), parsed.options().get("COLUMN"));
+    assertEquals(Arrays.asList("t1", "r1"), parsed.positionalArgs());
+    assertEquals(Arrays.asList("c1", "c2"), parsed.options().get("COLUMN"));
   }
 
   @Test
@@ -122,7 +123,7 @@ public class ShellLineParserTest {
       ShellLineParser.parse("add_peer '1', TABLE_CFS => {'ns:tab' => ['cf1', 'cf2']}");
     @SuppressWarnings("unchecked")
     Map<String, Object> tableCfs = (Map<String, Object>) parsed.options().get("TABLE_CFS");
-    assertEquals(List.of("cf1", "cf2"), tableCfs.get("ns:tab"));
+    assertEquals(Arrays.asList("cf1", "cf2"), tableCfs.get("ns:tab"));
   }
 
   @Test

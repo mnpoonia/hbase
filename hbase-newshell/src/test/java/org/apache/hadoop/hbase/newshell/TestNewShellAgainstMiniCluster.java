@@ -150,7 +150,7 @@ public class TestNewShellAgainstMiniCluster {
     ShellTableFactory tables = new DefaultShellTableFactory(connection);
     ScriptedShellTerminal terminal = new ScriptedShellTerminal(lines);
     ExecutionContext context = new ExecutionContext(admin, tables, terminal.writer());
-    CommandRegistry registry = new CommandRegistry(List.of(new StatusCommand(), new CreateCommand(),
+    CommandRegistry registry = new CommandRegistry(Arrays.asList(new StatusCommand(), new CreateCommand(),
       new DisableCommand(), new GetCommand(), new EnableCommand(), new DropCommand(),
       new PutCommand(), new ListCommand(), new DescribeCommand(),
       new DecommissionRegionServersCommand(), new RecommissionRegionServerCommand(),

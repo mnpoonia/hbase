@@ -22,6 +22,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
@@ -42,7 +43,7 @@ public class ListQuotaSnapshotsCommandTest {
     @Override
     public List<List<String>> listQuotaSnapshots(Map<String, Object> filterArgs) {
       this.args = filterArgs;
-      return List.of(List.of("t1", "10", "100", "false", "None"));
+      return Arrays.asList(Arrays.asList("t1", "10", "100", "false", "None"));
     }
   }
 

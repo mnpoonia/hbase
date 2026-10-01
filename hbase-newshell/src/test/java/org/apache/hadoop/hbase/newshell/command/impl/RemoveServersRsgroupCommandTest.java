@@ -23,6 +23,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
@@ -44,6 +45,6 @@ public class RemoveServersRsgroupCommandTest {
     Rec a=new Rec();
     new RemoveServersRsgroupCommand().execute(ShellLineParser.parse("remove_servers_rsgroup ['h:1']"),
       new ExecutionContext(a,new StubShellTableFactory(),new PrintWriter(new StringWriter())));
-    assertEquals(List.of("h:1"), a.s);
+    assertEquals(Arrays.asList("h:1"), a.s);
   }
 }

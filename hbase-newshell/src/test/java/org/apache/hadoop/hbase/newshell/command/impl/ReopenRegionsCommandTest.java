@@ -23,6 +23,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
@@ -58,7 +59,7 @@ public class ReopenRegionsCommandTest {
   @Test
   public void reopensNamed() throws Exception {
     command.execute(ShellLineParser.parse("reopen_regions 't1', ['r1','r2']"), context);
-    assertEquals(List.of("r1", "r2"), admin.regions);
+    assertEquals(Arrays.asList("r1", "r2"), admin.regions);
   }
   @Test
   public void throwsWhenMissing() throws Exception {

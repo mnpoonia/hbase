@@ -26,6 +26,7 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.ArrayDeque;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Deque;
 import org.apache.hadoop.hbase.newshell.command.CommandRegistry;
 import org.apache.hadoop.hbase.newshell.command.CommandResult;
@@ -161,7 +162,7 @@ public class NewShellMainTest {
   @Test
   public void stopsCleanlyOnEndOfInput() throws IOException {
     FakeShellTerminal terminal = new FakeShellTerminal();
-    CommandRegistry registry = new CommandRegistry(java.util.List.of());
+    CommandRegistry registry = new CommandRegistry(java.util.Collections.emptyList());
     NewShellMain.run(terminal, newContext(terminal.writer()), registry, new DefaultFormatter());
     assertEquals("", terminal.output());
   }
@@ -169,7 +170,7 @@ public class NewShellMainTest {
   @Test
   public void exitAndQuitAreCaseInsensitiveAndStopTheLoop() throws IOException {
     FakeShellTerminal terminal = new FakeShellTerminal("QUIT", "hello");
-    CommandRegistry registry = new CommandRegistry(java.util.List.of(new SucceedingCommand()));
+    CommandRegistry registry = new CommandRegistry(java.util.Arrays.asList(new SucceedingCommand()));
     NewShellMain.run(terminal, newContext(terminal.writer()), registry, new DefaultFormatter());
     assertEquals("", terminal.output());
   }
@@ -177,7 +178,7 @@ public class NewShellMainTest {
   @Test
   public void dispatchesRecognizedCommandThroughFormatter() throws IOException {
     FakeShellTerminal terminal = new FakeShellTerminal("hello", "exit");
-    CommandRegistry registry = new CommandRegistry(java.util.List.of(new SucceedingCommand()));
+    CommandRegistry registry = new CommandRegistry(java.util.Arrays.asList(new SucceedingCommand()));
     NewShellMain.run(terminal, newContext(terminal.writer()), registry, new DefaultFormatter());
     assertTrue(terminal.output().contains("hello world"));
   }
@@ -185,7 +186,7 @@ public class NewShellMainTest {
   @Test
   public void printsErrorForUnknownCommandAndContinues() throws IOException {
     FakeShellTerminal terminal = new FakeShellTerminal("nope", "hello", "exit");
-    CommandRegistry registry = new CommandRegistry(java.util.List.of(new SucceedingCommand()));
+    CommandRegistry registry = new CommandRegistry(java.util.Arrays.asList(new SucceedingCommand()));
     NewShellMain.run(terminal, newContext(terminal.writer()), registry, new DefaultFormatter());
     String output = terminal.output();
     assertTrue(output.contains("ERROR: unknown command 'nope'"));
@@ -195,7 +196,7 @@ public class NewShellMainTest {
   @Test
   public void printsErrorForParseFailureAndContinues() throws IOException {
     FakeShellTerminal terminal = new FakeShellTerminal("'unterminated", "hello", "exit");
-    CommandRegistry registry = new CommandRegistry(java.util.List.of(new SucceedingCommand()));
+    CommandRegistry registry = new CommandRegistry(java.util.Arrays.asList(new SucceedingCommand()));
     NewShellMain.run(terminal, newContext(terminal.writer()), registry, new DefaultFormatter());
     String output = terminal.output();
     assertTrue(output.contains("ERROR:"));
@@ -206,7 +207,7 @@ public class NewShellMainTest {
   public void printsErrorForCommandFailureAndContinues() throws IOException {
     FakeShellTerminal terminal = new FakeShellTerminal("boom", "hello", "exit");
     CommandRegistry registry =
-      new CommandRegistry(java.util.List.of(new SucceedingCommand(), new FailingCommand()));
+      new CommandRegistry(java.util.Arrays.asList(new SucceedingCommand(), new FailingCommand()));
     NewShellMain.run(terminal, newContext(terminal.writer()), registry, new DefaultFormatter());
     String output = terminal.output();
     assertTrue(output.contains("ERROR: kaboom"));
@@ -217,7 +218,7 @@ public class NewShellMainTest {
   public void exitOnFirstErrorFalseContinuesPastFailure() throws IOException {
     FakeShellTerminal terminal = new FakeShellTerminal("boom", "hello", "exit");
     CommandRegistry registry =
-      new CommandRegistry(java.util.List.of(new SucceedingCommand(), new FailingCommand()));
+      new CommandRegistry(java.util.Arrays.asList(new SucceedingCommand(), new FailingCommand()));
     int code = NewShellMain.run(terminal, newContext(terminal.writer()), registry,
       new DefaultFormatter(), false);
     assertEquals(ExitCodes.SUCCESS, code);
@@ -228,7 +229,7 @@ public class NewShellMainTest {
   public void exitOnFirstErrorTrueStopsAtFirstFailure() throws IOException {
     FakeShellTerminal terminal = new FakeShellTerminal("boom", "hello", "exit");
     CommandRegistry registry =
-      new CommandRegistry(java.util.List.of(new SucceedingCommand(), new FailingCommand()));
+      new CommandRegistry(java.util.Arrays.asList(new SucceedingCommand(), new FailingCommand()));
     int code = NewShellMain.run(terminal, newContext(terminal.writer()), registry,
       new DefaultFormatter(), true);
     assertEquals(ExitCodes.CLIENT_ERROR, code);
@@ -238,7 +239,7 @@ public class NewShellMainTest {
   @Test
   public void exitOnFirstErrorTrueSucceedsWhenNoFailureOccurs() throws IOException {
     FakeShellTerminal terminal = new FakeShellTerminal("hello", "exit");
-    CommandRegistry registry = new CommandRegistry(java.util.List.of(new SucceedingCommand()));
+    CommandRegistry registry = new CommandRegistry(java.util.Arrays.asList(new SucceedingCommand()));
     int code = NewShellMain.run(terminal, newContext(terminal.writer()), registry,
       new DefaultFormatter(), true);
     assertEquals(ExitCodes.SUCCESS, code);
@@ -248,7 +249,7 @@ public class NewShellMainTest {
   public void runtimeExceptionFromCommandDoesNotKillSession() throws IOException {
     FakeShellTerminal terminal = new FakeShellTerminal("boom", "hello", "exit");
     CommandRegistry registry =
-      new CommandRegistry(java.util.List.of(new SucceedingCommand(), new UncheckedThrowingCommand()));
+      new CommandRegistry(java.util.Arrays.asList(new SucceedingCommand(), new UncheckedThrowingCommand()));
     NewShellMain.run(terminal, newContext(terminal.writer()), registry, new DefaultFormatter());
     String output = terminal.output();
     assertTrue(output.contains("unchecked boom"));
@@ -259,7 +260,7 @@ public class NewShellMainTest {
   public void exitOnFirstErrorPropagatesRuntimeFailure() throws IOException {
     FakeShellTerminal terminal = new FakeShellTerminal("boom", "hello", "exit");
     CommandRegistry registry =
-      new CommandRegistry(java.util.List.of(new SucceedingCommand(), new UncheckedThrowingCommand()));
+      new CommandRegistry(java.util.Arrays.asList(new SucceedingCommand(), new UncheckedThrowingCommand()));
     int code = NewShellMain.run(terminal, newContext(terminal.writer()), registry,
       new DefaultFormatter(), true);
     assertEquals(ExitCodes.CLIENT_ERROR, code);
@@ -269,7 +270,7 @@ public class NewShellMainTest {
   @Test
   public void nullMessageShellCommandExceptionFallsBackToClassName() throws IOException {
     FakeShellTerminal terminal = new FakeShellTerminal("boom", "exit");
-    CommandRegistry registry = new CommandRegistry(java.util.List.of(new NullMessageFailingCommand()));
+    CommandRegistry registry = new CommandRegistry(java.util.Arrays.asList(new NullMessageFailingCommand()));
     NewShellMain.run(terminal, newContext(terminal.writer()), registry, new DefaultFormatter());
     String output = terminal.output();
     assertTrue(output.contains("ShellCommandException"));
@@ -279,7 +280,7 @@ public class NewShellMainTest {
   @Test
   public void skipsCommentLines() throws IOException {
     FakeShellTerminal terminal = new FakeShellTerminal("# this is a comment", "  # indented too", "exit");
-    CommandRegistry registry = new CommandRegistry(java.util.List.of());
+    CommandRegistry registry = new CommandRegistry(java.util.Collections.emptyList());
     NewShellMain.run(terminal, newContext(terminal.writer()), registry, new DefaultFormatter());
     assertFalse(terminal.output().contains("ERROR"));
   }

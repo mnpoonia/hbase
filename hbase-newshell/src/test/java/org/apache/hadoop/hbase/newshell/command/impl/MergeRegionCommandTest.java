@@ -23,6 +23,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
@@ -52,19 +53,19 @@ public class MergeRegionCommandTest {
   @Test
   public void mergesTwo() throws Exception {
     command.execute(ShellLineParser.parse("merge_region 'r1', 'r2'"), context);
-    assertEquals(List.of("r1", "r2"), admin.regions);
+    assertEquals(Arrays.asList("r1", "r2"), admin.regions);
     assertEquals(false, admin.force);
   }
   @Test
   public void mergesWithForce() throws Exception {
     command.execute(ShellLineParser.parse("merge_region 'r1', 'r2', true"), context);
-    assertEquals(List.of("r1", "r2"), admin.regions);
+    assertEquals(Arrays.asList("r1", "r2"), admin.regions);
     assertEquals(true, admin.force);
   }
   @Test
   public void mergesArray() throws Exception {
     command.execute(ShellLineParser.parse("merge_region ['r1','r2','r3'], true"), context);
-    assertEquals(List.of("r1", "r2", "r3"), admin.regions);
+    assertEquals(Arrays.asList("r1", "r2", "r3"), admin.regions);
     assertEquals(true, admin.force);
   }
 }

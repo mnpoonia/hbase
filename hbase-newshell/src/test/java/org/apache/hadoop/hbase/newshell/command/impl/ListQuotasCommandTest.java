@@ -21,6 +21,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
@@ -42,7 +43,7 @@ public class ListQuotasCommandTest {
     @Override
     public List<List<String>> listQuotas(Map<String, Object> filterArgs) {
       this.lastFilterArgs = filterArgs;
-      return List.of(List.of("USER => u1", "TYPE => THROTTLE"));
+      return Arrays.asList(Arrays.asList("USER => u1", "TYPE => THROTTLE"));
     }
   }
 
@@ -57,7 +58,7 @@ public class ListQuotasCommandTest {
     TabularResult result = (TabularResult) command.execute(parsed, context);
 
     assertEquals("u1", admin.lastFilterArgs.get("USER"));
-    assertEquals(List.of("OWNER", "QUOTAS"), result.header());
+    assertEquals(Arrays.asList("OWNER", "QUOTAS"), result.header());
     assertEquals(1, result.rows().size());
   }
 }

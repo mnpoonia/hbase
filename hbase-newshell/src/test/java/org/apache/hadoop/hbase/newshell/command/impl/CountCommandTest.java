@@ -22,6 +22,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
@@ -78,7 +79,7 @@ public class CountCommandTest {
 
     assertEquals("t1", tables.lastTableName);
     assertEquals("r1", table.lastOptions.get("STARTROW"));
-    assertEquals(List.of("42 row(s)"), result.lines());
+    assertEquals(Arrays.asList("42 row(s)"), result.lines());
   }
 
   @Test

@@ -22,6 +22,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
 import org.apache.hadoop.hbase.newshell.command.SessionOptions;
@@ -38,7 +40,7 @@ import org.apache.hadoop.hbase.newshell.parser.ParsedCommand;
 public class EnableAllCommandTest {
 
   private static final class RecordingShellAdmin extends StubShellAdmin {
-    private List<String> tableNames = List.of();
+    private List<String> tableNames = Collections.emptyList();
     private final List<String> enabled = new ArrayList<>();
 
     @Override
@@ -59,11 +61,11 @@ public class EnableAllCommandTest {
 
   @Test
   public void enablesEveryMatch() throws Exception {
-    admin.tableNames = List.of("t1", "t2");
+    admin.tableNames = Arrays.asList("t1", "t2");
     ParsedCommand parsed = ShellLineParser.parse("enable_all 't.*'");
     TextResult result = (TextResult) command.execute(parsed, context);
 
-    assertEquals(List.of("t1", "t2"), admin.enabled);
-    assertEquals(List.of("2 tables successfully enabled"), result.lines());
+    assertEquals(Arrays.asList("t1", "t2"), admin.enabled);
+    assertEquals(Arrays.asList("2 tables successfully enabled"), result.lines());
   }
 }

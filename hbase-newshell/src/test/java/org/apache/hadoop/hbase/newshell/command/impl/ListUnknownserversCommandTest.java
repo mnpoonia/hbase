@@ -21,6 +21,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.Arrays;
 import java.util.List;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
 import org.apache.hadoop.hbase.newshell.command.TabularResult;
@@ -36,7 +37,7 @@ public class ListUnknownserversCommandTest {
   private static final class RecordingShellAdmin extends StubShellAdmin {
     @Override
     public List<String> listUnknownServers() {
-      return List.of("u1");
+      return Arrays.asList("u1");
     }
   }
 
@@ -48,6 +49,6 @@ public class ListUnknownserversCommandTest {
   public void lists() throws Exception {
     TabularResult result =
       (TabularResult) command.execute(ShellLineParser.parse("list_unknownservers"), context);
-    assertEquals(List.of(List.of("u1")), result.rows());
+    assertEquals(Arrays.asList(Arrays.asList("u1")), result.rows());
   }
 }

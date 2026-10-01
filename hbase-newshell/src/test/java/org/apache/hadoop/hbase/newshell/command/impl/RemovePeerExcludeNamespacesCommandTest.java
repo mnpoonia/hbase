@@ -23,6 +23,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
@@ -50,6 +51,6 @@ public class RemovePeerExcludeNamespacesCommandTest {
   public void runs() throws Exception {
     command.execute(ShellLineParser.parse("remove_peer_exclude_namespaces '1', ['ns1', 'ns2']"), context);
     assertEquals("1", admin.peer);
-    assertEquals(List.of("ns1", "ns2"), admin.ns);
+    assertEquals(Arrays.asList("ns1", "ns2"), admin.ns);
   }
 }

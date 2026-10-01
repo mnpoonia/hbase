@@ -22,6 +22,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.Arrays;
 import java.util.List;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
 import org.apache.hadoop.hbase.newshell.command.ShellCommandException;
@@ -63,7 +64,7 @@ public class BalancerCommandTest {
 
     assertEquals(false, admin.lastDryRun);
     assertEquals(false, admin.lastIgnoreRit);
-    assertEquals(List.of("Balancer ran", "Moves calculated: 3, moves executed: 2"), result.lines());
+    assertEquals(Arrays.asList("Balancer ran", "Moves calculated: 3, moves executed: 2"), result.lines());
   }
 
   @Test
@@ -81,7 +82,7 @@ public class BalancerCommandTest {
     ParsedCommand parsed = ShellLineParser.parse("balancer");
     TextResult result = (TextResult) command.execute(parsed, context);
 
-    assertEquals(List.of("Balancer did not run. See logs for details."), result.lines());
+    assertEquals(Arrays.asList("Balancer did not run. See logs for details."), result.lines());
   }
 
   @Test

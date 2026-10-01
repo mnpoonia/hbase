@@ -22,6 +22,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
@@ -86,7 +87,7 @@ public class PutCommandTest {
     assertEquals("r1", table.lastRow);
     assertEquals("f1:c1", table.lastColumn);
     assertEquals("v1", table.lastValue);
-    assertEquals(List.of(), result.lines());
+    assertEquals(Collections.emptyList(), result.lines());
   }
 
   @Test

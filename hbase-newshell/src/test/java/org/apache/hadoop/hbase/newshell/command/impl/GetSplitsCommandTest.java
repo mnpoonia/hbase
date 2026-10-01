@@ -22,6 +22,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.Arrays;
 import java.util.List;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
 import org.apache.hadoop.hbase.newshell.command.ShellCommandException;
@@ -42,7 +43,7 @@ public class GetSplitsCommandTest {
   private static final class RecordingShellTable extends StubShellTable {
     @Override
     public List<String> getSplits() {
-      return List.of("1000", "2000");
+      return Arrays.asList("1000", "2000");
     }
   }
 
@@ -73,7 +74,7 @@ public class GetSplitsCommandTest {
     TextResult result = (TextResult) command.execute(parsed, context);
 
     assertEquals("t1", tables.lastTableName);
-    assertEquals(List.of("Total number of splits = 3", "1000", "2000"), result.lines());
+    assertEquals(Arrays.asList("Total number of splits = 3", "1000", "2000"), result.lines());
   }
 
   @Test

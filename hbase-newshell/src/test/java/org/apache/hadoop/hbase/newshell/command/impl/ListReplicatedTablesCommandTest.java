@@ -23,6 +23,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
@@ -39,7 +40,7 @@ import org.junit.jupiter.api.Test;
 @Tag(SmallTests.TAG)
 public class ListReplicatedTablesCommandTest {
   private static final class RecordingShellAdmin extends StubShellAdmin {
-    @Override public List<List<String>> listReplicatedTables(String regex) { return List.of(List.of("t:cf", "GLOBAL")); }
+    @Override public List<List<String>> listReplicatedTables(String regex) { return Arrays.asList(Arrays.asList("t:cf", "GLOBAL")); }
   }
   private final ListReplicatedTablesCommand command = new ListReplicatedTablesCommand();
   private final RecordingShellAdmin admin = new RecordingShellAdmin();
@@ -48,6 +49,6 @@ public class ListReplicatedTablesCommandTest {
   @Test
   public void runs() throws Exception {
     TabularResult result = (TabularResult) command.execute(ShellLineParser.parse("list_replicated_tables"), context);
-    assertEquals(List.of(List.of("t:cf", "GLOBAL")), result.rows());
+    assertEquals(Arrays.asList(Arrays.asList("t:cf", "GLOBAL")), result.rows());
   }
 }

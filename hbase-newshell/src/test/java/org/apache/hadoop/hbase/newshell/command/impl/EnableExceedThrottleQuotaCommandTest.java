@@ -23,6 +23,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.Arrays;
 import java.util.List;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
 import org.apache.hadoop.hbase.newshell.command.TextResult;
@@ -54,6 +55,6 @@ public class EnableExceedThrottleQuotaCommandTest {
     TextResult result = (TextResult) new EnableExceedThrottleQuotaCommand()
       .execute(ShellLineParser.parse("enable_exceed_throttle_quota"), context);
     assertTrue(admin.enabled);
-    assertEquals(List.of("Previous exceed throttle quota enabled : false"), result.lines());
+    assertEquals(Arrays.asList("Previous exceed throttle quota enabled : false"), result.lines());
   }
 }

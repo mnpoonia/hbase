@@ -22,6 +22,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.Arrays;
 import java.util.List;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
 import org.apache.hadoop.hbase.newshell.command.TabularResult;
@@ -38,7 +39,7 @@ public class ListQuotaTableSizesCommandTest {
   private static final class RecordingShellAdmin extends StubShellAdmin {
     @Override
     public List<List<String>> listQuotaTableSizes() {
-      return List.of(List.of("t1", "100"));
+      return Arrays.asList(Arrays.asList("t1", "100"));
     }
   }
 
@@ -49,6 +50,6 @@ public class ListQuotaTableSizesCommandTest {
       new PrintWriter(new StringWriter()));
     TabularResult result =
       (TabularResult) command.execute(ShellLineParser.parse("list_quota_table_sizes"), context);
-    assertEquals(List.of(List.of("t1", "100")), result.rows());
+    assertEquals(Arrays.asList(Arrays.asList("t1", "100")), result.rows());
   }
 }

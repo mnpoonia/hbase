@@ -21,6 +21,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.Arrays;
 import java.util.List;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
 import org.apache.hadoop.hbase.newshell.command.TextResult;
@@ -41,7 +42,7 @@ public class ListLabelsCommandTest {
     @Override
     public List<String> listLabels(String regex) {
       this.lastRegex = regex;
-      return List.of("SECRET", "PRIVATE");
+      return Arrays.asList("SECRET", "PRIVATE");
     }
   }
 
@@ -56,7 +57,7 @@ public class ListLabelsCommandTest {
     TextResult result = (TextResult) command.execute(parsed, context);
 
     assertEquals(".*", admin.lastRegex);
-    assertEquals(List.of("SECRET", "PRIVATE"), result.lines());
+    assertEquals(Arrays.asList("SECRET", "PRIVATE"), result.lines());
   }
 
   @Test

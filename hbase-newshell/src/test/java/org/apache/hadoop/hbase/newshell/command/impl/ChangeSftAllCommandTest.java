@@ -22,6 +22,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.Collections;
 import java.util.List;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
 import org.apache.hadoop.hbase.newshell.command.SessionOptions;
@@ -43,7 +44,7 @@ public class ChangeSftAllCommandTest {
 
     @Override
     public List<String> listTables(String regex) {
-      return List.of();
+      return Collections.emptyList();
     }
 
     @Override

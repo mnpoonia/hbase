@@ -23,6 +23,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
@@ -39,7 +40,7 @@ import org.junit.jupiter.api.Test;
 @Tag(SmallTests.TAG)
 public class ListPeerConfigsCommandTest {
   private static final class RecordingShellAdmin extends StubShellAdmin {
-    @Override public List<List<String>> listPeerConfigRows() { return List.of(List.of("PeerId", "1")); }
+    @Override public List<List<String>> listPeerConfigRows() { return Arrays.asList(Arrays.asList("PeerId", "1")); }
   }
   private final ListPeerConfigsCommand command = new ListPeerConfigsCommand();
   private final RecordingShellAdmin admin = new RecordingShellAdmin();
@@ -48,6 +49,6 @@ public class ListPeerConfigsCommandTest {
   @Test
   public void runs() throws Exception {
     TabularResult result = (TabularResult) command.execute(ShellLineParser.parse("list_peer_configs"), context);
-    assertEquals(List.of(List.of("PeerId", "1")), result.rows());
+    assertEquals(Arrays.asList(Arrays.asList("PeerId", "1")), result.rows());
   }
 }

@@ -21,6 +21,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.Arrays;
 import java.util.List;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
 import org.apache.hadoop.hbase.newshell.command.TabularResult;
@@ -41,7 +42,7 @@ public class ListNamespaceCommandTest {
     @Override
     public List<String> listNamespaces(String regex) {
       this.lastRegex = regex;
-      return List.of("ns1", "default");
+      return Arrays.asList("ns1", "default");
     }
   }
 
@@ -56,8 +57,8 @@ public class ListNamespaceCommandTest {
     TabularResult result = (TabularResult) command.execute(parsed, context);
 
     assertEquals(".*", admin.lastRegex);
-    assertEquals(List.of("NAMESPACE"), result.header());
-    assertEquals(List.of(List.of("ns1"), List.of("default")), result.rows());
+    assertEquals(Arrays.asList("NAMESPACE"), result.header());
+    assertEquals(Arrays.asList(Arrays.asList("ns1"), Arrays.asList("default")), result.rows());
   }
 
   @Test

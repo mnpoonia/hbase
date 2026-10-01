@@ -22,6 +22,8 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
 import org.apache.hadoop.hbase.newshell.command.ShellCommandException;
@@ -60,8 +62,8 @@ public class MoveServersRsgroupCommandTest {
     TextResult result = (TextResult) command.execute(parsed, context);
 
     assertEquals("dest", admin.lastGroupName);
-    assertEquals(List.of("server1:1000", "server2:1000"), admin.lastHostPorts);
-    assertEquals(List.of(), result.lines());
+    assertEquals(Arrays.asList("server1:1000", "server2:1000"), admin.lastHostPorts);
+    assertEquals(Collections.emptyList(), result.lines());
   }
 
   @Test

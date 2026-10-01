@@ -21,6 +21,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
 import org.apache.hadoop.hbase.newshell.command.TextResult;
@@ -36,7 +38,7 @@ import org.junit.jupiter.api.Test;
 public class RitCommandTest {
   private static final class RecordingShellAdmin extends StubShellAdmin {
     @Override public List<String> regionsInTransition() {
-      return List.of("r1 state=OPENING");
+      return Arrays.asList("r1 state=OPENING");
     }
   }
   private final RitCommand command = new RitCommand();
@@ -46,19 +48,19 @@ public class RitCommandTest {
   @Test
   public void listsRit() throws Exception {
     TextResult result = (TextResult) command.execute(ShellLineParser.parse("rit"), context);
-    assertEquals(List.of("r1 state=OPENING", "1 row(s)"), result.lines());
+    assertEquals(Arrays.asList("r1 state=OPENING", "1 row(s)"), result.lines());
   }
 
   @Test
   public void emptyRitStillPrintsZeroRowFooter() throws Exception {
     StubShellAdmin empty = new StubShellAdmin() {
       @Override public List<String> regionsInTransition() {
-        return List.of();
+        return Collections.emptyList();
       }
     };
     ExecutionContext emptyCtx =
       new ExecutionContext(empty, new StubShellTableFactory(), new PrintWriter(new StringWriter()));
     TextResult result = (TextResult) command.execute(ShellLineParser.parse("rit"), emptyCtx);
-    assertEquals(List.of("0 row(s)"), result.lines());
+    assertEquals(Arrays.asList("0 row(s)"), result.lines());
   }
 }

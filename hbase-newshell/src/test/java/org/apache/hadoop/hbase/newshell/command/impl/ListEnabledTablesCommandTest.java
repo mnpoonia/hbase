@@ -22,6 +22,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.Arrays;
 import java.util.List;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
 import org.apache.hadoop.hbase.newshell.command.TabularResult;
@@ -42,7 +43,7 @@ public class ListEnabledTablesCommandTest {
     @Override
     public List<String> listTablesByState(boolean enabled) {
       this.lastRequestedState = enabled;
-      return List.of("t1");
+      return Arrays.asList("t1");
     }
   }
 
@@ -57,7 +58,7 @@ public class ListEnabledTablesCommandTest {
     TabularResult result = (TabularResult) command.execute(parsed, context);
 
     assertTrue(admin.lastRequestedState);
-    assertEquals(List.of("TABLE"), result.header());
-    assertEquals(List.of(List.of("t1")), result.rows());
+    assertEquals(Arrays.asList("TABLE"), result.header());
+    assertEquals(Arrays.asList(Arrays.asList("t1")), result.rows());
   }
 }

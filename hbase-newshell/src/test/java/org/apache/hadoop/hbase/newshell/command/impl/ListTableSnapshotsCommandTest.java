@@ -23,6 +23,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.Arrays;
 import java.util.List;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
 import org.apache.hadoop.hbase.newshell.command.ShellCommandException;
@@ -47,7 +48,7 @@ public class ListTableSnapshotsCommandTest {
     public List<SnapshotInfo> listTableSnapshots(String tableNameRegex, String snapshotNameRegex) {
       this.tableRegex = tableNameRegex;
       this.snapshotRegex = snapshotNameRegex;
-      return List.of(new SnapshotInfo("snap1", "t1", 0L, 0L));
+      return Arrays.asList(new SnapshotInfo("snap1", "t1", 0L, 0L));
     }
   }
 

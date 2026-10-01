@@ -23,6 +23,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
@@ -43,7 +44,7 @@ public class GetLargelogResponsesCommandTest {
     private boolean large;
     @Override public List<String> getSlowLogResponses(List<String> serverNames,
       Map<String, Object> args, boolean largeLog) {
-      large = largeLog; return List.of("large:1");
+      large = largeLog; return Arrays.asList("large:1");
     }
   }
   private final GetLargelogResponsesCommand command = new GetLargelogResponsesCommand();

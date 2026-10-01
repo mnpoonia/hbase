@@ -25,6 +25,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
 import org.apache.hadoop.hbase.newshell.command.SessionOptions;
@@ -48,7 +49,7 @@ public class DeleteTableSnapshotsCommandTest {
 
     @Override
     public List<SnapshotInfo> listTableSnapshots(String tableNameRegex, String snapshotNameRegex) {
-      return List.copyOf(snapshots);
+      return new ArrayList<>(snapshots);
     }
 
     @Override
@@ -68,7 +69,7 @@ public class DeleteTableSnapshotsCommandTest {
     admin.snapshots.add(new SnapshotInfo("snap2", "t1", 0L, 0L));
     ParsedCommand parsed = ShellLineParser.parse("delete_table_snapshots 't.*'");
     TextResult result = (TextResult) command.execute(parsed, context);
-    assertEquals(List.of("snap1", "snap2"), admin.deleted);
+    assertEquals(Arrays.asList("snap1", "snap2"), admin.deleted);
     assertTrue(result.lines().get(0).contains("Successfully deleted snapshot: snap1"));
   }
 

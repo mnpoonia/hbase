@@ -22,6 +22,8 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.Arrays;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
@@ -61,8 +63,8 @@ public class AlterCommandTest {
 
     assertEquals("t1", admin.lastAlteredTable);
     assertEquals(1, admin.lastFamilySpecs.size());
-    assertEquals(Map.of("NAME", "f1", "TTL", 100L), admin.lastFamilySpecs.get(0));
-    assertEquals(List.of("Updating all regions with the new schema..."), result.lines());
+    assertEquals(mapOf("NAME", "f1", "TTL", 100L), admin.lastFamilySpecs.get(0));
+    assertEquals(Arrays.asList("Updating all regions with the new schema..."), result.lines());
   }
 
   @Test
@@ -78,5 +80,13 @@ public class AlterCommandTest {
   public void throwsWhenNoFamilySpecGiven() throws Exception {
     ParsedCommand parsed = ShellLineParser.parse("alter 't1'");
     assertThrows(ShellCommandException.class, () -> command.execute(parsed, context));
+  }
+
+  private static Map<String, Object> mapOf(Object... keyValuePairs) {
+    Map<String, Object> map = new LinkedHashMap<>();
+    for (int i = 0; i < keyValuePairs.length; i += 2) {
+      map.put((String) keyValuePairs[i], keyValuePairs[i + 1]);
+    }
+    return map;
   }
 }

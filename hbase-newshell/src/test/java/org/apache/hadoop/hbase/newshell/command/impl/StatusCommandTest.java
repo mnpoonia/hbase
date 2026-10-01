@@ -22,6 +22,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import org.apache.hadoop.hbase.ClusterMetrics;
@@ -66,8 +68,8 @@ public class StatusCommandTest {
   public void detailedReportsActiveMasterWithDoubleSpaceFormat() throws Exception {
     ServerName master = ServerName.valueOf("master.example.com", 16000, 1L);
     ClusterMetrics metrics = ClusterMetricsBuilder.newBuilder().setHBaseVersion("3.0.0")
-      .setMasterName(master).setBackerMasterNames(List.of()).setMasterCoprocessorNames(List.of())
-      .setMasterTasks(List.of()).setLiveServerMetrics(Map.of()).setDeadServerNames(List.of())
+      .setMasterName(master).setBackerMasterNames(Collections.emptyList()).setMasterCoprocessorNames(Collections.emptyList())
+      .setMasterTasks(Collections.emptyList()).setLiveServerMetrics(Collections.emptyMap()).setDeadServerNames(Collections.emptyList())
       .build();
 
     ParsedCommand parsed = ShellLineParser.parse("status 'detailed'");
@@ -81,9 +83,9 @@ public class StatusCommandTest {
     ServerName master = ServerName.valueOf("master.example.com", 16000, 1L);
     ServerName backup = ServerName.valueOf("backup.example.com", 16000, 2L);
     ClusterMetrics metrics = ClusterMetricsBuilder.newBuilder().setHBaseVersion("3.0.0")
-      .setMasterName(master).setBackerMasterNames(List.of(backup))
-      .setMasterCoprocessorNames(List.of()).setMasterTasks(List.of()).setLiveServerMetrics(Map.of())
-      .setDeadServerNames(List.of()).build();
+      .setMasterName(master).setBackerMasterNames(Arrays.asList(backup))
+      .setMasterCoprocessorNames(Collections.emptyList()).setMasterTasks(Collections.emptyList()).setLiveServerMetrics(Collections.emptyMap())
+      .setDeadServerNames(Collections.emptyList()).build();
 
     ParsedCommand parsed = ShellLineParser.parse("status 'detailed'");
     TextResult result = (TextResult) command.execute(parsed, contextFor(metrics));
@@ -101,9 +103,9 @@ public class StatusCommandTest {
     ServerName master = ServerName.valueOf("master.example.com", 16000, 1L);
     ServerName live = ServerName.valueOf("rs.example.com", 16020, 2L);
     ClusterMetrics metrics = ClusterMetricsBuilder.newBuilder().setHBaseVersion("3.0.0")
-      .setMasterName(master).setBackerMasterNames(List.of()).setMasterCoprocessorNames(List.of())
-      .setLiveServerMetrics(Map.of(live, org.apache.hadoop.hbase.ServerMetricsBuilder.of(live)))
-      .setDeadServerNames(List.of()).build();
+      .setMasterName(master).setBackerMasterNames(Collections.emptyList()).setMasterCoprocessorNames(Collections.emptyList())
+      .setLiveServerMetrics(Collections.singletonMap(live, org.apache.hadoop.hbase.ServerMetricsBuilder.of(live)))
+      .setDeadServerNames(Collections.emptyList()).build();
 
     ParsedCommand parsed = ShellLineParser.parse("status");
     TextResult result = (TextResult) command.execute(parsed, contextFor(metrics));
@@ -118,8 +120,8 @@ public class StatusCommandTest {
   @Test
   public void unsupportedFormatThrows() throws Exception {
     ClusterMetrics metrics = ClusterMetricsBuilder.newBuilder().setHBaseVersion("3.0.0")
-      .setBackerMasterNames(List.of()).setMasterCoprocessorNames(List.of())
-      .setLiveServerMetrics(Map.of()).setDeadServerNames(List.of()).build();
+      .setBackerMasterNames(Collections.emptyList()).setMasterCoprocessorNames(Collections.emptyList())
+      .setLiveServerMetrics(Collections.emptyMap()).setDeadServerNames(Collections.emptyList()).build();
 
     ParsedCommand parsed = ShellLineParser.parse("status 'replication'");
     assertThrows(ShellCommandException.class, () -> command.execute(parsed, contextFor(metrics)));

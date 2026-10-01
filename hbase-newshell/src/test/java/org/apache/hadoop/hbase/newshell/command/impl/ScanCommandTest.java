@@ -22,6 +22,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
@@ -50,7 +51,7 @@ public class ScanCommandTest {
     public ScanResult scan(Map<String, Object> options) {
       this.lastOptions = options;
       return new ScanResult(
-        List.of(new ScanRow("r1", List.of(new CellView("f1", "c1", 123L, "v1")))));
+        Arrays.asList(new ScanRow("r1", Arrays.asList(new CellView("f1", "c1", 123L, "v1")))));
     }
   }
 
@@ -82,7 +83,7 @@ public class ScanCommandTest {
 
     assertEquals("t1", tables.lastTableName);
     assertEquals(10L, table.lastOptions.get("LIMIT"));
-    assertEquals(List.of("ROW", "COLUMN+CELL"), result.header());
+    assertEquals(Arrays.asList("ROW", "COLUMN+CELL"), result.header());
     assertEquals(1, result.rows().size());
     assertEquals("r1", result.rows().get(0).get(0));
   }

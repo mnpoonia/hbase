@@ -22,6 +22,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
 import org.apache.hadoop.hbase.newshell.command.TextResult;
@@ -41,7 +43,7 @@ public class ClearDeadserversCommandTest {
     @Override
     public List<String> clearDeadServers(List<String> serverNames) {
       last = serverNames;
-      return List.of();
+      return Collections.emptyList();
     }
   }
 
@@ -60,6 +62,6 @@ public class ClearDeadserversCommandTest {
   @Test
   public void clearsNamed() throws Exception {
     command.execute(ShellLineParser.parse("clear_deadservers 'host,1,2'"), context);
-    assertEquals(List.of("host,1,2"), admin.last);
+    assertEquals(Arrays.asList("host,1,2"), admin.last);
   }
 }

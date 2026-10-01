@@ -23,6 +23,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.Arrays;
 import java.util.List;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
 import org.apache.hadoop.hbase.newshell.command.ShellCommandException;
@@ -43,7 +44,7 @@ public class GetAuthsCommandTest {
     @Override
     public List<String> getAuths(String user) {
       this.user = user;
-      return List.of("SECRET", "PRIVATE");
+      return Arrays.asList("SECRET", "PRIVATE");
     }
   }
 
@@ -57,7 +58,7 @@ public class GetAuthsCommandTest {
     TextResult result =
       (TextResult) command.execute(ShellLineParser.parse("get_auths 'user1'"), context);
     assertEquals("user1", admin.user);
-    assertEquals(List.of("SECRET", "PRIVATE"), result.lines());
+    assertEquals(Arrays.asList("SECRET", "PRIVATE"), result.lines());
   }
 
   @Test

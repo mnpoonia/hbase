@@ -23,6 +23,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
@@ -41,7 +42,7 @@ import org.junit.jupiter.api.Test;
 public class GetBalancerRejectionsCommandTest {
   private static final class RecordingShellAdmin extends StubShellAdmin {
     @Override public List<String> getBalancerRejections(Map<String, Object> args) {
-      return List.of("rej:1");
+      return Arrays.asList("rej:1");
     }
   }
   private final GetBalancerRejectionsCommand command = new GetBalancerRejectionsCommand();

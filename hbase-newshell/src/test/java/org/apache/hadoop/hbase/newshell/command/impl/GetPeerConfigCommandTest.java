@@ -23,6 +23,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
@@ -39,7 +40,7 @@ import org.junit.jupiter.api.Test;
 @Tag(SmallTests.TAG)
 public class GetPeerConfigCommandTest {
   private static final class RecordingShellAdmin extends StubShellAdmin {
-    @Override public List<List<String>> getPeerConfigRows(String peerId) { return List.of(List.of("Cluster Key", "ck")); }
+    @Override public List<List<String>> getPeerConfigRows(String peerId) { return Arrays.asList(Arrays.asList("Cluster Key", "ck")); }
   }
   private final GetPeerConfigCommand command = new GetPeerConfigCommand();
   private final RecordingShellAdmin admin = new RecordingShellAdmin();
@@ -48,6 +49,6 @@ public class GetPeerConfigCommandTest {
   @Test
   public void runs() throws Exception {
     TabularResult result = (TabularResult) command.execute(ShellLineParser.parse("get_peer_config '1'"), context);
-    assertEquals(List.of(List.of("Cluster Key", "ck")), result.rows());
+    assertEquals(Arrays.asList(Arrays.asList("Cluster Key", "ck")), result.rows());
   }
 }

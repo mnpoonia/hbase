@@ -22,6 +22,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.Arrays;
 import java.util.List;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
 import org.apache.hadoop.hbase.newshell.command.ShellCommandException;
@@ -72,7 +73,7 @@ public class GetCounterCommandTest {
     ParsedCommand parsed = ShellLineParser.parse("get_counter 't1', 'r1', 'f1:c1'");
     TextResult result = (TextResult) command.execute(parsed, context);
 
-    assertEquals(List.of("COUNTER VALUE = 5"), result.lines());
+    assertEquals(Arrays.asList("COUNTER VALUE = 5"), result.lines());
   }
 
   @Test
@@ -81,7 +82,7 @@ public class GetCounterCommandTest {
     ParsedCommand parsed = ShellLineParser.parse("get_counter 't1', 'r1', 'f1:c1'");
     TextResult result = (TextResult) command.execute(parsed, context);
 
-    assertEquals(List.of("No counter found at specified coordinates"), result.lines());
+    assertEquals(Arrays.asList("No counter found at specified coordinates"), result.lines());
   }
 
   @Test

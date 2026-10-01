@@ -21,6 +21,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.Arrays;
 import java.util.List;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
 import org.apache.hadoop.hbase.newshell.command.TextResult;
@@ -56,6 +57,6 @@ public class DescribeNamespaceCommandTest {
     TextResult result = (TextResult) command.execute(parsed, context);
 
     assertEquals("ns1", admin.lastNamespace);
-    assertEquals(List.of("DESCRIPTION", "{NAME => 'ns1'}", "Quota is disabled"), result.lines());
+    assertEquals(Arrays.asList("DESCRIPTION", "{NAME => 'ns1'}", "Quota is disabled"), result.lines());
   }
 }

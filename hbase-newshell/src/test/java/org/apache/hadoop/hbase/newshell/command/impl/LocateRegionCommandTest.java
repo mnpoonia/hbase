@@ -21,6 +21,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.Arrays;
 import java.util.List;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
 import org.apache.hadoop.hbase.newshell.command.TabularResult;
@@ -61,9 +62,9 @@ public class LocateRegionCommandTest {
 
     assertEquals("t1", admin.lastTableName);
     assertEquals("row0", admin.lastRowKey);
-    assertEquals(List.of("HOST", "REGION"), result.header());
+    assertEquals(Arrays.asList("HOST", "REGION"), result.header());
     assertEquals(
-      List.of(List.of("host1:1234",
+      Arrays.asList(Arrays.asList("host1:1234",
         "{ENCODED => abc, NAME => 't1,,123.abc.', STARTKEY => '', ENDKEY => ''}")),
       result.rows());
   }

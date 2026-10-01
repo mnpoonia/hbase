@@ -23,6 +23,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
@@ -43,7 +44,7 @@ public class GetSlowlogResponsesCommandTest {
     private List<String> servers; private boolean large;
     @Override public List<String> getSlowLogResponses(List<String> serverNames,
       Map<String, Object> args, boolean largeLog) {
-      servers = serverNames; large = largeLog; return List.of("slow:1");
+      servers = serverNames; large = largeLog; return Arrays.asList("slow:1");
     }
   }
   private final GetSlowlogResponsesCommand command = new GetSlowlogResponsesCommand();
@@ -54,7 +55,7 @@ public class GetSlowlogResponsesCommandTest {
   public void getsStar() throws Exception {
     TextResult result = (TextResult) command.execute(
       ShellLineParser.parse("get_slowlog_responses '*'"), context);
-    assertEquals(List.of("*"), admin.servers);
+    assertEquals(Arrays.asList("*"), admin.servers);
     assertEquals(false, admin.large);
     assertTrue(result.lines().get(0).contains("SlowLog"));
   }

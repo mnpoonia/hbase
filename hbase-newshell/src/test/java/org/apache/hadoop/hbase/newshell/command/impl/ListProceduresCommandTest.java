@@ -21,6 +21,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.Arrays;
 import java.util.List;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
 import org.apache.hadoop.hbase.newshell.command.TabularResult;
@@ -38,7 +39,7 @@ public class ListProceduresCommandTest {
   private static final class RecordingShellAdmin extends StubShellAdmin {
     @Override
     public List<List<String>> listProcedures() {
-      return List.of(List.of("1", "SomeProcedure", "SUCCESS", "0", "1", ""));
+      return Arrays.asList(Arrays.asList("1", "SomeProcedure", "SUCCESS", "0", "1", ""));
     }
   }
 
@@ -52,7 +53,7 @@ public class ListProceduresCommandTest {
     ParsedCommand parsed = ShellLineParser.parse("list_procedures");
     TabularResult result = (TabularResult) command.execute(parsed, context);
 
-    assertEquals(List.of("PID", "Name", "State", "Submitted", "Last_Update", "Parameters"),
+    assertEquals(Arrays.asList("PID", "Name", "State", "Submitted", "Last_Update", "Parameters"),
       result.header());
     assertEquals(1, result.rows().size());
   }
