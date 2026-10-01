@@ -20,6 +20,7 @@ package org.apache.hadoop.hbase.newshell.jline4;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.file.Path;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 import org.apache.hadoop.hbase.newshell.spi.ShellTerminal;
@@ -45,7 +46,7 @@ final class Jline4ShellTerminal implements ShellTerminal, SupportsHistory {
   private final Terminal terminal;
   private final LineReader reader;
   private final AtomicReference<org.apache.hadoop.hbase.newshell.spi.Completer> delegate =
-    new AtomicReference<>((buffer, cursor) -> List.of());
+    new AtomicReference<>((buffer, cursor) -> Collections.<String> emptyList());
 
   Jline4ShellTerminal(TerminalConfig config) throws IOException {
     this.terminal = TerminalBuilder.builder().name(config.getAppName()).system(true).build();

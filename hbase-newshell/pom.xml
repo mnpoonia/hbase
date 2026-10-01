@@ -32,6 +32,16 @@
     hbase-shell (the existing JRuby-based shell). This module has no JRuby dependency.
     See the jline3-backend / jline4-backend profiles below for how the JLine
     version-abstraction layer is wired up.</description>
+  <properties>
+    <!--
+      This module is kept Java 8 compile-compatible (no Java 9+ syntax or java.* API
+      usage), independent of the Java 17 target the rest of the reactor builds with -
+      overrides the root pom's compileSource/releaseTarget (17) just for this module.
+    -->
+    <compileSource>8</compileSource>
+    <releaseTarget>8</releaseTarget>
+    <maven.compiler.release>8</maven.compiler.release>
+  </properties>
   <dependencies>
     <!-- Intra-project dependencies -->
     <dependency>
