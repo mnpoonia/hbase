@@ -37,7 +37,10 @@ import org.apache.yetus.audience.InterfaceAudience;
  * literal ({@code NAME} required, {@code VERSIONS} optional), plus an optional table-level
  * attribute hash with no {@code NAME} key (e.g. {@code SPLITS => [...]}) - see
  * {@link org.apache.hadoop.hbase.newshell.hbase.ShellAdmin#createTable} for the supported
- * attributes.
+ * attributes. When native {@code --flag} options are combined with multiple bareword families (e.g.
+ * {@code create 't1', 'f1', 'f2' --versions=3}, a newshell-only syntax with no hbase-shell
+ * equivalent), the flags are applied to exactly one family - the last bareword {@code NAME}-only
+ * one - not to every family.
  */
 @InterfaceAudience.Private
 public final class CreateCommand implements ShellCommand {
@@ -90,23 +93,22 @@ public final class CreateCommand implements ShellCommand {
         // all, but still describes exactly one family via the flat options map.
         familySpecs.add(new LinkedHashMap<>(flagOnlyOptions));
       } else {
-        // create 't1', 'f1' --versions=3: merge flags onto bareword NAME-only families so
-        // --flag attributes are not silently dropped.
-        boolean merged = false;
-        for (int i = 0; i < familySpecs.size(); i++) {
+        // create 't1', 'f1' --versions=3: merge flags onto exactly one family - the last
+        // bareword NAME-only one, if any, else the last family overall - so --flag attributes
+        // are not silently dropped, and not silently applied to every family either (there is
+        // no hbase-shell syntax to compare against here; --flag is a newshell-only addition, so
+        // "apply to the single most-recently-named family" is the least surprising choice).
+        int targetIndex = familySpecs.size() - 1;
+        for (int i = familySpecs.size() - 1; i >= 0; i--) {
           Map<String, Object> fam = familySpecs.get(i);
           if (fam.size() == 1 && fam.containsKey("NAME")) {
-            Map<String, Object> enriched = new LinkedHashMap<>(fam);
-            enriched.putAll(flagOnlyOptions);
-            familySpecs.set(i, enriched);
-            merged = true;
+            targetIndex = i;
+            break;
           }
         }
-        if (!merged) {
-          Map<String, Object> last = new LinkedHashMap<>(familySpecs.get(familySpecs.size() - 1));
-          last.putAll(flagOnlyOptions);
-          familySpecs.set(familySpecs.size() - 1, last);
-        }
+        Map<String, Object> enriched = new LinkedHashMap<>(familySpecs.get(targetIndex));
+        enriched.putAll(flagOnlyOptions);
+        familySpecs.set(targetIndex, enriched);
       }
     }
     if (familySpecs.isEmpty()) {

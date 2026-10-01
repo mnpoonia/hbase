@@ -32,17 +32,18 @@ import org.apache.yetus.audience.InterfaceAudience;
 public interface ShellTable {
   GetResult get(String row, Map<String, Object> options) throws ShellCommandException, IOException;
 
-  void put(String row, String column, String value, Map<String, Object> options) throws IOException;
+  void put(String row, String column, String value, Map<String, Object> options)
+    throws ShellCommandException, IOException;
 
   ScanResult scan(Map<String, Object> options) throws ShellCommandException, IOException;
 
   /**
    * Counts the rows matching {@code options} (the same {@code COLUMNS}/{@code LIMIT}/
-   * {@code STARTROW}/{@code STOPROW}/{@code VERSIONS}/{@code FILTER} options {@link #scan}
-   * accepts, plus {@code CACHE_BLOCKS} and {@code INTERVAL}). Mirrors hbase-shell's
-   * {@code _count_internal}: every {@code INTERVAL} rows (default {@code 1000}),
-   * {@code progressListener} is invoked with the running count and the row key just counted, so a
-   * long-running count can report progress to the caller.
+   * {@code STARTROW}/{@code STOPROW}/{@code VERSIONS}/{@code FILTER} options {@link #scan} accepts,
+   * plus {@code CACHE_BLOCKS} and {@code INTERVAL}). Mirrors hbase-shell's {@code _count_internal}:
+   * every {@code INTERVAL} rows (default {@code 1000}), {@code progressListener} is invoked with
+   * the running count and the row key just counted, so a long-running count can report progress to
+   * the caller.
    */
   long count(Map<String, Object> options, CountProgressListener progressListener)
     throws ShellCommandException, IOException;
@@ -56,7 +57,7 @@ public interface ShellTable {
   void delete(String row, String column, Long timestamp) throws IOException;
 
   void deleteAll(String row, String column, Long timestamp, Map<String, Object> options)
-    throws IOException;
+    throws ShellCommandException, IOException;
 
   Long getCounter(String row, String column) throws IOException;
 

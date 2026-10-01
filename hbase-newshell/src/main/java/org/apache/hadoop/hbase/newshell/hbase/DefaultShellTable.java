@@ -53,11 +53,11 @@ import org.apache.yetus.audience.InterfaceAudience;
  * {@code hbase/table.rb#_put_internal} - a single {@code cf:qualifier} column, required, plus an
  * optional {@code TIMESTAMP}; {@code _count_internal} (row count, with {@code INTERVAL} progress
  * reporting via {@link ShellTable.CountProgressListener}, {@code CACHE_BLOCKS}, and
- * {@code FILTER}); {@code _delete_internal}/{@code _deleteall_internal}
- * (single-version vs all-versions column delete, plus {@code ROWPREFIXFILTER}/{@code CACHE} batched
- * range delete); {@code _get_counter_internal}/{@code _incr_internal}/ {@code _append_internal};
- * and {@code _get_splits_internal}. {@code FILTER} (via {@link ParseFilter}'s textual filter
- * grammar) and {@code TIMERANGE} are supported for {@code get} and {@code scan}; ATTRIBUTES/
+ * {@code FILTER}); {@code _delete_internal}/{@code _deleteall_internal} (single-version vs
+ * all-versions column delete, plus {@code ROWPREFIXFILTER}/{@code CACHE} batched range delete);
+ * {@code _get_counter_internal}/{@code _incr_internal}/ {@code _append_internal}; and
+ * {@code _get_splits_internal}. {@code FILTER} (via {@link ParseFilter}'s textual filter grammar)
+ * and {@code TIMERANGE} are supported for {@code get} and {@code scan}; ATTRIBUTES/
  * AUTHORIZATIONS/CONSISTENCY (for {@code get}), ATTRIBUTES/VISIBILITY/TTL (for {@code put}) are
  * explicitly not ported.
  */
@@ -81,11 +81,11 @@ public final class DefaultShellTable implements ShellTable {
     }
     Object versions = options.get("VERSIONS");
     if (versions != null) {
-      get.readVersions(((Number) versions).intValue());
+      get.readVersions(requireNumber(versions, "VERSIONS").intValue());
     }
     Object timestamp = options.get("TIMESTAMP");
     if (timestamp != null) {
-      get.setTimestamp(((Number) timestamp).longValue());
+      get.setTimestamp(requireNumber(timestamp, "TIMESTAMP").longValue());
     }
     Object timerange = options.get("TIMERANGE");
     if (timerange != null) {
@@ -111,7 +111,7 @@ public final class DefaultShellTable implements ShellTable {
 
   @Override
   public void put(String row, String column, String value, Map<String, Object> options)
-    throws IOException {
+    throws ShellCommandException, IOException {
     int colonIndex = column.indexOf(':');
     if (colonIndex < 0 || colonIndex == column.length() - 1) {
       throw new IOException("Column '" + column + "' must be of the form 'family:qualifier'");
@@ -121,7 +121,7 @@ public final class DefaultShellTable implements ShellTable {
     Put put = new Put(row.getBytes(StandardCharsets.UTF_8));
     Object timestamp = options.get("TIMESTAMP");
     if (timestamp != null) {
-      put.addColumn(family, qualifier, ((Number) timestamp).longValue(),
+      put.addColumn(family, qualifier, requireNumber(timestamp, "TIMESTAMP").longValue(),
         value.getBytes(StandardCharsets.UTF_8));
     } else {
       put.addColumn(family, qualifier, value.getBytes(StandardCharsets.UTF_8));
@@ -184,13 +184,12 @@ public final class DefaultShellTable implements ShellTable {
   /**
    * Coerces a {@code CACHE_BLOCKS} option value, matching hbase-shell's {@code count} command:
    * defaults to {@code false} when absent, accepts a real {@link Boolean}, or a {@link String}
-   * whose value is {@code "true"}/{@code "false"} case-insensitively - any other value is
-   * rejected. Deliberately not reusing {@link AttributeCoercion#toBoolean}, which leniently
-   * delegates to {@link Boolean#parseBoolean} and would silently treat any non-"true" string
-   * (e.g. a typo) as {@code false} instead of raising an error.
+   * whose value is {@code "true"}/{@code "false"} case-insensitively - any other value is rejected.
+   * Deliberately not reusing {@link AttributeCoercion#toBoolean}, which leniently delegates to
+   * {@link Boolean#parseBoolean} and would silently treat any non-"true" string (e.g. a typo) as
+   * {@code false} instead of raising an error.
    */
-  private static boolean resolveCacheBlocks(Object cacheBlocksOption)
-    throws ShellCommandException {
+  private static boolean resolveCacheBlocks(Object cacheBlocksOption) throws ShellCommandException {
     if (cacheBlocksOption == null) {
       return false;
     }
@@ -210,11 +209,11 @@ public final class DefaultShellTable implements ShellTable {
       "Expected CACHE_BLOCKS value to be a boolean or the string 'true' or 'false'");
   }
 
-  private static long resolveInterval(Object intervalOption) {
+  private static long resolveInterval(Object intervalOption) throws ShellCommandException {
     if (intervalOption == null) {
       return 1000L;
     }
-    return ((Number) intervalOption).longValue();
+    return requireNumber(intervalOption, "INTERVAL").longValue();
   }
 
   @Override
@@ -227,12 +226,12 @@ public final class DefaultShellTable implements ShellTable {
 
   @Override
   public void deleteAll(String row, String column, Long timestamp, Map<String, Object> options)
-    throws IOException {
+    throws ShellCommandException, IOException {
     long ts = timestamp == null ? HConstants.LATEST_TIMESTAMP : timestamp;
     Object prefix = options.get("ROWPREFIXFILTER");
     if (prefix != null) {
       Object cacheOption = options.get("CACHE");
-      int cache = cacheOption == null ? 100 : ((Number) cacheOption).intValue();
+      int cache = cacheOption == null ? 100 : requireNumber(cacheOption, "CACHE").intValue();
       byte[] prefixBytes = prefix.toString().getBytes(StandardCharsets.UTF_8);
       Scan scan = new Scan().setStartStopRowForPrefixScan(prefixBytes);
       List<Delete> batch = new ArrayList<>();
@@ -346,7 +345,7 @@ public final class DefaultShellTable implements ShellTable {
     }
   }
 
-  private static Scan buildScan(Map<String, Object> options) {
+  private static Scan buildScan(Map<String, Object> options) throws ShellCommandException {
     Scan scan = new Scan();
     Object columns = options.get("COLUMNS");
     if (columns != null) {
@@ -356,7 +355,7 @@ public final class DefaultShellTable implements ShellTable {
     }
     Object limit = options.get("LIMIT");
     if (limit != null) {
-      scan.setLimit(((Number) limit).intValue());
+      scan.setLimit(requireNumber(limit, "LIMIT").intValue());
     }
     Object startRow = options.get("STARTROW");
     if (startRow != null) {
@@ -368,9 +367,23 @@ public final class DefaultShellTable implements ShellTable {
     }
     Object versions = options.get("VERSIONS");
     if (versions != null) {
-      scan.readVersions(((Number) versions).intValue());
+      scan.readVersions(requireNumber(versions, "VERSIONS").intValue());
     }
     return scan;
+  }
+
+  /**
+   * Guards an option value that must be numeric (e.g. {@code VERSIONS => 'x'}, a typo) so it raises
+   * a clear {@link ShellCommandException} instead of an unchecked {@link ClassCastException},
+   * matching the guard idiom already used for positional args in {@code DeleteCommand}/
+   * {@code IncrCommand}/{@code DeleteallCommand}.
+   */
+  private static Number requireNumber(Object value, String optionName)
+    throws ShellCommandException {
+    if (!(value instanceof Number)) {
+      throw new ShellCommandException(optionName + " must be numeric: '" + value + "'");
+    }
+    return (Number) value;
   }
 
   /**
@@ -379,7 +392,8 @@ public final class DefaultShellTable implements ShellTable {
    */
   private static long[] parseTimeRange(Object timerangeOption) throws ShellCommandException {
     if (!(timerangeOption instanceof List)) {
-      throw new ShellCommandException("TIMERANGE must be a two-element array of [minStamp, maxStamp]");
+      throw new ShellCommandException(
+        "TIMERANGE must be a two-element array of [minStamp, maxStamp]");
     }
     List<?> range = (List<?>) timerangeOption;
     if (range.size() != 2) {
@@ -387,20 +401,21 @@ public final class DefaultShellTable implements ShellTable {
         "TIMERANGE must be a two-element array of [minStamp, maxStamp], got " + range.size()
           + " element(s)");
     }
-    return new long[] { ((Number) range.get(0)).longValue(), ((Number) range.get(1)).longValue() };
+    return new long[] { requireNumber(range.get(0), "TIMERANGE").longValue(),
+      requireNumber(range.get(1), "TIMERANGE").longValue() };
   }
 
   /**
    * Parses a {@code FILTER => "<filter-string>"} option value using {@link ParseFilter}'s textual
-   * filter grammar (HBASE-4176), e.g. {@code "PrefixFilter('row')"}. Raw object-construction
-   * syntax ({@code FILTER => SomeFilter.new(...)}) is not supported.
+   * filter grammar (HBASE-4176), e.g. {@code "PrefixFilter('row')"}. Raw object-construction syntax
+   * ({@code FILTER => SomeFilter.new(...)}) is not supported.
    */
   private static Filter parseFilterString(String filterString) throws ShellCommandException {
     try {
       return new ParseFilter().parseFilterString(filterString);
     } catch (CharacterCodingException | IllegalArgumentException e) {
-      throw new ShellCommandException("Invalid FILTER string '" + filterString + "': " + e.getMessage(),
-        e);
+      throw new ShellCommandException(
+        "Invalid FILTER string '" + filterString + "': " + e.getMessage(), e);
     }
   }
 

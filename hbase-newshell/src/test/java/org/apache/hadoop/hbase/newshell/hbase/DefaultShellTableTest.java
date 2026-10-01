@@ -171,6 +171,28 @@ public class DefaultShellTableTest {
   }
 
   @Test
+  public void scanThrowsShellCommandExceptionForNonNumericLimit() {
+    Table table = mock(Table.class);
+    DefaultShellTable shellTable = new DefaultShellTable(table);
+
+    Map<String, Object> options = new HashMap<>();
+    options.put("LIMIT", "ten");
+    assertThrows(ShellCommandException.class, () -> shellTable.scan(options));
+  }
+
+  @Test
+  public void countThrowsShellCommandExceptionForNonNumericInterval() {
+    Table table = mock(Table.class);
+    DefaultShellTable shellTable = new DefaultShellTable(table);
+
+    Map<String, Object> options = new HashMap<>();
+    options.put("INTERVAL", "many");
+    assertThrows(ShellCommandException.class,
+      () -> shellTable.count(options, (count, row) -> {
+      }));
+  }
+
+  @Test
   public void getAppliesFilterOption() throws IOException, ShellCommandException {
     Table table = mock(Table.class);
     when(table.get(any(Get.class))).thenReturn(Result.create(Collections.emptyList()));
@@ -293,9 +315,8 @@ public class DefaultShellTableTest {
 
     Map<String, Object> options = new HashMap<>();
     options.put("CACHE_BLOCKS", "nonsense");
-    assertThrows(ShellCommandException.class,
-      () -> shellTable.count(options, (count, row) -> {
-      }));
+    assertThrows(ShellCommandException.class, () -> shellTable.count(options, (count, row) -> {
+    }));
   }
 
   @Test
