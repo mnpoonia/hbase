@@ -15,23 +15,34 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.apache.hadoop.hbase.newshell.command.impl;
+
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.List;
 import org.apache.hadoop.hbase.newshell.command.*;
 import org.apache.hadoop.hbase.newshell.parser.ParsedCommand;
 import org.apache.yetus.audience.InterfaceAudience;
+
 @InterfaceAudience.Private
 public final class GetServerRsgroupCommand implements ShellCommand {
-  @Override public String name() { return "get_server_rsgroup"; }
-  @Override public String help() { return "get_server_rsgroup 'name'"; }
-  @Override public CommandResult execute(ParsedCommand command, ExecutionContext context)
+  @Override
+  public String name() {
+    return "get_server_rsgroup";
+  }
+
+  @Override
+  public String help() {
+    return "get_server_rsgroup 'name'";
+  }
+
+  @Override
+  public CommandResult execute(ParsedCommand command, ExecutionContext context)
     throws ShellCommandException, IOException {
-    if (command.positionalArgs().isEmpty()) throw new ShellCommandException("get_server_rsgroup requires an argument");
-    String group = context.admin().getRsGroupOfServer(String.valueOf(command.positionalArgs().get(0)));
+    if (command.positionalArgs().isEmpty())
+      throw new ShellCommandException("get_server_rsgroup requires an argument");
+    String group =
+      context.admin().getRsGroupOfServer(String.valueOf(command.positionalArgs().get(0)));
     return new TabularResult(Collections.emptyList(), Arrays.asList(Arrays.asList(group)));
   }
 }

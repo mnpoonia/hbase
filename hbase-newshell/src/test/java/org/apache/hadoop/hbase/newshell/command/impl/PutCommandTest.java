@@ -23,7 +23,6 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.Collections;
-import java.util.List;
 import java.util.Map;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
 import org.apache.hadoop.hbase.newshell.command.ShellCommandException;
@@ -32,11 +31,11 @@ import org.apache.hadoop.hbase.newshell.hbase.ShellTable;
 import org.apache.hadoop.hbase.newshell.hbase.ShellTableFactory;
 import org.apache.hadoop.hbase.newshell.hbase.StubShellAdmin;
 import org.apache.hadoop.hbase.newshell.hbase.StubShellTable;
+import org.apache.hadoop.hbase.newshell.parser.ParsedCommand;
 import org.apache.hadoop.hbase.newshell.parser.ShellLineParser;
 import org.apache.hadoop.hbase.testclassification.SmallTests;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
-import org.apache.hadoop.hbase.newshell.parser.ParsedCommand;
 
 @Tag(SmallTests.TAG)
 public class PutCommandTest {
@@ -92,7 +91,8 @@ public class PutCommandTest {
 
   @Test
   public void putsSingleCellWithTimestamp() throws Exception {
-    ParsedCommand parsed = ShellLineParser.parse("put 't1', 'r1', 'f1:c1', 'v1', {TIMESTAMP => 123}");
+    ParsedCommand parsed =
+      ShellLineParser.parse("put 't1', 'r1', 'f1:c1', 'v1', {TIMESTAMP => 123}");
     command.execute(parsed, context);
 
     assertEquals(123L, table.lastOptions.get("TIMESTAMP"));

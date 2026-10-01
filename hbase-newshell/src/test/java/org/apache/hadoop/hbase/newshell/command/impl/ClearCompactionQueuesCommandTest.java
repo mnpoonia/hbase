@@ -18,18 +18,13 @@
 package org.apache.hadoop.hbase.newshell.command.impl;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
-import org.apache.hadoop.hbase.newshell.command.ShellCommandException;
-import org.apache.hadoop.hbase.newshell.command.TabularResult;
-import org.apache.hadoop.hbase.newshell.command.TextResult;
 import org.apache.hadoop.hbase.newshell.hbase.StubShellAdmin;
 import org.apache.hadoop.hbase.newshell.hbase.StubShellTableFactory;
 import org.apache.hadoop.hbase.newshell.parser.ShellLineParser;
@@ -37,25 +32,31 @@ import org.apache.hadoop.hbase.testclassification.SmallTests;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
-
 @Tag(SmallTests.TAG)
 public class ClearCompactionQueuesCommandTest {
   private static final class RecordingShellAdmin extends StubShellAdmin {
-    private String server; private List<String> queues;
-    @Override public void clearCompactionQueues(String serverName, List<String> queueNames) {
-      server = serverName; queues = queueNames;
+    private String server;
+    private List<String> queues;
+
+    @Override
+    public void clearCompactionQueues(String serverName, List<String> queueNames) {
+      server = serverName;
+      queues = queueNames;
     }
   }
+
   private final ClearCompactionQueuesCommand command = new ClearCompactionQueuesCommand();
   private final RecordingShellAdmin admin = new RecordingShellAdmin();
   private final ExecutionContext context =
     new ExecutionContext(admin, new StubShellTableFactory(), new PrintWriter(new StringWriter()));
+
   @Test
   public void clearsAllQueues() throws Exception {
     command.execute(ShellLineParser.parse("clear_compaction_queues 'host,1'"), context);
     assertEquals("host,1", admin.server);
     assertTrue(admin.queues.isEmpty());
   }
+
   @Test
   public void clearsNamed() throws Exception {
     command.execute(ShellLineParser.parse("clear_compaction_queues 'host,1', 'long'"), context);

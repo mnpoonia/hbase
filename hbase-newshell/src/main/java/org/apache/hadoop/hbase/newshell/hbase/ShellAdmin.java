@@ -25,8 +25,8 @@ import org.apache.yetus.audience.InterfaceAudience;
  * directly - {@link DefaultShellAdmin} is the only class that does.
  * <p>
  * Composed of cohesive per-domain sub-interfaces rather than declaring ~155 methods directly, so
- * each domain's contract can be read, tested, and (if ever needed) implemented independently of
- * the others.
+ * each domain's contract can be read, tested, and (if ever needed) implemented independently of the
+ * others.
  */
 @InterfaceAudience.Private
 public interface ShellAdmin extends TableAdminContract, NamespaceAdminContract,

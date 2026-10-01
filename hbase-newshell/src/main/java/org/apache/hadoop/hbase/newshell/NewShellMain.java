@@ -185,16 +185,16 @@ public final class NewShellMain {
       formatter.format(command.name(), command.execute(parsed, context), out);
       return ExitCodes.SUCCESS;
     } catch (ShellCommandException | IOException e) {
-      printError(context, out, e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName(),
-        e);
+      printError(context, out,
+        e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName(), e);
       return ErrorMapper.exitCodeFor(e);
     } catch (RuntimeException e) {
       // Trust boundary for the REPL: ShellCommand.execute must not leak unchecked
       // exceptions, but attribute translation / TableName validation / Admin calls
       // can still throw. Catch here so one bad command cannot kill the session.
       LOG.warn("Unchecked exception while executing command '{}'", parsed.commandName(), e);
-      printError(context, out, e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName(),
-        e);
+      printError(context, out,
+        e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName(), e);
       return ExitCodes.CLIENT_ERROR;
     }
   }

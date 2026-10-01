@@ -15,18 +15,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.apache.hadoop.hbase.newshell.command.impl;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.util.List;
-import java.util.Map;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
-import org.apache.hadoop.hbase.newshell.command.TabularResult;
 import org.apache.hadoop.hbase.newshell.command.TextResult;
 import org.apache.hadoop.hbase.newshell.hbase.BalanceResult;
 import org.apache.hadoop.hbase.newshell.hbase.StubShellAdmin;
@@ -39,13 +34,17 @@ import org.junit.jupiter.api.Test;
 @Tag(SmallTests.TAG)
 public class BalanceRsgroupCommandTest {
   static final class Rec extends StubShellAdmin {
-    @Override public BalanceResult balanceRsGroup(String g, boolean d, boolean i) {
+    @Override
+    public BalanceResult balanceRsGroup(String g, boolean d, boolean i) {
       return new BalanceResult(true, 2, 1);
     }
   }
-  @Test public void runs() throws Exception {
-    TextResult r=(TextResult)new BalanceRsgroupCommand().execute(ShellLineParser.parse("balance_rsgroup 'g1'"),
-      new ExecutionContext(new Rec(),new StubShellTableFactory(),new PrintWriter(new StringWriter())));
+
+  @Test
+  public void runs() throws Exception {
+    TextResult r = (TextResult) new BalanceRsgroupCommand()
+      .execute(ShellLineParser.parse("balance_rsgroup 'g1'"), new ExecutionContext(new Rec(),
+        new StubShellTableFactory(), new PrintWriter(new StringWriter())));
     assertEquals("Balancer ran", r.lines().get(0));
   }
 }

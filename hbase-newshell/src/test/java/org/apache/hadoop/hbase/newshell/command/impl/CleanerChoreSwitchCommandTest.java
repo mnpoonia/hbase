@@ -22,6 +22,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import org.apache.hadoop.hbase.newshell.command.CommandResult;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
 import org.apache.hadoop.hbase.newshell.command.ShellCommandException;
 import org.apache.hadoop.hbase.newshell.command.TextResult;
@@ -31,7 +32,6 @@ import org.apache.hadoop.hbase.newshell.parser.ShellLineParser;
 import org.apache.hadoop.hbase.testclassification.SmallTests;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
-import org.apache.hadoop.hbase.newshell.command.CommandResult;
 
 @Tag(SmallTests.TAG)
 public class CleanerChoreSwitchCommandTest {
@@ -52,7 +52,8 @@ public class CleanerChoreSwitchCommandTest {
 
   @Test
   public void switches() throws Exception {
-    CommandResult result = command.execute(ShellLineParser.parse("cleaner_chore_switch true"), context);
+    CommandResult result =
+      command.execute(ShellLineParser.parse("cleaner_chore_switch true"), context);
     assertEquals(Boolean.TRUE, admin.last);
     assertEquals("false", ((TextResult) result).lines().get(0));
   }

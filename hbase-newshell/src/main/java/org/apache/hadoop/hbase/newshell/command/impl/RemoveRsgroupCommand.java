@@ -15,19 +15,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.apache.hadoop.hbase.newshell.command.impl;
+
 import java.io.IOException;
 import org.apache.hadoop.hbase.newshell.command.*;
 import org.apache.hadoop.hbase.newshell.parser.ParsedCommand;
 import org.apache.yetus.audience.InterfaceAudience;
+
 @InterfaceAudience.Private
 public final class RemoveRsgroupCommand implements ShellCommand {
-  @Override public String name() { return "remove_rsgroup"; }
-  @Override public String help() { return "remove_rsgroup 'group'"; }
-  @Override public CommandResult execute(ParsedCommand command, ExecutionContext context)
+  @Override
+  public String name() {
+    return "remove_rsgroup";
+  }
+
+  @Override
+  public String help() {
+    return "remove_rsgroup 'group'";
+  }
+
+  @Override
+  public CommandResult execute(ParsedCommand command, ExecutionContext context)
     throws ShellCommandException, IOException {
-    if (command.positionalArgs().isEmpty()) throw new ShellCommandException("remove_rsgroup requires a group name");
+    if (command.positionalArgs().isEmpty())
+      throw new ShellCommandException("remove_rsgroup requires a group name");
     context.admin().removeRsGroup(String.valueOf(command.positionalArgs().get(0)));
     return TextResult.of();
   }

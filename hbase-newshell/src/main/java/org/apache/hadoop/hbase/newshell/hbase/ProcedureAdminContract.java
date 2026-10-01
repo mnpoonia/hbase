@@ -23,9 +23,8 @@ import org.apache.yetus.audience.InterfaceAudience;
 
 /**
  * Procedure and lock listing operations. Mirrors the method set delegated internally by
- * {@link DefaultShellAdmin} to {@code ProcedureAdminOps}; named {@code ProcedureAdminContract}
- * (not {@code ProcedureAdminOps}) to avoid a same-package name collision with that implementation
- * class.
+ * {@link DefaultShellAdmin} to {@code ProcedureAdminOps}; named {@code ProcedureAdminContract} (not
+ * {@code ProcedureAdminOps}) to avoid a same-package name collision with that implementation class.
  */
 @InterfaceAudience.Private
 public interface ProcedureAdminContract {

@@ -29,8 +29,8 @@ import org.apache.yetus.audience.InterfaceAudience;
  * {@code org.apache.hadoop.hbase.client.Connection}/{@code Admin} - so commands depend on these
  * narrow interfaces rather than the full HBase client surface, and never reach into globals.
  * <p>
- * Intended for single-threaded use: one instance per session, accessed only by that session's
- * REPL loop.
+ * Intended for single-threaded use: one instance per session, accessed only by that session's REPL
+ * loop.
  */
 @InterfaceAudience.Private
 public final class ExecutionContext {

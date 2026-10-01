@@ -30,8 +30,16 @@ import org.apache.yetus.audience.InterfaceAudience;
 
 @InterfaceAudience.Private
 public final class GetPeerConfigCommand implements ShellCommand {
-  @Override public String name() { return "get_peer_config"; }
-  @Override public String help() { return "get_peer_config 'peerId'"; }
+  @Override
+  public String name() {
+    return "get_peer_config";
+  }
+
+  @Override
+  public String help() {
+    return "get_peer_config 'peerId'";
+  }
+
   @Override
   public CommandResult execute(ParsedCommand command, ExecutionContext context)
     throws ShellCommandException, IOException {

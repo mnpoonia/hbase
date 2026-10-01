@@ -28,8 +28,16 @@ import org.apache.yetus.audience.InterfaceAudience;
 
 @InterfaceAudience.Private
 public final class PeerModificationEnabledCommand implements ShellCommand {
-  @Override public String name() { return "peer_modification_enabled"; }
-  @Override public String help() { return "peer_modification_enabled"; }
+  @Override
+  public String name() {
+    return "peer_modification_enabled";
+  }
+
+  @Override
+  public String help() {
+    return "peer_modification_enabled";
+  }
+
   @Override
   public CommandResult execute(ParsedCommand command, ExecutionContext context)
     throws ShellCommandException, IOException {

@@ -22,8 +22,8 @@ import java.util.Objects;
 import org.apache.yetus.audience.InterfaceAudience;
 
 /**
- * Rows plus optional stdout warnings for {@code list_regions}, matching the Ruby shell's
- * "Can not find all details for region: …" messages when region metrics are missing.
+ * Rows plus optional stdout warnings for {@code list_regions}, matching the Ruby shell's "Can not
+ * find all details for region: …" messages when region metrics are missing.
  */
 @InterfaceAudience.Private
 public final class ListRegionsView {

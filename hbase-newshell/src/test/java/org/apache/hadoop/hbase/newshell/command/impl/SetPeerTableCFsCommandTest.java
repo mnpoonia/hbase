@@ -18,17 +18,12 @@
 package org.apache.hadoop.hbase.newshell.command.impl;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.util.List;
 import java.util.Map;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
-import org.apache.hadoop.hbase.newshell.command.ShellCommandException;
-import org.apache.hadoop.hbase.newshell.command.TabularResult;
-import org.apache.hadoop.hbase.newshell.command.TextResult;
 import org.apache.hadoop.hbase.newshell.hbase.StubShellAdmin;
 import org.apache.hadoop.hbase.newshell.hbase.StubShellTableFactory;
 import org.apache.hadoop.hbase.newshell.parser.ShellLineParser;
@@ -39,13 +34,21 @@ import org.junit.jupiter.api.Test;
 @Tag(SmallTests.TAG)
 public class SetPeerTableCFsCommandTest {
   private static final class RecordingShellAdmin extends StubShellAdmin {
-    String peer; Map<String, Object> map;
-    @Override public void setPeerTableCFs(String peerId, Map<String, Object> tableCFs) { peer=peerId; map=tableCFs; }
+    String peer;
+    Map<String, Object> map;
+
+    @Override
+    public void setPeerTableCFs(String peerId, Map<String, Object> tableCFs) {
+      peer = peerId;
+      map = tableCFs;
+    }
   }
+
   private final SetPeerTableCFsCommand command = new SetPeerTableCFsCommand();
   private final RecordingShellAdmin admin = new RecordingShellAdmin();
   private final ExecutionContext context =
     new ExecutionContext(admin, new StubShellTableFactory(), new PrintWriter(new StringWriter()));
+
   @Test
   public void runs() throws Exception {
     command.execute(ShellLineParser.parse("set_peer_tableCFs '1', {'t1' => []}"), context);

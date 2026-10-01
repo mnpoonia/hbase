@@ -22,8 +22,8 @@ import java.util.List;
 
 /**
  * {@link SnapshotAdminContract} with every method defaulted to throw
- * {@link UnsupportedOperationException}. Command-under-test fakes implement this (directly or
- * via {@link StubShellAdmin}) and override only the method(s) their command actually calls.
+ * {@link UnsupportedOperationException}. Command-under-test fakes implement this (directly or via
+ * {@link StubShellAdmin}) and override only the method(s) their command actually calls.
  */
 public interface StubSnapshotAdminContract extends SnapshotAdminContract {
   @Override

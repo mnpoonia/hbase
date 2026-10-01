@@ -15,7 +15,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.apache.hadoop.hbase.newshell.command.impl;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -23,12 +22,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.util.List;
 import java.util.Map;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
-import org.apache.hadoop.hbase.newshell.command.TabularResult;
-import org.apache.hadoop.hbase.newshell.command.TextResult;
-import org.apache.hadoop.hbase.newshell.hbase.BalanceResult;
 import org.apache.hadoop.hbase.newshell.hbase.StubShellAdmin;
 import org.apache.hadoop.hbase.newshell.hbase.StubShellTableFactory;
 import org.apache.hadoop.hbase.newshell.parser.ShellLineParser;
@@ -38,12 +33,24 @@ import org.junit.jupiter.api.Test;
 
 @Tag(SmallTests.TAG)
 public class AlterRsgroupConfigCommandTest {
-  static final class Rec extends StubShellAdmin { String g; Map<String,Object> a;
-    @Override public void alterRsGroupConfig(String groupName, Map<String,Object> args){g=groupName;a=args;} }
-  @Test public void runs() throws Exception {
-    Rec a=new Rec();
-    new AlterRsgroupConfigCommand().execute(ShellLineParser.parse("alter_rsgroup_config 'grp1', {METHOD => 'set', 'k' => 'v'}"),
-      new ExecutionContext(a,new StubShellTableFactory(),new PrintWriter(new StringWriter())));
-    assertEquals("grp1", a.g); assertTrue(a.a.containsKey("METHOD") || a.a.containsKey("k"));
+  static final class Rec extends StubShellAdmin {
+    String g;
+    Map<String, Object> a;
+
+    @Override
+    public void alterRsGroupConfig(String groupName, Map<String, Object> args) {
+      g = groupName;
+      a = args;
+    }
+  }
+
+  @Test
+  public void runs() throws Exception {
+    Rec a = new Rec();
+    new AlterRsgroupConfigCommand().execute(
+      ShellLineParser.parse("alter_rsgroup_config 'grp1', {METHOD => 'set', 'k' => 'v'}"),
+      new ExecutionContext(a, new StubShellTableFactory(), new PrintWriter(new StringWriter())));
+    assertEquals("grp1", a.g);
+    assertTrue(a.a.containsKey("METHOD") || a.a.containsKey("k"));
   }
 }

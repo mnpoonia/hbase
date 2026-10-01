@@ -71,7 +71,7 @@ public final class BalanceResult {
 
   @Override
   public String toString() {
-    return "BalanceResult[ran=" + ran + ", movesCalculated=" + movesCalculated
-      + ", movesExecuted=" + movesExecuted + "]";
+    return "BalanceResult[ran=" + ran + ", movesCalculated=" + movesCalculated + ", movesExecuted="
+      + movesExecuted + "]";
   }
 }

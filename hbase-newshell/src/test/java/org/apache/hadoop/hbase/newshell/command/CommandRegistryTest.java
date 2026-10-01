@@ -24,7 +24,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.List;
 import org.apache.hadoop.hbase.newshell.parser.ParsedCommand;
 import org.apache.hadoop.hbase.testclassification.SmallTests;
 import org.junit.jupiter.api.Tag;
@@ -72,7 +71,7 @@ public class CommandRegistryTest {
 
   @Test
   public void throwsOnDuplicateCommandName() {
-    assertThrows(IllegalStateException.class,
-      () -> new CommandRegistry(Arrays.asList(new FakeCommand("status"), new FakeCommand("STATUS"))));
+    assertThrows(IllegalStateException.class, () -> new CommandRegistry(
+      Arrays.asList(new FakeCommand("status"), new FakeCommand("STATUS"))));
   }
 }

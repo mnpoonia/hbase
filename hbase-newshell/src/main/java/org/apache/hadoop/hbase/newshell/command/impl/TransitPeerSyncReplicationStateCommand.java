@@ -28,10 +28,16 @@ import org.apache.yetus.audience.InterfaceAudience;
 
 @InterfaceAudience.Private
 public final class TransitPeerSyncReplicationStateCommand implements ShellCommand {
-  @Override public String name() { return "transit_peer_sync_replication_state"; }
-  @Override public String help() {
+  @Override
+  public String name() {
+    return "transit_peer_sync_replication_state";
+  }
+
+  @Override
+  public String help() {
     return "transit_peer_sync_replication_state 'peerId', 'ACTIVE|STANDBY|DOWNGRADE_ACTIVE'";
   }
+
   @Override
   public CommandResult execute(ParsedCommand command, ExecutionContext context)
     throws ShellCommandException, IOException {
@@ -39,8 +45,7 @@ public final class TransitPeerSyncReplicationStateCommand implements ShellComman
       throw new ShellCommandException(
         "transit_peer_sync_replication_state requires peer id and state");
     }
-    context.admin().transitPeerSyncReplicationState(
-      String.valueOf(command.positionalArgs().get(0)),
+    context.admin().transitPeerSyncReplicationState(String.valueOf(command.positionalArgs().get(0)),
       String.valueOf(command.positionalArgs().get(1)));
     return TextResult.of();
   }

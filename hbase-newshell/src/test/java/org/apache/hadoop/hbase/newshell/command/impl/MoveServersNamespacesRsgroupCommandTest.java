@@ -15,21 +15,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.apache.hadoop.hbase.newshell.command.impl;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
-import org.apache.hadoop.hbase.newshell.command.TabularResult;
-import org.apache.hadoop.hbase.newshell.command.TextResult;
-import org.apache.hadoop.hbase.newshell.hbase.BalanceResult;
 import org.apache.hadoop.hbase.newshell.hbase.StubShellAdmin;
 import org.apache.hadoop.hbase.newshell.hbase.StubShellTableFactory;
 import org.apache.hadoop.hbase.newshell.parser.ShellLineParser;
@@ -39,12 +33,27 @@ import org.junit.jupiter.api.Test;
 
 @Tag(SmallTests.TAG)
 public class MoveServersNamespacesRsgroupCommandTest {
-  static final class Rec extends StubShellAdmin { String g; List<String> s,n;
-    @Override public void moveServersAndNamespacesToRsGroup(List<String> servers, List<String> namespaces, String groupName){s=servers;n=namespaces;g=groupName;} }
-  @Test public void runs() throws Exception {
-    Rec a=new Rec();
-    new MoveServersNamespacesRsgroupCommand().execute(ShellLineParser.parse("move_servers_namespaces_rsgroup 'dest', ['h:1'], ['ns1']"),
-      new ExecutionContext(a,new StubShellTableFactory(),new PrintWriter(new StringWriter())));
-    assertEquals("dest", a.g); assertEquals(Arrays.asList("h:1"), a.s); assertEquals(Arrays.asList("ns1"), a.n);
+  static final class Rec extends StubShellAdmin {
+    String g;
+    List<String> s, n;
+
+    @Override
+    public void moveServersAndNamespacesToRsGroup(List<String> servers, List<String> namespaces,
+      String groupName) {
+      s = servers;
+      n = namespaces;
+      g = groupName;
+    }
+  }
+
+  @Test
+  public void runs() throws Exception {
+    Rec a = new Rec();
+    new MoveServersNamespacesRsgroupCommand().execute(
+      ShellLineParser.parse("move_servers_namespaces_rsgroup 'dest', ['h:1'], ['ns1']"),
+      new ExecutionContext(a, new StubShellTableFactory(), new PrintWriter(new StringWriter())));
+    assertEquals("dest", a.g);
+    assertEquals(Arrays.asList("h:1"), a.s);
+    assertEquals(Arrays.asList("ns1"), a.n);
   }
 }

@@ -30,10 +30,16 @@ import org.apache.yetus.audience.InterfaceAudience;
 
 @InterfaceAudience.Private
 public final class RemovePeerTableCFsCommand implements ShellCommand {
-  @Override public String name() { return "remove_peer_tableCFs"; }
-  @Override public String help() {
+  @Override
+  public String name() {
+    return "remove_peer_tableCFs";
+  }
+
+  @Override
+  public String help() {
     return "remove_peer_tableCFs 'peerId', { 't1' => [] }";
   }
+
   @Override
   public CommandResult execute(ParsedCommand command, ExecutionContext context)
     throws ShellCommandException, IOException {
@@ -49,7 +55,8 @@ public final class RemovePeerTableCFsCommand implements ShellCommand {
     return TextResult.of();
   }
 
-  private static Map<String, Object> tableCfsFrom(ParsedCommand command) throws ShellCommandException {
+  private static Map<String, Object> tableCfsFrom(ParsedCommand command)
+    throws ShellCommandException {
     if (command.positionalArgs().size() > 1) {
       Object arg = command.positionalArgs().get(1);
       if (arg instanceof Map) {

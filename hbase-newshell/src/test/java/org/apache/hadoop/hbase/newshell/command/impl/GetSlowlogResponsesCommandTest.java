@@ -18,7 +18,6 @@
 package org.apache.hadoop.hbase.newshell.command.impl;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.PrintWriter;
@@ -27,8 +26,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
-import org.apache.hadoop.hbase.newshell.command.ShellCommandException;
-import org.apache.hadoop.hbase.newshell.command.TabularResult;
 import org.apache.hadoop.hbase.newshell.command.TextResult;
 import org.apache.hadoop.hbase.newshell.hbase.StubShellAdmin;
 import org.apache.hadoop.hbase.newshell.hbase.StubShellTableFactory;
@@ -37,24 +34,30 @@ import org.apache.hadoop.hbase.testclassification.SmallTests;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
-
 @Tag(SmallTests.TAG)
 public class GetSlowlogResponsesCommandTest {
   private static final class RecordingShellAdmin extends StubShellAdmin {
-    private List<String> servers; private boolean large;
-    @Override public List<String> getSlowLogResponses(List<String> serverNames,
-      Map<String, Object> args, boolean largeLog) {
-      servers = serverNames; large = largeLog; return Arrays.asList("slow:1");
+    private List<String> servers;
+    private boolean large;
+
+    @Override
+    public List<String> getSlowLogResponses(List<String> serverNames, Map<String, Object> args,
+      boolean largeLog) {
+      servers = serverNames;
+      large = largeLog;
+      return Arrays.asList("slow:1");
     }
   }
+
   private final GetSlowlogResponsesCommand command = new GetSlowlogResponsesCommand();
   private final RecordingShellAdmin admin = new RecordingShellAdmin();
   private final ExecutionContext context =
     new ExecutionContext(admin, new StubShellTableFactory(), new PrintWriter(new StringWriter()));
+
   @Test
   public void getsStar() throws Exception {
-    TextResult result = (TextResult) command.execute(
-      ShellLineParser.parse("get_slowlog_responses '*'"), context);
+    TextResult result =
+      (TextResult) command.execute(ShellLineParser.parse("get_slowlog_responses '*'"), context);
     assertEquals(Arrays.asList("*"), admin.servers);
     assertEquals(false, admin.large);
     assertTrue(result.lines().get(0).contains("SlowLog"));

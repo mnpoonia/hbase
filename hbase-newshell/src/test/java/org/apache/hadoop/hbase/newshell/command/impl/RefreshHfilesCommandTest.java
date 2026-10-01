@@ -18,16 +18,12 @@
 package org.apache.hadoop.hbase.newshell.command.impl;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.util.List;
 import java.util.Map;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
-import org.apache.hadoop.hbase.newshell.command.ShellCommandException;
-import org.apache.hadoop.hbase.newshell.command.TabularResult;
 import org.apache.hadoop.hbase.newshell.command.TextResult;
 import org.apache.hadoop.hbase.newshell.hbase.StubShellAdmin;
 import org.apache.hadoop.hbase.newshell.hbase.StubShellTableFactory;
@@ -36,24 +32,31 @@ import org.apache.hadoop.hbase.testclassification.SmallTests;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
-
 @Tag(SmallTests.TAG)
 public class RefreshHfilesCommandTest {
   private static final class RecordingShellAdmin extends StubShellAdmin {
     private Map<String, Object> last;
-    @Override public long refreshHFiles(Map<String, Object> args) { last = args; return 42L; }
+
+    @Override
+    public long refreshHFiles(Map<String, Object> args) {
+      last = args;
+      return 42L;
+    }
   }
+
   private final RefreshHfilesCommand command = new RefreshHfilesCommand();
   private final RecordingShellAdmin admin = new RecordingShellAdmin();
   private final ExecutionContext context =
     new ExecutionContext(admin, new StubShellTableFactory(), new PrintWriter(new StringWriter()));
+
   @Test
   public void refreshesAll() throws Exception {
-    TextResult result = (TextResult) command.execute(
-      ShellLineParser.parse("refresh_hfiles"), context);
+    TextResult result =
+      (TextResult) command.execute(ShellLineParser.parse("refresh_hfiles"), context);
     assertTrue(admin.last.isEmpty());
     assertTrue(result.lines().get(0).contains("42"));
   }
+
   @Test
   public void refreshesTable() throws Exception {
     command.execute(ShellLineParser.parse("refresh_hfiles TABLE_NAME => 't1'"), context);

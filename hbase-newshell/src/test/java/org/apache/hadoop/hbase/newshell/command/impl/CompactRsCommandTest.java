@@ -18,17 +18,10 @@
 package org.apache.hadoop.hbase.newshell.command.impl;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.util.List;
-import java.util.Map;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
-import org.apache.hadoop.hbase.newshell.command.ShellCommandException;
-import org.apache.hadoop.hbase.newshell.command.TabularResult;
-import org.apache.hadoop.hbase.newshell.command.TextResult;
 import org.apache.hadoop.hbase.newshell.hbase.StubShellAdmin;
 import org.apache.hadoop.hbase.newshell.hbase.StubShellTableFactory;
 import org.apache.hadoop.hbase.newshell.parser.ShellLineParser;
@@ -36,25 +29,31 @@ import org.apache.hadoop.hbase.testclassification.SmallTests;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
-
 @Tag(SmallTests.TAG)
 public class CompactRsCommandTest {
   private static final class RecordingShellAdmin extends StubShellAdmin {
-    private String server; private boolean major;
-    @Override public void compactRegionServer(String serverName, boolean major) {
-      server = serverName; this.major = major;
+    private String server;
+    private boolean major;
+
+    @Override
+    public void compactRegionServer(String serverName, boolean major) {
+      server = serverName;
+      this.major = major;
     }
   }
+
   private final CompactRsCommand command = new CompactRsCommand();
   private final RecordingShellAdmin admin = new RecordingShellAdmin();
   private final ExecutionContext context =
     new ExecutionContext(admin, new StubShellTableFactory(), new PrintWriter(new StringWriter()));
+
   @Test
   public void compactMinor() throws Exception {
     command.execute(ShellLineParser.parse("compact_rs 'host,1,2'"), context);
     assertEquals("host,1,2", admin.server);
     assertEquals(false, admin.major);
   }
+
   @Test
   public void compactMajor() throws Exception {
     command.execute(ShellLineParser.parse("compact_rs 'host,1,2', true"), context);

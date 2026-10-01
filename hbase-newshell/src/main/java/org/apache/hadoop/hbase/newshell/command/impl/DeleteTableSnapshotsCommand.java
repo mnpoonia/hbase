@@ -15,7 +15,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.apache.hadoop.hbase.newshell.command.impl;
 
 import java.io.IOException;
@@ -63,9 +62,8 @@ public final class DeleteTableSnapshotsCommand implements ShellCommand {
         "delete_table_snapshots requires a table name regular expression");
     }
     String tableRegex = String.valueOf(command.positionalArgs().get(0));
-    String snapshotRegex = command.positionalArgs().size() > 1
-      ? String.valueOf(command.positionalArgs().get(1))
-      : ".*";
+    String snapshotRegex =
+      command.positionalArgs().size() > 1 ? String.valueOf(command.positionalArgs().get(1)) : ".*";
     List<SnapshotInfo> list = context.admin().listTableSnapshots(tableRegex, snapshotRegex);
     PrintWriter out = context.out();
     out.println("SNAPSHOT  TABLE + CREATION TIME");

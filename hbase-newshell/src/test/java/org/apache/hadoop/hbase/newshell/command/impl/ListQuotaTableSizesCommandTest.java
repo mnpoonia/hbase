@@ -15,7 +15,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.apache.hadoop.hbase.newshell.command.impl;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -46,8 +45,8 @@ public class ListQuotaTableSizesCommandTest {
   @Test
   public void listsSizes() throws Exception {
     ListQuotaTableSizesCommand command = new ListQuotaTableSizesCommand();
-    ExecutionContext context = new ExecutionContext(new RecordingShellAdmin(), new StubShellTableFactory(),
-      new PrintWriter(new StringWriter()));
+    ExecutionContext context = new ExecutionContext(new RecordingShellAdmin(),
+      new StubShellTableFactory(), new PrintWriter(new StringWriter()));
     TabularResult result =
       (TabularResult) command.execute(ShellLineParser.parse("list_quota_table_sizes"), context);
     assertEquals(Arrays.asList(Arrays.asList("t1", "100")), result.rows());

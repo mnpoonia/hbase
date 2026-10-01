@@ -15,7 +15,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.apache.hadoop.hbase.newshell.command.impl;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -23,7 +22,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.Arrays;
-import java.util.List;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
 import org.apache.hadoop.hbase.newshell.command.TextResult;
 import org.apache.hadoop.hbase.newshell.hbase.StubShellAdmin;
@@ -45,8 +43,8 @@ public class RpcThrottleEnabledCommandTest {
 
   @Test
   public void reportsState() throws Exception {
-    ExecutionContext context = new ExecutionContext(new RecordingShellAdmin(), new StubShellTableFactory(),
-      new PrintWriter(new StringWriter()));
+    ExecutionContext context = new ExecutionContext(new RecordingShellAdmin(),
+      new StubShellTableFactory(), new PrintWriter(new StringWriter()));
     TextResult result = (TextResult) new RpcThrottleEnabledCommand()
       .execute(ShellLineParser.parse("rpc_throttle_enabled"), context);
     assertEquals(Arrays.asList("true"), result.lines());

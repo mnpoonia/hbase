@@ -28,8 +28,16 @@ import org.apache.yetus.audience.InterfaceAudience;
 
 @InterfaceAudience.Private
 public final class SetPeerBandwidthCommand implements ShellCommand {
-  @Override public String name() { return "set_peer_bandwidth"; }
-  @Override public String help() { return "set_peer_bandwidth 'peerId', 2097152"; }
+  @Override
+  public String name() {
+    return "set_peer_bandwidth";
+  }
+
+  @Override
+  public String help() {
+    return "set_peer_bandwidth 'peerId', 2097152";
+  }
+
   @Override
   public CommandResult execute(ParsedCommand command, ExecutionContext context)
     throws ShellCommandException, IOException {

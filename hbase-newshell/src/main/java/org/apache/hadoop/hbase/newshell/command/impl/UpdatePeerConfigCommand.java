@@ -30,8 +30,16 @@ import org.apache.yetus.audience.InterfaceAudience;
 
 @InterfaceAudience.Private
 public final class UpdatePeerConfigCommand implements ShellCommand {
-  @Override public String name() { return "update_peer_config"; }
-  @Override public String help() { return "update_peer_config 'peerId', CONFIG => {...}"; }
+  @Override
+  public String name() {
+    return "update_peer_config";
+  }
+
+  @Override
+  public String help() {
+    return "update_peer_config 'peerId', CONFIG => {...}";
+  }
+
   @Override
   public CommandResult execute(ParsedCommand command, ExecutionContext context)
     throws ShellCommandException, IOException {

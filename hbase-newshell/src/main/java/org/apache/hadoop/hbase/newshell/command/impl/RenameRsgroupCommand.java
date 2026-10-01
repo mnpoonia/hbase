@@ -15,19 +15,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.apache.hadoop.hbase.newshell.command.impl;
+
 import java.io.IOException;
 import org.apache.hadoop.hbase.newshell.command.*;
 import org.apache.hadoop.hbase.newshell.parser.ParsedCommand;
 import org.apache.yetus.audience.InterfaceAudience;
+
 @InterfaceAudience.Private
 public final class RenameRsgroupCommand implements ShellCommand {
-  @Override public String name() { return "rename_rsgroup"; }
-  @Override public String help() { return "rename_rsgroup 'old', 'new'"; }
-  @Override public CommandResult execute(ParsedCommand command, ExecutionContext context)
+  @Override
+  public String name() {
+    return "rename_rsgroup";
+  }
+
+  @Override
+  public String help() {
+    return "rename_rsgroup 'old', 'new'";
+  }
+
+  @Override
+  public CommandResult execute(ParsedCommand command, ExecutionContext context)
     throws ShellCommandException, IOException {
-    if (command.positionalArgs().size()<2) throw new ShellCommandException("rename_rsgroup requires old and new names");
+    if (command.positionalArgs().size() < 2)
+      throw new ShellCommandException("rename_rsgroup requires old and new names");
     context.admin().renameRsGroup(String.valueOf(command.positionalArgs().get(0)),
       String.valueOf(command.positionalArgs().get(1)));
     return TextResult.of();

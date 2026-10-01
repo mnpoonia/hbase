@@ -23,8 +23,8 @@ import java.util.Map;
 
 /**
  * {@link NamespaceAdminContract} with every method defaulted to throw
- * {@link UnsupportedOperationException}. Command-under-test fakes implement this (directly or
- * via {@link StubShellAdmin}) and override only the method(s) their command actually calls.
+ * {@link UnsupportedOperationException}. Command-under-test fakes implement this (directly or via
+ * {@link StubShellAdmin}) and override only the method(s) their command actually calls.
  */
 public interface StubNamespaceAdminContract extends NamespaceAdminContract {
   @Override
@@ -39,8 +39,7 @@ public interface StubNamespaceAdminContract extends NamespaceAdminContract {
   }
 
   @Override
-  default void alterNamespace(String namespace, Map<String, Object> properties)
-    throws IOException {
+  default void alterNamespace(String namespace, Map<String, Object> properties) throws IOException {
     throw StubContractSupport.notNeeded();
   }
 

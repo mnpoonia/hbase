@@ -46,7 +46,8 @@ public final class StatusView {
   }
 
   public List<String> summaryLines() {
-    return Arrays.asList("1 active master, " + metrics.getBackupMasterNames().size() + " backup masters,",
+    return Arrays.asList(
+      "1 active master, " + metrics.getBackupMasterNames().size() + " backup masters,",
       "              " + metrics.getLiveServerMetrics().size() + " servers,",
       "              " + metrics.getDecommissionedServerNames().size() + " decommissioned,",
       "              " + metrics.getDeadServerNames().size() + " dead,",

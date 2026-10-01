@@ -67,8 +67,9 @@ import org.apache.hadoop.hbase.util.FutureUtils;
 import org.apache.hadoop.hbase.util.Pair;
 import org.apache.hadoop.hbase.zookeeper.ZKDump;
 import org.apache.hadoop.hbase.zookeeper.ZKWatcher;
-import org.apache.hbase.thirdparty.com.google.protobuf.ByteString;
 import org.apache.yetus.audience.InterfaceAudience;
+
+import org.apache.hbase.thirdparty.com.google.protobuf.ByteString;
 
 import org.apache.hadoop.hbase.shaded.protobuf.generated.ClientProtos.RegionActionResult;
 import org.apache.hadoop.hbase.shaded.protobuf.generated.VisibilityLabelsProtos.ListLabelsResponse;
@@ -117,7 +118,8 @@ public final class DefaultShellAdmin implements ShellAdmin {
     for (Map<String, Object> familySpec : familySpecs) {
       tableBuilder.setColumnFamily(ColumnFamilyAttributes.build(familySpec));
     }
-    byte[][] splits = TableAttributes.apply(tableBuilder, tableAttributes, admin.getConfiguration());
+    byte[][] splits =
+      TableAttributes.apply(tableBuilder, tableAttributes, admin.getConfiguration());
     if (splits == null) {
       admin.createTable(tableBuilder.build());
     } else {
@@ -561,9 +563,8 @@ public final class DefaultShellAdmin implements ShellAdmin {
 
   @Override
   public RegionLocationView locateRegion(String tableName, String rowKey) throws IOException {
-    HRegionLocation location =
-      admin.getConnection().getRegionLocator(TableName.valueOf(tableName))
-        .getRegionLocation(Bytes.toBytes(rowKey));
+    HRegionLocation location = admin.getConnection().getRegionLocator(TableName.valueOf(tableName))
+      .getRegionLocation(Bytes.toBytes(rowKey));
     // Ruby locate_region prints RegionInfo#toString (ENCODED/NAME/STARTKEY/ENDKEY dict).
     return new RegionLocationView(location.getHostnamePort(), location.getRegion().toString());
   }
@@ -577,12 +578,11 @@ public final class DefaultShellAdmin implements ShellAdmin {
     ClusterMetrics clusterMetrics = admin.getClusterMetrics();
     List<String> warnings = new ArrayList<>();
     List<List<String>> rows = new ArrayList<>();
-    for (HRegionLocation location : admin.getConnection()
-      .getRegionLocator(table).getAllRegionLocations()) {
+    for (HRegionLocation location : admin.getConnection().getRegionLocator(table)
+      .getAllRegionLocations()) {
       RegionInfo regionInfo = location.getRegion();
       ServerName serverName = location.getServerName();
-      ServerMetrics serverMetrics =
-        clusterMetrics.getLiveServerMetrics().get(serverName);
+      ServerMetrics serverMetrics = clusterMetrics.getLiveServerMetrics().get(serverName);
       RegionMetrics regionMetrics = serverMetrics == null
         ? null
         : serverMetrics.getRegionMetrics().get(regionInfo.getRegionName());
@@ -605,8 +605,7 @@ public final class DefaultShellAdmin implements ShellAdmin {
 
   @Override
   public void createNamespace(String namespace, Map<String, Object> properties) throws IOException {
-    NamespaceDescriptor.Builder builder =
-      NamespaceDescriptor.create(namespace);
+    NamespaceDescriptor.Builder builder = NamespaceDescriptor.create(namespace);
     for (Map.Entry<String, Object> entry : properties.entrySet()) {
       builder.addConfiguration(entry.getKey(), String.valueOf(entry.getValue()));
     }
@@ -621,8 +620,7 @@ public final class DefaultShellAdmin implements ShellAdmin {
   @Override
   public void alterNamespace(String namespace, Map<String, Object> properties) throws IOException {
     NamespaceDescriptor existing = admin.getNamespaceDescriptor(namespace);
-    NamespaceDescriptor.Builder builder =
-      NamespaceDescriptor.create(existing);
+    NamespaceDescriptor.Builder builder = NamespaceDescriptor.create(existing);
     String method = String.valueOf(properties.get("METHOD"));
     if ("unset".equalsIgnoreCase(method)) {
       Object name = properties.get("NAME");
@@ -804,8 +802,7 @@ public final class DefaultShellAdmin implements ShellAdmin {
       throw new IOException("DISABLED: Visibility labels feature is not available");
     }
     List<String> labels = new ArrayList<>();
-    for (ByteString label : response
-      .getLabelList()) {
+    for (ByteString label : response.getLabelList()) {
       labels.add(Bytes.toStringBinary(label.toByteArray()));
     }
     return labels;
@@ -828,8 +825,7 @@ public final class DefaultShellAdmin implements ShellAdmin {
 
   @Override
   public List<String> getAuths(String user) throws IOException {
-    org.apache.hadoop.hbase.shaded.protobuf.generated.VisibilityLabelsProtos.GetAuthsResponse
-      response;
+    org.apache.hadoop.hbase.shaded.protobuf.generated.VisibilityLabelsProtos.GetAuthsResponse response;
     try {
       response = VisibilityClient.getAuths(admin.getConnection(), user);
     } catch (Throwable t) {
@@ -842,8 +838,7 @@ public final class DefaultShellAdmin implements ShellAdmin {
       throw new IOException("DISABLED: Visibility labels feature is not available");
     }
     List<String> labels = new ArrayList<>();
-    for (ByteString auth : response
-      .getAuthList()) {
+    for (ByteString auth : response.getAuthList()) {
       labels.add(Bytes.toStringBinary(auth.toByteArray()));
     }
     return labels;
@@ -886,8 +881,7 @@ public final class DefaultShellAdmin implements ShellAdmin {
       throw new IOException("DISABLED: Visibility labels feature is not available");
     }
     StringBuilder failures = new StringBuilder();
-    for (RegionActionResult result
-      : response.getResultList()) {
+    for (RegionActionResult result : response.getResultList()) {
       if (result.hasException()) {
         failures.append(result.getException().getValue().toStringUtf8());
       }
@@ -933,8 +927,7 @@ public final class DefaultShellAdmin implements ShellAdmin {
 
   @Override
   public void moveTablesToRsGroup(List<String> tables, String groupName) throws IOException {
-    Set<TableName> tableNames =
-      tables.stream().map(TableName::valueOf).collect(Collectors.toSet());
+    Set<TableName> tableNames = tables.stream().map(TableName::valueOf).collect(Collectors.toSet());
     admin.setRSGroup(tableNames, groupName);
   }
 
@@ -1359,8 +1352,8 @@ public final class DefaultShellAdmin implements ShellAdmin {
   @Override
   public void walRoll(String serverName) throws IOException {
     Collection<ServerName> liveServers = admin.getClusterMetrics().getLiveServerMetrics().keySet();
-    ServerName resolved = resolveServerName(serverName, liveServers)
-      .orElseThrow(() -> new IOException("Could not find server with specified name: " + serverName));
+    ServerName resolved = resolveServerName(serverName, liveServers).orElseThrow(
+      () -> new IOException("Could not find server with specified name: " + serverName));
     admin.rollWALWriter(resolved);
   }
 

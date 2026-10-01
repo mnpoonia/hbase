@@ -15,7 +15,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.apache.hadoop.hbase.newshell.command.impl;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -45,8 +44,8 @@ public class ListSecurityCapabilitiesCommandTest {
 
   @Test
   public void listsCapabilities() throws Exception {
-    ExecutionContext context = new ExecutionContext(new RecordingShellAdmin(), new StubShellTableFactory(),
-      new PrintWriter(new StringWriter()));
+    ExecutionContext context = new ExecutionContext(new RecordingShellAdmin(),
+      new StubShellTableFactory(), new PrintWriter(new StringWriter()));
     TextResult result = (TextResult) new ListSecurityCapabilitiesCommand()
       .execute(ShellLineParser.parse("list_security_capabilities"), context);
     assertEquals(Arrays.asList("AUTHORIZATION", "CELL_VISIBILITY"), result.lines());

@@ -18,18 +18,12 @@
 package org.apache.hadoop.hbase.newshell.command.impl;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
-import org.apache.hadoop.hbase.newshell.command.ShellCommandException;
-import org.apache.hadoop.hbase.newshell.command.TabularResult;
-import org.apache.hadoop.hbase.newshell.command.TextResult;
 import org.apache.hadoop.hbase.newshell.hbase.StubShellAdmin;
 import org.apache.hadoop.hbase.newshell.hbase.StubShellTableFactory;
 import org.apache.hadoop.hbase.newshell.parser.ShellLineParser;
@@ -40,16 +34,25 @@ import org.junit.jupiter.api.Test;
 @Tag(SmallTests.TAG)
 public class SetPeerExcludeNamespacesCommandTest {
   private static final class RecordingShellAdmin extends StubShellAdmin {
-    String peer; List<String> ns;
-    @Override public void setPeerExcludeNamespaces(String peerId, List<String> namespaces) { peer=peerId; ns=namespaces; }
+    String peer;
+    List<String> ns;
+
+    @Override
+    public void setPeerExcludeNamespaces(String peerId, List<String> namespaces) {
+      peer = peerId;
+      ns = namespaces;
+    }
   }
+
   private final SetPeerExcludeNamespacesCommand command = new SetPeerExcludeNamespacesCommand();
   private final RecordingShellAdmin admin = new RecordingShellAdmin();
   private final ExecutionContext context =
     new ExecutionContext(admin, new StubShellTableFactory(), new PrintWriter(new StringWriter()));
+
   @Test
   public void runs() throws Exception {
-    command.execute(ShellLineParser.parse("set_peer_exclude_namespaces '1', ['ns1', 'ns2']"), context);
+    command.execute(ShellLineParser.parse("set_peer_exclude_namespaces '1', ['ns1', 'ns2']"),
+      context);
     assertEquals("1", admin.peer);
     assertEquals(Arrays.asList("ns1", "ns2"), admin.ns);
   }

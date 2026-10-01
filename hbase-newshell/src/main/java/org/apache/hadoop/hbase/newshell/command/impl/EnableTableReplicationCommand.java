@@ -28,8 +28,16 @@ import org.apache.yetus.audience.InterfaceAudience;
 
 @InterfaceAudience.Private
 public final class EnableTableReplicationCommand implements ShellCommand {
-  @Override public String name() { return "enable_table_replication"; }
-  @Override public String help() { return "enable_table_replication 'table'"; }
+  @Override
+  public String name() {
+    return "enable_table_replication";
+  }
+
+  @Override
+  public String help() {
+    return "enable_table_replication 'table'";
+  }
+
   @Override
   public CommandResult execute(ParsedCommand command, ExecutionContext context)
     throws ShellCommandException, IOException {
@@ -38,6 +46,7 @@ public final class EnableTableReplicationCommand implements ShellCommand {
     }
     String table = String.valueOf(command.positionalArgs().get(0));
     context.admin().enableTableReplication(table);
-    return TextResult.of(String.format("The replication of table '%s' successfully enabled", table));
+    return TextResult
+      .of(String.format("The replication of table '%s' successfully enabled", table));
   }
 }

@@ -18,18 +18,13 @@
 package org.apache.hadoop.hbase.newshell.command.impl;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
-import org.apache.hadoop.hbase.newshell.command.ShellCommandException;
 import org.apache.hadoop.hbase.newshell.command.TabularResult;
-import org.apache.hadoop.hbase.newshell.command.TextResult;
 import org.apache.hadoop.hbase.newshell.hbase.StubShellAdmin;
 import org.apache.hadoop.hbase.newshell.hbase.StubShellTableFactory;
 import org.apache.hadoop.hbase.newshell.parser.ShellLineParser;
@@ -40,15 +35,21 @@ import org.junit.jupiter.api.Test;
 @Tag(SmallTests.TAG)
 public class ListReplicatedTablesCommandTest {
   private static final class RecordingShellAdmin extends StubShellAdmin {
-    @Override public List<List<String>> listReplicatedTables(String regex) { return Arrays.asList(Arrays.asList("t:cf", "GLOBAL")); }
+    @Override
+    public List<List<String>> listReplicatedTables(String regex) {
+      return Arrays.asList(Arrays.asList("t:cf", "GLOBAL"));
+    }
   }
+
   private final ListReplicatedTablesCommand command = new ListReplicatedTablesCommand();
   private final RecordingShellAdmin admin = new RecordingShellAdmin();
   private final ExecutionContext context =
     new ExecutionContext(admin, new StubShellTableFactory(), new PrintWriter(new StringWriter()));
+
   @Test
   public void runs() throws Exception {
-    TabularResult result = (TabularResult) command.execute(ShellLineParser.parse("list_replicated_tables"), context);
+    TabularResult result =
+      (TabularResult) command.execute(ShellLineParser.parse("list_replicated_tables"), context);
     assertEquals(Arrays.asList(Arrays.asList("t:cf", "GLOBAL")), result.rows());
   }
 }

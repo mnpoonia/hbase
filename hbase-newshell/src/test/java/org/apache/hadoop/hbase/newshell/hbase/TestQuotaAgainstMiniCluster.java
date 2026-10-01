@@ -25,6 +25,7 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.testclassification.ClientTests;
@@ -33,11 +34,10 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
-import org.apache.hadoop.conf.Configuration;
 
 /**
- * End-to-end verification of quota shell APIs against a real minicluster with quota support
- * enabled - mirrors {@code hbase/quotas.rb}'s THROTTLE forms and rpc/exceed-throttle switches.
+ * End-to-end verification of quota shell APIs against a real minicluster with quota support enabled
+ * - mirrors {@code hbase/quotas.rb}'s THROTTLE forms and rpc/exceed-throttle switches.
  */
 @Tag(LargeTests.TAG)
 @Tag(ClientTests.TAG)

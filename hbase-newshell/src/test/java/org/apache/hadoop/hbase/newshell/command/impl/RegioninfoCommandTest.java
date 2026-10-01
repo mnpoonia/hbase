@@ -18,16 +18,10 @@
 package org.apache.hadoop.hbase.newshell.command.impl;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.util.List;
-import java.util.Map;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
-import org.apache.hadoop.hbase.newshell.command.ShellCommandException;
-import org.apache.hadoop.hbase.newshell.command.TabularResult;
 import org.apache.hadoop.hbase.newshell.command.TextResult;
 import org.apache.hadoop.hbase.newshell.hbase.StubShellAdmin;
 import org.apache.hadoop.hbase.newshell.hbase.StubShellTableFactory;
@@ -36,22 +30,24 @@ import org.apache.hadoop.hbase.testclassification.SmallTests;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
-
 @Tag(SmallTests.TAG)
 public class RegioninfoCommandTest {
   private static final class RecordingShellAdmin extends StubShellAdmin {
-    @Override public String regionInfo(String regionName) {
+    @Override
+    public String regionInfo(String regionName) {
       return "ENCODED => " + regionName;
     }
   }
+
   private final RegioninfoCommand command = new RegioninfoCommand();
   private final RecordingShellAdmin admin = new RecordingShellAdmin();
   private final ExecutionContext context =
     new ExecutionContext(admin, new StubShellTableFactory(), new PrintWriter(new StringWriter()));
+
   @Test
   public void printsInfo() throws Exception {
-    TextResult result = (TextResult) command.execute(
-      ShellLineParser.parse("regioninfo 'abc'"), context);
+    TextResult result =
+      (TextResult) command.execute(ShellLineParser.parse("regioninfo 'abc'"), context);
     assertEquals("ENCODED => abc", result.lines().get(0));
   }
 }

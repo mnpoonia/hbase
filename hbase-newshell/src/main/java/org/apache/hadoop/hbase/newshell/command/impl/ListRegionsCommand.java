@@ -37,8 +37,8 @@ import org.apache.yetus.audience.InterfaceAudience;
 /**
  * Ported, minimal slice, from hbase-shell's {@code shell/commands/list_regions.rb}: table name
  * only, always reporting all seven columns. Output uses the Ruby command's pipe-aligned
- * {@code printf} layout (not the shared shell formatter), including the trailing
- * {@code N rows} footer.
+ * {@code printf} layout (not the shared shell formatter), including the trailing {@code N rows}
+ * footer.
  */
 @InterfaceAudience.Private
 public final class ListRegionsCommand implements ShellCommand {
@@ -81,7 +81,8 @@ public final class ListRegionsCommand implements ShellCommand {
     }
 
     List<String> lines = new ArrayList<>(view.warnings());
-    lines.add(formatPipeRow(COLUMNS.stream().map(col -> pad(col, widths.get(col))).collect(Collectors.toList())));
+    lines.add(formatPipeRow(
+      COLUMNS.stream().map(col -> pad(col, widths.get(col))).collect(Collectors.toList())));
     lines.add(formatPipeRow(
       COLUMNS.stream().map(col -> String.join("", Collections.nCopies(widths.get(col), "-")))
         .collect(Collectors.toList())));

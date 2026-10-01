@@ -18,8 +18,6 @@
 package org.apache.hadoop.hbase.newshell.command.impl;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -27,8 +25,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
-import org.apache.hadoop.hbase.newshell.command.ShellCommandException;
-import org.apache.hadoop.hbase.newshell.command.TabularResult;
 import org.apache.hadoop.hbase.newshell.command.TextResult;
 import org.apache.hadoop.hbase.newshell.hbase.StubShellAdmin;
 import org.apache.hadoop.hbase.newshell.hbase.StubShellTableFactory;
@@ -37,22 +33,24 @@ import org.apache.hadoop.hbase.testclassification.SmallTests;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
-
 @Tag(SmallTests.TAG)
 public class GetBalancerRejectionsCommandTest {
   private static final class RecordingShellAdmin extends StubShellAdmin {
-    @Override public List<String> getBalancerRejections(Map<String, Object> args) {
+    @Override
+    public List<String> getBalancerRejections(Map<String, Object> args) {
       return Arrays.asList("rej:1");
     }
   }
+
   private final GetBalancerRejectionsCommand command = new GetBalancerRejectionsCommand();
   private final RecordingShellAdmin admin = new RecordingShellAdmin();
   private final ExecutionContext context =
     new ExecutionContext(admin, new StubShellTableFactory(), new PrintWriter(new StringWriter()));
+
   @Test
   public void returnsRejections() throws Exception {
-    TextResult result = (TextResult) command.execute(
-      ShellLineParser.parse("get_balancer_rejections"), context);
+    TextResult result =
+      (TextResult) command.execute(ShellLineParser.parse("get_balancer_rejections"), context);
     assertEquals("Retrieved BalancerRejection Responses", result.lines().get(0));
     assertEquals("rej:1", result.lines().get(1));
   }

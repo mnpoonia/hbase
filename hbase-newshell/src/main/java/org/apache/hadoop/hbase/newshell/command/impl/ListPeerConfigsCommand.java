@@ -19,7 +19,6 @@ package org.apache.hadoop.hbase.newshell.command.impl;
 
 import java.io.IOException;
 import java.util.Collections;
-import java.util.List;
 import org.apache.hadoop.hbase.newshell.command.CommandResult;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
 import org.apache.hadoop.hbase.newshell.command.ShellCommand;
@@ -30,8 +29,16 @@ import org.apache.yetus.audience.InterfaceAudience;
 
 @InterfaceAudience.Private
 public final class ListPeerConfigsCommand implements ShellCommand {
-  @Override public String name() { return "list_peer_configs"; }
-  @Override public String help() { return "list_peer_configs"; }
+  @Override
+  public String name() {
+    return "list_peer_configs";
+  }
+
+  @Override
+  public String help() {
+    return "list_peer_configs";
+  }
+
   @Override
   public CommandResult execute(ParsedCommand command, ExecutionContext context)
     throws ShellCommandException, IOException {

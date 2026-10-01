@@ -80,7 +80,8 @@ public class TestPilotCommandsAgainstMiniCluster {
   public void createBuildsTableWithNamedFamily() throws Exception {
     String tableName = "newshell_create_test";
     ShellAdmin admin = new DefaultShellAdmin(connection.getAdmin());
-    admin.createTable(tableName, Arrays.asList(Collections.singletonMap("NAME", "f1")), Collections.emptyMap());
+    admin.createTable(tableName, Arrays.asList(Collections.singletonMap("NAME", "f1")),
+      Collections.emptyMap());
 
     Admin realAdmin = connection.getAdmin();
     assertTrue(realAdmin.tableExists(TableName.valueOf(tableName)));
@@ -93,7 +94,8 @@ public class TestPilotCommandsAgainstMiniCluster {
     String tableName = "newshell_create_multi_family_test";
     ShellAdmin admin = new DefaultShellAdmin(connection.getAdmin());
     admin.createTable(tableName,
-      Arrays.asList(Collections.singletonMap("NAME", "f1"), mapOf("NAME", "f2", "VERSIONS", 5L)), Collections.emptyMap());
+      Arrays.asList(Collections.singletonMap("NAME", "f1"), mapOf("NAME", "f2", "VERSIONS", 5L)),
+      Collections.emptyMap());
 
     Admin realAdmin = connection.getAdmin();
     assertTrue(realAdmin.tableExists(TableName.valueOf(tableName)));
@@ -141,7 +143,8 @@ public class TestPilotCommandsAgainstMiniCluster {
     }
 
     ShellTableFactory factory = new DefaultShellTableFactory(connection);
-    GetResult result = factory.forTable(tableName).get("r1", Collections.singletonMap("COLUMN", "f1:c1"));
+    GetResult result =
+      factory.forTable(tableName).get("r1", Collections.singletonMap("COLUMN", "f1:c1"));
 
     List<CellView> cells = result.cells();
     assertEquals(1, cells.size());
@@ -164,8 +167,8 @@ public class TestPilotCommandsAgainstMiniCluster {
     }
 
     ShellTableFactory factory = new DefaultShellTableFactory(connection);
-    GetResult result =
-      factory.forTable(tableName).get("r1", Collections.singletonMap("COLUMN", Arrays.asList("f1:c1", "f1:c2", "f2:c1")));
+    GetResult result = factory.forTable(tableName).get("r1",
+      Collections.singletonMap("COLUMN", Arrays.asList("f1:c1", "f1:c2", "f2:c1")));
 
     List<CellView> cells = result.cells();
     assertEquals(3, cells.size());
@@ -429,7 +432,8 @@ public class TestPilotCommandsAgainstMiniCluster {
     assertEquals("r1", limited.rows().get(0).row());
 
     ScanResult ranged = factory.forTable(tableName).scan(mapOf("STARTROW", "r2", "STOPROW", "r4"));
-    assertEquals(Arrays.asList("r2", "r3"), ranged.rows().stream().map(ScanRow::row).collect(Collectors.toList()));
+    assertEquals(Arrays.asList("r2", "r3"),
+      ranged.rows().stream().map(ScanRow::row).collect(Collectors.toList()));
   }
 
   @Test
@@ -521,7 +525,8 @@ public class TestPilotCommandsAgainstMiniCluster {
       mapOf("ROWPREFIXFILTER", "prefix-", "CACHE", 1L));
 
     ScanResult remaining = factory.forTable(tableName).scan(Collections.emptyMap());
-    assertEquals(Arrays.asList("other-1"), remaining.rows().stream().map(ScanRow::row).collect(Collectors.toList()));
+    assertEquals(Arrays.asList("other-1"),
+      remaining.rows().stream().map(ScanRow::row).collect(Collectors.toList()));
   }
 
   @Test

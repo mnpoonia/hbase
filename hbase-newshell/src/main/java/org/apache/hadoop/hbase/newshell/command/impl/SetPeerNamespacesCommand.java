@@ -30,10 +30,16 @@ import org.apache.yetus.audience.InterfaceAudience;
 
 @InterfaceAudience.Private
 public final class SetPeerNamespacesCommand implements ShellCommand {
-  @Override public String name() { return "set_peer_namespaces"; }
-  @Override public String help() {
+  @Override
+  public String name() {
+    return "set_peer_namespaces";
+  }
+
+  @Override
+  public String help() {
     return "set_peer_namespaces 'peerId', ['ns1', 'ns2']";
   }
+
   @Override
   public CommandResult execute(ParsedCommand command, ExecutionContext context)
     throws ShellCommandException, IOException {

@@ -22,17 +22,16 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.Arrays;
-import java.util.List;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
 import org.apache.hadoop.hbase.newshell.command.TabularResult;
 import org.apache.hadoop.hbase.newshell.hbase.RegionLocationView;
 import org.apache.hadoop.hbase.newshell.hbase.StubShellAdmin;
 import org.apache.hadoop.hbase.newshell.hbase.StubShellTableFactory;
+import org.apache.hadoop.hbase.newshell.parser.ParsedCommand;
 import org.apache.hadoop.hbase.newshell.parser.ShellLineParser;
 import org.apache.hadoop.hbase.testclassification.SmallTests;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
-import org.apache.hadoop.hbase.newshell.parser.ParsedCommand;
 
 @Tag(SmallTests.TAG)
 public class LocateRegionCommandTest {
@@ -63,9 +62,7 @@ public class LocateRegionCommandTest {
     assertEquals("t1", admin.lastTableName);
     assertEquals("row0", admin.lastRowKey);
     assertEquals(Arrays.asList("HOST", "REGION"), result.header());
-    assertEquals(
-      Arrays.asList(Arrays.asList("host1:1234",
-        "{ENCODED => abc, NAME => 't1,,123.abc.', STARTKEY => '', ENDKEY => ''}")),
-      result.rows());
+    assertEquals(Arrays.asList(Arrays.asList("host1:1234",
+      "{ENCODED => abc, NAME => 't1,,123.abc.', STARTKEY => '', ENDKEY => ''}")), result.rows());
   }
 }

@@ -27,8 +27,8 @@ import org.apache.hadoop.hbase.newshell.parser.ParsedCommand;
 import org.apache.yetus.audience.InterfaceAudience;
 
 /**
- * Ported from hbase-shell's {@code shell/commands/regioninfo.rb}: prints RegionInfo for a
- * region name or encoded region name.
+ * Ported from hbase-shell's {@code shell/commands/regioninfo.rb}: prints RegionInfo for a region
+ * name or encoded region name.
  */
 @InterfaceAudience.Private
 public final class RegioninfoCommand implements ShellCommand {
@@ -48,6 +48,7 @@ public final class RegioninfoCommand implements ShellCommand {
     if (command.positionalArgs().isEmpty()) {
       throw new ShellCommandException("regioninfo requires a region name argument");
     }
-    return TextResult.of(context.admin().regionInfo(String.valueOf(command.positionalArgs().get(0))));
+    return TextResult
+      .of(context.admin().regionInfo(String.valueOf(command.positionalArgs().get(0))));
   }
 }

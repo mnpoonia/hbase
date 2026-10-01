@@ -15,7 +15,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.apache.hadoop.hbase.newshell.command.impl;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -46,8 +45,8 @@ public class ListSnapshotSizesCommandTest {
   @Test
   public void listsSizes() throws Exception {
     ListSnapshotSizesCommand command = new ListSnapshotSizesCommand();
-    ExecutionContext context = new ExecutionContext(new RecordingShellAdmin(), new StubShellTableFactory(),
-      new PrintWriter(new StringWriter()));
+    ExecutionContext context = new ExecutionContext(new RecordingShellAdmin(),
+      new StubShellTableFactory(), new PrintWriter(new StringWriter()));
     TabularResult result =
       (TabularResult) command.execute(ShellLineParser.parse("list_snapshot_sizes"), context);
     assertEquals(Arrays.asList(Arrays.asList("snap1", "42")), result.rows());

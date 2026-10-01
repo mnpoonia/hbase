@@ -30,11 +30,11 @@ import org.apache.hadoop.hbase.newshell.command.ShellCommandException;
 import org.apache.hadoop.hbase.newshell.command.TextResult;
 import org.apache.hadoop.hbase.newshell.hbase.StubShellAdmin;
 import org.apache.hadoop.hbase.newshell.hbase.StubShellTableFactory;
+import org.apache.hadoop.hbase.newshell.parser.ParsedCommand;
 import org.apache.hadoop.hbase.newshell.parser.ShellLineParser;
 import org.apache.hadoop.hbase.testclassification.SmallTests;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
-import org.apache.hadoop.hbase.newshell.parser.ParsedCommand;
 
 @Tag(SmallTests.TAG)
 public class RecommissionRegionServerCommandTest {
@@ -67,7 +67,8 @@ public class RecommissionRegionServerCommandTest {
 
   @Test
   public void recommissionsServerWithRegions() throws Exception {
-    ParsedCommand parsed = ShellLineParser.parse("recommission_regionserver 'host1', ['region1', 'region2']");
+    ParsedCommand parsed =
+      ShellLineParser.parse("recommission_regionserver 'host1', ['region1', 'region2']");
     command.execute(parsed, context);
 
     assertEquals("host1", admin.lastHostOrServer);

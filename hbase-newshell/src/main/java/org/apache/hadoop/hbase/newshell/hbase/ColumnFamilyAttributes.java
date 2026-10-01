@@ -34,9 +34,9 @@ import org.apache.yetus.audience.InterfaceAudience;
 
 /**
  * Builds a real {@link ColumnFamilyDescriptor} from a {@code create}-style family spec map
- * ({@code NAME} required, everything else optional). Each supported attribute is a single map
- * entry below rather than a hand-written {@code if (x != null) builder.setX(...)} branch, so
- * adding coverage for another {@code hbase/admin.rb#cfd} attribute (see hbase-shell's own generic
+ * ({@code NAME} required, everything else optional). Each supported attribute is a single map entry
+ * below rather than a hand-written {@code if (x != null) builder.setX(...)} branch, so adding
+ * coverage for another {@code hbase/admin.rb#cfd} attribute (see hbase-shell's own generic
  * hash-driven column descriptor builder) is a one-line addition here, not a new branch spread
  * across {@link DefaultShellAdmin}. {@code CONFIGURATION} and {@code METADATA} hashes are applied
  * generically via {@code setConfiguration}/{@code setValue}. Any attribute key that is neither a
@@ -56,13 +56,14 @@ final class ColumnFamilyAttributes {
     m.put("BLOCKCACHE",
       (builder, value) -> builder.setBlockCacheEnabled(AttributeCoercion.toBoolean(value)));
     m.put("IN_MEMORY", (builder, value) -> builder.setInMemory(AttributeCoercion.toBoolean(value)));
-    m.put("COMPRESSION",
-      (builder, value) -> builder.setCompressionType(Compression.Algorithm.valueOf(toUpper(value))));
+    m.put("COMPRESSION", (builder, value) -> builder
+      .setCompressionType(Compression.Algorithm.valueOf(toUpper(value))));
     m.put("BLOOMFILTER",
       (builder, value) -> builder.setBloomFilterType(BloomType.valueOf(toUpper(value))));
     m.put("DATA_BLOCK_ENCODING",
       (builder, value) -> builder.setDataBlockEncoding(DataBlockEncoding.valueOf(toUpper(value))));
-    m.put("REPLICATION_SCOPE", (builder, value) -> builder.setScope(AttributeCoercion.toInt(value)));
+    m.put("REPLICATION_SCOPE",
+      (builder, value) -> builder.setScope(AttributeCoercion.toInt(value)));
     m.put("KEEP_DELETED_CELLS",
       (builder, value) -> builder.setKeepDeletedCells(KeepDeletedCells.valueOf(toUpper(value))));
     m.put("NEW_VERSION_BEHAVIOR",
@@ -101,8 +102,8 @@ final class ColumnFamilyAttributes {
    * attributes not present in the spec untouched - used by {@code alter} to modify an existing
    * {@link ColumnFamilyDescriptor} in place rather than building a fresh one.
    */
-  static void applyAttributes(ColumnFamilyDescriptorBuilder builder,
-    Map<String, Object> familySpec) throws IOException {
+  static void applyAttributes(ColumnFamilyDescriptorBuilder builder, Map<String, Object> familySpec)
+    throws IOException {
     Map<String, Object> remaining = new HashMap<>(familySpec);
     remaining.remove("NAME");
     applyValueMap(builder, remaining, "CONFIGURATION", true);

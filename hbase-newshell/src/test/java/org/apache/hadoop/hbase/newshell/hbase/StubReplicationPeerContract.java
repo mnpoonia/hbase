@@ -23,8 +23,8 @@ import java.util.Map;
 
 /**
  * {@link ReplicationPeerContract} with every method defaulted to throw
- * {@link UnsupportedOperationException}. Command-under-test fakes implement this (directly or
- * via {@link StubShellAdmin}) and override only the method(s) their command actually calls.
+ * {@link UnsupportedOperationException}. Command-under-test fakes implement this (directly or via
+ * {@link StubShellAdmin}) and override only the method(s) their command actually calls.
  */
 public interface StubReplicationPeerContract extends ReplicationPeerContract {
   @Override
@@ -78,8 +78,7 @@ public interface StubReplicationPeerContract extends ReplicationPeerContract {
   }
 
   @Override
-  default void setPeerExcludeNamespaces(String peerId, List<String> namespaces)
-    throws IOException {
+  default void setPeerExcludeNamespaces(String peerId, List<String> namespaces) throws IOException {
     throw StubContractSupport.notNeeded();
   }
 
@@ -106,14 +105,12 @@ public interface StubReplicationPeerContract extends ReplicationPeerContract {
   }
 
   @Override
-  default void appendPeerTableCFs(String peerId, Map<String, Object> tableCFs)
-    throws IOException {
+  default void appendPeerTableCFs(String peerId, Map<String, Object> tableCFs) throws IOException {
     throw StubContractSupport.notNeeded();
   }
 
   @Override
-  default void removePeerTableCFs(String peerId, Map<String, Object> tableCFs)
-    throws IOException {
+  default void removePeerTableCFs(String peerId, Map<String, Object> tableCFs) throws IOException {
     throw StubContractSupport.notNeeded();
   }
 
@@ -176,8 +173,7 @@ public interface StubReplicationPeerContract extends ReplicationPeerContract {
   }
 
   @Override
-  default boolean peerModificationSwitch(boolean enabled, boolean drainProcs)
-    throws IOException {
+  default boolean peerModificationSwitch(boolean enabled, boolean drainProcs) throws IOException {
     throw StubContractSupport.notNeeded();
   }
 

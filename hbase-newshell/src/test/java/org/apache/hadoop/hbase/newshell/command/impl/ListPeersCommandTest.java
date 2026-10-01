@@ -28,11 +28,11 @@ import org.apache.hadoop.hbase.newshell.command.TabularResult;
 import org.apache.hadoop.hbase.newshell.hbase.PeerDescription;
 import org.apache.hadoop.hbase.newshell.hbase.StubShellAdmin;
 import org.apache.hadoop.hbase.newshell.hbase.StubShellTableFactory;
+import org.apache.hadoop.hbase.newshell.parser.ParsedCommand;
 import org.apache.hadoop.hbase.newshell.parser.ShellLineParser;
 import org.apache.hadoop.hbase.testclassification.SmallTests;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
-import org.apache.hadoop.hbase.newshell.parser.ParsedCommand;
 
 @Tag(SmallTests.TAG)
 public class ListPeersCommandTest {
@@ -40,8 +40,8 @@ public class ListPeersCommandTest {
   private static final class RecordingShellAdmin extends StubShellAdmin {
     @Override
     public List<PeerDescription> listPeers() {
-      return Arrays.asList(new PeerDescription("1", "zk1,zk2:2181:/hbase", "nil", "nil", "NONE", true,
-        true, "", "", 0L, false));
+      return Arrays.asList(new PeerDescription("1", "zk1,zk2:2181:/hbase", "nil", "nil", "NONE",
+        true, true, "", "", 0L, false));
     }
   }
 
@@ -59,7 +59,7 @@ public class ListPeersCommandTest {
       "SYNC_REPLICATION_STATE", "STATE", "REPLICATE_ALL", "NAMESPACES", "TABLE_CFS", "BANDWIDTH",
       "SERIAL"), result.header());
     assertEquals(1, result.rows().size());
-    assertEquals(Arrays.asList("1", "zk1,zk2:2181:/hbase", "nil", "nil", "NONE", "ENABLED", "true", "",
-      "", "0", "false"), result.rows().get(0));
+    assertEquals(Arrays.asList("1", "zk1,zk2:2181:/hbase", "nil", "nil", "NONE", "ENABLED", "true",
+      "", "", "0", "false"), result.rows().get(0));
   }
 }

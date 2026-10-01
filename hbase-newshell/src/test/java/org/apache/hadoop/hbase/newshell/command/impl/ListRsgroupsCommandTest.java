@@ -29,11 +29,11 @@ import org.apache.hadoop.hbase.newshell.command.TabularResult;
 import org.apache.hadoop.hbase.newshell.hbase.RsGroupSummary;
 import org.apache.hadoop.hbase.newshell.hbase.StubShellAdmin;
 import org.apache.hadoop.hbase.newshell.hbase.StubShellTableFactory;
+import org.apache.hadoop.hbase.newshell.parser.ParsedCommand;
 import org.apache.hadoop.hbase.newshell.parser.ShellLineParser;
 import org.apache.hadoop.hbase.testclassification.SmallTests;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
-import org.apache.hadoop.hbase.newshell.parser.ParsedCommand;
 
 @Tag(SmallTests.TAG)
 public class ListRsgroupsCommandTest {
@@ -44,7 +44,8 @@ public class ListRsgroupsCommandTest {
     @Override
     public List<RsGroupSummary> listRsGroups(String regex) {
       this.lastRegex = regex;
-      return Arrays.asList(new RsGroupSummary("default", Arrays.asList("host1:1000"), Arrays.asList("t1")),
+      return Arrays.asList(
+        new RsGroupSummary("default", Arrays.asList("host1:1000"), Arrays.asList("t1")),
         new RsGroupSummary("empty", Collections.emptyList(), Collections.emptyList()));
     }
   }
@@ -61,7 +62,7 @@ public class ListRsgroupsCommandTest {
 
     assertEquals(".*", admin.lastRegex);
     assertEquals(Arrays.asList("NAME", "SERVER / TABLE"), result.header());
-    assertEquals(Arrays.asList(Arrays.asList("default", "server host1:1000"), Arrays.asList("", "table t1"),
-      Arrays.asList("empty", "")), result.rows());
+    assertEquals(Arrays.asList(Arrays.asList("default", "server host1:1000"),
+      Arrays.asList("", "table t1"), Arrays.asList("empty", "")), result.rows());
   }
 }

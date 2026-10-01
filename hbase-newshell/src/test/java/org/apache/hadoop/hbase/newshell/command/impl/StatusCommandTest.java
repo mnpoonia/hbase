@@ -25,7 +25,6 @@ import java.io.StringWriter;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import org.apache.hadoop.hbase.ClusterMetrics;
 import org.apache.hadoop.hbase.ClusterMetricsBuilder;
 import org.apache.hadoop.hbase.ServerName;
@@ -35,11 +34,11 @@ import org.apache.hadoop.hbase.newshell.command.TextResult;
 import org.apache.hadoop.hbase.newshell.hbase.StatusView;
 import org.apache.hadoop.hbase.newshell.hbase.StubShellAdmin;
 import org.apache.hadoop.hbase.newshell.hbase.StubShellTableFactory;
+import org.apache.hadoop.hbase.newshell.parser.ParsedCommand;
 import org.apache.hadoop.hbase.newshell.parser.ShellLineParser;
 import org.apache.hadoop.hbase.testclassification.SmallTests;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
-import org.apache.hadoop.hbase.newshell.parser.ParsedCommand;
 
 @Tag(SmallTests.TAG)
 public class StatusCommandTest {
@@ -68,8 +67,9 @@ public class StatusCommandTest {
   public void detailedReportsActiveMasterWithDoubleSpaceFormat() throws Exception {
     ServerName master = ServerName.valueOf("master.example.com", 16000, 1L);
     ClusterMetrics metrics = ClusterMetricsBuilder.newBuilder().setHBaseVersion("3.0.0")
-      .setMasterName(master).setBackerMasterNames(Collections.emptyList()).setMasterCoprocessorNames(Collections.emptyList())
-      .setMasterTasks(Collections.emptyList()).setLiveServerMetrics(Collections.emptyMap()).setDeadServerNames(Collections.emptyList())
+      .setMasterName(master).setBackerMasterNames(Collections.emptyList())
+      .setMasterCoprocessorNames(Collections.emptyList()).setMasterTasks(Collections.emptyList())
+      .setLiveServerMetrics(Collections.emptyMap()).setDeadServerNames(Collections.emptyList())
       .build();
 
     ParsedCommand parsed = ShellLineParser.parse("status 'detailed'");
@@ -84,8 +84,9 @@ public class StatusCommandTest {
     ServerName backup = ServerName.valueOf("backup.example.com", 16000, 2L);
     ClusterMetrics metrics = ClusterMetricsBuilder.newBuilder().setHBaseVersion("3.0.0")
       .setMasterName(master).setBackerMasterNames(Arrays.asList(backup))
-      .setMasterCoprocessorNames(Collections.emptyList()).setMasterTasks(Collections.emptyList()).setLiveServerMetrics(Collections.emptyMap())
-      .setDeadServerNames(Collections.emptyList()).build();
+      .setMasterCoprocessorNames(Collections.emptyList()).setMasterTasks(Collections.emptyList())
+      .setLiveServerMetrics(Collections.emptyMap()).setDeadServerNames(Collections.emptyList())
+      .build();
 
     ParsedCommand parsed = ShellLineParser.parse("status 'detailed'");
     TextResult result = (TextResult) command.execute(parsed, contextFor(metrics));
@@ -103,8 +104,10 @@ public class StatusCommandTest {
     ServerName master = ServerName.valueOf("master.example.com", 16000, 1L);
     ServerName live = ServerName.valueOf("rs.example.com", 16020, 2L);
     ClusterMetrics metrics = ClusterMetricsBuilder.newBuilder().setHBaseVersion("3.0.0")
-      .setMasterName(master).setBackerMasterNames(Collections.emptyList()).setMasterCoprocessorNames(Collections.emptyList())
-      .setLiveServerMetrics(Collections.singletonMap(live, org.apache.hadoop.hbase.ServerMetricsBuilder.of(live)))
+      .setMasterName(master).setBackerMasterNames(Collections.emptyList())
+      .setMasterCoprocessorNames(Collections.emptyList())
+      .setLiveServerMetrics(
+        Collections.singletonMap(live, org.apache.hadoop.hbase.ServerMetricsBuilder.of(live)))
       .setDeadServerNames(Collections.emptyList()).build();
 
     ParsedCommand parsed = ShellLineParser.parse("status");
@@ -120,8 +123,10 @@ public class StatusCommandTest {
   @Test
   public void unsupportedFormatThrows() throws Exception {
     ClusterMetrics metrics = ClusterMetricsBuilder.newBuilder().setHBaseVersion("3.0.0")
-      .setBackerMasterNames(Collections.emptyList()).setMasterCoprocessorNames(Collections.emptyList())
-      .setLiveServerMetrics(Collections.emptyMap()).setDeadServerNames(Collections.emptyList()).build();
+      .setBackerMasterNames(Collections.emptyList())
+      .setMasterCoprocessorNames(Collections.emptyList())
+      .setLiveServerMetrics(Collections.emptyMap()).setDeadServerNames(Collections.emptyList())
+      .build();
 
     ParsedCommand parsed = ShellLineParser.parse("status 'replication'");
     assertThrows(ShellCommandException.class, () -> command.execute(parsed, contextFor(metrics)));

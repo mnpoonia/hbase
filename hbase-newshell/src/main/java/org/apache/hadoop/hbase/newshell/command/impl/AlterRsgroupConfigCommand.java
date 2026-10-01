@@ -15,25 +15,36 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.apache.hadoop.hbase.newshell.command.impl;
+
 import java.io.IOException;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import org.apache.hadoop.hbase.newshell.command.*;
 import org.apache.hadoop.hbase.newshell.parser.ParsedCommand;
 import org.apache.yetus.audience.InterfaceAudience;
+
 @InterfaceAudience.Private
 public final class AlterRsgroupConfigCommand implements ShellCommand {
-  @Override public String name() { return "alter_rsgroup_config"; }
-  @Override public String help() { return "alter_rsgroup_config 'grp', {METHOD=>'set', 'k'=>'v'}"; }
-  @Override public CommandResult execute(ParsedCommand command, ExecutionContext context)
+  @Override
+  public String name() {
+    return "alter_rsgroup_config";
+  }
+
+  @Override
+  public String help() {
+    return "alter_rsgroup_config 'grp', {METHOD=>'set', 'k'=>'v'}";
+  }
+
+  @Override
+  public CommandResult execute(ParsedCommand command, ExecutionContext context)
     throws ShellCommandException, IOException {
-    if (command.positionalArgs().isEmpty()) throw new ShellCommandException("alter_rsgroup_config requires a group name");
+    if (command.positionalArgs().isEmpty())
+      throw new ShellCommandException("alter_rsgroup_config requires a group name");
     String group = String.valueOf(command.positionalArgs().get(0));
     Map<String, Object> args = new LinkedHashMap<>();
-    if (command.positionalArgs().size()>1 && command.positionalArgs().get(1) instanceof Map) {
-      for (Map.Entry<?,?> e : ((Map<?,?>)command.positionalArgs().get(1)).entrySet()) {
+    if (command.positionalArgs().size() > 1 && command.positionalArgs().get(1) instanceof Map) {
+      for (Map.Entry<?, ?> e : ((Map<?, ?>) command.positionalArgs().get(1)).entrySet()) {
         args.put(String.valueOf(e.getKey()), e.getValue());
       }
     } else if (!command.hashLiterals().isEmpty()) {

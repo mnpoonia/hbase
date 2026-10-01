@@ -15,20 +15,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.apache.hadoop.hbase.newshell.command.impl;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.util.List;
-import java.util.Map;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
-import org.apache.hadoop.hbase.newshell.command.TabularResult;
-import org.apache.hadoop.hbase.newshell.command.TextResult;
-import org.apache.hadoop.hbase.newshell.hbase.BalanceResult;
 import org.apache.hadoop.hbase.newshell.hbase.StubShellAdmin;
 import org.apache.hadoop.hbase.newshell.hbase.StubShellTableFactory;
 import org.apache.hadoop.hbase.newshell.parser.ShellLineParser;
@@ -38,11 +31,20 @@ import org.junit.jupiter.api.Test;
 
 @Tag(SmallTests.TAG)
 public class RemoveRsgroupCommandTest {
-  static final class Rec extends StubShellAdmin { String g; @Override public void removeRsGroup(String n){g=n;} }
-  @Test public void runs() throws Exception {
-    Rec a=new Rec();
+  static final class Rec extends StubShellAdmin {
+    String g;
+
+    @Override
+    public void removeRsGroup(String n) {
+      g = n;
+    }
+  }
+
+  @Test
+  public void runs() throws Exception {
+    Rec a = new Rec();
     new RemoveRsgroupCommand().execute(ShellLineParser.parse("remove_rsgroup 'g1'"),
-      new ExecutionContext(a,new StubShellTableFactory(),new PrintWriter(new StringWriter())));
+      new ExecutionContext(a, new StubShellTableFactory(), new PrintWriter(new StringWriter())));
     assertEquals("g1", a.g);
   }
 }

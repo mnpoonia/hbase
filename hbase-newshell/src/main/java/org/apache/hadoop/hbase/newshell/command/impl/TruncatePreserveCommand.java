@@ -30,8 +30,8 @@ import org.apache.yetus.audience.InterfaceAudience;
 
 /**
  * Ported from hbase-shell's {@code shell/commands/truncate_preserve.rb} /
- * {@code admin.rb#truncate_preserve}: {@code Admin.truncateTable} with
- * {@code preserveSplits=true}, including the Ruby progress lines.
+ * {@code admin.rb#truncate_preserve}: {@code Admin.truncateTable} with {@code preserveSplits=true},
+ * including the Ruby progress lines.
  */
 @InterfaceAudience.Private
 public final class TruncatePreserveCommand implements ShellCommand {

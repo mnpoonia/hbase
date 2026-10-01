@@ -15,7 +15,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.apache.hadoop.hbase.newshell.command.impl;
 
 import java.io.IOException;
@@ -61,9 +60,8 @@ public final class ListTableSnapshotsCommand implements ShellCommand {
         "list_table_snapshots requires a table name regular expression");
     }
     String tableRegex = String.valueOf(command.positionalArgs().get(0));
-    String snapshotRegex = command.positionalArgs().size() > 1
-      ? String.valueOf(command.positionalArgs().get(1))
-      : ".*";
+    String snapshotRegex =
+      command.positionalArgs().size() > 1 ? String.valueOf(command.positionalArgs().get(1)) : ".*";
     List<SnapshotInfo> snapshots = context.admin().listTableSnapshots(tableRegex, snapshotRegex);
     List<List<String>> rows = new ArrayList<>();
     for (SnapshotInfo snapshot : snapshots) {

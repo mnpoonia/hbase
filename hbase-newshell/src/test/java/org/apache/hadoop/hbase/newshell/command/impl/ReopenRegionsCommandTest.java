@@ -25,11 +25,8 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
 import org.apache.hadoop.hbase.newshell.command.ShellCommandException;
-import org.apache.hadoop.hbase.newshell.command.TabularResult;
-import org.apache.hadoop.hbase.newshell.command.TextResult;
 import org.apache.hadoop.hbase.newshell.hbase.StubShellAdmin;
 import org.apache.hadoop.hbase.newshell.hbase.StubShellTableFactory;
 import org.apache.hadoop.hbase.newshell.parser.ShellLineParser;
@@ -37,30 +34,37 @@ import org.apache.hadoop.hbase.testclassification.SmallTests;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
-
 @Tag(SmallTests.TAG)
 public class ReopenRegionsCommandTest {
   private static final class RecordingShellAdmin extends StubShellAdmin {
-    private String table; private List<String> regions;
-    @Override public void reopenRegions(String tableName, List<String> regionNames) {
-      table = tableName; regions = regionNames;
+    private String table;
+    private List<String> regions;
+
+    @Override
+    public void reopenRegions(String tableName, List<String> regionNames) {
+      table = tableName;
+      regions = regionNames;
     }
   }
+
   private final ReopenRegionsCommand command = new ReopenRegionsCommand();
   private final RecordingShellAdmin admin = new RecordingShellAdmin();
   private final ExecutionContext context =
     new ExecutionContext(admin, new StubShellTableFactory(), new PrintWriter(new StringWriter()));
+
   @Test
   public void reopensAll() throws Exception {
     command.execute(ShellLineParser.parse("reopen_regions 't1'"), context);
     assertEquals("t1", admin.table);
     assertTrue(admin.regions.isEmpty());
   }
+
   @Test
   public void reopensNamed() throws Exception {
     command.execute(ShellLineParser.parse("reopen_regions 't1', ['r1','r2']"), context);
     assertEquals(Arrays.asList("r1", "r2"), admin.regions);
   }
+
   @Test
   public void throwsWhenMissing() throws Exception {
     assertThrows(ShellCommandException.class,

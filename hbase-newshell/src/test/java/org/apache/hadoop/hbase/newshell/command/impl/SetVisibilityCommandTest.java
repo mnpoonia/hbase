@@ -15,7 +15,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.apache.hadoop.hbase.newshell.command.impl;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -24,7 +23,6 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.Arrays;
-import java.util.List;
 import java.util.Map;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
 import org.apache.hadoop.hbase.newshell.command.ShellCommandException;
@@ -45,7 +43,8 @@ public class SetVisibilityCommandTest {
     private Map<String, Object> options;
 
     @Override
-    public long setVisibility(String tableName, String visibility, Map<String, Object> scanOptions) {
+    public long setVisibility(String tableName, String visibility,
+      Map<String, Object> scanOptions) {
       this.tableName = tableName;
       this.visibility = visibility;
       this.options = scanOptions;

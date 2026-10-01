@@ -126,8 +126,10 @@ final class ReplicationAdminOps {
 
   void setPeerNamespaces(String peerId, List<String> namespaces) throws IOException {
     ReplicationPeerConfig rpc = admin.getReplicationPeerConfig(peerId);
-    admin.updateReplicationPeerConfig(peerId, ReplicationPeerConfig.newBuilder(rpc)
-      .setNamespaces(namespaces == null ? Collections.emptySet() : new HashSet<>(namespaces)).build());
+    admin.updateReplicationPeerConfig(peerId,
+      ReplicationPeerConfig.newBuilder(rpc)
+        .setNamespaces(namespaces == null ? Collections.emptySet() : new HashSet<>(namespaces))
+        .build());
   }
 
   void appendPeerNamespaces(String peerId, List<String> namespaces) throws IOException {
@@ -135,9 +137,8 @@ final class ReplicationAdminOps {
       return;
     }
     ReplicationPeerConfig rpc = admin.getReplicationPeerConfig(peerId);
-    Set<String> ns = rpc.getNamespaces() == null
-      ? new HashSet<>()
-      : new HashSet<>(rpc.getNamespaces());
+    Set<String> ns =
+      rpc.getNamespaces() == null ? new HashSet<>() : new HashSet<>(rpc.getNamespaces());
     ns.addAll(namespaces);
     admin.updateReplicationPeerConfig(peerId,
       ReplicationPeerConfig.newBuilder(rpc).setNamespaces(ns).build());
@@ -233,8 +234,8 @@ final class ReplicationAdminOps {
       return;
     }
     ReplicationPeerConfig rpc = admin.getReplicationPeerConfig(peerId);
-    admin.updateReplicationPeerConfig(peerId, ReplicationPeerConfig.newBuilder(rpc)
-      .setExcludeTableCFsMap(toTableCfsMap(tableCFs)).build());
+    admin.updateReplicationPeerConfig(peerId,
+      ReplicationPeerConfig.newBuilder(rpc).setExcludeTableCFsMap(toTableCfsMap(tableCFs)).build());
   }
 
   void appendPeerExcludeTableCFs(String peerId, Map<String, Object> tableCFs) throws IOException {

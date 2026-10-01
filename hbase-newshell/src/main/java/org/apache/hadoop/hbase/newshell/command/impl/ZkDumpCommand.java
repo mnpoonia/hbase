@@ -27,8 +27,8 @@ import org.apache.hadoop.hbase.newshell.parser.ParsedCommand;
 import org.apache.yetus.audience.InterfaceAudience;
 
 /**
- * Ported from hbase-shell's {@code shell/commands/zk_dump.rb}: dumps ZooKeeper view of the
- * cluster via {@code ZKDump}.
+ * Ported from hbase-shell's {@code shell/commands/zk_dump.rb}: dumps ZooKeeper view of the cluster
+ * via {@code ZKDump}.
  */
 @InterfaceAudience.Private
 public final class ZkDumpCommand implements ShellCommand {

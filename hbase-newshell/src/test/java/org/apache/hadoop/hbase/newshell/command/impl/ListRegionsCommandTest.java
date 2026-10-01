@@ -30,18 +30,19 @@ import org.apache.hadoop.hbase.newshell.command.TextResult;
 import org.apache.hadoop.hbase.newshell.hbase.ListRegionsView;
 import org.apache.hadoop.hbase.newshell.hbase.StubShellAdmin;
 import org.apache.hadoop.hbase.newshell.hbase.StubShellTableFactory;
+import org.apache.hadoop.hbase.newshell.parser.ParsedCommand;
 import org.apache.hadoop.hbase.newshell.parser.ShellLineParser;
 import org.apache.hadoop.hbase.testclassification.SmallTests;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
-import org.apache.hadoop.hbase.newshell.parser.ParsedCommand;
 
 @Tag(SmallTests.TAG)
 public class ListRegionsCommandTest {
 
   private static final class RecordingShellAdmin extends StubShellAdmin {
     private String lastTableName;
-    private ListRegionsView view = new ListRegionsView(Collections.emptyList(), Collections.emptyList());
+    private ListRegionsView view =
+      new ListRegionsView(Collections.emptyList(), Collections.emptyList());
 
     @Override
     public ListRegionsView listRegions(String tableName) {
@@ -75,7 +76,8 @@ public class ListRegionsCommandTest {
   @Test
   public void prependsMissingMetricsWarnings() throws Exception {
     admin.view = new ListRegionsView(
-      Arrays.asList("Can not find all details for region: t1,,123.abc. , it may be disabled or in transition"),
+      Arrays.asList(
+        "Can not find all details for region: t1,,123.abc. , it may be disabled or in transition"),
       Arrays.asList(Arrays.asList("host1:1234", "t1,,123.abc.", "", "", "", "", "")));
     ParsedCommand parsed = ShellLineParser.parse("list_regions 't1'");
     TextResult result = (TextResult) command.execute(parsed, context);

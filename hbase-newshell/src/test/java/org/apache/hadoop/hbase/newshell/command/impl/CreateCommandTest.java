@@ -32,11 +32,11 @@ import org.apache.hadoop.hbase.newshell.command.ShellCommandException;
 import org.apache.hadoop.hbase.newshell.command.TextResult;
 import org.apache.hadoop.hbase.newshell.hbase.StubShellAdmin;
 import org.apache.hadoop.hbase.newshell.hbase.StubShellTableFactory;
+import org.apache.hadoop.hbase.newshell.parser.ParsedCommand;
 import org.apache.hadoop.hbase.newshell.parser.ShellLineParser;
 import org.apache.hadoop.hbase.testclassification.SmallTests;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
-import org.apache.hadoop.hbase.newshell.parser.ParsedCommand;
 
 @Tag(SmallTests.TAG)
 public class CreateCommandTest {
@@ -93,7 +93,9 @@ public class CreateCommandTest {
     ParsedCommand parsed = ShellLineParser.parse("create 't1', 'f1', 'f2'");
     command.execute(parsed, context);
 
-    assertEquals(Arrays.asList(Collections.singletonMap("NAME", "f1"), Collections.singletonMap("NAME", "f2")), admin.lastFamilySpecs);
+    assertEquals(
+      Arrays.asList(Collections.singletonMap("NAME", "f1"), Collections.singletonMap("NAME", "f2")),
+      admin.lastFamilySpecs);
   }
 
   @Test
@@ -103,13 +105,15 @@ public class CreateCommandTest {
     command.execute(parsed, context);
 
     assertEquals("t1", admin.lastTableName);
-    assertEquals(Arrays.asList(Collections.singletonMap("NAME", "f1"), mapOf("NAME", "f2", "VERSIONS", 5L)),
+    assertEquals(
+      Arrays.asList(Collections.singletonMap("NAME", "f1"), mapOf("NAME", "f2", "VERSIONS", 5L)),
       admin.lastFamilySpecs);
   }
 
   @Test
   public void bareTrailingAttributeHashWithoutNameBecomesTableAttribute() throws Exception {
-    ParsedCommand parsed = ShellLineParser.parse("create 't1', {NAME => 'f1'}, SPLITS => ['1000', '2000']");
+    ParsedCommand parsed =
+      ShellLineParser.parse("create 't1', {NAME => 'f1'}, SPLITS => ['1000', '2000']");
     command.execute(parsed, context);
 
     assertEquals("t1", admin.lastTableName);

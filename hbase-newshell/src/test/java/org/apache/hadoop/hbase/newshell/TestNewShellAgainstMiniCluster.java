@@ -25,7 +25,6 @@ import java.io.StringWriter;
 import java.util.ArrayDeque;
 import java.util.Arrays;
 import java.util.Deque;
-import java.util.List;
 import java.util.UUID;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.hadoop.hbase.ServerName;
@@ -150,9 +149,9 @@ public class TestNewShellAgainstMiniCluster {
     ShellTableFactory tables = new DefaultShellTableFactory(connection);
     ScriptedShellTerminal terminal = new ScriptedShellTerminal(lines);
     ExecutionContext context = new ExecutionContext(admin, tables, terminal.writer());
-    CommandRegistry registry = new CommandRegistry(Arrays.asList(new StatusCommand(), new CreateCommand(),
-      new DisableCommand(), new GetCommand(), new EnableCommand(), new DropCommand(),
-      new PutCommand(), new ListCommand(), new DescribeCommand(),
+    CommandRegistry registry = new CommandRegistry(Arrays.asList(new StatusCommand(),
+      new CreateCommand(), new DisableCommand(), new GetCommand(), new EnableCommand(),
+      new DropCommand(), new PutCommand(), new ListCommand(), new DescribeCommand(),
       new DecommissionRegionServersCommand(), new RecommissionRegionServerCommand(),
       new ListDecommissionedRegionServersCommand(), new AlterCommand(), new ExistsCommand(),
       new CompactCommand(), new MajorCompactCommand(), new SplitCommand(), new AddPeerCommand(),
@@ -193,8 +192,7 @@ public class TestNewShellAgainstMiniCluster {
     String tableName = "newshell_typed_multi_family";
     runScript("create '" + tableName + "', {NAME => 'f1'}, {NAME => 'f2'}", "exit");
     assertTrue(lastOutput.contains("Created table " + tableName));
-    TableDescriptor descriptor =
-      connection.getAdmin().getDescriptor(TableName.valueOf(tableName));
+    TableDescriptor descriptor = connection.getAdmin().getDescriptor(TableName.valueOf(tableName));
     assertTrue(descriptor.hasColumnFamily(Bytes.toBytes("f1")));
     assertTrue(descriptor.hasColumnFamily(Bytes.toBytes("f2")));
   }
@@ -293,8 +291,7 @@ public class TestNewShellAgainstMiniCluster {
 
     runScript("alter '" + tableName + "', {NAME => 'f1', TTL => 100}", "exit");
     assertTrue(lastOutput.contains("Updating all regions with the new schema..."));
-    TableDescriptor descriptor =
-      connection.getAdmin().getDescriptor(TableName.valueOf(tableName));
+    TableDescriptor descriptor = connection.getAdmin().getDescriptor(TableName.valueOf(tableName));
     assertTrue(descriptor.getColumnFamily(Bytes.toBytes("f1")).getTimeToLive() == 100);
   }
 

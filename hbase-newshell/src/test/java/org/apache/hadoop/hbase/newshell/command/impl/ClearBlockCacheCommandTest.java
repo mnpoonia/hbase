@@ -17,17 +17,11 @@
  */
 package org.apache.hadoop.hbase.newshell.command.impl;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.util.List;
-import java.util.Map;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
-import org.apache.hadoop.hbase.newshell.command.ShellCommandException;
-import org.apache.hadoop.hbase.newshell.command.TabularResult;
 import org.apache.hadoop.hbase.newshell.command.TextResult;
 import org.apache.hadoop.hbase.newshell.hbase.StubShellAdmin;
 import org.apache.hadoop.hbase.newshell.hbase.StubShellTableFactory;
@@ -36,22 +30,24 @@ import org.apache.hadoop.hbase.testclassification.SmallTests;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
-
 @Tag(SmallTests.TAG)
 public class ClearBlockCacheCommandTest {
   private static final class RecordingShellAdmin extends StubShellAdmin {
-    @Override public String clearBlockCache(String tableName) {
+    @Override
+    public String clearBlockCache(String tableName) {
       return "CacheEvictionStats{evictedBlocks=0}";
     }
   }
+
   private final ClearBlockCacheCommand command = new ClearBlockCacheCommand();
   private final RecordingShellAdmin admin = new RecordingShellAdmin();
   private final ExecutionContext context =
     new ExecutionContext(admin, new StubShellTableFactory(), new PrintWriter(new StringWriter()));
+
   @Test
   public void clears() throws Exception {
-    TextResult result = (TextResult) command.execute(
-      ShellLineParser.parse("clear_block_cache 't1'"), context);
+    TextResult result =
+      (TextResult) command.execute(ShellLineParser.parse("clear_block_cache 't1'"), context);
     assertTrue(result.lines().get(0).contains("CacheEvictionStats"));
   }
 }

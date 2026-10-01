@@ -30,8 +30,16 @@ import org.apache.yetus.audience.InterfaceAudience;
 
 @InterfaceAudience.Private
 public final class ListReplicatedTablesCommand implements ShellCommand {
-  @Override public String name() { return "list_replicated_tables"; }
-  @Override public String help() { return "list_replicated_tables, list_replicated_tables 'regex'"; }
+  @Override
+  public String name() {
+    return "list_replicated_tables";
+  }
+
+  @Override
+  public String help() {
+    return "list_replicated_tables, list_replicated_tables 'regex'";
+  }
+
   @Override
   public CommandResult execute(ParsedCommand command, ExecutionContext context)
     throws ShellCommandException, IOException {

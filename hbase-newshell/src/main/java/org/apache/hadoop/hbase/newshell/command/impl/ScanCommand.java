@@ -66,7 +66,8 @@ public final class ScanCommand implements ShellCommand {
     List<List<String>> rows = new ArrayList<>();
     for (ScanRow row : result.rows()) {
       for (CellView cell : row.cells()) {
-        rows.add(Arrays.asList(row.row(), CellViews.column(cell) + " " + CellViews.formatCell(cell)));
+        rows
+          .add(Arrays.asList(row.row(), CellViews.column(cell) + " " + CellViews.formatCell(cell)));
       }
     }
     return new TabularResult(HEADER, rows);

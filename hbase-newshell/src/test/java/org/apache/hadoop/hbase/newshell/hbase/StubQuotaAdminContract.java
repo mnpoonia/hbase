@@ -23,8 +23,8 @@ import java.util.Map;
 
 /**
  * {@link QuotaAdminContract} with every method defaulted to throw
- * {@link UnsupportedOperationException}. Command-under-test fakes implement this (directly or
- * via {@link StubShellAdmin}) and override only the method(s) their command actually calls.
+ * {@link UnsupportedOperationException}. Command-under-test fakes implement this (directly or via
+ * {@link StubShellAdmin}) and override only the method(s) their command actually calls.
  */
 public interface StubQuotaAdminContract extends QuotaAdminContract {
   @Override
@@ -43,8 +43,7 @@ public interface StubQuotaAdminContract extends QuotaAdminContract {
   }
 
   @Override
-  default List<List<String>> listQuotaSnapshots(Map<String, Object> filterArgs)
-    throws IOException {
+  default List<List<String>> listQuotaSnapshots(Map<String, Object> filterArgs) throws IOException {
     throw StubContractSupport.notNeeded();
   }
 

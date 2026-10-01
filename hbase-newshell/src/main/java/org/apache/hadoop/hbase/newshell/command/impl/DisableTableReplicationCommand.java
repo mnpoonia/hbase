@@ -28,8 +28,16 @@ import org.apache.yetus.audience.InterfaceAudience;
 
 @InterfaceAudience.Private
 public final class DisableTableReplicationCommand implements ShellCommand {
-  @Override public String name() { return "disable_table_replication"; }
-  @Override public String help() { return "disable_table_replication 'table'"; }
+  @Override
+  public String name() {
+    return "disable_table_replication";
+  }
+
+  @Override
+  public String help() {
+    return "disable_table_replication 'table'";
+  }
+
   @Override
   public CommandResult execute(ParsedCommand command, ExecutionContext context)
     throws ShellCommandException, IOException {

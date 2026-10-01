@@ -33,8 +33,8 @@ public final class SessionOptions {
   private final boolean quiet;
   private final boolean interactive;
 
-  public SessionOptions(OutputFormat outputFormat, boolean verbose, boolean forceYes,
-    boolean quiet, boolean interactive) {
+  public SessionOptions(OutputFormat outputFormat, boolean verbose, boolean forceYes, boolean quiet,
+    boolean interactive) {
     this.outputFormat = outputFormat;
     this.verbose = verbose;
     this.forceYes = forceYes;

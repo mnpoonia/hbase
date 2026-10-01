@@ -15,8 +15,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.apache.hadoop.hbase.newshell.command.impl;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -25,14 +25,26 @@ import java.util.List;
 import org.apache.hadoop.hbase.newshell.command.*;
 import org.apache.hadoop.hbase.newshell.parser.ParsedCommand;
 import org.apache.yetus.audience.InterfaceAudience;
+
 @InterfaceAudience.Private
 public final class GetNamespaceRsgroupCommand implements ShellCommand {
-  @Override public String name() { return "get_namespace_rsgroup"; }
-  @Override public String help() { return "get_namespace_rsgroup 'ns'"; }
-  @Override public CommandResult execute(ParsedCommand command, ExecutionContext context)
+  @Override
+  public String name() {
+    return "get_namespace_rsgroup";
+  }
+
+  @Override
+  public String help() {
+    return "get_namespace_rsgroup 'ns'";
+  }
+
+  @Override
+  public CommandResult execute(ParsedCommand command, ExecutionContext context)
     throws ShellCommandException, IOException {
-    if (command.positionalArgs().isEmpty()) throw new ShellCommandException("get_namespace_rsgroup requires a namespace");
-    String group = context.admin().getNamespaceRsGroup(String.valueOf(command.positionalArgs().get(0)));
+    if (command.positionalArgs().isEmpty())
+      throw new ShellCommandException("get_namespace_rsgroup requires a namespace");
+    String group =
+      context.admin().getNamespaceRsGroup(String.valueOf(command.positionalArgs().get(0)));
     List<List<String>> rows = new ArrayList<>();
     if (group != null) {
       rows.add(Arrays.asList(group));

@@ -18,17 +18,10 @@
 package org.apache.hadoop.hbase.newshell.command.impl;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.util.List;
-import java.util.Map;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
-import org.apache.hadoop.hbase.newshell.command.ShellCommandException;
-import org.apache.hadoop.hbase.newshell.command.TabularResult;
-import org.apache.hadoop.hbase.newshell.command.TextResult;
 import org.apache.hadoop.hbase.newshell.hbase.StubShellAdmin;
 import org.apache.hadoop.hbase.newshell.hbase.StubShellTableFactory;
 import org.apache.hadoop.hbase.newshell.parser.ShellLineParser;
@@ -40,15 +33,24 @@ import org.junit.jupiter.api.Test;
 public class TransitPeerSyncReplicationStateCommandTest {
   private static final class RecordingShellAdmin extends StubShellAdmin {
     String peer, state;
-    @Override public void transitPeerSyncReplicationState(String peerId, String s) { peer=peerId; state=s; }
+
+    @Override
+    public void transitPeerSyncReplicationState(String peerId, String s) {
+      peer = peerId;
+      state = s;
+    }
   }
-  private final TransitPeerSyncReplicationStateCommand command = new TransitPeerSyncReplicationStateCommand();
+
+  private final TransitPeerSyncReplicationStateCommand command =
+    new TransitPeerSyncReplicationStateCommand();
   private final RecordingShellAdmin admin = new RecordingShellAdmin();
   private final ExecutionContext context =
     new ExecutionContext(admin, new StubShellTableFactory(), new PrintWriter(new StringWriter()));
+
   @Test
   public void runs() throws Exception {
-    command.execute(ShellLineParser.parse("transit_peer_sync_replication_state '1', 'STANDBY'"), context);
+    command.execute(ShellLineParser.parse("transit_peer_sync_replication_state '1', 'STANDBY'"),
+      context);
     assertEquals("1", admin.peer);
     assertEquals("STANDBY", admin.state);
   }

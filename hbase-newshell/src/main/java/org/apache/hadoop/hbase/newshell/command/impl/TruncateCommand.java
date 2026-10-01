@@ -29,9 +29,8 @@ import org.apache.hadoop.hbase.newshell.parser.ParsedCommand;
 import org.apache.yetus.audience.InterfaceAudience;
 
 /**
- * Ported from hbase-shell's {@code shell/commands/truncate.rb} /
- * {@code admin.rb#truncate}: {@code Admin.truncateTable} with {@code preserveSplits=false},
- * including the Ruby progress lines.
+ * Ported from hbase-shell's {@code shell/commands/truncate.rb} / {@code admin.rb#truncate}:
+ * {@code Admin.truncateTable} with {@code preserveSplits=false}, including the Ruby progress lines.
  */
 @InterfaceAudience.Private
 public final class TruncateCommand implements ShellCommand {

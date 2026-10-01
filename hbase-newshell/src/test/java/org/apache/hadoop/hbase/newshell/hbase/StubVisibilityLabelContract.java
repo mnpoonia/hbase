@@ -23,8 +23,8 @@ import java.util.Map;
 
 /**
  * {@link VisibilityLabelContract} with every method defaulted to throw
- * {@link UnsupportedOperationException}. Command-under-test fakes implement this (directly or
- * via {@link StubShellAdmin}) and override only the method(s) their command actually calls.
+ * {@link UnsupportedOperationException}. Command-under-test fakes implement this (directly or via
+ * {@link StubShellAdmin}) and override only the method(s) their command actually calls.
  */
 public interface StubVisibilityLabelContract extends VisibilityLabelContract {
   @Override
@@ -53,8 +53,8 @@ public interface StubVisibilityLabelContract extends VisibilityLabelContract {
   }
 
   @Override
-  default long setVisibility(String tableName, String visibility,
-    Map<String, Object> scanOptions) throws IOException {
+  default long setVisibility(String tableName, String visibility, Map<String, Object> scanOptions)
+    throws IOException {
     throw StubContractSupport.notNeeded();
   }
 }

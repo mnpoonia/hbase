@@ -28,14 +28,23 @@ import org.apache.yetus.audience.InterfaceAudience;
 
 @InterfaceAudience.Private
 public final class ShowPeerTableCFsCommand implements ShellCommand {
-  @Override public String name() { return "show_peer_tableCFs"; }
-  @Override public String help() { return "show_peer_tableCFs 'peerId'"; }
+  @Override
+  public String name() {
+    return "show_peer_tableCFs";
+  }
+
+  @Override
+  public String help() {
+    return "show_peer_tableCFs 'peerId'";
+  }
+
   @Override
   public CommandResult execute(ParsedCommand command, ExecutionContext context)
     throws ShellCommandException, IOException {
     if (command.positionalArgs().isEmpty()) {
       throw new ShellCommandException("show_peer_tableCFs requires a peer id");
     }
-    return TextResult.of(context.admin().showPeerTableCFs(String.valueOf(command.positionalArgs().get(0))));
+    return TextResult
+      .of(context.admin().showPeerTableCFs(String.valueOf(command.positionalArgs().get(0))));
   }
 }

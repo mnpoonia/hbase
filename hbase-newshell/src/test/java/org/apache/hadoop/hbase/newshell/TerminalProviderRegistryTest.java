@@ -22,7 +22,6 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.List;
 import org.apache.hadoop.hbase.newshell.spi.NoAvailableTerminalProviderException;
 import org.apache.hadoop.hbase.newshell.spi.ShellTerminal;
 import org.apache.hadoop.hbase.newshell.spi.TerminalConfig;

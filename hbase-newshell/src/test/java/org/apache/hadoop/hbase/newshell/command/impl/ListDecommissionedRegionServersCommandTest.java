@@ -28,11 +28,11 @@ import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
 import org.apache.hadoop.hbase.newshell.command.TabularResult;
 import org.apache.hadoop.hbase.newshell.hbase.StubShellAdmin;
 import org.apache.hadoop.hbase.newshell.hbase.StubShellTableFactory;
+import org.apache.hadoop.hbase.newshell.parser.ParsedCommand;
 import org.apache.hadoop.hbase.newshell.parser.ShellLineParser;
 import org.apache.hadoop.hbase.testclassification.SmallTests;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
-import org.apache.hadoop.hbase.newshell.parser.ParsedCommand;
 
 @Tag(SmallTests.TAG)
 public class ListDecommissionedRegionServersCommandTest {
@@ -59,7 +59,8 @@ public class ListDecommissionedRegionServersCommandTest {
     TabularResult result = (TabularResult) command.execute(parsed, context);
 
     assertEquals(Arrays.asList("DECOMMISSIONED REGION SERVERS"), result.header());
-    assertEquals(Arrays.asList(Arrays.asList("host1,60020,123"), Arrays.asList("host2,60020,456")), result.rows());
+    assertEquals(Arrays.asList(Arrays.asList("host1,60020,123"), Arrays.asList("host2,60020,456")),
+      result.rows());
   }
 
   @Test

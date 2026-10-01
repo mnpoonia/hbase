@@ -18,8 +18,8 @@
 package org.apache.hadoop.hbase.newshell.hbase;
 
 /**
- * {@link ShellAdmin} with every method of every {@code *Contract} sub-interface defaulted to
- * throw {@link UnsupportedOperationException}, via the per-domain {@code Stub*Contract} mixins.
+ * {@link ShellAdmin} with every method of every {@code *Contract} sub-interface defaulted to throw
+ * {@link UnsupportedOperationException}, via the per-domain {@code Stub*Contract} mixins.
  * Command-under-test fakes extend this and override only the method(s) their command actually
  * calls, instead of every test re-declaring all of {@link ShellAdmin}'s methods.
  */

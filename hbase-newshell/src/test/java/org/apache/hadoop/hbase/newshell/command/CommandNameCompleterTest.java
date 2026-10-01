@@ -57,9 +57,8 @@ public class CommandNameCompleterTest {
   }
 
   private static CommandNameCompleter completerFor(String... names) {
-    List<ShellCommand> commands =
-      Arrays.asList(names).stream().<ShellCommand> map(FakeCommand::new)
-        .collect(Collectors.toList());
+    List<ShellCommand> commands = Arrays.asList(names).stream().<ShellCommand> map(FakeCommand::new)
+      .collect(Collectors.toList());
     return new CommandNameCompleter(new CommandRegistry(commands));
   }
 

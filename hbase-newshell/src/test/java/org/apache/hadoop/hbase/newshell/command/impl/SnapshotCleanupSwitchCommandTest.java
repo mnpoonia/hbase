@@ -21,6 +21,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import org.apache.hadoop.hbase.newshell.command.CommandResult;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
 import org.apache.hadoop.hbase.newshell.command.TextResult;
 import org.apache.hadoop.hbase.newshell.hbase.StubShellAdmin;
@@ -29,7 +30,6 @@ import org.apache.hadoop.hbase.newshell.parser.ShellLineParser;
 import org.apache.hadoop.hbase.testclassification.SmallTests;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
-import org.apache.hadoop.hbase.newshell.command.CommandResult;
 
 @Tag(SmallTests.TAG)
 public class SnapshotCleanupSwitchCommandTest {
@@ -50,7 +50,8 @@ public class SnapshotCleanupSwitchCommandTest {
 
   @Test
   public void switches() throws Exception {
-    CommandResult result = command.execute(ShellLineParser.parse("snapshot_cleanup_switch false"), context);
+    CommandResult result =
+      command.execute(ShellLineParser.parse("snapshot_cleanup_switch false"), context);
     assertEquals(Boolean.FALSE, admin.last);
     assertEquals("Previous snapshot cleanup state : true", ((TextResult) result).lines().get(0));
   }

@@ -18,17 +18,11 @@
 package org.apache.hadoop.hbase.newshell.command.impl;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.util.List;
-import java.util.Map;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
-import org.apache.hadoop.hbase.newshell.command.ShellCommandException;
-import org.apache.hadoop.hbase.newshell.command.TabularResult;
-import org.apache.hadoop.hbase.newshell.command.TextResult;
 import org.apache.hadoop.hbase.newshell.hbase.StubShellAdmin;
 import org.apache.hadoop.hbase.newshell.hbase.StubShellTableFactory;
 import org.apache.hadoop.hbase.newshell.parser.ShellLineParser;
@@ -39,13 +33,21 @@ import org.junit.jupiter.api.Test;
 @Tag(SmallTests.TAG)
 public class SetPeerSerialCommandTest {
   private static final class RecordingShellAdmin extends StubShellAdmin {
-    boolean last; String peer;
-    @Override public void setPeerSerial(String peerId, boolean v) { peer=peerId; last=v; }
+    boolean last;
+    String peer;
+
+    @Override
+    public void setPeerSerial(String peerId, boolean v) {
+      peer = peerId;
+      last = v;
+    }
   }
+
   private final SetPeerSerialCommand command = new SetPeerSerialCommand();
   private final RecordingShellAdmin admin = new RecordingShellAdmin();
   private final ExecutionContext context =
     new ExecutionContext(admin, new StubShellTableFactory(), new PrintWriter(new StringWriter()));
+
   @Test
   public void runs() throws Exception {
     command.execute(ShellLineParser.parse("set_peer_serial '1', true"), context);

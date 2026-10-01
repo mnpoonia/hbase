@@ -29,10 +29,16 @@ import org.apache.yetus.audience.InterfaceAudience;
 
 @InterfaceAudience.Private
 public final class SetPeerReplicateAllCommand implements ShellCommand {
-  @Override public String name() { return "set_peer_replicate_all"; }
-  @Override public String help() {
+  @Override
+  public String name() {
+    return "set_peer_replicate_all";
+  }
+
+  @Override
+  public String help() {
     return "set_peer_replicate_all 'peerId', true|false";
   }
+
   @Override
   public CommandResult execute(ParsedCommand command, ExecutionContext context)
     throws ShellCommandException, IOException {

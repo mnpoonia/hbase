@@ -252,14 +252,16 @@ final class QuotaAdminOps {
     return rows;
   }
 
-  private static boolean accept(TableName tableName, Object desiredTable,
-    Object desiredNamespace) {
-    if (desiredTable != null
-      && !tableName.getQualifierAsString().equals(String.valueOf(desiredTable))) {
+  private static boolean accept(TableName tableName, Object desiredTable, Object desiredNamespace) {
+    if (
+      desiredTable != null && !tableName.getQualifierAsString().equals(String.valueOf(desiredTable))
+    ) {
       return false;
     }
-    if (desiredNamespace != null
-      && !tableName.getNamespaceAsString().equals(String.valueOf(desiredNamespace))) {
+    if (
+      desiredNamespace != null
+        && !tableName.getNamespaceAsString().equals(String.valueOf(desiredNamespace))
+    ) {
       return false;
     }
     return true;
@@ -267,8 +269,8 @@ final class QuotaAdminOps {
 
   List<List<String>> listSnapshotSizes() throws IOException {
     List<List<String>> rows = new ArrayList<>();
-    for (Map.Entry<String, Long> entry : QuotaTableUtil.getObservedSnapshotSizes(admin.getConnection())
-      .entrySet()) {
+    for (Map.Entry<String, Long> entry : QuotaTableUtil
+      .getObservedSnapshotSizes(admin.getConnection()).entrySet()) {
       rows.add(Arrays.asList(entry.getKey(), String.valueOf(entry.getValue())));
     }
     return rows;

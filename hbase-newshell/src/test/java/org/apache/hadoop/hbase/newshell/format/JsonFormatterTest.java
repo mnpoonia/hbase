@@ -23,7 +23,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.Arrays;
-import java.util.List;
 import org.apache.hadoop.hbase.newshell.command.TabularResult;
 import org.apache.hadoop.hbase.newshell.command.TextResult;
 import org.apache.hadoop.hbase.testclassification.SmallTests;
@@ -45,8 +44,8 @@ public class JsonFormatterTest {
   @Test
   public void tabularResultEmitsNdjsonThenTrailer() {
     StringWriter buf = new StringWriter();
-    TabularResult result =
-      new TabularResult(Arrays.asList("ROW", "CELL"), Arrays.asList(Arrays.asList("r1", "v1"), Arrays.asList("r2", "v2")));
+    TabularResult result = new TabularResult(Arrays.asList("ROW", "CELL"),
+      Arrays.asList(Arrays.asList("r1", "v1"), Arrays.asList("r2", "v2")));
     new JsonFormatter().format("scan", result, new PrintWriter(buf));
     String[] lines = buf.toString().trim().split("\n");
     assertEquals(3, lines.length);

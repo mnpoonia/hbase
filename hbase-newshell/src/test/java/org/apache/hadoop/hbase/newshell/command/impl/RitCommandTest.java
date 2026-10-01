@@ -33,18 +33,20 @@ import org.apache.hadoop.hbase.testclassification.SmallTests;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
-
 @Tag(SmallTests.TAG)
 public class RitCommandTest {
   private static final class RecordingShellAdmin extends StubShellAdmin {
-    @Override public List<String> regionsInTransition() {
+    @Override
+    public List<String> regionsInTransition() {
       return Arrays.asList("r1 state=OPENING");
     }
   }
+
   private final RitCommand command = new RitCommand();
   private final RecordingShellAdmin admin = new RecordingShellAdmin();
   private final ExecutionContext context =
     new ExecutionContext(admin, new StubShellTableFactory(), new PrintWriter(new StringWriter()));
+
   @Test
   public void listsRit() throws Exception {
     TextResult result = (TextResult) command.execute(ShellLineParser.parse("rit"), context);
@@ -54,7 +56,8 @@ public class RitCommandTest {
   @Test
   public void emptyRitStillPrintsZeroRowFooter() throws Exception {
     StubShellAdmin empty = new StubShellAdmin() {
-      @Override public List<String> regionsInTransition() {
+      @Override
+      public List<String> regionsInTransition() {
         return Collections.emptyList();
       }
     };

@@ -30,11 +30,11 @@ import org.apache.hadoop.hbase.newshell.hbase.ShellTable;
 import org.apache.hadoop.hbase.newshell.hbase.ShellTableFactory;
 import org.apache.hadoop.hbase.newshell.hbase.StubShellAdmin;
 import org.apache.hadoop.hbase.newshell.hbase.StubShellTable;
+import org.apache.hadoop.hbase.newshell.parser.ParsedCommand;
 import org.apache.hadoop.hbase.newshell.parser.ShellLineParser;
 import org.apache.hadoop.hbase.testclassification.SmallTests;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
-import org.apache.hadoop.hbase.newshell.parser.ParsedCommand;
 
 @Tag(SmallTests.TAG)
 public class DeleteallCommandTest {
@@ -95,7 +95,8 @@ public class DeleteallCommandTest {
 
   @Test
   public void deletesByRowPrefixFilterWithoutARowArgument() throws Exception {
-    ParsedCommand parsed = ShellLineParser.parse("deleteall 't1', {ROWPREFIXFILTER => 'prefix'}, 'f1:c1'");
+    ParsedCommand parsed =
+      ShellLineParser.parse("deleteall 't1', {ROWPREFIXFILTER => 'prefix'}, 'f1:c1'");
     command.execute(parsed, context);
 
     assertNull(table.lastRow);

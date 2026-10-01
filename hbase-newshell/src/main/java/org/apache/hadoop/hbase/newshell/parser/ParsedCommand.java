@@ -40,8 +40,8 @@ public final class ParsedCommand {
   private final Map<String, Object> options;
   private final List<Map<String, Object>> hashLiterals;
 
-  public ParsedCommand(String commandName, List<Object> positionalArgs,
-    Map<String, Object> options, List<Map<String, Object>> hashLiterals) {
+  public ParsedCommand(String commandName, List<Object> positionalArgs, Map<String, Object> options,
+    List<Map<String, Object>> hashLiterals) {
     this.commandName = commandName;
     this.positionalArgs = positionalArgs;
     this.options = options;
@@ -75,8 +75,7 @@ public final class ParsedCommand {
     ParsedCommand other = (ParsedCommand) o;
     return Objects.equals(commandName, other.commandName)
       && Objects.equals(positionalArgs, other.positionalArgs)
-      && Objects.equals(options, other.options)
-      && Objects.equals(hashLiterals, other.hashLiterals);
+      && Objects.equals(options, other.options) && Objects.equals(hashLiterals, other.hashLiterals);
   }
 
   @Override

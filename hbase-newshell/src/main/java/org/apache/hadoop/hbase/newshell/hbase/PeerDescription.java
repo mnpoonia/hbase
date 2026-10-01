@@ -115,9 +115,8 @@ public final class PeerDescription {
 
   @Override
   public int hashCode() {
-    return Objects.hash(peerId, clusterKey, endpointClassname, remoteRootDir,
-      syncReplicationState, enabled, replicateAllUserTables, namespaces, tableCfs, bandwidth,
-      serial);
+    return Objects.hash(peerId, clusterKey, endpointClassname, remoteRootDir, syncReplicationState,
+      enabled, replicateAllUserTables, namespaces, tableCfs, bandwidth, serial);
   }
 
   @Override

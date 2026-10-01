@@ -29,10 +29,16 @@ import org.apache.yetus.audience.InterfaceAudience;
 
 @InterfaceAudience.Private
 public final class SetPeerSerialCommand implements ShellCommand {
-  @Override public String name() { return "set_peer_serial"; }
-  @Override public String help() {
+  @Override
+  public String name() {
+    return "set_peer_serial";
+  }
+
+  @Override
+  public String help() {
     return "set_peer_serial 'peerId', true|false";
   }
+
   @Override
   public CommandResult execute(ParsedCommand command, ExecutionContext context)
     throws ShellCommandException, IOException {

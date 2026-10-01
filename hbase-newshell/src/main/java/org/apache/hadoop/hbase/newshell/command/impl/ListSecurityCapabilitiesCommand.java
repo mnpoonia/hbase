@@ -15,7 +15,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.apache.hadoop.hbase.newshell.command.impl;
 
 import java.io.IOException;
@@ -56,8 +55,10 @@ public final class ListSecurityCapabilitiesCommand implements ShellCommand {
         return TextResult.of("ERROR: Master does not support getSecurityCapabilities");
       }
       Throwable cause = e.getCause();
-      if (cause instanceof UnsupportedOperationException
-        || (cause != null && String.valueOf(cause).contains("UnsupportedOperationException"))) {
+      if (
+        cause instanceof UnsupportedOperationException
+          || (cause != null && String.valueOf(cause).contains("UnsupportedOperationException"))
+      ) {
         return TextResult.of("ERROR: Master does not support getSecurityCapabilities");
       }
       throw e;

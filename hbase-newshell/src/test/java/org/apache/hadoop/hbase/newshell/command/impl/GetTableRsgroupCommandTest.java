@@ -15,21 +15,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.apache.hadoop.hbase.newshell.command.impl;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
 import org.apache.hadoop.hbase.newshell.command.TabularResult;
-import org.apache.hadoop.hbase.newshell.command.TextResult;
-import org.apache.hadoop.hbase.newshell.hbase.BalanceResult;
 import org.apache.hadoop.hbase.newshell.hbase.StubShellAdmin;
 import org.apache.hadoop.hbase.newshell.hbase.StubShellTableFactory;
 import org.apache.hadoop.hbase.newshell.parser.ShellLineParser;
@@ -40,11 +34,17 @@ import org.junit.jupiter.api.Test;
 @Tag(SmallTests.TAG)
 public class GetTableRsgroupCommandTest {
   static final class Rec extends StubShellAdmin {
-    @Override public String getRsGroupOfTable(String n){ return "g1"; }
+    @Override
+    public String getRsGroupOfTable(String n) {
+      return "g1";
+    }
   }
-  @Test public void runs() throws Exception {
-    TabularResult r=(TabularResult)new GetTableRsgroupCommand().execute(ShellLineParser.parse("get_table_rsgroup 'x'"),
-      new ExecutionContext(new Rec(),new StubShellTableFactory(),new PrintWriter(new StringWriter())));
+
+  @Test
+  public void runs() throws Exception {
+    TabularResult r = (TabularResult) new GetTableRsgroupCommand()
+      .execute(ShellLineParser.parse("get_table_rsgroup 'x'"), new ExecutionContext(new Rec(),
+        new StubShellTableFactory(), new PrintWriter(new StringWriter())));
     assertEquals(Arrays.asList(Arrays.asList("g1")), r.rows());
   }
 }

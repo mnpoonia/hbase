@@ -30,10 +30,16 @@ import org.apache.yetus.audience.InterfaceAudience;
 
 @InterfaceAudience.Private
 public final class SetPeerTableCFsCommand implements ShellCommand {
-  @Override public String name() { return "set_peer_tableCFs"; }
-  @Override public String help() {
+  @Override
+  public String name() {
+    return "set_peer_tableCFs";
+  }
+
+  @Override
+  public String help() {
     return "set_peer_tableCFs 'peerId', { 't1' => [] }";
   }
+
   @Override
   public CommandResult execute(ParsedCommand command, ExecutionContext context)
     throws ShellCommandException, IOException {
@@ -42,12 +48,13 @@ public final class SetPeerTableCFsCommand implements ShellCommand {
     }
     String peerId = String.valueOf(command.positionalArgs().get(0));
     Map<String, Object> tableCFs = tableCfsFrom(command);
-    
+
     context.admin().setPeerTableCFs(peerId, tableCFs);
     return TextResult.of();
   }
 
-  private static Map<String, Object> tableCfsFrom(ParsedCommand command) throws ShellCommandException {
+  private static Map<String, Object> tableCfsFrom(ParsedCommand command)
+    throws ShellCommandException {
     if (command.positionalArgs().size() > 1) {
       Object arg = command.positionalArgs().get(1);
       if (arg instanceof Map) {

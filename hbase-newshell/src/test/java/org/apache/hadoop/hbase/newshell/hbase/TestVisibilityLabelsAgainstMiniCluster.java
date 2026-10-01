@@ -24,8 +24,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Connection;
@@ -42,7 +42,6 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
-import org.apache.hadoop.conf.Configuration;
 
 /**
  * End-to-end verification of visibility-label shell APIs against a real minicluster with the
@@ -127,7 +126,8 @@ public class TestVisibilityLabelsAgainstMiniCluster {
         Bytes.toBytes("v1")));
     }
 
-    long count = admin.setVisibility(tableName, label, Collections.singletonMap("COLUMNS", Arrays.asList("cf:c1")));
+    long count = admin.setVisibility(tableName, label,
+      Collections.singletonMap("COLUMNS", Arrays.asList("cf:c1")));
     assertEquals(1L, count);
   }
 
