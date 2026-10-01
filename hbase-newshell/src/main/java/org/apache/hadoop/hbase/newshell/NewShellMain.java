@@ -126,7 +126,7 @@ public final class NewShellMain {
     String line;
     while ((line = terminal.readLine("newshell> ")) != null) {
       String trimmed = line.trim();
-      if (trimmed.isEmpty()) {
+      if (trimmed.isEmpty() || trimmed.startsWith("#")) {
         continue;
       }
       if (trimmed.equalsIgnoreCase(EXIT_COMMAND) || trimmed.equalsIgnoreCase(QUIT_COMMAND)) {

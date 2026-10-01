@@ -208,6 +208,14 @@ public class NewShellMainTest {
   }
 
   @Test
+  public void skipsCommentLines() throws IOException {
+    FakeShellTerminal terminal = new FakeShellTerminal("# this is a comment", "  # indented too", "exit");
+    CommandRegistry registry = new CommandRegistry(java.util.List.of());
+    NewShellMain.run(terminal, newContext(terminal.writer()), registry, new DefaultFormatter());
+    assertFalse(terminal.output().contains("ERROR"));
+  }
+
+  @Test
   public void launchArgsParsesOutputAndYes() {
     NewShellMain.LaunchArgs args = NewShellMain.LaunchArgs
       .parse(new String[] { "-n", "--yes", "--output", "json", "script.ns" });
