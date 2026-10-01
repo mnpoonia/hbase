@@ -124,6 +124,33 @@ for the JRuby shell.
   intentional, accepted scope limitation of the pilot, not a bug — not
   something to implement.
 
+- **No multi-line command entry** (bracket/quote continuation, or trailing
+  `\` continuation). Old hbase-shell inherits this for free from JRuby's
+  IRB, which buffers input across `readline()` calls while brackets/quotes
+  are unbalanced (or a line ends in `\`) before handing the joined
+  expression to the Ruby parser — this is a standard REPL feature (bash,
+  Python's REPL, `psql`, etc. all do it), not something hbase-shell built
+  itself. For example:
+  ```
+  hbase> alter 't1', COPROCESSOR => {
+           CLASSNAME => 'org.apache.hadoop.hbase.coprocessor.SimpleRegionObserver',
+           JAR_PATH => 'hdfs:///foo.jar',
+           PRIORITY => 12,
+           PROPERTIES => {'a' => '17' }
+         }
+  ```
+  `NewShellMain.java` reads and parses one line at a time
+  (`terminal.readLine(...)` straight into `ShellLineParser.parse(line)`,
+  around line 154/174) with no bracket-depth or trailing-`\` buffering
+  layer, so each line above is parsed independently and fails on the first
+  fragment (`ShellParseException` from the unterminated `{`).
+  `ShellLineParser` itself parses nested braces correctly if given the
+  whole statement as one line — this is a REPL input-loop gap, not a
+  grammar gap. Workaround: write the whole command on a single line, e.g.
+  `alter 't1', COPROCESSOR => {CLASSNAME => '...', JAR_PATH => '...', PRIORITY => 12, PROPERTIES => {'a' => '17'}}`.
+  Intentional, accepted scope limitation of the pilot, not a bug — not
+  something to implement.
+
 ### Machine-facing improvements (borrowed from picocli CLI review)
 
 Ideas worth taking from Nihal Jain's draft `hbase-cli` / picocli PoC
