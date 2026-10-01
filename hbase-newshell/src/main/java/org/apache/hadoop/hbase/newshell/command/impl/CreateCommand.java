@@ -36,8 +36,7 @@ import org.apache.yetus.audience.InterfaceAudience;
  * literal ({@code NAME} required, {@code VERSIONS} optional), plus an optional table-level
  * attribute hash with no {@code NAME} key (e.g. {@code SPLITS => [...]}) - see
  * {@link org.apache.hadoop.hbase.newshell.hbase.ShellAdmin#createTable} for the supported
- * attributes. SPLITALGO, CONFIGURATION and MOB options are explicitly not ported for this pilot
- * slice.
+ * attributes.
  */
 @InterfaceAudience.Private
 public final class CreateCommand implements ShellCommand {
@@ -77,10 +76,37 @@ public final class CreateCommand implements ShellCommand {
         tableAttributes.putAll(hashLiteral);
       }
     }
-    // Native flag syntax (--name=f1 --versions=3) has no hash literal at all, but still
-    // describes exactly one family via the flat options map.
-    if (familySpecs.isEmpty() && !command.options().isEmpty()) {
-      familySpecs.add(command.options());
+    // options() also contains a flattened copy of every hash literal, so strip those keys out
+    // first - what remains is native --flag input that hash literals didn't already contribute,
+    // which must still be merged in rather than silently dropped.
+    Map<String, Object> flagOnlyOptions = new LinkedHashMap<>(command.options());
+    for (Map<String, Object> hashLiteral : command.hashLiterals()) {
+      flagOnlyOptions.keySet().removeAll(hashLiteral.keySet());
+    }
+    if (!flagOnlyOptions.isEmpty()) {
+      if (familySpecs.isEmpty()) {
+        // Native flag syntax (--name=f1 --versions=3) has no hash literal or bareword family at
+        // all, but still describes exactly one family via the flat options map.
+        familySpecs.add(new LinkedHashMap<>(flagOnlyOptions));
+      } else {
+        // create 't1', 'f1' --versions=3: merge flags onto bareword NAME-only families so
+        // --flag attributes are not silently dropped.
+        boolean merged = false;
+        for (int i = 0; i < familySpecs.size(); i++) {
+          Map<String, Object> fam = familySpecs.get(i);
+          if (fam.size() == 1 && fam.containsKey("NAME")) {
+            Map<String, Object> enriched = new LinkedHashMap<>(fam);
+            enriched.putAll(flagOnlyOptions);
+            familySpecs.set(i, enriched);
+            merged = true;
+          }
+        }
+        if (!merged) {
+          Map<String, Object> last = new LinkedHashMap<>(familySpecs.get(familySpecs.size() - 1));
+          last.putAll(flagOnlyOptions);
+          familySpecs.set(familySpecs.size() - 1, last);
+        }
+      }
     }
     if (familySpecs.isEmpty()) {
       throw new ShellCommandException(
