@@ -34,6 +34,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import org.apache.hadoop.hbase.ClusterMetrics;
 import org.apache.hadoop.hbase.HRegionLocation;
+import org.apache.hadoop.hbase.MetaTableAccessor;
 import org.apache.hadoop.hbase.NamespaceDescriptor;
 import org.apache.hadoop.hbase.RegionMetrics;
 import org.apache.hadoop.hbase.ServerMetrics;
@@ -63,6 +64,7 @@ import org.apache.hadoop.hbase.security.access.UserPermission;
 import org.apache.hadoop.hbase.security.visibility.VisibilityClient;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.FutureUtils;
+import org.apache.hadoop.hbase.util.Pair;
 import org.apache.hadoop.hbase.zookeeper.ZKDump;
 import org.apache.hadoop.hbase.zookeeper.ZKWatcher;
 import org.apache.hbase.thirdparty.com.google.protobuf.ByteString;
@@ -530,10 +532,8 @@ public final class DefaultShellAdmin implements ShellAdmin {
   @Override
   public List<String> listTablesByState(boolean enabled) throws IOException {
     List<String> result = new ArrayList<>();
-    for (TableName table : admin.listTableNames()) {
-      if (admin.isTableEnabled(table) == enabled) {
-        result.add(table.getNameAsString());
-      }
+    for (TableName table : admin.listTableNamesByState(enabled)) {
+      result.add(table.getNameAsString());
     }
     return result;
   }
@@ -1561,6 +1561,18 @@ public final class DefaultShellAdmin implements ShellAdmin {
 
   @Override
   public String regionInfo(String regionName) throws IOException {
+    Pair<RegionInfo, ServerName> fromMeta =
+      MetaTableAccessor.getRegion(admin.getConnection(), Bytes.toBytes(regionName));
+    if (fromMeta != null) {
+      return fromMeta.getFirst().toString();
+    }
+    for (RegionInfo info : admin.getRegions(TableName.META_TABLE_NAME)) {
+      if (
+        info.getEncodedName().equals(regionName) || info.getRegionNameAsString().equals(regionName)
+      ) {
+        return info.toString();
+      }
+    }
     for (TableName table : admin.listTableNames()) {
       for (RegionInfo info : admin.getRegions(table)) {
         if (
@@ -1569,13 +1581,6 @@ public final class DefaultShellAdmin implements ShellAdmin {
         ) {
           return info.toString();
         }
-      }
-    }
-    for (RegionInfo info : admin.getRegions(TableName.META_TABLE_NAME)) {
-      if (
-        info.getEncodedName().equals(regionName) || info.getRegionNameAsString().equals(regionName)
-      ) {
-        return info.toString();
       }
     }
     throw new UnknownRegionException(regionName);
