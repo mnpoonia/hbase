@@ -27,15 +27,20 @@ public enum OutputFormat {
   CSV;
 
   public static OutputFormat parse(String raw) {
-    if (raw == null || raw.isBlank()) {
+    if (raw == null || raw.trim().isEmpty()) {
       return TEXT;
     }
-    return switch (raw.trim().toLowerCase()) {
-      case "json" -> JSON;
-      case "csv" -> CSV;
-      case "text", "table" -> TEXT;
-      default -> throw new IllegalArgumentException(
-        "Unknown output format '" + raw + "' (expected text|json|csv)");
-    };
+    switch (raw.trim().toLowerCase()) {
+      case "json":
+        return JSON;
+      case "csv":
+        return CSV;
+      case "text":
+      case "table":
+        return TEXT;
+      default:
+        throw new IllegalArgumentException(
+          "Unknown output format '" + raw + "' (expected text|json|csv)");
+    }
   }
 }

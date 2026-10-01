@@ -93,7 +93,8 @@ final class VisibilityOps {
       scan.setTimestamp(((Number) timestamp).longValue());
     }
     Object timerange = options.get("TIMERANGE");
-    if (timerange instanceof List<?> range && range.size() == 2) {
+    if (timerange instanceof List<?> && ((List<?>) timerange).size() == 2) {
+      List<?> range = (List<?>) timerange;
       scan.setTimeRange(((Number) range.get(0)).longValue(), ((Number) range.get(1)).longValue());
     }
     Object filter = options.get("FILTER");

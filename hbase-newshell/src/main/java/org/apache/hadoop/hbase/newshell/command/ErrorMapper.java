@@ -36,8 +36,8 @@ public final class ErrorMapper {
     if (thrown == null) {
       return ExitCodes.CLIENT_ERROR;
     }
-    if (thrown instanceof ShellCommandException sce) {
-      return sce.exitCode();
+    if (thrown instanceof ShellCommandException) {
+      return ((ShellCommandException) thrown).exitCode();
     }
     Throwable cursor = thrown;
     while (cursor != null) {

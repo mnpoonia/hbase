@@ -29,12 +29,14 @@ import org.apache.yetus.audience.InterfaceAudience;
 public final class CsvFormatter implements Formatter {
   @Override
   public void format(String commandName, CommandResult result, PrintWriter out) {
-    if (result instanceof TextResult textResult) {
+    if (result instanceof TextResult) {
+      TextResult textResult = (TextResult) result;
       out.println(csvEscape("line"));
       for (String line : textResult.lines()) {
         out.println(csvEscape(line));
       }
-    } else if (result instanceof TabularResult tabularResult) {
+    } else if (result instanceof TabularResult) {
+      TabularResult tabularResult = (TabularResult) result;
       out.println(joinCsv(tabularResult.header()));
       for (List<String> row : tabularResult.rows()) {
         out.println(joinCsv(row));

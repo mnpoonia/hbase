@@ -125,8 +125,8 @@ public final class DeleteTableSnapshotsCommand implements ShellCommand {
     if (yes == null) {
       return false;
     }
-    if (yes instanceof Boolean b) {
-      return b;
+    if (yes instanceof Boolean) {
+      return (Boolean) yes;
     }
     return Boolean.parseBoolean(String.valueOf(yes)) || "Y".equalsIgnoreCase(String.valueOf(yes));
   }

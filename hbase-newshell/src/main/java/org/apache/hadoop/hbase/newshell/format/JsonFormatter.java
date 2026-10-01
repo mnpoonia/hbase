@@ -38,7 +38,8 @@ public final class JsonFormatter implements Formatter {
   @Override
   public void format(String commandName, CommandResult result, PrintWriter out) {
     try {
-      if (result instanceof TextResult textResult) {
+      if (result instanceof TextResult) {
+        TextResult textResult = (TextResult) result;
         Map<String, Object> envelope = new LinkedHashMap<>();
         envelope.put("status", "ok");
         if (commandName != null) {
@@ -46,7 +47,8 @@ public final class JsonFormatter implements Formatter {
         }
         envelope.put("data", Map.of("lines", textResult.lines()));
         out.println(JsonMapper.writeObjectAsString(envelope));
-      } else if (result instanceof TabularResult tabularResult) {
+      } else if (result instanceof TabularResult) {
+        TabularResult tabularResult = (TabularResult) result;
         List<String> header = tabularResult.header();
         for (List<String> row : tabularResult.rows()) {
           Map<String, Object> obj = new LinkedHashMap<>();

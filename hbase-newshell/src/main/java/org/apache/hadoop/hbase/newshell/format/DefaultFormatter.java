@@ -33,12 +33,13 @@ import org.apache.yetus.audience.InterfaceAudience;
 public final class DefaultFormatter implements Formatter {
   @Override
   public void format(String commandName, CommandResult result, PrintWriter out) {
-    if (result instanceof TextResult textResult) {
+    if (result instanceof TextResult) {
+      TextResult textResult = (TextResult) result;
       for (String line : textResult.lines()) {
         out.println(line);
       }
-    } else if (result instanceof TabularResult tabularResult) {
-      formatTabular(tabularResult, out);
+    } else if (result instanceof TabularResult) {
+      formatTabular((TabularResult) result, out);
     } else {
       throw new IllegalArgumentException("Unknown CommandResult type: " + result.getClass());
     }

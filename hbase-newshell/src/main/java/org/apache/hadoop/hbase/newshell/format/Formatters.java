@@ -26,10 +26,15 @@ public final class Formatters {
   }
 
   public static Formatter forFormat(OutputFormat format) {
-    return switch (format) {
-      case JSON -> new JsonFormatter();
-      case CSV -> new CsvFormatter();
-      case TEXT -> new DefaultFormatter();
-    };
+    switch (format) {
+      case JSON:
+        return new JsonFormatter();
+      case CSV:
+        return new CsvFormatter();
+      case TEXT:
+        return new DefaultFormatter();
+      default:
+        throw new IllegalArgumentException("Unknown OutputFormat: " + format);
+    }
   }
 }
