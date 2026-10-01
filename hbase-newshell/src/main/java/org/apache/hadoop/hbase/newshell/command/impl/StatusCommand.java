@@ -18,6 +18,7 @@
 package org.apache.hadoop.hbase.newshell.command.impl;
 
 import java.io.IOException;
+import java.util.List;
 import org.apache.hadoop.hbase.newshell.command.CommandResult;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
 import org.apache.hadoop.hbase.newshell.command.ShellCommand;
@@ -49,7 +50,7 @@ public final class StatusCommand implements ShellCommand {
   @Override
   public CommandResult execute(ParsedCommand command, ExecutionContext context)
     throws ShellCommandException, IOException {
-    java.util.List<Object> positionals = command.positionalArgs();
+    List<Object> positionals = command.positionalArgs();
     String format = positionals.isEmpty() ? "summary" : String.valueOf(positionals.get(0));
     StatusView status = context.admin().status();
     if (format.equalsIgnoreCase(DETAILED)) {

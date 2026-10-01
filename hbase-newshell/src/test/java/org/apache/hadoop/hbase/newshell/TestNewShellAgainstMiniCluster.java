@@ -34,6 +34,7 @@ import org.apache.hadoop.hbase.client.Admin;
 import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Table;
+import org.apache.hadoop.hbase.client.TableDescriptor;
 import org.apache.hadoop.hbase.newshell.command.CommandRegistry;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
 import org.apache.hadoop.hbase.newshell.command.impl.AddPeerCommand;
@@ -192,7 +193,7 @@ public class TestNewShellAgainstMiniCluster {
     String tableName = "newshell_typed_multi_family";
     runScript("create '" + tableName + "', {NAME => 'f1'}, {NAME => 'f2'}", "exit");
     assertTrue(lastOutput.contains("Created table " + tableName));
-    org.apache.hadoop.hbase.client.TableDescriptor descriptor =
+    TableDescriptor descriptor =
       connection.getAdmin().getDescriptor(TableName.valueOf(tableName));
     assertTrue(descriptor.hasColumnFamily(Bytes.toBytes("f1")));
     assertTrue(descriptor.hasColumnFamily(Bytes.toBytes("f2")));
@@ -292,7 +293,7 @@ public class TestNewShellAgainstMiniCluster {
 
     runScript("alter '" + tableName + "', {NAME => 'f1', TTL => 100}", "exit");
     assertTrue(lastOutput.contains("Updating all regions with the new schema..."));
-    org.apache.hadoop.hbase.client.TableDescriptor descriptor =
+    TableDescriptor descriptor =
       connection.getAdmin().getDescriptor(TableName.valueOf(tableName));
     assertTrue(descriptor.getColumnFamily(Bytes.toBytes("f1")).getTimeToLive() == 100);
   }

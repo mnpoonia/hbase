@@ -18,6 +18,7 @@
 package org.apache.hadoop.hbase.newshell.command.impl;
 
 import java.io.IOException;
+import java.util.List;
 import org.apache.hadoop.hbase.newshell.command.CommandResult;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
 import org.apache.hadoop.hbase.newshell.command.ShellCommand;
@@ -46,7 +47,7 @@ public final class MoveCommand implements ShellCommand {
   @Override
   public CommandResult execute(ParsedCommand command, ExecutionContext context)
     throws ShellCommandException, IOException {
-    java.util.List<Object> positionals = command.positionalArgs();
+    List<Object> positionals = command.positionalArgs();
     if (positionals.isEmpty()) {
       throw new ShellCommandException("move requires an encoded region name argument");
     }
