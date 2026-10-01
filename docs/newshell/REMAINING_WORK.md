@@ -1,7 +1,10 @@
 # hbase-newshell: remaining work
 
-Status snapshot as of 2026-09-24. `hbase-newshell` currently ports **161 of 184**
-hbase-shell Ruby commands (`hbase-shell/src/main/ruby/shell/commands/*.rb`).
+Status snapshot as of 2026-10-01. **All 182 of 184** hbase-shell Ruby
+commands (`hbase-shell/src/main/ruby/shell/commands/*.rb`) are ported; the
+remaining 2 (`table_help`, `processlist`) are intentionally skipped — see
+section 8. Command porting itself is complete; what's left is the
+scripts/infrastructure and JRuby-removal cutover work in section 1 onward.
 Groups below follow the same grouping hbase-shell itself uses
 (`hbase-shell/src/main/ruby/shell.rb`). Every command/script entry also lists
 its filesystem path.
