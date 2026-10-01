@@ -67,9 +67,9 @@ import org.apache.hadoop.hbase.shaded.protobuf.generated.VisibilityLabelsProtos.
  * Wraps a real {@link Admin}. Ported, for the pilot commands only, from hbase-shell's
  * {@code hbase/admin.rb} - {@code status} (summary branch only), {@code create} (one or more column
  * families - see {@link ColumnFamilyAttributes} for the supported per-family attributes, and
- * {@link TableAttributes} for the supported table-level attributes including SPLITS - no
- * SPLITALGO/CONFIGURATION/MOB at the table level), {@code disable}, {@code enable} (mirrors
- * {@code disable}'s exists/already-in-that-state guards), {@code drop} (requires the table be
+ * {@link TableAttributes} for the supported table-level attributes including
+ * SPLITS/SPLITS_FILE/NUMREGIONS+SPLITALGO/CONFIGURATION/METADATA), {@code disable}, {@code enable}
+ * (mirrors {@code disable}'s exists/already-in-that-state guards), {@code drop} (requires the table be
  * disabled first, per {@code admin.rb#drop}), {@code list} (regex-filtered table names, per
  * {@code admin.rb#list}), and {@code describe} (enabled/disabled status, table attributes, and
  * column family descriptions, per {@code shell/commands/describe.rb} - the QUOTAS section is not
@@ -99,12 +99,17 @@ public final class DefaultShellAdmin implements ShellAdmin {
   @Override
   public void createTable(String tableName, List<Map<String, Object>> familySpecs,
     Map<String, Object> tableAttributes) throws IOException {
-    TableDescriptorBuilder tableBuilder =
-      TableDescriptorBuilder.newBuilder(TableName.valueOf(tableName));
+    TableName table;
+    try {
+      table = TableName.valueOf(tableName);
+    } catch (IllegalArgumentException e) {
+      throw new IOException("Invalid table name '" + tableName + "': " + e.getMessage(), e);
+    }
+    TableDescriptorBuilder tableBuilder = TableDescriptorBuilder.newBuilder(table);
     for (Map<String, Object> familySpec : familySpecs) {
       tableBuilder.setColumnFamily(ColumnFamilyAttributes.build(familySpec));
     }
-    byte[][] splits = TableAttributes.apply(tableBuilder, tableAttributes);
+    byte[][] splits = TableAttributes.apply(tableBuilder, tableAttributes, admin.getConfiguration());
     if (splits == null) {
       admin.createTable(tableBuilder.build());
     } else {
