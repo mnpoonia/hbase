@@ -48,6 +48,8 @@ public interface ShellTerminal extends AutoCloseable {
   /**
    * Installs a completer to be consulted while the user is editing a line. Optional - backends that
    * don't support completion may make this a no-op.
+   * <p>
+   * Expected to be called once, before any {@link #readLine} call, and never concurrently with it.
    */
   void setCompleter(Completer completer);
 
