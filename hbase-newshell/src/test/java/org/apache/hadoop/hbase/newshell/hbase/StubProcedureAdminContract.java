@@ -17,14 +17,22 @@
  */
 package org.apache.hadoop.hbase.newshell.hbase;
 
+import java.io.IOException;
+import java.util.List;
+
 /**
- * {@link ShellAdmin} with every method of every {@code *Contract} sub-interface defaulted to
- * throw {@link UnsupportedOperationException}, via the per-domain {@code Stub*Contract} mixins.
- * Command-under-test fakes extend this and override only the method(s) their command actually
- * calls, instead of every test re-declaring all of {@link ShellAdmin}'s methods.
+ * {@link ProcedureAdminContract} with every method defaulted to throw
+ * {@link UnsupportedOperationException}. Command-under-test fakes implement this (directly or
+ * via {@link StubShellAdmin}) and override only the method(s) their command actually calls.
  */
-public class StubShellAdmin implements ShellAdmin, StubTableAdminContract,
-  StubNamespaceAdminContract, StubSnapshotAdminContract, StubReplicationPeerContract,
-  StubRsGroupAdminContract, StubClusterOpsContract, StubSecurityAdminContract,
-  StubVisibilityLabelContract, StubQuotaAdminContract, StubProcedureAdminContract {
+public interface StubProcedureAdminContract extends ProcedureAdminContract {
+  @Override
+  default List<List<String>> listProcedures() throws IOException {
+    throw StubContractSupport.notNeeded();
+  }
+
+  @Override
+  default List<String> listLocks() throws IOException {
+    throw StubContractSupport.notNeeded();
+  }
 }

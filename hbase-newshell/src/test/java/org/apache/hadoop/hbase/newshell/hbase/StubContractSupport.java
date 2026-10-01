@@ -18,13 +18,14 @@
 package org.apache.hadoop.hbase.newshell.hbase;
 
 /**
- * {@link ShellAdmin} with every method of every {@code *Contract} sub-interface defaulted to
- * throw {@link UnsupportedOperationException}, via the per-domain {@code Stub*Contract} mixins.
- * Command-under-test fakes extend this and override only the method(s) their command actually
- * calls, instead of every test re-declaring all of {@link ShellAdmin}'s methods.
+ * Shared helper for the {@code Stub*Contract} test mixins so the exception-construction isn't
+ * duplicated across all ten of them.
  */
-public class StubShellAdmin implements ShellAdmin, StubTableAdminContract,
-  StubNamespaceAdminContract, StubSnapshotAdminContract, StubReplicationPeerContract,
-  StubRsGroupAdminContract, StubClusterOpsContract, StubSecurityAdminContract,
-  StubVisibilityLabelContract, StubQuotaAdminContract, StubProcedureAdminContract {
+final class StubContractSupport {
+  private StubContractSupport() {
+  }
+
+  static UnsupportedOperationException notNeeded() {
+    return new UnsupportedOperationException("not needed for this test");
+  }
 }
