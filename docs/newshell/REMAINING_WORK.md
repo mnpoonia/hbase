@@ -28,12 +28,24 @@ for the JRuby shell.
   to `CLASS='org.apache.hadoop.hbase.newshell.NewShellMain'` (mirroring the
   `newshell` case) and drop the `jruby_cmds`/JRuby classpath wiring. This is
   the actual "JRuby removal" cutover for HBASE-30250.
-- [ ] **Preserve `-n` / piped-stdin one-shot semantics.** Real ops scripts
+- [x] **Preserve `-n` / piped-stdin one-shot semantics.** Real ops scripts
   already depend on `hbase shell -n` for one-shot commands piped over
   stdin — see section 3 below (`bin/graceful_stop.sh`,
   `bin/rolling-restart.sh`, both piping `balance_switch`). `bin/hbase
   newshell -n` must behave identically for these to keep working after the
   cutover.
+  — verified 2026-10-05 in the parity container
+  (`HBASE_SHELL_ENGINE=newshell` vs legacy), using the scripts' exact
+  patterns: `echo 'balance_switch false' | hbase shell -n | grep 'Previous
+  balancer state' | awk -F": " '{print $2}'` yields `true` on both engines;
+  plain `echo 'balance_switch true' | hbase shell` (no `-n`, output
+  discarded) exits 0 and takes effect on both. Known differences, neither a
+  regression: (1) newshell writes its `newshell> ` prompt to stdout when
+  stdin is piped (legacy writes none), harmless to the `grep`/`awk` above;
+  (2) `rolling-restart.sh:205`'s `| tail -1` returns the prompt text, not the
+  balancer state, on BOTH engines, so that script line is already broken on
+  the legacy shell — separate fix to the script. Default engine is still
+  legacy until `bin/hbase shell` is repointed (next item).
 - [x] **Expand `dev-support/hbase_docker/shell-parity-corpus.tsv`** with one
   entry per newly-ported command (see
   `dev-support/hbase_docker/verify-shell-parity.sh`), so every command lands
