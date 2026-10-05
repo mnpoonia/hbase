@@ -17,23 +17,30 @@
  */
 package org.apache.hadoop.hbase.newshell.hbase;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Admin;
+import org.apache.hadoop.hbase.client.ColumnFamilyDescriptorBuilder;
 import org.apache.hadoop.hbase.client.TableDescriptor;
+import org.apache.hadoop.hbase.client.TableDescriptorBuilder;
 import org.apache.hadoop.hbase.testclassification.SmallTests;
+import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 
 @Tag(SmallTests.TAG)
 public class DefaultShellAdminTest {
@@ -85,5 +92,44 @@ public class DefaultShellAdminTest {
       Collections.singletonList(Collections.<String, Object> singletonMap("NAME", "f1"));
     shellAdmin.createTable("t1", families, Collections.<String, Object> emptyMap());
     verify(admin).createTable(any(TableDescriptor.class));
+  }
+
+  private TableDescriptor twoFamilyTable() {
+    return TableDescriptorBuilder.newBuilder(TableName.valueOf("t"))
+      .setColumnFamily(ColumnFamilyDescriptorBuilder.of("f1"))
+      .setColumnFamily(ColumnFamilyDescriptorBuilder.of("f2")).build();
+  }
+
+  @Test
+  public void alterMethodDeleteDropsFamily() throws IOException {
+    when(admin.tableExists(TableName.valueOf("t"))).thenReturn(true);
+    when(admin.getDescriptor(TableName.valueOf("t"))).thenReturn(twoFamilyTable());
+    Map<String, Object> spec = new HashMap<>();
+    spec.put("NAME", "f1");
+    spec.put("METHOD", "delete");
+
+    shellAdmin.alterTable("t", Collections.singletonList(spec));
+
+    ArgumentCaptor<TableDescriptor> captor = ArgumentCaptor.forClass(TableDescriptor.class);
+    verify(admin).modifyTable(captor.capture());
+    assertEquals(1, captor.getValue().getColumnFamilyCount());
+    assertTrue(captor.getValue().hasColumnFamily(Bytes.toBytes("f2")));
+  }
+
+  @Test
+  public void alterRejectsUnknownMethodAndDeleteWithExtraAttributes() throws IOException {
+    when(admin.tableExists(TableName.valueOf("t"))).thenReturn(true);
+    when(admin.getDescriptor(TableName.valueOf("t"))).thenReturn(twoFamilyTable());
+    Map<String, Object> bogus = new HashMap<>();
+    bogus.put("NAME", "f1");
+    bogus.put("METHOD", "add");
+    assertThrows(IOException.class,
+      () -> shellAdmin.alterTable("t", Collections.singletonList(bogus)));
+    Map<String, Object> extra = new HashMap<>();
+    extra.put("NAME", "f1");
+    extra.put("METHOD", "delete");
+    extra.put("TTL", 5L);
+    assertThrows(IOException.class,
+      () -> shellAdmin.alterTable("t", Collections.singletonList(extra)));
   }
 }

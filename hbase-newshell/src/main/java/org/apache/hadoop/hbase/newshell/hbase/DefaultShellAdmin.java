@@ -249,6 +249,17 @@ public final class DefaultShellAdmin implements ShellAdmin {
         throw new IOException(
           "Column family '" + name + "' does not exist on table '" + tableName + "'");
       }
+      Object method = familySpec.get("METHOD");
+      if (method != null) {
+        if (!"delete".equalsIgnoreCase(method.toString())) {
+          throw new IOException("Unsupported METHOD '" + method + "' (only 'delete' is supported)");
+        }
+        if (familySpec.size() > 2) {
+          throw new IOException("METHOD => 'delete' takes only NAME, got: " + familySpec.keySet());
+        }
+        tableBuilder.removeColumnFamily(familyName);
+        continue;
+      }
       ColumnFamilyDescriptorBuilder familyBuilder =
         ColumnFamilyDescriptorBuilder.newBuilder(existingFamily);
       ColumnFamilyAttributes.applyAttributes(familyBuilder, familySpec);

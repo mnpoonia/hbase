@@ -32,8 +32,8 @@ import org.apache.yetus.audience.InterfaceAudience;
  * Ported, minimal slice, from hbase-shell's {@code shell/commands/alter.rb}: one table name plus
  * one or more column family attribute hash literals, each requiring {@code NAME} to identify an
  * existing column family on the table (e.g. {@code alter 't1', {NAME => 'f1', TTL => 100}}).
- * Adding/deleting column families, table-scope attributes (MAX_FILESIZE, etc.), and coprocessors
- * are explicitly not ported for this slice.
+ * {@code METHOD => 'delete'} drops the named family. Adding column families, table-scope attributes
+ * (MAX_FILESIZE, etc.), and coprocessors are explicitly not ported for this slice.
  */
 @InterfaceAudience.Private
 public final class AlterCommand implements ShellCommand {
@@ -45,7 +45,7 @@ public final class AlterCommand implements ShellCommand {
   @Override
   public String help() {
     return "alter 'table', {NAME => 'family', TTL => N} - modify an existing column family's "
-      + "attributes";
+      + "attributes; {NAME => 'family', METHOD => 'delete'} - drop it";
   }
 
   @Override
