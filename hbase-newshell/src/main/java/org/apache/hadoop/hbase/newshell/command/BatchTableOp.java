@@ -52,19 +52,23 @@ public final class BatchTableOp {
     }
     DestructiveBatchConfirm.confirm(context, command, commandName, tables);
     List<String> failed = new ArrayList<>();
+    IOException firstFailure = null;
     for (String table : tables) {
       try {
         action.apply(admin, table);
       } catch (IOException e) {
-        failed.add(table);
+        failed.add(table + " (" + e.getMessage() + ")");
+        if (firstFailure == null) {
+          firstFailure = e;
+        }
       }
     }
-    List<String> lines = new ArrayList<>();
-    lines.add((tables.size() - failed.size()) + " tables successfully " + pastParticiple);
-    if (!failed.isEmpty()) {
-      lines.add(failed.size() + " tables not " + pastParticiple + " due to an exception: "
-        + String.join(",", failed));
+    String summary = (tables.size() - failed.size()) + " tables successfully " + pastParticiple;
+    if (failed.isEmpty()) {
+      return TextResult.of(summary);
     }
-    return new TextResult(lines);
+    // Surface partial failure as an error so a -n run exits non-zero instead of reporting success.
+    throw new ShellCommandException(summary + "\n" + failed.size() + " tables not " + pastParticiple
+      + " due to an exception: " + String.join(", ", failed), firstFailure);
   }
 }

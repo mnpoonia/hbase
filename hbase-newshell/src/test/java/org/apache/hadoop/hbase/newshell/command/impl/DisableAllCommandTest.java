@@ -19,6 +19,7 @@ package org.apache.hadoop.hbase.newshell.command.impl;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -28,6 +29,7 @@ import java.util.Collections;
 import java.util.List;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
 import org.apache.hadoop.hbase.newshell.command.SessionOptions;
+import org.apache.hadoop.hbase.newshell.command.ShellCommandException;
 import org.apache.hadoop.hbase.newshell.command.TextResult;
 import org.apache.hadoop.hbase.newshell.command.UserAbortException;
 import org.apache.hadoop.hbase.newshell.hbase.StubShellAdmin;
@@ -44,6 +46,7 @@ public class DisableAllCommandTest {
   private static final class RecordingShellAdmin extends StubShellAdmin {
     private List<String> tableNames = Collections.emptyList();
     private final List<String> disabled = new ArrayList<>();
+    private String failingTable;
 
     @Override
     public List<String> listTables(String regex) {
@@ -51,7 +54,10 @@ public class DisableAllCommandTest {
     }
 
     @Override
-    public void disableTable(String tableName) {
+    public void disableTable(String tableName) throws java.io.IOException {
+      if (tableName.equals(failingTable)) {
+        throw new java.io.IOException("boom on " + tableName);
+      }
       disabled.add(tableName);
     }
   }
@@ -99,5 +105,18 @@ public class DisableAllCommandTest {
     TextResult result = (TextResult) command.execute(parsed, noYes);
     assertEquals(Arrays.asList("t1"), admin.disabled);
     assertEquals(Arrays.asList("1 tables successfully disabled"), result.lines());
+  }
+
+  @Test
+  public void partialFailureIsReportedAsErrorWithCause() throws Exception {
+    admin.tableNames = Arrays.asList("t1", "t2", "t3");
+    admin.failingTable = "t2";
+    ParsedCommand parsed = ShellLineParser.parse("disable_all 't.*'");
+    ShellCommandException e =
+      assertThrows(ShellCommandException.class, () -> command.execute(parsed, context));
+    assertEquals(Arrays.asList("t1", "t3"), admin.disabled);
+    assertTrue(e.getMessage().contains("2 tables successfully disabled"), e.getMessage());
+    assertTrue(e.getMessage().contains("t2 (boom on t2)"), e.getMessage());
+    assertEquals("boom on t2", e.getCause().getMessage());
   }
 }

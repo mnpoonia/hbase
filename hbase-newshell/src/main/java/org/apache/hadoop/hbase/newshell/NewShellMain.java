@@ -195,7 +195,8 @@ public final class NewShellMain {
       LOG.warn("Unchecked exception while executing command '{}'", parsed.commandName(), e);
       printError(context, out,
         e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName(), e);
-      return ExitCodes.CLIENT_ERROR;
+      // Streaming output wraps scan IOExceptions in unchecked ones; keep the server/client split.
+      return ErrorMapper.exitCodeFor(e);
     }
   }
 

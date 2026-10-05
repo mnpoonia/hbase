@@ -47,4 +47,18 @@ public class ErrorMapperTest {
   public void mapsUserAbort() {
     assertEquals(ExitCodes.USER_ABORT, ErrorMapper.exitCodeFor(new UserAbortException("nope")));
   }
+
+  @Test
+  public void mapsIoExceptionWrappedByUncheckedExceptions() {
+    assertEquals(ExitCodes.SERVER_ERROR,
+      ErrorMapper.exitCodeFor(new java.io.UncheckedIOException(new IOException("rs down"))));
+    assertEquals(ExitCodes.SERVER_ERROR,
+      ErrorMapper.exitCodeFor(new IllegalStateException("scan failed", new IOException("rpc"))));
+  }
+
+  @Test
+  public void mapsPlainRuntimeExceptionAsClient() {
+    assertEquals(ExitCodes.CLIENT_ERROR,
+      ErrorMapper.exitCodeFor(new IllegalArgumentException("x")));
+  }
 }

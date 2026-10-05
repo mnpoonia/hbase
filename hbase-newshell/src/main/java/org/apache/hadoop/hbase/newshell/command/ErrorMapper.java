@@ -40,7 +40,12 @@ public final class ErrorMapper {
       return ((ShellCommandException) thrown).exitCode();
     }
     Throwable cursor = thrown;
+    boolean ioInChain = false;
     while (cursor != null) {
+      if (cursor instanceof ShellCommandException) {
+        return ((ShellCommandException) cursor).exitCode();
+      }
+      ioInChain |= cursor instanceof IOException;
       if (cursor instanceof AccessDeniedException) {
         return ExitCodes.AUTH_ERROR;
       }
@@ -55,7 +60,9 @@ public final class ErrorMapper {
       }
       cursor = cursor.getCause();
     }
-    if (thrown instanceof IOException) {
+    // Includes IOExceptions wrapped by streaming code (UncheckedIOException,
+    // IllegalStateException).
+    if (ioInChain) {
       return ExitCodes.SERVER_ERROR;
     }
     return ExitCodes.CLIENT_ERROR;
