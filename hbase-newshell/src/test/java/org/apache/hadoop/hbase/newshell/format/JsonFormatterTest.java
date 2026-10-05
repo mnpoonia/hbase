@@ -43,6 +43,13 @@ public class JsonFormatterTest {
   }
 
   @Test
+  public void errorEmitsJsonEnvelope() {
+    StringWriter buf = new StringWriter();
+    new JsonFormatter().formatError("boom \"x\"", new PrintWriter(buf));
+    assertEquals("{\"status\":\"error\",\"error\":\"boom \\\"x\\\"\"}", buf.toString().trim());
+  }
+
+  @Test
   public void tabularResultEmitsNdjsonThenTrailer() {
     StringWriter buf = new StringWriter();
     TabularResult result = new TabularResult(Arrays.asList("ROW", "CELL"),

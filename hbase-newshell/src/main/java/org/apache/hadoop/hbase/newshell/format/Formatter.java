@@ -25,4 +25,9 @@ import org.apache.yetus.audience.InterfaceAudience;
 @InterfaceAudience.Private
 public interface Formatter {
   void format(String commandName, CommandResult result, PrintWriter out);
+
+  /** Renders a command failure; machine-readable formats override this to stay parseable. */
+  default void formatError(String message, PrintWriter out) {
+    out.println("ERROR: " + message);
+  }
 }

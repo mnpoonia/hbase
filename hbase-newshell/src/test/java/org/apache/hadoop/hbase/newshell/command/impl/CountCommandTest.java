@@ -25,8 +25,10 @@ import java.io.StringWriter;
 import java.util.Arrays;
 import java.util.Map;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
+import org.apache.hadoop.hbase.newshell.command.SessionOptions;
 import org.apache.hadoop.hbase.newshell.command.ShellCommandException;
 import org.apache.hadoop.hbase.newshell.command.TextResult;
+import org.apache.hadoop.hbase.newshell.format.OutputFormat;
 import org.apache.hadoop.hbase.newshell.hbase.ShellTable;
 import org.apache.hadoop.hbase.newshell.hbase.ShellTable.CountProgressListener;
 import org.apache.hadoop.hbase.newshell.hbase.ShellTableFactory;
@@ -99,5 +101,17 @@ public class CountCommandTest {
     table.lastProgressListener.onProgress(2L, "r2");
 
     assertEquals("Current count: 2, row: r2" + System.lineSeparator(), outBuffer.toString());
+  }
+
+  @Test
+  public void progressLinesAreSuppressedInJsonMode() throws Exception {
+    StringWriter jsonOut = new StringWriter();
+    ExecutionContext jsonContext = new ExecutionContext(new StubShellAdmin(), tables,
+      new PrintWriter(jsonOut), new SessionOptions(OutputFormat.JSON, false, false, false, false));
+    command.execute(ShellLineParser.parse("count 't1'"), jsonContext);
+
+    table.lastProgressListener.onProgress(2L, "r2");
+
+    assertEquals("", jsonOut.toString());
   }
 }

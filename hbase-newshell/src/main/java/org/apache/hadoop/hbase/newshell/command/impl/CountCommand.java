@@ -25,6 +25,7 @@ import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
 import org.apache.hadoop.hbase.newshell.command.ShellCommand;
 import org.apache.hadoop.hbase.newshell.command.ShellCommandException;
 import org.apache.hadoop.hbase.newshell.command.TextResult;
+import org.apache.hadoop.hbase.newshell.format.OutputFormat;
 import org.apache.hadoop.hbase.newshell.parser.ParsedCommand;
 import org.apache.yetus.audience.InterfaceAudience;
 
@@ -59,9 +60,13 @@ public final class CountCommand implements ShellCommand {
     }
     String tableName = String.valueOf(command.positionalArgs().get(0));
     PrintWriter out = context.out();
+    // Progress lines are human-oriented; keep them out of json/csv output so it stays parseable.
+    boolean showProgress = context.options().outputFormat() == OutputFormat.TEXT;
     long count = context.tables().forTable(tableName).count(command.options(), (cnt, row) -> {
-      out.println("Current count: " + cnt + ", row: " + row);
-      out.flush();
+      if (showProgress) {
+        out.println("Current count: " + cnt + ", row: " + row);
+        out.flush();
+      }
     });
     return TextResult.of(count + " row(s)");
   }

@@ -40,6 +40,18 @@ import org.apache.yetus.audience.InterfaceAudience;
 @InterfaceAudience.Private
 public final class JsonFormatter implements Formatter {
   @Override
+  public void formatError(String message, PrintWriter out) {
+    Map<String, Object> envelope = new LinkedHashMap<>();
+    envelope.put("status", "error");
+    envelope.put("error", message);
+    try {
+      out.println(JsonMapper.writeObjectAsString(envelope));
+    } catch (java.io.IOException e) {
+      out.println("ERROR: " + message);
+    }
+  }
+
+  @Override
   public void format(String commandName, CommandResult result, PrintWriter out) {
     try {
       if (result instanceof TextResult) {

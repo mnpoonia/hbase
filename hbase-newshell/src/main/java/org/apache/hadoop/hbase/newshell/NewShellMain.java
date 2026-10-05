@@ -183,19 +183,19 @@ public final class NewShellMain {
     try {
       parsed = ShellLineParser.parse(line);
     } catch (ShellParseException e) {
-      printError(context, out, e.getMessage(), e);
+      printError(context, formatter, out, e.getMessage(), e);
       return ExitCodes.CLIENT_ERROR;
     }
     ShellCommand command = registry.lookup(parsed.commandName()).orElse(null);
     if (command == null) {
-      printError(context, out, "unknown command '" + parsed.commandName() + "'", null);
+      printError(context, formatter, out, "unknown command '" + parsed.commandName() + "'", null);
       return ExitCodes.CLIENT_ERROR;
     }
     try {
       formatter.format(command.name(), command.execute(parsed, context), out);
       return ExitCodes.SUCCESS;
     } catch (ShellCommandException | IOException e) {
-      printError(context, out,
+      printError(context, formatter, out,
         e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName(), e);
       return ErrorMapper.exitCodeFor(e);
     } catch (RuntimeException e) {
@@ -203,17 +203,17 @@ public final class NewShellMain {
       // exceptions, but attribute translation / TableName validation / Admin calls
       // can still throw. Catch here so one bad command cannot kill the session.
       LOG.warn("Unchecked exception while executing command '{}'", parsed.commandName(), e);
-      printError(context, out,
+      printError(context, formatter, out,
         e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName(), e);
       // Streaming output wraps scan IOExceptions in unchecked ones; keep the server/client split.
       return ErrorMapper.exitCodeFor(e);
     }
   }
 
-  private static void printError(ExecutionContext context, PrintWriter out, String message,
-    Throwable cause) {
+  private static void printError(ExecutionContext context, Formatter formatter, PrintWriter out,
+    String message, Throwable cause) {
     if (!context.options().quiet()) {
-      out.println("ERROR: " + message);
+      formatter.formatError(message, out);
       if (context.options().verbose() && cause != null) {
         cause.printStackTrace(out);
       }
