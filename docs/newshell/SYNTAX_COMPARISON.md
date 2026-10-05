@@ -8,7 +8,11 @@ For each pilot command, three equivalent forms of the same call:
 
 (2) and (3) both work in newshell today and populate the same `options` map — pick whichever reads better; they are not a staged migration, just two accepted spellings for the same pilot commands.
 
-Keys are case-sensitive in both (2) and (3), matching real Ruby (see "Known grammar/syntax limitations" / case-sensitivity note elsewhere in these docs) — `NAME`, not `name`.
+Hash-literal keys (2) are case-sensitive, matching real Ruby — `NAME`, not `name`. Native flag keys (3) are upper-cased by the parser, so `--versions=3` and `--VERSIONS=3` are equivalent.
+
+**Unsupported options fail loudly.** `get`, `put`, `scan`, `count` and `deleteall` only accept the options shown below; anything else (`REVERSED`, `RAW`, `ROWPREFIXFILTER` on `scan`, `ATTRIBUTES`, a non-string `FILTER`, ...) raises an error instead of being ignored.
+
+**`alter` is a partial port.** It modifies the attributes of existing families and drops one with `METHOD => 'delete'`. Adding a family and table-scope attributes (`MAX_FILESIZE`, coprocessors, ...) are not ported yet.
 
 ## create
 
