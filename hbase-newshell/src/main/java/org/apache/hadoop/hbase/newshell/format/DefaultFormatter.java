@@ -28,8 +28,8 @@ import org.apache.yetus.audience.InterfaceAudience;
 
 /**
  * Plain-text renderer for the {@link CommandResult} shapes. Uses {@code instanceof} rather than a
- * pattern-matching {@code switch} because this module's release target is Java 8, which has
- * neither pattern matching nor switch expressions.
+ * pattern-matching {@code switch} because this module's release target is Java 8, which has neither
+ * pattern matching nor switch expressions.
  */
 @InterfaceAudience.Private
 public final class DefaultFormatter implements Formatter {

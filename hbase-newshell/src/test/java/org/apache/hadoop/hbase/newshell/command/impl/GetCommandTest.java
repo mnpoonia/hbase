@@ -89,8 +89,8 @@ public class GetCommandTest {
 
   @Test
   public void passesFilterAndTimerangeOptionsThrough() throws Exception {
-    ParsedCommand parsed = ShellLineParser
-      .parse("get 't1', 'r1', {FILTER => \"ValueFilter(=, 'binary:abc')\", TIMERANGE => [100, 200]}");
+    ParsedCommand parsed = ShellLineParser.parse(
+      "get 't1', 'r1', {FILTER => \"ValueFilter(=, 'binary:abc')\", TIMERANGE => [100, 200]}");
     command.execute(parsed, context);
 
     assertEquals("ValueFilter(=, 'binary:abc')", table.lastOptions.get("FILTER"));

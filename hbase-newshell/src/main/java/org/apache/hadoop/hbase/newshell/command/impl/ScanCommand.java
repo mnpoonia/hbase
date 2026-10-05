@@ -63,8 +63,8 @@ public final class ScanCommand implements ShellCommand {
     ScanResult result = context.tables().forTable(tableName).scan(options);
     return new StreamingTabularResult(HEADER, rowConsumer -> result.forEachRow(row -> {
       for (CellView cell : row.cells()) {
-        rowConsumer
-          .accept(Arrays.asList(row.row(), CellViews.column(cell) + " " + CellViews.formatCell(cell)));
+        rowConsumer.accept(
+          Arrays.asList(row.row(), CellViews.column(cell) + " " + CellViews.formatCell(cell)));
       }
     }));
   }

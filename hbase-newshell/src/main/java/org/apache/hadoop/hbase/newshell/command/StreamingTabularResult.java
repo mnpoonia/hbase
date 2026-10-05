@@ -23,10 +23,10 @@ import java.util.function.Consumer;
 import org.apache.yetus.audience.InterfaceAudience;
 
 /**
- * A header plus data rows pushed to a {@code org.apache.hadoop.hbase.newshell.format.Formatter}
- * one row at a time via {@link #forEachRow}, instead of a fully materialized
- * {@link TabularResult} - for producers (like {@code scan}) whose result set must not be buffered
- * in memory before output starts.
+ * A header plus data rows pushed to a {@code org.apache.hadoop.hbase.newshell.format.Formatter} one
+ * row at a time via {@link #forEachRow}, instead of a fully materialized {@link TabularResult} -
+ * for producers (like {@code scan}) whose result set must not be buffered in memory before output
+ * starts.
  */
 @InterfaceAudience.Private
 public final class StreamingTabularResult implements CommandResult {

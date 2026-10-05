@@ -42,8 +42,8 @@ public class CsvFormatterTest {
   @Test
   public void streamingTabularResultMatchesTabularResultOutput() {
     StringWriter buf = new StringWriter();
-    StreamingTabularResult result = new StreamingTabularResult(Arrays.asList("A", "B"),
-      rowConsumer -> {
+    StreamingTabularResult result =
+      new StreamingTabularResult(Arrays.asList("A", "B"), rowConsumer -> {
         rowConsumer.accept(Arrays.asList("1", "x,y"));
         rowConsumer.accept(Arrays.asList("2", "z"));
       });

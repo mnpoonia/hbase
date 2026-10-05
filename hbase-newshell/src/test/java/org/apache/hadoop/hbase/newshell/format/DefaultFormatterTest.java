@@ -42,8 +42,8 @@ public class DefaultFormatterTest {
   @Test
   public void streamingTabularResultMatchesTabularResultOutput() {
     StringWriter buf = new StringWriter();
-    StreamingTabularResult result = new StreamingTabularResult(Arrays.asList("ROW", "COLUMN+CELL"),
-      rowConsumer -> {
+    StreamingTabularResult result =
+      new StreamingTabularResult(Arrays.asList("ROW", "COLUMN+CELL"), rowConsumer -> {
         rowConsumer.accept(Arrays.asList("r1", "cell1"));
         rowConsumer.accept(Arrays.asList("r2", "cell2"));
       });

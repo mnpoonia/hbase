@@ -59,8 +59,8 @@ public class JsonFormatterTest {
   @Test
   public void streamingTabularResultEmitsNdjsonThenTrailer() {
     StringWriter buf = new StringWriter();
-    StreamingTabularResult result = new StreamingTabularResult(Arrays.asList("ROW", "CELL"),
-      rowConsumer -> {
+    StreamingTabularResult result =
+      new StreamingTabularResult(Arrays.asList("ROW", "CELL"), rowConsumer -> {
         rowConsumer.accept(Arrays.asList("r1", "v1"));
         rowConsumer.accept(Arrays.asList("r2", "v2"));
       });

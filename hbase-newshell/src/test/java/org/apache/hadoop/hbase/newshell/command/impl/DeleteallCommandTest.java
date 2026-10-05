@@ -112,8 +112,7 @@ public class DeleteallCommandTest {
 
   @Test
   public void throwsWhenTimestampNotNumeric() throws Exception {
-    ParsedCommand parsed =
-      ShellLineParser.parse("deleteall 't1', 'r1', 'f1:c1', 'notanumber'");
+    ParsedCommand parsed = ShellLineParser.parse("deleteall 't1', 'r1', 'f1:c1', 'notanumber'");
     assertThrows(ShellCommandException.class, () -> command.execute(parsed, context));
   }
 }

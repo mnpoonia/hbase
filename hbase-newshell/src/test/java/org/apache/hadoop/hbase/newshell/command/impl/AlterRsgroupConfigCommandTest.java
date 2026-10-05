@@ -61,8 +61,7 @@ public class AlterRsgroupConfigCommandTest {
     Rec a = new Rec();
     ExecutionContext context =
       new ExecutionContext(a, new StubShellTableFactory(), new PrintWriter(new StringWriter()));
-    assertThrows(ShellCommandException.class,
-      () -> new AlterRsgroupConfigCommand().execute(
-        ShellLineParser.parse("alter_rsgroup_config 'grp1', 'notahash'"), context));
+    assertThrows(ShellCommandException.class, () -> new AlterRsgroupConfigCommand()
+      .execute(ShellLineParser.parse("alter_rsgroup_config 'grp1', 'notahash'"), context));
   }
 }

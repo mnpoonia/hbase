@@ -93,8 +93,8 @@ public class ScanCommandTest {
 
   @Test
   public void passesFilterAndTimerangeOptionsThrough() throws Exception {
-    ParsedCommand parsed =
-      ShellLineParser.parse("scan 't1', {FILTER => \"PrefixFilter('row')\", TIMERANGE => [100, 200]}");
+    ParsedCommand parsed = ShellLineParser
+      .parse("scan 't1', {FILTER => \"PrefixFilter('row')\", TIMERANGE => [100, 200]}");
     StreamingTabularResult result = (StreamingTabularResult) command.execute(parsed, context);
     result.forEachRow(row -> {
     });
