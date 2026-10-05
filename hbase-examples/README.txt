@@ -5,7 +5,9 @@ Example code.
 
 * org.apache.hadoop.hbase.mapreduce.IndexBuilder
     Demonstrates map/reduce with a table as the source and other tables as the sink.
-    You can generate sample data for this MR job via hbase-examples/src/main/ruby/index-builder-setup.rb.
+    You can generate sample data for this MR job by running the command file
+    hbase-examples/src/main/shell/index-builder-setup.txt through the shell, e.g.:
+      ./bin/hbase newshell hbase-examples/src/main/shell/index-builder-setup.txt
 
 
 * Thrift examples

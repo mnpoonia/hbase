@@ -430,22 +430,32 @@ candidates to compose into `regionserver-prestop.jsh` /
 Separate from the shell/JRuby-removal effort, but still Ruby scripts living
 in this repo, so tracked here for completeness.
 
-- [ ] `DemoClient.rb` — `hbase-examples/src/main/ruby/DemoClient.rb`. Plain
+- [x] `DemoClient.rb` — `hbase-examples/src/main/ruby/DemoClient.rb`. Plain
   Ruby (not JRuby) Thrift client example; requires the standalone `thrift`
   gem and the generated `gen-rb` bindings, not `bin/hbase`. Marked
   `TODO: fix rb/php/py examples to actually work` (HBASE-3630) in its own
   header — already broken/unmaintained independent of newshell.
-- [ ] `gen-rb/hbase.rb`, `gen-rb/hbase_constants.rb`, `gen-rb/hbase_types.rb`
+  — covered: the Java equivalents already exist and are maintained:
+  `hbase-examples/src/main/java/org/apache/hadoop/hbase/thrift/DemoClient.java`
+  (Thrift1) and `.../thrift2/DemoClient.java` (Thrift2). The Ruby file is
+  left in place; no new Java needed.
+- [x] `gen-rb/hbase.rb`, `gen-rb/hbase_constants.rb`, `gen-rb/hbase_types.rb`
   — `hbase-examples/src/main/ruby/gen-rb/`. Thrift-generated bindings
   consumed by `DemoClient.rb`. Not hand-maintained; regenerate from the
   Thrift IDL rather than porting.
-- [ ] `index-builder-setup.rb` — `hbase-examples/src/main/ruby/index-builder-setup.rb`.
+  — covered: the Java client (`thrift/DemoClient.java`) uses Java bindings
+  generated from the same IDL by the `hbase-thrift` build; nothing to write.
+- [x] `index-builder-setup.rb` — `hbase-examples/src/main/ruby/index-builder-setup.rb`.
   Not a JRuby program — it's a batch of shell commands (`create`, `put`)
   meant to be fed into an interactive/non-interactive **hbase shell**
   session to seed sample data for the IndexBuilder example. Both commands
   it uses are already ported (`create`, `put`), so it should work
   unmodified once one-shot script-file invocation (section 1) is
   supported by newshell.
+  — done: plain command file
+  `hbase-examples/src/main/shell/index-builder-setup.txt` (4 `create` + 9
+  `put`, the Ruby `each` loop unrolled), run with `bin/hbase newshell <file>`.
+  README and `IndexBuilder` javadoc updated. The Ruby file is left in place.
 
 ## 5. External consumer: `k8s_hbase` JRuby scripts
 

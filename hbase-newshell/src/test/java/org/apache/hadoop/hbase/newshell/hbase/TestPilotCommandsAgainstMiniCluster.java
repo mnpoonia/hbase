@@ -479,7 +479,8 @@ public class TestPilotCommandsAgainstMiniCluster {
     }
 
     ShellTableFactory factory = new DefaultShellTableFactory(connection);
-    assertEquals(3L, factory.forTable(tableName).count(Collections.emptyMap()));
+    assertEquals(3L, factory.forTable(tableName).count(Collections.emptyMap(), (count, row) -> {
+    }));
   }
 
   @Test

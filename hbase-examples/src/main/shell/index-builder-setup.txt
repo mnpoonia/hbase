@@ -1,0 +1,37 @@
+#
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+# Set up sample data for the IndexBuilder example.
+# Run with:  bin/hbase newshell hbase-examples/src/main/shell/index-builder-setup.txt
+#       or:  bin/hbase shell -n hbase-examples/src/main/shell/index-builder-setup.txt
+create 'people', 'attributes'
+create 'people-email', 'INDEX'
+create 'people-phone', 'INDEX'
+create 'people-name', 'INDEX'
+
+put 'people', '1', 'attributes:name', 'jenny'
+put 'people', '1', 'attributes:email', 'jenny@example.com'
+put 'people', '1', 'attributes:phone', '867-5309'
+
+put 'people', '2', 'attributes:name', 'alice'
+put 'people', '2', 'attributes:email', 'alice@example.com'
+put 'people', '2', 'attributes:phone', '555-1234'
+
+put 'people', '3', 'attributes:name', 'kevin'
+put 'people', '3', 'attributes:email', 'kevinpet@example.com'
+put 'people', '3', 'attributes:phone', '555-1212'

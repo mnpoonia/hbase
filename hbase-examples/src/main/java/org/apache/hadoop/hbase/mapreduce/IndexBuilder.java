@@ -52,7 +52,9 @@ import org.apache.yetus.audience.InterfaceAudience;
  *  TABLE_NAME COLUMN_FAMILY ATTR [ATTR ...]</strong></tt>
  * </p>
  * <p>
- * To run with the sample data provided in index-builder-setup.rb, use the arguments
+ * To run with the sample data provided in index-builder-setup.txt (create it with
+ * <tt>bin/hbase newshell hbase-examples/src/main/shell/index-builder-setup.txt</tt>), use the
+ * arguments
  * <strong><tt>people attributes name email phone</tt></strong>.
  * </p>
  * <p>
