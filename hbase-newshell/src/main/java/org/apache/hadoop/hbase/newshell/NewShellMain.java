@@ -90,7 +90,7 @@ public final class NewShellMain {
       return;
     }
 
-    boolean interactive = launch.scriptFile == null && !launch.exitOnFirstError;
+    boolean interactive = isInteractive(launch, System.console() != null);
     SessionOptions options = new SessionOptions(launch.outputFormat, launch.verbose,
       launch.forceYes, launch.quiet, interactive);
     Formatter formatter = Formatters.forFormat(options.outputFormat());
@@ -110,6 +110,15 @@ public final class NewShellMain {
     if (exitCode != ExitCodes.SUCCESS) {
       System.exit(exitCode);
     }
+  }
+
+  /**
+   * A session is interactive only on a real terminal: piped stdin (as used by graceful_stop.sh and
+   * rolling-restart.sh) must not have its following lines consumed as y/N answers or be preceded by
+   * a prompt on stdout.
+   */
+  static boolean isInteractive(LaunchArgs launch, boolean hasConsole) {
+    return launch.scriptFile == null && !launch.exitOnFirstError && hasConsole;
   }
 
   private static ShellTerminal openTerminal(String scriptFile) throws IOException {
@@ -151,7 +160,8 @@ public final class NewShellMain {
     Formatter formatter, boolean exitOnFirstError) throws IOException {
     PrintWriter out = context.out();
     String line;
-    while ((line = terminal.readLine("newshell> ")) != null) {
+    String prompt = context.options().interactive() ? "newshell> " : "";
+    while ((line = terminal.readLine(prompt)) != null) {
       String trimmed = line.trim();
       if (trimmed.isEmpty() || trimmed.startsWith("#")) {
         continue;

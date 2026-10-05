@@ -308,4 +308,15 @@ public class NewShellMainTest {
     assertTrue(NewShellMain.LaunchArgs.parse(new String[] { "-d" }).verbose);
     assertTrue(NewShellMain.LaunchArgs.parse(new String[] { "--debug" }).verbose);
   }
+
+  @Test
+  public void sessionIsInteractiveOnlyOnARealTerminal() {
+    NewShellMain.LaunchArgs plain = NewShellMain.LaunchArgs.parse(new String[0]);
+    assertTrue(NewShellMain.isInteractive(plain, true));
+    assertFalse(NewShellMain.isInteractive(plain, false));
+    assertFalse(
+      NewShellMain.isInteractive(NewShellMain.LaunchArgs.parse(new String[] { "-n" }), true));
+    assertFalse(
+      NewShellMain.isInteractive(NewShellMain.LaunchArgs.parse(new String[] { "f.ns" }), true));
+  }
 }

@@ -17,6 +17,7 @@
  */
 package org.apache.hadoop.hbase.newshell.command;
 
+import org.apache.hadoop.hbase.newshell.parser.ParsedCommand;
 import org.apache.yetus.audience.InterfaceAudience;
 
 /** Shared parsing helpers for shell command arguments. */
@@ -31,5 +32,18 @@ public final class ArgParsing {
       return (Boolean) value;
     }
     return Boolean.parseBoolean(String.valueOf(value));
+  }
+
+  /**
+   * Rejects surplus positional arguments so that, e.g., {@code truncate 't1', 't2'} fails instead
+   * of silently truncating only {@code t1}.
+   */
+  public static void requireMaxArgs(ParsedCommand command, String commandName, int max)
+    throws ShellCommandException {
+    int actual = command.positionalArgs().size();
+    if (actual > max) {
+      throw new ShellCommandException(commandName + " takes at most " + max
+        + " positional argument(s), got " + actual + ": " + command.positionalArgs());
+    }
   }
 }

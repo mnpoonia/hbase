@@ -18,6 +18,9 @@
 package org.apache.hadoop.hbase.newshell.command.impl;
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
+import org.apache.hadoop.hbase.newshell.command.ArgParsing;
 import org.apache.hadoop.hbase.newshell.command.CommandResult;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
 import org.apache.hadoop.hbase.newshell.command.ShellCommand;
@@ -47,6 +50,7 @@ public final class PutCommand implements ShellCommand {
   @Override
   public CommandResult execute(ParsedCommand command, ExecutionContext context)
     throws ShellCommandException, IOException {
+    ArgParsing.requireMaxArgs(command, "put", 5);
     if (command.positionalArgs().size() < 4) {
       throw new ShellCommandException(
         "put requires a table name, row key, column and value argument");
@@ -55,7 +59,13 @@ public final class PutCommand implements ShellCommand {
     String row = String.valueOf(command.positionalArgs().get(1));
     String column = String.valueOf(command.positionalArgs().get(2));
     String value = String.valueOf(command.positionalArgs().get(3));
-    context.tables().forTable(tableName).put(row, column, value, command.options());
+    Map<String, Object> options = command.options();
+    if (command.positionalArgs().size() == 5) {
+      // Legacy shell form: put 't', 'r', 'cf:c', 'v', <timestamp>
+      options = new HashMap<>(options);
+      options.put("TIMESTAMP", command.positionalArgs().get(4));
+    }
+    context.tables().forTable(tableName).put(row, column, value, options);
     return TextResult.of();
   }
 }
