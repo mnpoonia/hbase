@@ -187,9 +187,8 @@ public class DefaultShellTableTest {
 
     Map<String, Object> options = new HashMap<>();
     options.put("INTERVAL", "many");
-    assertThrows(ShellCommandException.class,
-      () -> shellTable.count(options, (count, row) -> {
-      }));
+    assertThrows(ShellCommandException.class, () -> shellTable.count(options, (count, row) -> {
+    }));
   }
 
   @Test
