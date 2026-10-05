@@ -140,6 +140,14 @@ final class Lexer {
     return new Token(TokenType.IDENT, input.substring(start, pos), start);
   }
 
+  /**
+   * Reads a quoted string following Ruby rules. Single-quoted strings only unescape {@code \\} and
+   * {@code \'}; any other backslash is kept literally, so {@code 'C:\temp'} stays as typed.
+   * Double-quoted strings also unescape {@code \n \t \r \0 \e \a \b \s} and {@code \"}. A
+   * {@code \xNN} sequence is deliberately left intact in both forms so the table layer can decode
+   * it to a raw byte with {@code BinaryStrings.toBytes}; that is the inverse of
+   * {@code Bytes.toStringBinary}, which is how rows and values are printed.
+   */
   private Token readString(char quote) throws ShellParseException {
     int start = pos;
     pos++; // consume opening quote
@@ -150,7 +158,14 @@ final class Lexer {
       }
       char c = input.charAt(pos);
       if (c == '\\' && pos + 1 < input.length()) {
-        value.append(input.charAt(pos + 1));
+        char next = input.charAt(pos + 1);
+        if (next == '\\' || next == quote) {
+          value.append(next);
+        } else if (quote == '"' && escapeFor(next) >= 0) {
+          value.append((char) escapeFor(next));
+        } else {
+          value.append(c).append(next);
+        }
         pos += 2;
       } else if (c == quote) {
         pos++;
@@ -161,6 +176,30 @@ final class Lexer {
       }
     }
     return new Token(TokenType.STRING, value.toString(), start);
+  }
+
+  /** Returns the character a double-quoted {@code \\<c>} escape denotes, or -1 if not an escape. */
+  private static int escapeFor(char c) {
+    switch (c) {
+      case 'n':
+        return '\n';
+      case 't':
+        return '\t';
+      case 'r':
+        return '\r';
+      case '0':
+        return '\0';
+      case 'e':
+        return 0x1B;
+      case 'a':
+        return 0x07;
+      case 'b':
+        return '\b';
+      case 's':
+        return ' ';
+      default:
+        return -1;
+    }
   }
 
   private void skipWhitespace() {

@@ -19,7 +19,6 @@ package org.apache.hadoop.hbase.newshell.hbase;
 
 import java.io.IOException;
 import java.nio.charset.CharacterCodingException;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -72,7 +71,7 @@ public final class DefaultShellTable implements ShellTable {
   @Override
   public GetResult get(String row, Map<String, Object> options)
     throws ShellCommandException, IOException {
-    Get get = new Get(row.getBytes(StandardCharsets.UTF_8));
+    Get get = new Get(BinaryStrings.toBytes(row));
     Object columns = options.get("COLUMN");
     if (columns != null) {
       for (Object column : asList(columns)) {
@@ -116,15 +115,15 @@ public final class DefaultShellTable implements ShellTable {
     if (colonIndex < 0 || colonIndex == column.length() - 1) {
       throw new IOException("Column '" + column + "' must be of the form 'family:qualifier'");
     }
-    byte[] family = column.substring(0, colonIndex).getBytes(StandardCharsets.UTF_8);
-    byte[] qualifier = column.substring(colonIndex + 1).getBytes(StandardCharsets.UTF_8);
-    Put put = new Put(row.getBytes(StandardCharsets.UTF_8));
+    byte[] family = BinaryStrings.toBytes(column.substring(0, colonIndex));
+    byte[] qualifier = BinaryStrings.toBytes(column.substring(colonIndex + 1));
+    Put put = new Put(BinaryStrings.toBytes(row));
     Object timestamp = options.get("TIMESTAMP");
     if (timestamp != null) {
       put.addColumn(family, qualifier, requireNumber(timestamp, "TIMESTAMP").longValue(),
-        value.getBytes(StandardCharsets.UTF_8));
+        BinaryStrings.toBytes(value));
     } else {
-      put.addColumn(family, qualifier, value.getBytes(StandardCharsets.UTF_8));
+      put.addColumn(family, qualifier, BinaryStrings.toBytes(value));
     }
     table.put(put);
   }
@@ -219,7 +218,7 @@ public final class DefaultShellTable implements ShellTable {
   @Override
   public void delete(String row, String column, Long timestamp) throws IOException {
     long ts = timestamp == null ? HConstants.LATEST_TIMESTAMP : timestamp;
-    Delete delete = new Delete(row.getBytes(StandardCharsets.UTF_8), ts);
+    Delete delete = new Delete(BinaryStrings.toBytes(row), ts);
     addDeleteColumn(delete, column, ts, false);
     table.delete(delete);
   }
@@ -232,7 +231,7 @@ public final class DefaultShellTable implements ShellTable {
     if (prefix != null) {
       Object cacheOption = options.get("CACHE");
       int cache = cacheOption == null ? 100 : requireNumber(cacheOption, "CACHE").intValue();
-      byte[] prefixBytes = prefix.toString().getBytes(StandardCharsets.UTF_8);
+      byte[] prefixBytes = BinaryStrings.toBytes(prefix.toString());
       Scan scan = new Scan().setStartStopRowForPrefixScan(prefixBytes);
       List<Delete> batch = new ArrayList<>();
       try (ResultScanner scanner = table.getScanner(scan)) {
@@ -251,7 +250,7 @@ public final class DefaultShellTable implements ShellTable {
       }
       return;
     }
-    Delete delete = new Delete(row.getBytes(StandardCharsets.UTF_8), ts);
+    Delete delete = new Delete(BinaryStrings.toBytes(row), ts);
     addDeleteColumn(delete, column, ts, true);
     table.delete(delete);
   }
@@ -259,8 +258,8 @@ public final class DefaultShellTable implements ShellTable {
   @Override
   public Long getCounter(String row, String column) throws IOException {
     String[] parts = requireFamilyAndQualifier(column);
-    Get get = new Get(row.getBytes(StandardCharsets.UTF_8));
-    get.addColumn(Bytes.toBytes(parts[0]), Bytes.toBytes(parts[1]));
+    Get get = new Get(BinaryStrings.toBytes(row));
+    get.addColumn(BinaryStrings.toBytes(parts[0]), BinaryStrings.toBytes(parts[1]));
     get.readVersions(1);
     Result result = table.get(get);
     return decodeLong(result);
@@ -269,8 +268,8 @@ public final class DefaultShellTable implements ShellTable {
   @Override
   public Long increment(String row, String column, long amount) throws IOException {
     String[] parts = requireFamilyAndQualifier(column);
-    Increment increment = new Increment(row.getBytes(StandardCharsets.UTF_8));
-    increment.addColumn(Bytes.toBytes(parts[0]), Bytes.toBytes(parts[1]), amount);
+    Increment increment = new Increment(BinaryStrings.toBytes(row));
+    increment.addColumn(BinaryStrings.toBytes(parts[0]), BinaryStrings.toBytes(parts[1]), amount);
     Result result = table.increment(increment);
     return decodeLong(result);
   }
@@ -278,9 +277,9 @@ public final class DefaultShellTable implements ShellTable {
   @Override
   public String append(String row, String column, String value) throws IOException {
     String[] parts = requireFamilyAndQualifier(column);
-    Append append = new Append(row.getBytes(StandardCharsets.UTF_8));
-    append.addColumn(Bytes.toBytes(parts[0]), Bytes.toBytes(parts[1]),
-      value.getBytes(StandardCharsets.UTF_8));
+    Append append = new Append(BinaryStrings.toBytes(row));
+    append.addColumn(BinaryStrings.toBytes(parts[0]), BinaryStrings.toBytes(parts[1]),
+      BinaryStrings.toBytes(value));
     Result result = table.append(append);
     if (result.isEmpty()) {
       return null;
@@ -328,12 +327,12 @@ public final class DefaultShellTable implements ShellTable {
     byte[] family;
     byte[] qualifier = null;
     if (colonIndex < 0) {
-      family = column.getBytes(StandardCharsets.UTF_8);
+      family = BinaryStrings.toBytes(column);
     } else {
-      family = column.substring(0, colonIndex).getBytes(StandardCharsets.UTF_8);
+      family = BinaryStrings.toBytes(column.substring(0, colonIndex));
       String qualifierPart = column.substring(colonIndex + 1);
       if (!qualifierPart.isEmpty()) {
-        qualifier = qualifierPart.getBytes(StandardCharsets.UTF_8);
+        qualifier = BinaryStrings.toBytes(qualifierPart);
       }
     }
     if (qualifier == null) {
@@ -359,11 +358,11 @@ public final class DefaultShellTable implements ShellTable {
     }
     Object startRow = options.get("STARTROW");
     if (startRow != null) {
-      scan.withStartRow(startRow.toString().getBytes(StandardCharsets.UTF_8));
+      scan.withStartRow(BinaryStrings.toBytes(startRow.toString()));
     }
     Object stopRow = options.get("STOPROW");
     if (stopRow != null) {
-      scan.withStopRow(stopRow.toString().getBytes(StandardCharsets.UTF_8));
+      scan.withStopRow(BinaryStrings.toBytes(stopRow.toString()));
     }
     Object versions = options.get("VERSIONS");
     if (versions != null) {
@@ -422,30 +421,30 @@ public final class DefaultShellTable implements ShellTable {
   private static void addScanColumn(Scan scan, String columnSpec) {
     int colonIndex = columnSpec.indexOf(':');
     if (colonIndex < 0) {
-      scan.addFamily(columnSpec.getBytes(StandardCharsets.UTF_8));
+      scan.addFamily(BinaryStrings.toBytes(columnSpec));
       return;
     }
-    byte[] family = columnSpec.substring(0, colonIndex).getBytes(StandardCharsets.UTF_8);
+    byte[] family = BinaryStrings.toBytes(columnSpec.substring(0, colonIndex));
     String qualifierPart = columnSpec.substring(colonIndex + 1);
     if (qualifierPart.isEmpty()) {
       scan.addFamily(family);
     } else {
-      scan.addColumn(family, qualifierPart.getBytes(StandardCharsets.UTF_8));
+      scan.addColumn(family, BinaryStrings.toBytes(qualifierPart));
     }
   }
 
   private static void addColumn(Get get, String columnSpec) {
     int colonIndex = columnSpec.indexOf(':');
     if (colonIndex < 0) {
-      get.addFamily(columnSpec.getBytes(StandardCharsets.UTF_8));
+      get.addFamily(BinaryStrings.toBytes(columnSpec));
       return;
     }
-    byte[] family = columnSpec.substring(0, colonIndex).getBytes(StandardCharsets.UTF_8);
+    byte[] family = BinaryStrings.toBytes(columnSpec.substring(0, colonIndex));
     String qualifierPart = columnSpec.substring(colonIndex + 1);
     if (qualifierPart.isEmpty()) {
       get.addFamily(family);
     } else {
-      get.addColumn(family, qualifierPart.getBytes(StandardCharsets.UTF_8));
+      get.addColumn(family, BinaryStrings.toBytes(qualifierPart));
     }
   }
 

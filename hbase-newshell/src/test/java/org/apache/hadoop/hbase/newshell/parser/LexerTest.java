@@ -44,6 +44,33 @@ public class LexerTest {
     assertEquals("it's a test", tokens.get(0).text());
   }
 
+  private static String lex(String input) throws ShellParseException {
+    return new Lexer(input).tokenize().get(0).text();
+  }
+
+  @Test
+  public void singleQuotedKeepsOtherBackslashesLiterally() throws ShellParseException {
+    assertEquals("C:\\temp", lex("'C:\\temp'"));
+    assertEquals("a\\nb", lex("'a\\nb'"));
+    assertEquals("a\\b", lex("'a\\\\b'"));
+    assertEquals("ValueFilter(=,'regexstring:a\\.b')",
+      lex("'ValueFilter(=,\\'regexstring:a\\.b\\')'"));
+  }
+
+  @Test
+  public void doubleQuotedUnescapesRubyEscapes() throws ShellParseException {
+    assertEquals("a\nb\tc\rd", lex("\"a\\nb\\tc\\rd\""));
+    assertEquals("say \"hi\"", lex("\"say \\\"hi\\\"\""));
+    assertEquals("a\\b", lex("\"a\\\\b\""));
+    assertEquals("a.b\\.c", lex("\"a.b\\.c\""));
+  }
+
+  @Test
+  public void hexEscapesArePreservedForTheTableLayer() throws ShellParseException {
+    assertEquals("\\x00\\xFF", lex("\"\\x00\\xFF\""));
+    assertEquals("\\x00\\xFF", lex("'\\x00\\xFF'"));
+  }
+
   @Test
   public void tokenizesHashLiteralPunctuation() throws ShellParseException {
     List<Token> tokens = new Lexer("{NAME => 'f1'}").tokenize();
