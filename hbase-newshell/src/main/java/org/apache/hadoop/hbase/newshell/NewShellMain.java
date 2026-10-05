@@ -243,7 +243,10 @@ public final class NewShellMain {
           exitOnFirstError = true;
         } else if (arg.equals("-y") || arg.equals("--yes")) {
           forceYes = true;
-        } else if (arg.equals("-v") || arg.equals("--verbose")) {
+        } else if (
+          arg.equals("-v") || arg.equals("--verbose") || arg.equals("-d") || arg.equals("--debug")
+        ) {
+          // -d/--debug is the legacy shell spelling.
           verbose = true;
         } else if (arg.equals("-q") || arg.equals("--quiet")) {
           quiet = true;

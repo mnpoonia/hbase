@@ -103,6 +103,14 @@ public class ShellLineParserTest {
   }
 
   @Test
+  public void upperCasesFlagKeysSoLowercaseFlagsWork() throws ShellParseException {
+    ParsedCommand parsed = ShellLineParser.parse("create 't1' --name=f1 --versions=3 --yes");
+    assertEquals("f1", parsed.options().get("NAME"));
+    assertEquals(3L, parsed.options().get("VERSIONS"));
+    assertEquals(Boolean.TRUE, parsed.options().get("YES"));
+  }
+
+  @Test
   public void parsesHashLiteralWithArrayValue() throws ShellParseException {
     ParsedCommand parsed = ShellLineParser.parse("get 't1', 'r1', {COLUMN => ['c1', 'c2']}");
     assertEquals("get", parsed.commandName());

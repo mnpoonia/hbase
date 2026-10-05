@@ -121,7 +121,8 @@ public final class ShellLineParser {
 
   private void parseFlag(Map<String, Object> options) throws ShellParseException {
     Token flag = advance();
-    String key = flag.text();
+    // Option keys are upper-case throughout (VERSIONS, YES, ...); accept --versions/--yes too.
+    String key = flag.text().toUpperCase(Locale.ROOT);
     Object value;
     if (check(TokenType.EQUALS)) {
       advance();

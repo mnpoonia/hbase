@@ -858,6 +858,7 @@ elif [ "$COMMAND" = "hbtop" ] ; then
   HBASE_OPTS="${HBASE_OPTS} ${HBASE_HBTOP_OPTS}"
 elif [ "$COMMAND" = "newshell" ] ; then
   CLASS='org.apache.hadoop.hbase.newshell.NewShellMain'
+  HBASE_OPTS="$HBASE_OPTS $HBASE_SHELL_OPTS"
   if [ -n "${shaded_jar}" ] ; then
     for f in "${HBASE_HOME}"/lib/hbase-newshell*.jar; do
       if [ -f "${f}" ]; then

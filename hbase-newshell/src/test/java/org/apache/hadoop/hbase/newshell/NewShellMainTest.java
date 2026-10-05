@@ -302,4 +302,10 @@ public class NewShellMainTest {
     assertEquals(org.apache.hadoop.hbase.newshell.format.OutputFormat.JSON, args.outputFormat);
     assertEquals("script.ns", args.scriptFile);
   }
+
+  @Test
+  public void launchArgsAcceptsLegacyDebugFlag() {
+    assertTrue(NewShellMain.LaunchArgs.parse(new String[] { "-d" }).verbose);
+    assertTrue(NewShellMain.LaunchArgs.parse(new String[] { "--debug" }).verbose);
+  }
 }
