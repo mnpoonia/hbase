@@ -21,9 +21,13 @@ import java.io.IOException;
 import java.nio.charset.CharacterCodingException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.HConstants;
@@ -62,6 +66,15 @@ import org.apache.yetus.audience.InterfaceAudience;
  */
 @InterfaceAudience.Private
 public final class DefaultShellTable implements ShellTable {
+  private static final Set<String> GET_OPTIONS =
+    optionSet("COLUMN", "VERSIONS", "TIMESTAMP", "TIMERANGE", "FILTER");
+  private static final Set<String> PUT_OPTIONS = optionSet("TIMESTAMP");
+  private static final Set<String> SCAN_OPTIONS =
+    optionSet("COLUMNS", "LIMIT", "STARTROW", "STOPROW", "VERSIONS", "TIMERANGE", "FILTER");
+  private static final Set<String> COUNT_OPTIONS = optionSet("COLUMNS", "LIMIT", "STARTROW",
+    "STOPROW", "VERSIONS", "FILTER", "CACHE_BLOCKS", "INTERVAL");
+  private static final Set<String> DELETEALL_OPTIONS = optionSet("ROWPREFIXFILTER", "CACHE");
+
   private final Table table;
 
   public DefaultShellTable(Table table) {
@@ -71,6 +84,7 @@ public final class DefaultShellTable implements ShellTable {
   @Override
   public GetResult get(String row, Map<String, Object> options)
     throws ShellCommandException, IOException {
+    rejectUnsupportedOptions("get", options, GET_OPTIONS);
     Get get = new Get(BinaryStrings.toBytes(row));
     Object columns = options.get("COLUMN");
     if (columns != null) {
@@ -92,8 +106,8 @@ public final class DefaultShellTable implements ShellTable {
       get.setTimeRange(range[0], range[1]);
     }
     Object filter = options.get("FILTER");
-    if (filter instanceof String) {
-      get.setFilter(parseFilterString((String) filter));
+    if (filter != null) {
+      get.setFilter(parseFilterString(filter));
     }
     Result result = table.get(get);
     List<CellView> cells = new ArrayList<>();
@@ -111,6 +125,7 @@ public final class DefaultShellTable implements ShellTable {
   @Override
   public void put(String row, String column, String value, Map<String, Object> options)
     throws ShellCommandException, IOException {
+    rejectUnsupportedOptions("put", options, PUT_OPTIONS);
     int colonIndex = column.indexOf(':');
     if (colonIndex < 0 || colonIndex == column.length() - 1) {
       throw new IOException("Column '" + column + "' must be of the form 'family:qualifier'");
@@ -130,6 +145,7 @@ public final class DefaultShellTable implements ShellTable {
 
   @Override
   public ScanResult scan(Map<String, Object> options) throws ShellCommandException, IOException {
+    rejectUnsupportedOptions("scan", options, SCAN_OPTIONS);
     Scan scan = buildScan(options);
     Object timerange = options.get("TIMERANGE");
     if (timerange != null) {
@@ -137,8 +153,8 @@ public final class DefaultShellTable implements ShellTable {
       scan.setTimeRange(range[0], range[1]);
     }
     Object filter = options.get("FILTER");
-    if (filter instanceof String) {
-      scan.setFilter(parseFilterString((String) filter));
+    if (filter != null) {
+      scan.setFilter(parseFilterString(filter));
     }
     return new ScanResult(rowConsumer -> {
       try (ResultScanner scanner = table.getScanner(scan)) {
@@ -161,10 +177,11 @@ public final class DefaultShellTable implements ShellTable {
   @Override
   public long count(Map<String, Object> options, CountProgressListener progressListener)
     throws ShellCommandException, IOException {
+    rejectUnsupportedOptions("count", options, COUNT_OPTIONS);
     Scan scan = buildScan(options);
     Object filter = options.get("FILTER");
-    if (filter instanceof String) {
-      scan.setFilter(parseFilterString((String) filter));
+    if (filter != null) {
+      scan.setFilter(parseFilterString(filter));
     }
     scan.setCacheBlocks(resolveCacheBlocks(options.get("CACHE_BLOCKS")));
     long interval = resolveInterval(options.get("INTERVAL"));
@@ -226,6 +243,7 @@ public final class DefaultShellTable implements ShellTable {
   @Override
   public void deleteAll(String row, String column, Long timestamp, Map<String, Object> options)
     throws ShellCommandException, IOException {
+    rejectUnsupportedOptions("deleteall", options, DELETEALL_OPTIONS);
     long ts = timestamp == null ? HConstants.LATEST_TIMESTAMP : timestamp;
     Object prefix = options.get("ROWPREFIXFILTER");
     if (prefix != null) {
@@ -371,6 +389,25 @@ public final class DefaultShellTable implements ShellTable {
     return scan;
   }
 
+  private static Set<String> optionSet(String... names) {
+    return Collections.unmodifiableSet(new HashSet<>(Arrays.asList(names)));
+  }
+
+  /**
+   * Fails on any option the command does not implement, rather than silently dropping it and
+   * returning (or deleting) more than the user asked for, e.g. {@code scan 't', {REVERSED => true}}
+   * or {@code scan 't', {ROWPREFIXFILTER => 'x'}}.
+   */
+  private static void rejectUnsupportedOptions(String command, Map<String, Object> options,
+    Set<String> supported) throws ShellCommandException {
+    for (String key : options.keySet()) {
+      if (!supported.contains(key)) {
+        throw new ShellCommandException("Unsupported option '" + key + "' for " + command
+          + " (supported: " + new TreeSet<>(supported) + ")");
+      }
+    }
+  }
+
   /**
    * Guards an option value that must be numeric (e.g. {@code VERSIONS => 'x'}, a typo) so it raises
    * a clear {@link ShellCommandException} instead of an unchecked {@link ClassCastException},
@@ -409,7 +446,12 @@ public final class DefaultShellTable implements ShellTable {
    * filter grammar (HBASE-4176), e.g. {@code "PrefixFilter('row')"}. Raw object-construction syntax
    * ({@code FILTER => SomeFilter.new(...)}) is not supported.
    */
-  private static Filter parseFilterString(String filterString) throws ShellCommandException {
+  private static Filter parseFilterString(Object filterOption) throws ShellCommandException {
+    if (!(filterOption instanceof String)) {
+      throw new ShellCommandException(
+        "FILTER must be a filter string such as \"PrefixFilter('row')\", got: " + filterOption);
+    }
+    String filterString = (String) filterOption;
     try {
       return new ParseFilter().parseFilterString(filterString);
     } catch (CharacterCodingException | IllegalArgumentException e) {

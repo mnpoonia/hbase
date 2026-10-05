@@ -21,6 +21,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -168,6 +169,49 @@ public class DefaultShellTableTest {
     Map<String, Object> options = new HashMap<>();
     options.put("TIMERANGE", Collections.singletonList(100L));
     assertThrows(ShellCommandException.class, () -> shellTable.scan(options));
+  }
+
+  private static void assertUnsupportedOption(ThrowingCall call, String option) {
+    ShellCommandException e = assertThrows(ShellCommandException.class, call::run);
+    assertTrue(e.getMessage().contains("Unsupported option '" + option + "'"), e.getMessage());
+  }
+
+  private static Map<String, Object> opts(String key, Object value) {
+    Map<String, Object> m = new HashMap<>();
+    m.put(key, value);
+    return m;
+  }
+
+  @FunctionalInterface
+  private interface ThrowingCall {
+    void run() throws Exception;
+  }
+
+  @Test
+  public void scanRejectsUnsupportedOptions() {
+    DefaultShellTable shellTable = new DefaultShellTable(mock(Table.class));
+    for (String option : new String[] { "ROWPREFIXFILTER", "REVERSED", "RAW", "MAXLENGTH",
+      "ATTRIBUTES", "AUTHORIZATIONS" }) {
+      assertUnsupportedOption(() -> shellTable.scan(opts(option, "x")), option);
+    }
+  }
+
+  @Test
+  public void getPutCountAndDeleteallRejectUnsupportedOptions() {
+    DefaultShellTable shellTable = new DefaultShellTable(mock(Table.class));
+    assertUnsupportedOption(() -> shellTable.get("r", opts("ATTRIBUTES", "x")), "ATTRIBUTES");
+    assertUnsupportedOption(() -> shellTable.put("r", "cf:c", "v", opts("TTL", 5L)), "TTL");
+    assertUnsupportedOption(() -> shellTable.count(opts("REVERSED", true), (c, r) -> {
+    }), "REVERSED");
+    assertUnsupportedOption(() -> shellTable.deleteAll("r", null, null, opts("RAW", true)), "RAW");
+  }
+
+  @Test
+  public void scanRejectsNonStringFilter() {
+    DefaultShellTable shellTable = new DefaultShellTable(mock(Table.class));
+    ShellCommandException e = assertThrows(ShellCommandException.class,
+      () -> shellTable.scan(opts("FILTER", Long.valueOf(5))));
+    assertTrue(e.getMessage().contains("FILTER must be a filter string"), e.getMessage());
   }
 
   @Test
