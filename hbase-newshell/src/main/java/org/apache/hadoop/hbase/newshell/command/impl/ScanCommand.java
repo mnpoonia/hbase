@@ -19,6 +19,7 @@ package org.apache.hadoop.hbase.newshell.command.impl;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.apache.hadoop.hbase.newshell.command.ArgParsing;
@@ -61,12 +62,13 @@ public final class ScanCommand implements ShellCommand {
       throw new ShellCommandException("scan requires a table name argument");
     }
     String tableName = String.valueOf(command.positionalArgs().get(0));
-    Map<String, Object> options = command.options();
+    Map<String, Object> options = new HashMap<>(command.options());
+    int maxLength = ArgParsing.maxLength(options.remove("MAXLENGTH"));
     ScanResult result = context.tables().forTable(tableName).scan(options);
     return new StreamingTabularResult(HEADER, rowConsumer -> result.forEachRow(row -> {
       for (CellView cell : row.cells()) {
-        rowConsumer.accept(
-          Arrays.asList(row.row(), CellViews.column(cell) + " " + CellViews.formatCell(cell)));
+        rowConsumer.accept(Arrays.asList(row.row(),
+          CellViews.column(cell) + " " + CellViews.formatCell(cell, maxLength)));
       }
     }));
   }

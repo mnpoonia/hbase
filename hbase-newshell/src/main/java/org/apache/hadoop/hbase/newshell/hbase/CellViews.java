@@ -32,7 +32,16 @@ public final class CellViews {
   public static String formatCell(CellView cell) {
     String timestamp = LocalDateTime
       .ofInstant(Instant.ofEpochMilli(cell.timestamp()), ZoneId.systemDefault()).toString();
+    if (cell.deleteType() != null) {
+      return "timestamp=" + timestamp + ", type=" + cell.deleteType();
+    }
     return "timestamp=" + timestamp + ", value=" + cell.value();
+  }
+
+  /** As {@link #formatCell(CellView)}, cut to {@code maxLength} chars; negative means no limit. */
+  public static String formatCell(CellView cell, int maxLength) {
+    String text = formatCell(cell);
+    return maxLength >= 0 && text.length() > maxLength ? text.substring(0, maxLength) : text;
   }
 
   public static String column(CellView cell) {

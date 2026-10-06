@@ -31,12 +31,20 @@ public final class CellView {
   private final String qualifier;
   private final long timestamp;
   private final String value;
+  private final String deleteType;
 
   public CellView(String family, String qualifier, long timestamp, String value) {
+    this(family, qualifier, timestamp, value, null);
+  }
+
+  /** Builds a view of a delete-marker cell (visible with {@code RAW}); {@code value} is empty. */
+  public CellView(String family, String qualifier, long timestamp, String value,
+    String deleteType) {
     this.family = family;
     this.qualifier = qualifier;
     this.timestamp = timestamp;
     this.value = value;
+    this.deleteType = deleteType;
   }
 
   public String family() {
@@ -55,6 +63,11 @@ public final class CellView {
     return value;
   }
 
+  /** The {@code KeyValue.Type} name for a delete marker, or null for an ordinary cell. */
+  public String deleteType() {
+    return deleteType;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) {
@@ -65,12 +78,13 @@ public final class CellView {
     }
     CellView other = (CellView) o;
     return timestamp == other.timestamp && Objects.equals(family, other.family)
-      && Objects.equals(qualifier, other.qualifier) && Objects.equals(value, other.value);
+      && Objects.equals(qualifier, other.qualifier) && Objects.equals(value, other.value)
+      && Objects.equals(deleteType, other.deleteType);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(family, qualifier, timestamp, value);
+    return Objects.hash(family, qualifier, timestamp, value, deleteType);
   }
 
   @Override

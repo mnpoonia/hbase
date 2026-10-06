@@ -37,6 +37,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.apache.hadoop.hbase.client.Get;
+import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.client.Scan;
@@ -190,8 +191,7 @@ public class DefaultShellTableTest {
   @Test
   public void scanRejectsUnsupportedOptions() {
     DefaultShellTable shellTable = new DefaultShellTable(mock(Table.class));
-    for (String option : new String[] { "ROWPREFIXFILTER", "REVERSED", "RAW", "MAXLENGTH",
-      "ATTRIBUTES", "AUTHORIZATIONS" }) {
+    for (String option : new String[] { "ALL_METRICS", "METRICS", "BOGUS" }) {
       assertUnsupportedOption(() -> shellTable.scan(opts(option, "x")), option);
     }
   }
@@ -199,8 +199,8 @@ public class DefaultShellTableTest {
   @Test
   public void getPutCountAndDeleteallRejectUnsupportedOptions() {
     DefaultShellTable shellTable = new DefaultShellTable(mock(Table.class));
-    assertUnsupportedOption(() -> shellTable.get("r", opts("ATTRIBUTES", "x")), "ATTRIBUTES");
-    assertUnsupportedOption(() -> shellTable.put("r", "cf:c", "v", opts("TTL", 5L)), "TTL");
+    assertUnsupportedOption(() -> shellTable.get("r", opts("RAW", true)), "RAW");
+    assertUnsupportedOption(() -> shellTable.put("r", "cf:c", "v", opts("ACL", "x")), "ACL");
     assertUnsupportedOption(() -> shellTable.count(opts("REVERSED", true), (c, r) -> {
     }), "REVERSED");
     assertUnsupportedOption(() -> shellTable.deleteAll("r", null, null, opts("RAW", true)), "RAW");
@@ -409,5 +409,166 @@ public class DefaultShellTableTest {
 
     assertEquals(1L, count);
     assertEquals(0, progressCalls[0]);
+  }
+
+  private static Result resultOf(byte[] row, byte[] family, byte[] qualifier, byte[] value) {
+    return Result
+      .create(new org.apache.hadoop.hbase.Cell[] { org.apache.hadoop.hbase.CellBuilderFactory
+        .create(org.apache.hadoop.hbase.CellBuilderType.DEEP_COPY).setRow(row).setFamily(family)
+        .setQualifier(qualifier).setTimestamp(1L).setType(org.apache.hadoop.hbase.Cell.Type.Put)
+        .setValue(value).build() });
+  }
+
+  @Test
+  public void getAppliesAttributesAuthorizationsConsistencyAndReplica() throws Exception {
+    Table table = mock(Table.class);
+    when(table.get(any(org.apache.hadoop.hbase.client.Get.class)))
+      .thenReturn(Result.create(new org.apache.hadoop.hbase.Cell[0]));
+    Map<String, Object> options = new java.util.LinkedHashMap<>();
+    options.put("ATTRIBUTES", opts("mykey", "myvalue"));
+    options.put("AUTHORIZATIONS", Arrays.asList("PRIVATE", "SECRET"));
+    options.put("CONSISTENCY", "TIMELINE");
+    options.put("REGION_REPLICA_ID", 1L);
+    new DefaultShellTable(table).get("r1", options);
+
+    ArgumentCaptor<org.apache.hadoop.hbase.client.Get> captor =
+      ArgumentCaptor.forClass(org.apache.hadoop.hbase.client.Get.class);
+    verify(table).get(captor.capture());
+    org.apache.hadoop.hbase.client.Get get = captor.getValue();
+    assertEquals("myvalue", Bytes.toString(get.getAttribute("mykey")));
+    assertEquals(Arrays.asList("PRIVATE", "SECRET"), get.getAuthorizations().getLabels());
+    assertEquals(org.apache.hadoop.hbase.client.Consistency.TIMELINE, get.getConsistency());
+    assertEquals(1, get.getReplicaId());
+  }
+
+  @Test
+  public void getRejectsBadConsistencyAttributesAndAuthorizations() {
+    DefaultShellTable shellTable = new DefaultShellTable(mock(Table.class));
+    assertThrows(ShellCommandException.class,
+      () -> shellTable.get("r1", opts("CONSISTENCY", "SOMETIMES")));
+    assertThrows(ShellCommandException.class,
+      () -> shellTable.get("r1", opts("ATTRIBUTES", "notahash")));
+    assertThrows(ShellCommandException.class,
+      () -> shellTable.get("r1", opts("AUTHORIZATIONS", "SECRET")));
+  }
+
+  @Test
+  public void getFormatsValuesWithGlobalAndPerColumnConverters() throws Exception {
+    Table table = mock(Table.class);
+    byte[] f = Bytes.toBytes("f");
+    when(table.get(any(org.apache.hadoop.hbase.client.Get.class)))
+      .thenReturn(resultOf(Bytes.toBytes("r1"), f, Bytes.toBytes("n"), Bytes.toBytes(42)));
+    DefaultShellTable shellTable = new DefaultShellTable(table);
+
+    // default: toStringBinary escapes the int bytes
+    assertEquals("\\x00\\x00\\x00*",
+      shellTable.get("r1", Collections.emptyMap()).cells().get(0).value());
+    // per-column converter in the column spec
+    assertEquals("42", shellTable.get("r1", opts("COLUMN", "f:n:toInt")).cells().get(0).value());
+    // custom class form
+    assertEquals("42",
+      shellTable.get("r1", opts("COLUMN", "f:n:c(org.apache.hadoop.hbase.util.Bytes).toInt"))
+        .cells().get(0).value());
+    // global FORMATTER applies to value, family and qualifier
+    GetResult formatted = shellTable.get("r1", opts("FORMATTER", "toString"));
+    assertEquals("f", formatted.cells().get(0).family());
+    assertEquals("n", formatted.cells().get(0).qualifier());
+    assertThrows(ShellCommandException.class,
+      () -> shellTable.get("r1", opts("FORMATTER", "noSuchMethod")));
+  }
+
+  @Test
+  public void scanAppliesScanOptions() throws Exception {
+    Table table = mock(Table.class);
+    ResultScanner scanner = mock(ResultScanner.class);
+    when(scanner.iterator()).thenReturn(Collections.<Result> emptyList().iterator());
+    when(table.getScanner(any(Scan.class))).thenReturn(scanner);
+    Map<String, Object> options = new java.util.LinkedHashMap<>();
+    options.put("ROWPREFIXFILTER", "row2");
+    options.put("REVERSED", true);
+    options.put("RAW", true);
+    options.put("CACHE", 50L);
+    options.put("CACHE_BLOCKS", false);
+    options.put("BATCH", 5L);
+    options.put("MAX_RESULT_SIZE", 1234L);
+    options.put("TIMESTAMP", 77L);
+    options.put("ISOLATION_LEVEL", "READ_UNCOMMITTED");
+    options.put("READ_TYPE", "PREAD");
+    options.put("ALLOW_PARTIAL_RESULTS", true);
+    options.put("CONSISTENCY", "TIMELINE");
+    options.put("REGION_REPLICA_ID", 2L);
+    options.put("AUTHORIZATIONS", Arrays.asList("A", "B"));
+    options.put("ATTRIBUTES", opts("k", "v"));
+    new DefaultShellTable(table).scan(options).forEachRow(r -> {
+    });
+
+    ArgumentCaptor<Scan> captor = ArgumentCaptor.forClass(Scan.class);
+    verify(table).getScanner(captor.capture());
+    Scan scan = captor.getValue();
+    assertEquals("row2", Bytes.toString(scan.getStartRow()));
+    assertTrue(scan.isReversed() && scan.isRaw() && !scan.getCacheBlocks());
+    assertEquals(50, scan.getCaching());
+    assertEquals(5, scan.getBatch());
+    assertEquals(1234L, scan.getMaxResultSize());
+    assertEquals(77L, scan.getTimeRange().getMin());
+    assertEquals(org.apache.hadoop.hbase.client.IsolationLevel.READ_UNCOMMITTED,
+      scan.getIsolationLevel());
+    assertEquals(Scan.ReadType.PREAD, scan.getReadType());
+    assertTrue(scan.getAllowPartialResults());
+    assertEquals(org.apache.hadoop.hbase.client.Consistency.TIMELINE, scan.getConsistency());
+    assertEquals(2, scan.getReplicaId());
+    assertEquals(Arrays.asList("A", "B"), scan.getAuthorizations().getLabels());
+    assertEquals("v", Bytes.toString(scan.getAttribute("k")));
+  }
+
+  @Test
+  public void scanRejectsBadBooleanAndEnumValues() {
+    DefaultShellTable shellTable = new DefaultShellTable(mock(Table.class));
+    assertThrows(ShellCommandException.class, () -> shellTable.scan(opts("REVERSED", "maybe")));
+    assertThrows(ShellCommandException.class, () -> shellTable.scan(opts("READ_TYPE", "NOPE")));
+    assertThrows(ShellCommandException.class,
+      () -> shellTable.scan(opts("ISOLATION_LEVEL", "NOPE")));
+  }
+
+  @Test
+  public void scanFormatsRowKeysAndColumnsAndShowsDeleteMarkers() throws Exception {
+    Table table = mock(Table.class);
+    ResultScanner scanner = mock(ResultScanner.class);
+    byte[] f = Bytes.toBytes("f");
+    org.apache.hadoop.hbase.Cell put = org.apache.hadoop.hbase.CellBuilderFactory
+      .create(org.apache.hadoop.hbase.CellBuilderType.DEEP_COPY).setRow(Bytes.toBytes("r1"))
+      .setFamily(f).setQualifier(Bytes.toBytes("n")).setTimestamp(1L)
+      .setType(org.apache.hadoop.hbase.Cell.Type.Put).setValue(Bytes.toBytes(42)).build();
+    org.apache.hadoop.hbase.Cell del = org.apache.hadoop.hbase.CellBuilderFactory
+      .create(org.apache.hadoop.hbase.CellBuilderType.DEEP_COPY).setRow(Bytes.toBytes("r1"))
+      .setFamily(f).setQualifier(Bytes.toBytes("m")).setTimestamp(2L)
+      .setType(org.apache.hadoop.hbase.Cell.Type.DeleteColumn).build();
+    Result result = Result.create(new org.apache.hadoop.hbase.Cell[] { del, put });
+    when(scanner.iterator()).thenReturn(Collections.singletonList(result).iterator());
+    when(table.getScanner(any(Scan.class))).thenReturn(scanner);
+
+    java.util.List<ScanRow> rows = new java.util.ArrayList<>();
+    new DefaultShellTable(table).scan(opts("COLUMNS", "f:n:toInt")).forEachRow(rows::add);
+    assertEquals("r1", rows.get(0).row());
+    assertEquals("DeleteColumn", rows.get(0).cells().get(0).deleteType());
+    assertEquals("42", rows.get(0).cells().get(1).value());
+  }
+
+  @Test
+  public void putAppliesAttributesVisibilityAndTtl() throws Exception {
+    Table table = mock(Table.class);
+    Map<String, Object> options = new java.util.LinkedHashMap<>();
+    options.put("ATTRIBUTES", opts("k", "v"));
+    options.put("VISIBILITY", "PRIVATE|SECRET");
+    options.put("TTL", 5000L);
+    options.put("TIMESTAMP", 9L);
+    new DefaultShellTable(table).put("r1", "f:c", "v1", options);
+
+    ArgumentCaptor<Put> captor = ArgumentCaptor.forClass(Put.class);
+    verify(table).put(captor.capture());
+    Put put = captor.getValue();
+    assertEquals("v", Bytes.toString(put.getAttribute("k")));
+    assertEquals("PRIVATE|SECRET", put.getCellVisibility().getExpression());
+    assertEquals(5000L, put.getTTL());
   }
 }

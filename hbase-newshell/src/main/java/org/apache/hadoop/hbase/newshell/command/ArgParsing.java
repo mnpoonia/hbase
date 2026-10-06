@@ -46,4 +46,15 @@ public final class ArgParsing {
         + " positional argument(s), got " + actual + ": " + command.positionalArgs());
     }
   }
+
+  /** Reads a {@code MAXLENGTH} option value; absent means no limit (-1). */
+  public static int maxLength(Object value) throws ShellCommandException {
+    if (value == null) {
+      return -1;
+    }
+    if (!(value instanceof Number)) {
+      throw new ShellCommandException("MAXLENGTH must be a number");
+    }
+    return ((Number) value).intValue();
+  }
 }

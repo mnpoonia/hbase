@@ -22,6 +22,7 @@ import java.nio.charset.CharacterCodingException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
@@ -33,10 +34,14 @@ import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.HRegionLocation;
 import org.apache.hadoop.hbase.client.Append;
+import org.apache.hadoop.hbase.client.Consistency;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.Increment;
+import org.apache.hadoop.hbase.client.IsolationLevel;
+import org.apache.hadoop.hbase.client.OperationWithAttributes;
 import org.apache.hadoop.hbase.client.Put;
+import org.apache.hadoop.hbase.client.Query;
 import org.apache.hadoop.hbase.client.RegionLocator;
 import org.apache.hadoop.hbase.client.RegionReplicaUtil;
 import org.apache.hadoop.hbase.client.Result;
@@ -46,6 +51,8 @@ import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.filter.Filter;
 import org.apache.hadoop.hbase.filter.ParseFilter;
 import org.apache.hadoop.hbase.newshell.command.ShellCommandException;
+import org.apache.hadoop.hbase.security.visibility.Authorizations;
+import org.apache.hadoop.hbase.security.visibility.CellVisibility;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.yetus.audience.InterfaceAudience;
 
@@ -61,16 +68,22 @@ import org.apache.yetus.audience.InterfaceAudience;
  * {@code _get_counter_internal}/{@code _incr_internal}/ {@code _append_internal}; and
  * {@code _get_splits_internal}. {@code FILTER} (via {@link ParseFilter}'s textual filter grammar)
  * and {@code TIMERANGE} are supported for {@code get} and {@code scan}; ATTRIBUTES/
- * AUTHORIZATIONS/CONSISTENCY (for {@code get}), ATTRIBUTES/VISIBILITY/TTL (for {@code put}) are
- * explicitly not ported.
+ * ATTRIBUTES/VISIBILITY/TTL (for {@code put}) are supported, as are the scan options in
+ * {@code SCAN_OPTIONS} and the {@code get}/{@code scan} FORMATTER/FORMATTER_CLASS plus per-column
+ * {@code cf:qualifier:CONVERTER}. Scan metrics (ALL_METRICS/METRICS) are not ported.
  */
 @InterfaceAudience.Private
 public final class DefaultShellTable implements ShellTable {
   private static final Set<String> GET_OPTIONS =
-    optionSet("COLUMN", "VERSIONS", "TIMESTAMP", "TIMERANGE", "FILTER");
-  private static final Set<String> PUT_OPTIONS = optionSet("TIMESTAMP");
+    optionSet("COLUMN", "VERSIONS", "TIMESTAMP", "TIMERANGE", "FILTER", "ATTRIBUTES",
+      "AUTHORIZATIONS", "CONSISTENCY", "REGION_REPLICA_ID", "FORMATTER", "FORMATTER_CLASS");
+  private static final Set<String> PUT_OPTIONS =
+    optionSet("TIMESTAMP", "ATTRIBUTES", "VISIBILITY", "TTL");
   private static final Set<String> SCAN_OPTIONS =
-    optionSet("COLUMNS", "LIMIT", "STARTROW", "STOPROW", "VERSIONS", "TIMERANGE", "FILTER");
+    optionSet("COLUMN", "COLUMNS", "LIMIT", "STARTROW", "STOPROW", "ROWPREFIXFILTER", "TIMESTAMP",
+      "VERSIONS", "TIMERANGE", "FILTER", "CACHE", "CACHE_BLOCKS", "REVERSED", "RAW", "ATTRIBUTES",
+      "AUTHORIZATIONS", "CONSISTENCY", "REGION_REPLICA_ID", "ISOLATION_LEVEL", "READ_TYPE",
+      "ALLOW_PARTIAL_RESULTS", "BATCH", "MAX_RESULT_SIZE", "FORMATTER", "FORMATTER_CLASS");
   private static final Set<String> COUNT_OPTIONS = optionSet("COLUMNS", "LIMIT", "STARTROW",
     "STOPROW", "VERSIONS", "FILTER", "CACHE_BLOCKS", "INTERVAL");
   private static final Set<String> DELETEALL_OPTIONS = optionSet("ROWPREFIXFILTER", "CACHE");
@@ -86,10 +99,16 @@ public final class DefaultShellTable implements ShellTable {
     throws ShellCommandException, IOException {
     rejectUnsupportedOptions("get", options, GET_OPTIONS);
     Get get = new Get(BinaryStrings.toBytes(row));
+    Map<String, String> columnConverters = new HashMap<>();
     Object columns = options.get("COLUMN");
     if (columns != null) {
       for (Object column : asList(columns)) {
-        addColumn(get, column.toString());
+        byte[][] spec = parseColumn(column.toString(), columnConverters);
+        if (spec[1] == null) {
+          get.addFamily(spec[0]);
+        } else {
+          get.addColumn(spec[0], spec[1]);
+        }
       }
     }
     Object versions = options.get("VERSIONS");
@@ -109,14 +128,15 @@ public final class DefaultShellTable implements ShellTable {
     if (filter != null) {
       get.setFilter(parseFilterString(filter));
     }
+    applyQueryOptions(get, options);
+    ValueConverters converters = new ValueConverters(optionString(options, "FORMATTER_CLASS"),
+      optionString(options, "FORMATTER"));
     Result result = table.get(get);
     List<CellView> cells = new ArrayList<>();
     List<Cell> resultCells = result.listCells();
     if (resultCells != null) {
       for (Cell cell : resultCells) {
-        cells.add(new CellView(Bytes.toStringBinary(CellUtil.cloneFamily(cell)),
-          Bytes.toStringBinary(CellUtil.cloneQualifier(cell)), cell.getTimestamp(),
-          Bytes.toStringBinary(CellUtil.cloneValue(cell))));
+        cells.add(toCellView(cell, converters, columnConverters));
       }
     }
     return new GetResult(cells);
@@ -133,6 +153,7 @@ public final class DefaultShellTable implements ShellTable {
     byte[] family = BinaryStrings.toBytes(column.substring(0, colonIndex));
     byte[] qualifier = BinaryStrings.toBytes(column.substring(colonIndex + 1));
     Put put = new Put(BinaryStrings.toBytes(row));
+    applyPutOptions(put, options);
     Object timestamp = options.get("TIMESTAMP");
     if (timestamp != null) {
       put.addColumn(family, qualifier, requireNumber(timestamp, "TIMESTAMP").longValue(),
@@ -146,7 +167,8 @@ public final class DefaultShellTable implements ShellTable {
   @Override
   public ScanResult scan(Map<String, Object> options) throws ShellCommandException, IOException {
     rejectUnsupportedOptions("scan", options, SCAN_OPTIONS);
-    Scan scan = buildScan(options);
+    Map<String, String> columnConverters = new HashMap<>();
+    Scan scan = buildScan(options, columnConverters);
     Object timerange = options.get("TIMERANGE");
     if (timerange != null) {
       long[] range = parseTimeRange(timerange);
@@ -156,6 +178,13 @@ public final class DefaultShellTable implements ShellTable {
     if (filter != null) {
       scan.setFilter(parseFilterString(filter));
     }
+    Object timestamp = options.get("TIMESTAMP");
+    if (timestamp != null) {
+      scan.setTimestamp(requireNumber(timestamp, "TIMESTAMP").longValue());
+    }
+    applyScanOptions(scan, options);
+    ValueConverters converters = new ValueConverters(optionString(options, "FORMATTER_CLASS"),
+      optionString(options, "FORMATTER"));
     return new ScanResult(rowConsumer -> {
       try (ResultScanner scanner = table.getScanner(scan)) {
         for (Result result : scanner) {
@@ -163,13 +192,13 @@ public final class DefaultShellTable implements ShellTable {
           List<Cell> resultCells = result.listCells();
           if (resultCells != null) {
             for (Cell cell : resultCells) {
-              cells.add(new CellView(Bytes.toStringBinary(CellUtil.cloneFamily(cell)),
-                Bytes.toStringBinary(CellUtil.cloneQualifier(cell)), cell.getTimestamp(),
-                Bytes.toStringBinary(CellUtil.cloneValue(cell))));
+              cells.add(toCellView(cell, converters, columnConverters));
             }
           }
-          rowConsumer.accept(new ScanRow(Bytes.toStringBinary(result.getRow()), cells));
+          rowConsumer.accept(new ScanRow(converters.convertRow(result.getRow()), cells));
         }
+      } catch (ShellCommandException e) {
+        throw new IOException(e.getMessage(), e);
       }
     });
   }
@@ -178,7 +207,7 @@ public final class DefaultShellTable implements ShellTable {
   public long count(Map<String, Object> options, CountProgressListener progressListener)
     throws ShellCommandException, IOException {
     rejectUnsupportedOptions("count", options, COUNT_OPTIONS);
-    Scan scan = buildScan(options);
+    Scan scan = buildScan(options, new HashMap<>());
     Object filter = options.get("FILTER");
     if (filter != null) {
       scan.setFilter(parseFilterString(filter));
@@ -362,16 +391,23 @@ public final class DefaultShellTable implements ShellTable {
     }
   }
 
-  private static Scan buildScan(Map<String, Object> options) throws ShellCommandException {
+  private static Scan buildScan(Map<String, Object> options, Map<String, String> columnConverters)
+    throws ShellCommandException {
     Scan scan = new Scan();
-    Object columns = options.get("COLUMNS");
+    Object columns =
+      options.get("COLUMNS") != null ? options.get("COLUMNS") : options.get("COLUMN");
     if (columns != null) {
       for (Object column : asList(columns)) {
-        addScanColumn(scan, column.toString());
+        byte[][] spec = parseColumn(column.toString(), columnConverters);
+        if (spec[1] == null) {
+          scan.addFamily(spec[0]);
+        } else {
+          scan.addColumn(spec[0], spec[1]);
+        }
       }
     }
     Object limit = options.get("LIMIT");
-    if (limit != null) {
+    if (limit != null && requireNumber(limit, "LIMIT").intValue() > 0) {
       scan.setLimit(requireNumber(limit, "LIMIT").intValue());
     }
     Object startRow = options.get("STARTROW");
@@ -382,11 +418,111 @@ public final class DefaultShellTable implements ShellTable {
     if (stopRow != null) {
       scan.withStopRow(BinaryStrings.toBytes(stopRow.toString()));
     }
+    // Like the legacy shell, a prefix overrides any STARTROW/STOPROW.
+    Object prefix = options.get("ROWPREFIXFILTER");
+    if (prefix != null) {
+      scan.setStartStopRowForPrefixScan(BinaryStrings.toBytes(prefix.toString()));
+    }
     Object versions = options.get("VERSIONS");
     if (versions != null) {
       scan.readVersions(requireNumber(versions, "VERSIONS").intValue());
     }
     return scan;
+  }
+
+  /** Scan-only options on top of what {@link #buildScan} shares with {@code count}. */
+  private static void applyScanOptions(Scan scan, Map<String, Object> options)
+    throws ShellCommandException, IOException {
+    if (options.get("CACHE_BLOCKS") != null) {
+      scan.setCacheBlocks(requireBoolean(options.get("CACHE_BLOCKS"), "CACHE_BLOCKS"));
+    }
+    if (options.get("REVERSED") != null) {
+      scan.setReversed(requireBoolean(options.get("REVERSED"), "REVERSED"));
+    }
+    if (options.get("RAW") != null) {
+      scan.setRaw(requireBoolean(options.get("RAW"), "RAW"));
+    }
+    if (options.get("ALLOW_PARTIAL_RESULTS") != null) {
+      scan.setAllowPartialResults(
+        requireBoolean(options.get("ALLOW_PARTIAL_RESULTS"), "ALLOW_PARTIAL_RESULTS"));
+    }
+    if (
+      options.get("CACHE") != null && requireNumber(options.get("CACHE"), "CACHE").intValue() > 0
+    ) {
+      scan.setCaching(requireNumber(options.get("CACHE"), "CACHE").intValue());
+    }
+    if (
+      options.get("BATCH") != null && requireNumber(options.get("BATCH"), "BATCH").intValue() > 0
+    ) {
+      scan.setBatch(requireNumber(options.get("BATCH"), "BATCH").intValue());
+    }
+    Object maxResultSize = options.get("MAX_RESULT_SIZE");
+    if (maxResultSize != null && requireNumber(maxResultSize, "MAX_RESULT_SIZE").longValue() > 0) {
+      scan.setMaxResultSize(requireNumber(maxResultSize, "MAX_RESULT_SIZE").longValue());
+    }
+    if (options.get("ISOLATION_LEVEL") != null) {
+      scan.setIsolationLevel(
+        enumValue(IsolationLevel.class, options.get("ISOLATION_LEVEL"), "ISOLATION_LEVEL"));
+    }
+    if (options.get("READ_TYPE") != null) {
+      scan.setReadType(enumValue(Scan.ReadType.class, options.get("READ_TYPE"), "READ_TYPE"));
+    }
+    applyQueryOptions(scan, options);
+  }
+
+  private static void applyPutOptions(Put put, Map<String, Object> options)
+    throws ShellCommandException {
+    applyAttributes(put, options.get("ATTRIBUTES"));
+    Object visibility = options.get("VISIBILITY");
+    if (visibility != null) {
+      put.setCellVisibility(new CellVisibility(visibility.toString()));
+    }
+    Object ttl = options.get("TTL");
+    if (ttl != null) {
+      put.setTTL(requireNumber(ttl, "TTL").longValue());
+    }
+  }
+
+  private static boolean requireBoolean(Object value, String optionName)
+    throws ShellCommandException {
+    if (value instanceof Boolean) {
+      return (Boolean) value;
+    }
+    if (value instanceof String) {
+      String text = ((String) value).toLowerCase(Locale.ROOT);
+      if (text.equals("true") || text.equals("false")) {
+        return Boolean.parseBoolean(text);
+      }
+    }
+    throw new ShellCommandException(optionName + " must be true or false: '" + value + "'");
+  }
+
+  private static <E extends Enum<E>> E enumValue(Class<E> type, Object value, String optionName)
+    throws ShellCommandException {
+    try {
+      return Enum.valueOf(type, value.toString());
+    } catch (IllegalArgumentException e) {
+      throw new ShellCommandException(
+        optionName + " must be one of " + Arrays.toString(type.getEnumConstants()), e);
+    }
+  }
+
+  /**
+   * Converts a server cell to a view. Delete markers (returned with {@code RAW}) carry their cell
+   * type instead of a value, as in the legacy shell.
+   */
+  private static CellView toCellView(Cell cell, ValueConverters converters,
+    Map<String, String> columnConverters) throws ShellCommandException {
+    byte[] family = CellUtil.cloneFamily(cell);
+    byte[] qualifier = CellUtil.cloneQualifier(cell);
+    String family2 = converters.convert(family);
+    String qualifier2 = converters.convert(qualifier);
+    if (CellUtil.isDelete(cell)) {
+      return new CellView(family2, qualifier2, cell.getTimestamp(), "", cell.getType().toString());
+    }
+    String columnKey = Bytes.toStringBinary(family) + ":" + Bytes.toStringBinary(qualifier);
+    return new CellView(family2, qualifier2, cell.getTimestamp(),
+      converters.convert(CellUtil.cloneValue(cell), columnConverters.get(columnKey)));
   }
 
   private static Set<String> optionSet(String... names) {
@@ -460,33 +596,79 @@ public final class DefaultShellTable implements ShellTable {
     }
   }
 
-  private static void addScanColumn(Scan scan, String columnSpec) {
+  /**
+   * Parses {@code FAMILY[:QUALIFIER[:CONVERTER]]} into {@code [family, qualifier-or-null]},
+   * recording any converter against the {@code family:qualifier} it applies to.
+   */
+  private static byte[][] parseColumn(String columnSpec, Map<String, String> converters) {
     int colonIndex = columnSpec.indexOf(':');
     if (colonIndex < 0) {
-      scan.addFamily(BinaryStrings.toBytes(columnSpec));
+      return new byte[][] { BinaryStrings.toBytes(columnSpec), null };
+    }
+    String familyPart = columnSpec.substring(0, colonIndex);
+    String qualifierPart = columnSpec.substring(colonIndex + 1);
+    int converterIndex = qualifierPart.lastIndexOf(':');
+    if (
+      converterIndex >= 0
+        && ValueConverters.isConverter(qualifierPart.substring(converterIndex + 1))
+    ) {
+      String qualifierOnly = qualifierPart.substring(0, converterIndex);
+      converters.put(
+        Bytes.toStringBinary(BinaryStrings.toBytes(familyPart)) + ":"
+          + Bytes.toStringBinary(BinaryStrings.toBytes(qualifierOnly)),
+        qualifierPart.substring(converterIndex + 1));
+      qualifierPart = qualifierOnly;
+    }
+    byte[] family = BinaryStrings.toBytes(familyPart);
+    return new byte[][] { family,
+      qualifierPart.isEmpty() ? null : BinaryStrings.toBytes(qualifierPart) };
+  }
+
+  private static String optionString(Map<String, Object> options, String key) {
+    Object value = options.get(key);
+    return value == null ? null : value.toString();
+  }
+
+  @SuppressWarnings("unchecked")
+  private static void applyAttributes(OperationWithAttributes op, Object attributes)
+    throws ShellCommandException {
+    if (attributes == null) {
       return;
     }
-    byte[] family = BinaryStrings.toBytes(columnSpec.substring(0, colonIndex));
-    String qualifierPart = columnSpec.substring(colonIndex + 1);
-    if (qualifierPart.isEmpty()) {
-      scan.addFamily(family);
-    } else {
-      scan.addColumn(family, BinaryStrings.toBytes(qualifierPart));
+    if (!(attributes instanceof Map)) {
+      throw new ShellCommandException("ATTRIBUTES must be a hash such as {'k' => 'v'}");
+    }
+    for (Map.Entry<String, Object> e : ((Map<String, Object>) attributes).entrySet()) {
+      op.setAttribute(e.getKey(),
+        e.getValue() == null ? null : Bytes.toBytes(e.getValue().toString()));
     }
   }
 
-  private static void addColumn(Get get, String columnSpec) {
-    int colonIndex = columnSpec.indexOf(':');
-    if (colonIndex < 0) {
-      get.addFamily(BinaryStrings.toBytes(columnSpec));
-      return;
+  /**
+   * Options shared by {@code get} and {@code scan}: ATTRIBUTES, AUTHORIZATIONS, CONSISTENCY,
+   * replica.
+   */
+  @SuppressWarnings("unchecked")
+  private static void applyQueryOptions(Query query, Map<String, Object> options)
+    throws ShellCommandException {
+    applyAttributes(query, options.get("ATTRIBUTES"));
+    Object authorizations = options.get("AUTHORIZATIONS");
+    if (authorizations != null) {
+      if (!(authorizations instanceof List)) {
+        throw new ShellCommandException("AUTHORIZATIONS must be an array such as ['SECRET']");
+      }
+      List<String> auths = new ArrayList<>();
+      for (Object auth : (List<Object>) authorizations) {
+        auths.add(auth.toString());
+      }
+      query.setAuthorizations(new Authorizations(auths));
     }
-    byte[] family = BinaryStrings.toBytes(columnSpec.substring(0, colonIndex));
-    String qualifierPart = columnSpec.substring(colonIndex + 1);
-    if (qualifierPart.isEmpty()) {
-      get.addFamily(family);
-    } else {
-      get.addColumn(family, BinaryStrings.toBytes(qualifierPart));
+    if (options.get("CONSISTENCY") != null) {
+      query.setConsistency(enumValue(Consistency.class, options.get("CONSISTENCY"), "CONSISTENCY"));
+    }
+    Object replicaId = options.get("REGION_REPLICA_ID");
+    if (replicaId != null) {
+      query.setReplicaId(requireNumber(replicaId, "REGION_REPLICA_ID").intValue());
     }
   }
 

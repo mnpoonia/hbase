@@ -108,4 +108,15 @@ public class ScanCommandTest {
     ParsedCommand parsed = ShellLineParser.parse("scan");
     assertThrows(ShellCommandException.class, () -> command.execute(parsed, context));
   }
+
+  @Test
+  public void maxLengthTruncatesCellTextAndIsNotForwarded() throws Exception {
+    StreamingTabularResult result = (StreamingTabularResult) command
+      .execute(ShellLineParser.parse("scan 't1', {MAXLENGTH => 9}"), context);
+    List<List<String>> rows = new ArrayList<>();
+    result.forEachRow(rows::add);
+
+    assertEquals("f1:c1 timestamp", rows.get(0).get(1));
+    assertEquals(null, table.lastOptions.get("MAXLENGTH"));
+  }
 }

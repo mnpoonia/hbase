@@ -102,4 +102,36 @@ public class GetCommandTest {
     ParsedCommand parsed = ShellLineParser.parse("get 't1'");
     assertThrows(ShellCommandException.class, () -> command.execute(parsed, context));
   }
+
+  @Test
+  public void bareColumnArgumentsBecomeColumnOption() throws Exception {
+    command.execute(ShellLineParser.parse("get 't1', 'r1', 'f1:c1', 'f1:c2'"), context);
+    assertEquals(Arrays.asList("f1:c1", "f1:c2"), table.lastOptions.get("COLUMN"));
+
+    command.execute(ShellLineParser.parse("get 't1', 'r1', ['f1:c1', 'f1:c2']"), context);
+    assertEquals(Arrays.asList("f1:c1", "f1:c2"), table.lastOptions.get("COLUMN"));
+
+    command.execute(ShellLineParser.parse("get 't1', 'r1', 'f1:c1'"), context);
+    assertEquals(Arrays.asList("f1:c1"), table.lastOptions.get("COLUMN"));
+  }
+
+  @Test
+  public void columnsAliasIsAcceptedAndMixingIsRejected() throws Exception {
+    command.execute(ShellLineParser.parse("get 't1', 'r1', {COLUMNS => ['f1:c1']}"), context);
+    assertEquals(Arrays.asList("f1:c1"), table.lastOptions.get("COLUMN"));
+    assertEquals(null, table.lastOptions.get("COLUMNS"));
+
+    assertThrows(ShellCommandException.class, () -> command.execute(
+      ShellLineParser.parse("get 't1', 'r1', {COLUMN => 'a:b', COLUMNS => 'a:c'}"), context));
+    assertThrows(ShellCommandException.class, () -> command
+      .execute(ShellLineParser.parse("get 't1', 'r1', 'f1:c1', {VERSIONS => 2}"), context));
+  }
+
+  @Test
+  public void maxLengthTruncatesCellTextAndIsNotForwarded() throws Exception {
+    TabularResult result = (TabularResult) command
+      .execute(ShellLineParser.parse("get 't1', 'r1', {MAXLENGTH => 9}"), context);
+    assertEquals("timestamp", result.rows().get(0).get(1));
+    assertEquals(null, table.lastOptions.get("MAXLENGTH"));
+  }
 }
