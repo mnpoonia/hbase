@@ -20,6 +20,7 @@ package org.apache.hadoop.hbase.newshell.command.impl;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import org.apache.hadoop.hbase.newshell.command.ArgParsing;
@@ -58,10 +59,7 @@ public final class ScanCommand implements ShellCommand {
   public CommandResult execute(ParsedCommand command, ExecutionContext context)
     throws ShellCommandException, IOException {
     ArgParsing.requireMaxArgs(command, "scan", 1);
-    if (command.positionalArgs().isEmpty()) {
-      throw new ShellCommandException("scan requires a table name argument");
-    }
-    String tableName = String.valueOf(command.positionalArgs().get(0));
+    String tableName = ArgParsing.requireArg(command, 0, "scan requires a table name argument");
     Map<String, Object> options = new HashMap<>(command.options());
     int maxLength = ArgParsing.maxLength(options.remove("MAXLENGTH"));
     ScanResult result = context.tables().forTable(tableName).scan(options);
@@ -70,6 +68,10 @@ public final class ScanCommand implements ShellCommand {
         rowConsumer.accept(Arrays.asList(row.row(),
           CellViews.column(cell) + " " + CellViews.formatCell(cell, maxLength)));
       }
-    }));
+    }), () -> {
+      Map<String, String> metrics = new LinkedHashMap<>();
+      result.metrics().forEach((name, value) -> metrics.put(name, String.valueOf(value)));
+      return metrics;
+    });
   }
 }

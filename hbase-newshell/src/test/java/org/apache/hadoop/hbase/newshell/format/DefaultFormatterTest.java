@@ -50,4 +50,15 @@ public class DefaultFormatterTest {
     new DefaultFormatter().format("scan", result, new PrintWriter(buf));
     assertEquals("ROW  COLUMN+CELL\n r1 cell1\n r2 cell2\n2 row(s)\n", buf.toString());
   }
+
+  @Test
+  public void streamingTabularResultPrintsMetricsTrailer() {
+    StringWriter buf = new StringWriter();
+    StreamingTabularResult result = new StreamingTabularResult(Arrays.asList("ROW", "COLUMN+CELL"),
+      rowConsumer -> rowConsumer.accept(Arrays.asList("r1", "cell1")),
+      () -> java.util.Collections.singletonMap("RPC_CALLS", "3"));
+    new DefaultFormatter().format("scan", result, new PrintWriter(buf));
+    assertEquals("ROW  COLUMN+CELL\n r1 cell1\n1 row(s)\n\nMETRIC  VALUE\n RPC_CALLS 3\n",
+      buf.toString());
+  }
 }

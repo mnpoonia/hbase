@@ -17,6 +17,11 @@
  */
 package org.apache.hadoop.hbase.newshell.command;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import org.apache.hadoop.hbase.newshell.parser.ParsedCommand;
 import org.apache.yetus.audience.InterfaceAudience;
 
@@ -56,5 +61,81 @@ public final class ArgParsing {
       throw new ShellCommandException("MAXLENGTH must be a number");
     }
     return ((Number) value).intValue();
+  }
+
+  /** Fails with {@code message} unless at least {@code min} positional arguments were given. */
+  public static void requireArgs(ParsedCommand command, int min, String message)
+    throws ShellCommandException {
+    if (command.positionalArgs().size() < min) {
+      throw new ShellCommandException(message);
+    }
+  }
+
+  /** Positional argument {@code index} rendered as a string; the caller has checked it exists. */
+  public static String string(ParsedCommand command, int index) {
+    return String.valueOf(command.positionalArgs().get(index));
+  }
+
+  /** Positional argument {@code index} as a string, or {@code fallback} when absent. */
+  public static String optionalArg(ParsedCommand command, int index, String fallback) {
+    return command.positionalArgs().size() > index ? string(command, index) : fallback;
+  }
+
+  /** Requires positional argument {@code index} and returns it as a string. */
+  public static String requireArg(ParsedCommand command, int index, String message)
+    throws ShellCommandException {
+    requireArgs(command, index + 1, message);
+    return string(command, index);
+  }
+
+  /** A list value becomes a list of strings; any other value becomes a singleton list. */
+  public static List<String> stringList(Object value) {
+    if (value instanceof List) {
+      List<String> result = new ArrayList<>();
+      for (Object element : (List<?>) value) {
+        result.add(String.valueOf(element));
+      }
+      return result;
+    }
+    return Collections.singletonList(String.valueOf(value));
+  }
+
+  /** Copies a map, stringifying its keys. */
+  public static Map<String, Object> stringKeyed(Map<?, ?> source) {
+    Map<String, Object> out = new LinkedHashMap<>();
+    for (Map.Entry<?, ?> e : source.entrySet()) {
+      out.put(String.valueOf(e.getKey()), e.getValue());
+    }
+    return out;
+  }
+
+  /**
+   * The table-CFs map of the {@code *_peer_tableCFs} commands: positional argument 1 when it is a
+   * hash, else the first hash literal, else {@code null}.
+   */
+  public static Map<String, Object> tableCfs(ParsedCommand command) throws ShellCommandException {
+    if (command.positionalArgs().size() > 1) {
+      Object arg = command.positionalArgs().get(1);
+      if (arg instanceof Map) {
+        return stringKeyed((Map<?, ?>) arg);
+      }
+      throw new ShellCommandException("table-cfs argument must be a Hash");
+    }
+    if (!command.hashLiterals().isEmpty()) {
+      return new LinkedHashMap<>(command.hashLiterals().get(0));
+    }
+    return null;
+  }
+
+  /** True when the {@code YES} option (flag or {@code Y}/{@code true} value) was given. */
+  public static boolean isYes(ParsedCommand command) {
+    Object yes = command.options().get("YES");
+    if (yes == null) {
+      return false;
+    }
+    if (yes instanceof Boolean) {
+      return (Boolean) yes;
+    }
+    return parseBoolean(yes) || "Y".equalsIgnoreCase(String.valueOf(yes));
   }
 }

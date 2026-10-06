@@ -18,8 +18,11 @@
 package org.apache.hadoop.hbase.newshell.command.impl;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import org.apache.hadoop.hbase.newshell.command.ArgParsing;
 import org.apache.hadoop.hbase.newshell.command.CommandResult;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
 import org.apache.hadoop.hbase.newshell.command.ShellCommand;
@@ -44,23 +47,37 @@ public final class AlterCommand implements ShellCommand {
 
   @Override
   public String help() {
-    return "alter 'table', {NAME => 'family', TTL => N} - modify an existing column family's "
-      + "attributes; {NAME => 'family', METHOD => 'delete'} - drop it";
+    return "alter 'table', {NAME => 'family', TTL => N} - modify a column family (added if "
+      + "missing); 'delete' => 'family' - drop it; MAX_FILESIZE => N etc. - table attributes; "
+      + "{METHOD => 'table_att_unset', NAME => 'attr'}, {METHOD => 'table_conf_unset', NAME => "
+      + "'key'}, {METHOD => 'table_remove_coprocessor', CLASSNAME => 'cls'}, COPROCESSOR => "
+      + "'jar|class|priority|k=v' - other table changes; REOPEN_REGIONS => 'false' skips the "
+      + "region reopen";
+  }
+
+  /**
+   * Collects the change specs: a bareword family name becomes {@code {NAME => name}} (adds the
+   * family if missing, otherwise a no-op), followed by every hash literal in order.
+   */
+  static List<Map<String, Object>> alterSpecs(ParsedCommand command) {
+    List<Map<String, Object>> specs = new ArrayList<>();
+    for (Object family : command.positionalArgs().subList(1, command.positionalArgs().size())) {
+      specs.add(Collections.singletonMap("NAME", String.valueOf(family)));
+    }
+    specs.addAll(command.hashLiterals());
+    return specs;
   }
 
   @Override
   public CommandResult execute(ParsedCommand command, ExecutionContext context)
     throws ShellCommandException, IOException {
-    if (command.positionalArgs().isEmpty()) {
-      throw new ShellCommandException("alter requires a table name argument");
-    }
-    String tableName = String.valueOf(command.positionalArgs().get(0));
-    List<Map<String, Object>> familySpecs = command.hashLiterals();
-    if (familySpecs.isEmpty()) {
+    String tableName = ArgParsing.requireArg(command, 0, "alter requires a table name argument");
+    List<Map<String, Object>> specs = alterSpecs(command);
+    if (specs.isEmpty()) {
       throw new ShellCommandException(
-        "alter requires at least one column family spec, e.g. {NAME => 'f1', TTL => 100}");
+        "alter requires at least one change, e.g. {NAME => 'f1', TTL => 100}");
     }
-    context.admin().alterTable(tableName, familySpecs);
+    context.admin().alterTable(tableName, specs);
     return TextResult.of("Updating all regions with the new schema...");
   }
 }

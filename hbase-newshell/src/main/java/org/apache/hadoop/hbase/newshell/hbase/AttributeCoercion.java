@@ -43,8 +43,23 @@ final class AttributeCoercion {
     return Long.parseLong(requireNonNull(value).toString());
   }
 
+  /**
+   * Strict boolean coercion: accepts a {@link Boolean} or the string {@code true}/{@code false}
+   * (case-insensitive). Anything else, e.g. a typo such as {@code 'ture'}, is rejected rather than
+   * silently becoming {@code false}.
+   */
   static boolean toBoolean(Object value) {
-    return Boolean.parseBoolean(requireNonNull(value).toString());
+    if (value instanceof Boolean) {
+      return (Boolean) value;
+    }
+    String text = requireNonNull(value).toString();
+    if (text.equalsIgnoreCase("true")) {
+      return true;
+    }
+    if (text.equalsIgnoreCase("false")) {
+      return false;
+    }
+    throw new IllegalArgumentException("not a boolean: '" + text + "'");
   }
 
   // Rewraps a null value as IllegalArgumentException so callers' existing

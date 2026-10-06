@@ -41,10 +41,7 @@ public final class BatchTableOp {
   public static CommandResult run(ParsedCommand command, ExecutionContext context,
     String commandName, String pastParticiple, TableAction action)
     throws ShellCommandException, IOException {
-    if (command.positionalArgs().isEmpty()) {
-      throw new ShellCommandException(commandName + " requires a regex argument");
-    }
-    String regex = String.valueOf(command.positionalArgs().get(0));
+    String regex = ArgParsing.requireArg(command, 0, commandName + " requires a regex argument");
     ShellAdmin admin = context.admin();
     List<String> tables = admin.listTables(regex);
     if (tables.isEmpty()) {

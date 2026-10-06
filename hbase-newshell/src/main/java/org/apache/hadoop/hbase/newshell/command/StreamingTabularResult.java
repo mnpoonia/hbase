@@ -18,8 +18,11 @@
 package org.apache.hadoop.hbase.newshell.command;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 import org.apache.yetus.audience.InterfaceAudience;
 
 /**
@@ -37,10 +40,25 @@ public final class StreamingTabularResult implements CommandResult {
 
   private final List<String> header;
   private final RowProducer rowProducer;
+  private final Supplier<Map<String, String>> trailer;
 
   public StreamingTabularResult(List<String> header, RowProducer rowProducer) {
+    this(header, rowProducer, Collections::emptyMap);
+  }
+
+  /**
+   * @param trailer name/value pairs (e.g. scan metrics) to render after the rows; evaluated only
+   *                once {@link #forEachRow} has returned
+   */
+  public StreamingTabularResult(List<String> header, RowProducer rowProducer,
+    Supplier<Map<String, String>> trailer) {
     this.header = header;
     this.rowProducer = rowProducer;
+    this.trailer = trailer;
+  }
+
+  public Map<String, String> trailer() {
+    return trailer.get();
   }
 
   public List<String> header() {

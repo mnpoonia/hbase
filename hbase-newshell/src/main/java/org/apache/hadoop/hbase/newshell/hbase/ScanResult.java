@@ -18,6 +18,8 @@
 package org.apache.hadoop.hbase.newshell.hbase;
 
 import java.io.IOException;
+import java.util.Collections;
+import java.util.Map;
 import java.util.function.Consumer;
 import org.apache.yetus.audience.InterfaceAudience;
 
@@ -37,9 +39,27 @@ public final class ScanResult {
   }
 
   private final Producer producer;
+  private final Map<String, Long> metrics;
 
   public ScanResult(Producer producer) {
+    this(producer, Collections.<String, Long> emptyMap());
+  }
+
+  /**
+   * @param metrics filled by {@code producer} once the scan has been fully read (scan metrics
+   *                requested via {@code ALL_METRICS}/{@code METRICS}); read via {@link #metrics()}
+   */
+  public ScanResult(Producer producer, Map<String, Long> metrics) {
     this.producer = producer;
+    this.metrics = metrics;
+  }
+
+  /**
+   * Scan metrics, name-sorted, valid only after {@link #forEachRow} returns; empty if not
+   * requested.
+   */
+  public Map<String, Long> metrics() {
+    return metrics;
   }
 
   public void forEachRow(Consumer<ScanRow> rowConsumer) throws IOException {

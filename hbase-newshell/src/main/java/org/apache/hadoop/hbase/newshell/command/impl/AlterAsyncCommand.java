@@ -20,6 +20,7 @@ package org.apache.hadoop.hbase.newshell.command.impl;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import org.apache.hadoop.hbase.newshell.command.ArgParsing;
 import org.apache.hadoop.hbase.newshell.command.CommandResult;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
 import org.apache.hadoop.hbase.newshell.command.ShellCommand;
@@ -51,16 +52,15 @@ public final class AlterAsyncCommand implements ShellCommand {
   @Override
   public CommandResult execute(ParsedCommand command, ExecutionContext context)
     throws ShellCommandException, IOException {
-    if (command.positionalArgs().isEmpty()) {
-      throw new ShellCommandException("alter_async requires a table name argument");
-    }
-    String tableName = String.valueOf(command.positionalArgs().get(0));
-    List<Map<String, Object>> familySpecs = command.hashLiterals();
-    if (familySpecs.isEmpty()) {
+    ArgParsing.requireMaxArgs(command, "alter_async", 1);
+    String tableName =
+      ArgParsing.requireArg(command, 0, "alter_async requires a table name argument");
+    List<Map<String, Object>> specs = AlterCommand.alterSpecs(command);
+    if (specs.isEmpty()) {
       throw new ShellCommandException(
-        "alter_async requires at least one column family spec, e.g. {NAME => 'f1', TTL => 100}");
+        "alter_async requires at least one change, e.g. {NAME => 'f1', TTL => 100}");
     }
-    context.admin().alterTable(tableName, familySpecs);
+    context.admin().alterTable(tableName, specs);
     return TextResult.of();
   }
 }

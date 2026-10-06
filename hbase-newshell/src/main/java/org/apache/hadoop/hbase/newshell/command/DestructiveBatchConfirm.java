@@ -40,7 +40,7 @@ public final class DestructiveBatchConfirm {
     if (targets == null || targets.isEmpty()) {
       return;
     }
-    if (context.options().forceYes() || isYesOption(command)) {
+    if (context.options().forceYes() || ArgParsing.isYes(command)) {
       return;
     }
     PrintWriter out = context.out();
@@ -61,14 +61,24 @@ public final class DestructiveBatchConfirm {
       + " without confirmation; re-run with --yes " + "(or in an interactive TTY)");
   }
 
-  private static boolean isYesOption(ParsedCommand command) {
-    Object yes = command.options().get("YES");
-    if (yes == null) {
-      return false;
+  /** Confirmation gate for {@code delete_all_snapshot} / {@code delete_table_snapshots}. */
+  public static void confirmSnapshotDelete(ExecutionContext context, ParsedCommand command,
+    String commandName, int count) throws ShellCommandException, IOException {
+    if (context.options().forceYes() || ArgParsing.isYes(command)) {
+      return;
     }
-    if (yes instanceof Boolean) {
-      return (Boolean) yes;
+    PrintWriter out = context.out();
+    out.println();
+    out.flush();
+    if (context.options().interactive() && context.confirmationReader() != null) {
+      String answer =
+        context.confirmationReader().readLine("Delete the above " + count + " snapshots (y/n)? ");
+      if (answer != null && answer.trim().toLowerCase(Locale.ROOT).startsWith("y")) {
+        return;
+      }
+      throw new UserAbortException(commandName + " aborted");
     }
-    return Boolean.parseBoolean(String.valueOf(yes)) || "Y".equalsIgnoreCase(String.valueOf(yes));
+    throw new UserAbortException("Refusing " + commandName
+      + " without confirmation; re-run with --yes (or in an interactive TTY)");
   }
 }

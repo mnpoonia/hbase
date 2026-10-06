@@ -24,12 +24,18 @@ import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.function.BiConsumer;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.KeepDeletedCells;
+import org.apache.hadoop.hbase.MemoryCompactionPolicy;
 import org.apache.hadoop.hbase.client.ColumnFamilyDescriptor;
 import org.apache.hadoop.hbase.client.ColumnFamilyDescriptorBuilder;
+import org.apache.hadoop.hbase.client.MobCompactPartitionPolicy;
 import org.apache.hadoop.hbase.io.compress.Compression;
+import org.apache.hadoop.hbase.io.crypto.Encryption;
 import org.apache.hadoop.hbase.io.encoding.DataBlockEncoding;
 import org.apache.hadoop.hbase.regionserver.BloomType;
+import org.apache.hadoop.hbase.security.EncryptionUtil;
 import org.apache.yetus.audience.InterfaceAudience;
 
 /**
@@ -74,8 +80,31 @@ final class ColumnFamilyAttributes {
     m.put("DFS_REPLICATION",
       (builder, value) -> builder.setDFSReplication((short) AttributeCoercion.toInt(value)));
     m.put("BLOCKSIZE", (builder, value) -> builder.setBlocksize(AttributeCoercion.toInt(value)));
+    m.put("DFSR",
+      (builder, value) -> builder.setDFSReplication((short) AttributeCoercion.toInt(value)));
     m.put("CACHE_DATA_ON_WRITE",
       (builder, value) -> builder.setCacheDataOnWrite(AttributeCoercion.toBoolean(value)));
+    m.put("CACHE_INDEX_ON_WRITE",
+      (builder, value) -> builder.setCacheIndexesOnWrite(AttributeCoercion.toBoolean(value)));
+    m.put("CACHE_BLOOMS_ON_WRITE",
+      (builder, value) -> builder.setCacheBloomsOnWrite(AttributeCoercion.toBoolean(value)));
+    m.put("EVICT_BLOCKS_ON_CLOSE",
+      (builder, value) -> builder.setEvictBlocksOnClose(AttributeCoercion.toBoolean(value)));
+    m.put("COMPRESS_TAGS",
+      (builder, value) -> builder.setCompressTags(AttributeCoercion.toBoolean(value)));
+    m.put("PREFETCH_BLOCKS_ON_OPEN",
+      (builder, value) -> builder.setPrefetchBlocksOnOpen(AttributeCoercion.toBoolean(value)));
+    m.put("IN_MEMORY_COMPACTION", (builder, value) -> builder
+      .setInMemoryCompaction(MemoryCompactionPolicy.valueOf(toUpper(value))));
+    m.put("COMPRESSION_COMPACT", (builder, value) -> builder
+      .setCompactionCompressionType(Compression.Algorithm.valueOf(toUpper(value))));
+    m.put("COMPRESSION_COMPACT_MAJOR", (builder, value) -> builder
+      .setMajorCompactionCompressionType(Compression.Algorithm.valueOf(toUpper(value))));
+    m.put("COMPRESSION_COMPACT_MINOR", (builder, value) -> builder
+      .setMinorCompactionCompressionType(Compression.Algorithm.valueOf(toUpper(value))));
+    m.put("STORAGE_POLICY", (builder, value) -> builder.setStoragePolicy(toUpper(value)));
+    m.put("MOB_COMPACT_PARTITION_POLICY", (builder, value) -> builder
+      .setMobCompactPartitionPolicy(MobCompactPartitionPolicy.valueOf(toUpper(value))));
     SETTERS = Collections.unmodifiableMap(m);
   }
 
@@ -83,6 +112,15 @@ final class ColumnFamilyAttributes {
   }
 
   static ColumnFamilyDescriptor build(Map<String, Object> familySpec) throws IOException {
+    return build(familySpec, null);
+  }
+
+  /**
+   * @param conf used only to wrap an {@code ENCRYPTION_KEY}; may be {@code null}, in which case a
+   *             default configuration is loaded on demand
+   */
+  static ColumnFamilyDescriptor build(Map<String, Object> familySpec, Configuration conf)
+    throws IOException {
     Object name = familySpec.get("NAME");
     if (name == null) {
       throw new IOException("Column family spec requires a NAME");
@@ -90,7 +128,7 @@ final class ColumnFamilyAttributes {
     try {
       ColumnFamilyDescriptorBuilder builder =
         ColumnFamilyDescriptorBuilder.newBuilder(name.toString().getBytes(StandardCharsets.UTF_8));
-      applyAttributes(builder, familySpec);
+      applyAttributes(builder, familySpec, conf);
       return builder.build();
     } catch (IllegalArgumentException e) {
       throw new IOException("Invalid column family name or attribute: " + e.getMessage(), e);
@@ -104,8 +142,14 @@ final class ColumnFamilyAttributes {
    */
   static void applyAttributes(ColumnFamilyDescriptorBuilder builder, Map<String, Object> familySpec)
     throws IOException {
+    applyAttributes(builder, familySpec, null);
+  }
+
+  static void applyAttributes(ColumnFamilyDescriptorBuilder builder, Map<String, Object> familySpec,
+    Configuration conf) throws IOException {
     Map<String, Object> remaining = new HashMap<>(familySpec);
     remaining.remove("NAME");
+    applyEncryption(builder, remaining, conf);
     applyValueMap(builder, remaining, "CONFIGURATION", true);
     applyValueMap(builder, remaining, "METADATA", false);
     for (Map.Entry<String, Object> entry : remaining.entrySet()) {
@@ -120,6 +164,34 @@ final class ColumnFamilyAttributes {
           "Invalid value for column family attribute '" + entry.getKey() + "': " + entry.getValue(),
           e);
       }
+    }
+  }
+
+  /**
+   * Mirrors admin.rb#cfd: {@code ENCRYPTION} names the cipher, an optional {@code ENCRYPTION_KEY}
+   * is a passphrase turned into a secret key and wrapped with the cluster master key, and an
+   * optional {@code ENCRYPTION_KEY_NAMESPACE} scopes the key.
+   */
+  private static void applyEncryption(ColumnFamilyDescriptorBuilder builder,
+    Map<String, Object> remaining, Configuration conf) throws IOException {
+    Object algorithm = remaining.remove("ENCRYPTION");
+    Object keyPassphrase = remaining.remove("ENCRYPTION_KEY");
+    Object keyNamespace = remaining.remove("ENCRYPTION_KEY_NAMESPACE");
+    if (algorithm == null) {
+      if (keyPassphrase != null || keyNamespace != null) {
+        throw new IOException("ENCRYPTION_KEY and ENCRYPTION_KEY_NAMESPACE require ENCRYPTION");
+      }
+      return;
+    }
+    String cipher = toUpper(algorithm);
+    builder.setEncryptionType(cipher);
+    if (keyPassphrase != null) {
+      Configuration effective = conf != null ? conf : HBaseConfiguration.create();
+      byte[] key = Encryption.generateSecretKey(effective, cipher, keyPassphrase.toString());
+      builder.setEncryptionKey(EncryptionUtil.wrapKey(effective, key, cipher));
+    }
+    if (keyNamespace != null) {
+      builder.setEncryptionKeyNamespace(keyNamespace.toString());
     }
   }
 

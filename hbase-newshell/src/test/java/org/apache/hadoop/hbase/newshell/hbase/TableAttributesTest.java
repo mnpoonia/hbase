@@ -58,6 +58,15 @@ public class TableAttributesTest {
   }
 
   @Test
+  public void rejectsMistypedBooleanInsteadOfTreatingItAsFalse() {
+    Map<String, Object> attrs = new HashMap<>();
+    attrs.put("READONLY", "ture");
+    IOException e = assertThrows(IOException.class,
+      () -> TableAttributes.apply(newBuilder(), attrs, HBaseConfiguration.create()));
+    assertTrue(e.getMessage().contains("READONLY"));
+  }
+
+  @Test
   public void rejectsUnknownAttributeKey() {
     Map<String, Object> attrs = new HashMap<>();
     attrs.put("COMPRESION", "GZ");

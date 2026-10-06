@@ -106,6 +106,9 @@ public final class JsonFormatter implements Formatter {
           trailer.put("command", commandName);
         }
         trailer.put("rows", count[0]);
+        if (!streamingResult.trailer().isEmpty()) {
+          trailer.put("metrics", streamingResult.trailer());
+        }
         out.println(JsonMapper.writeObjectAsString(trailer));
       } else {
         throw new IllegalArgumentException("Unknown CommandResult type: " + result.getClass());

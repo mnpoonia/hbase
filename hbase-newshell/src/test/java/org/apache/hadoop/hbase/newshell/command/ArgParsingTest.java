@@ -17,8 +17,13 @@
  */
 package org.apache.hadoop.hbase.newshell.command;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.Arrays;
+import java.util.Collections;
 import org.apache.hadoop.hbase.newshell.parser.ShellLineParser;
 import org.apache.hadoop.hbase.testclassification.SmallTests;
 import org.junit.jupiter.api.Tag;
@@ -35,5 +40,42 @@ public class ArgParsingTest {
   public void requireMaxArgsRejectsSurplus() throws Exception {
     assertThrows(ShellCommandException.class,
       () -> ArgParsing.requireMaxArgs(ShellLineParser.parse("truncate 't1', 't2'"), "truncate", 1));
+  }
+
+  @Test
+  public void requireArgReturnsStringOrFailsWithMessage() throws Exception {
+    assertEquals("t1", ArgParsing.requireArg(ShellLineParser.parse("describe 't1'"), 0, "msg"));
+    ShellCommandException e = assertThrows(ShellCommandException.class,
+      () -> ArgParsing.requireArg(ShellLineParser.parse("describe"), 0, "describe needs a table"));
+    assertEquals("describe needs a table", e.getMessage());
+  }
+
+  @Test
+  public void requireArgsChecksMinimumCount() throws Exception {
+    ArgParsing.requireArgs(ShellLineParser.parse("move 'a', 'b'"), 2, "msg");
+    assertThrows(ShellCommandException.class,
+      () -> ArgParsing.requireArgs(ShellLineParser.parse("move 'a'"), 2, "msg"));
+  }
+
+  @Test
+  public void optionalArgFallsBackWhenAbsent() throws Exception {
+    assertEquals(".*", ArgParsing.optionalArg(ShellLineParser.parse("list"), 0, ".*"));
+    assertEquals("x", ArgParsing.optionalArg(ShellLineParser.parse("list 'x'"), 0, ".*"));
+  }
+
+  @Test
+  public void stringListWrapsScalarsAndStringifiesElements() {
+    assertEquals(Collections.singletonList("a"), ArgParsing.stringList("a"));
+    assertEquals(Arrays.asList("1", "b"), ArgParsing.stringList(Arrays.<Object> asList(1, "b")));
+  }
+
+  @Test
+  public void tableCfsReadsHashArgumentOrReturnsNull() throws Exception {
+    assertNull(ArgParsing.tableCfs(ShellLineParser.parse("set_peer_tableCFs '1'")));
+    assertThrows(ShellCommandException.class,
+      () -> ArgParsing.tableCfs(ShellLineParser.parse("set_peer_tableCFs '1', 'notahash'")));
+    assertTrue(
+      ArgParsing.tableCfs(ShellLineParser.parse("set_peer_tableCFs '1', { 't1' => ['cf'] }"))
+        .containsKey("t1"));
   }
 }

@@ -28,6 +28,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.BiConsumer;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.client.CoprocessorDescriptor;
+import org.apache.hadoop.hbase.client.CoprocessorDescriptorBuilder;
 import org.apache.hadoop.hbase.client.Durability;
 import org.apache.hadoop.hbase.client.TableDescriptorBuilder;
 import org.apache.hadoop.hbase.util.Bytes;
@@ -72,6 +74,19 @@ final class TableAttributes {
     m.put("REGION_REPLICATION",
       (builder, value) -> builder.setRegionReplication(AttributeCoercion.toInt(value)));
     m.put("PRIORITY", (builder, value) -> builder.setPriority(AttributeCoercion.toInt(value)));
+    m.put("NORMALIZER_TARGET_REGION_COUNT",
+      (builder, value) -> builder.setNormalizerTargetRegionCount(AttributeCoercion.toInt(value)));
+    m.put("NORMALIZER_TARGET_REGION_SIZE",
+      (builder, value) -> builder.setNormalizerTargetRegionSize(AttributeCoercion.toLong(value)));
+    m.put("NORMALIZER_TARGET_REGION_SIZE_MB",
+      (builder, value) -> builder.setNormalizerTargetRegionSize(AttributeCoercion.toLong(value)));
+    m.put("ERASURE_CODING_POLICY",
+      (builder, value) -> builder.setErasureCodingPolicy(value.toString()));
+    m.put("FLUSH_POLICY", (builder, value) -> builder.setFlushPolicyClassName(value.toString()));
+    m.put("SPLIT_POLICY",
+      (builder, value) -> builder.setRegionSplitPolicyClassName(value.toString()));
+    m.put("REGION_MEMSTORE_REPLICATION",
+      (builder, value) -> builder.setRegionMemStoreReplication(AttributeCoercion.toBoolean(value)));
     SETTERS = Collections.unmodifiableMap(m);
   }
 
@@ -86,6 +101,10 @@ final class TableAttributes {
   static byte[][] apply(TableDescriptorBuilder builder, Map<String, Object> tableAttributes,
     Configuration conf) throws IOException {
     Map<String, Object> remaining = new HashMap<>(tableAttributes);
+    // METHOD => 'table_att' is the deprecated marker for a table-attribute hash
+    if ("table_att".equals(remaining.get("METHOD"))) {
+      remaining.remove("METHOD");
+    }
     byte[][] splits = extractSplits(builder, remaining, conf);
     applyValueMap(builder, remaining, "CONFIGURATION");
     applyValueMap(builder, remaining, "METADATA");
@@ -102,6 +121,89 @@ final class TableAttributes {
       }
     }
     return splits;
+  }
+
+  /**
+   * Applies a table-scope {@code alter} attribute hash: the same attributes as {@code create}
+   * (minus the pre-split ones, which are meaningless on an existing table) plus {@code COPROCESSOR}
+   * (matched case-insensitively like hbase-shell), given as a legacy
+   * {@code 'path|class|priority|k=v,k=v'} spec string or a {@code CLASSNAME}/{@code JAR_PATH}/
+   * {@code PRIORITY}/{@code PROPERTIES} hash.
+   */
+  static void applyToExisting(TableDescriptorBuilder builder, Map<String, Object> attributes,
+    Configuration conf) throws IOException {
+    Map<String, Object> remaining = new HashMap<>();
+    for (Map.Entry<String, Object> entry : attributes.entrySet()) {
+      String key = entry.getKey();
+      if ("COPROCESSOR".equalsIgnoreCase(key.trim())) {
+        builder.setCoprocessor(toCoprocessor(entry.getValue()));
+      } else if (
+        "SPLITS".equals(key) || "SPLITS_FILE".equals(key) || "NUMREGIONS".equals(key)
+          || "SPLITALGO".equals(key)
+      ) {
+        throw new IOException("Table attribute '" + key + "' is only valid in create");
+      } else {
+        remaining.put(key, entry.getValue());
+      }
+    }
+    apply(builder, remaining, conf);
+  }
+
+  private static CoprocessorDescriptor toCoprocessor(Object value) throws IOException {
+    try {
+      if (value instanceof Map) {
+        Map<?, ?> spec = (Map<?, ?>) value;
+        Object className = spec.get("CLASSNAME");
+        if (className == null) {
+          throw new IOException("CLASSNAME must be provided in the COPROCESSOR spec");
+        }
+        CoprocessorDescriptorBuilder cp =
+          CoprocessorDescriptorBuilder.newBuilder(className.toString());
+        if (spec.get("JAR_PATH") != null) {
+          cp.setJarPath(spec.get("JAR_PATH").toString());
+        }
+        if (spec.get("PRIORITY") != null) {
+          cp.setPriority(AttributeCoercion.toInt(spec.get("PRIORITY")));
+        }
+        if (spec.get("PROPERTIES") instanceof Map) {
+          for (Map.Entry<?, ?> prop : ((Map<?, ?>) spec.get("PROPERTIES")).entrySet()) {
+            cp.setProperty(prop.getKey().toString(), String.valueOf(prop.getValue()));
+          }
+        }
+        return cp.build();
+      }
+      if (value instanceof String) {
+        return fromSpecString(((String) value).trim());
+      }
+    } catch (IllegalArgumentException | ClassCastException e) {
+      throw new IOException("Invalid COPROCESSOR value: " + value, e);
+    }
+    throw new IOException("COPROCESSOR must be provided as a String or Hash");
+  }
+
+  /** Parses the legacy {@code [jar path]|class|[priority]|[k=v,k=v]} coprocessor spec. */
+  private static CoprocessorDescriptor fromSpecString(String spec) throws IOException {
+    String[] parts = spec.split("\\|", -1);
+    if (parts.length < 2 || parts.length > 4 || parts[1].trim().isEmpty()) {
+      throw new IOException("Invalid COPROCESSOR spec '" + spec
+        + "', expected '[jar path]|class name|[priority]|[key=value,...]'");
+    }
+    CoprocessorDescriptorBuilder cp = CoprocessorDescriptorBuilder.newBuilder(parts[1].trim());
+    if (!parts[0].trim().isEmpty()) {
+      cp.setJarPath(parts[0].trim());
+    }
+    if (parts.length > 2 && !parts[2].trim().isEmpty()) {
+      cp.setPriority(Integer.parseInt(parts[2].trim()));
+    }
+    if (parts.length > 3) {
+      for (String kv : parts[3].split(",")) {
+        String[] pair = kv.split("=", 2);
+        if (pair.length == 2) {
+          cp.setProperty(pair[0].trim(), pair[1].trim());
+        }
+      }
+    }
+    return cp.build();
   }
 
   /**

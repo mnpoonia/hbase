@@ -191,7 +191,7 @@ public class DefaultShellTableTest {
   @Test
   public void scanRejectsUnsupportedOptions() {
     DefaultShellTable shellTable = new DefaultShellTable(mock(Table.class));
-    for (String option : new String[] { "ALL_METRICS", "METRICS", "BOGUS" }) {
+    for (String option : new String[] { "BOGUS", "INTERVAL" }) {
       assertUnsupportedOption(() -> shellTable.scan(opts(option, "x")), option);
     }
   }
@@ -231,6 +231,46 @@ public class DefaultShellTableTest {
 
     Map<String, Object> options = new HashMap<>();
     options.put("INTERVAL", "many");
+    assertThrows(ShellCommandException.class, () -> shellTable.count(options, (count, row) -> {
+    }));
+  }
+
+  @Test
+  public void countHonoursRowPrefixAndColumnLikeScan() throws IOException, ShellCommandException {
+    Table table = mock(Table.class);
+    ResultScanner scanner = mock(ResultScanner.class);
+    when(scanner.iterator()).thenReturn(Collections.<Result> emptyList().iterator());
+    when(table.getScanner(any(Scan.class))).thenReturn(scanner);
+    DefaultShellTable shellTable = new DefaultShellTable(table);
+
+    Map<String, Object> options = new HashMap<>();
+    options.put("ROWPREFIXFILTER", "ab");
+    options.put("COLUMN", "cf:q");
+    shellTable.count(options, (count, row) -> {
+    });
+
+    ArgumentCaptor<Scan> captor = ArgumentCaptor.forClass(Scan.class);
+    verify(table).getScanner(captor.capture());
+    assertEquals("ab", Bytes.toString(captor.getValue().getStartRow()));
+    assertTrue(captor.getValue().getFamilyMap().containsKey(Bytes.toBytes("cf")));
+  }
+
+  @Test
+  public void countRejectsNonPositiveInterval() {
+    DefaultShellTable shellTable = new DefaultShellTable(mock(Table.class));
+    for (Object interval : new Object[] { 0, -5 }) {
+      Map<String, Object> options = new HashMap<>();
+      options.put("INTERVAL", interval);
+      assertThrows(ShellCommandException.class, () -> shellTable.count(options, (count, row) -> {
+      }));
+    }
+  }
+
+  @Test
+  public void countRejectsNonBooleanCacheBlocks() {
+    DefaultShellTable shellTable = new DefaultShellTable(mock(Table.class));
+    Map<String, Object> options = new HashMap<>();
+    options.put("CACHE_BLOCKS", "ture");
     assertThrows(ShellCommandException.class, () -> shellTable.count(options, (count, row) -> {
     }));
   }
@@ -570,5 +610,62 @@ public class DefaultShellTableTest {
     assertEquals("v", Bytes.toString(put.getAttribute("k")));
     assertEquals("PRIVATE|SECRET", put.getCellVisibility().getExpression());
     assertEquals(5000L, put.getTTL());
+  }
+
+  @Test
+  public void scanMetricsAreCollectedAndFiltered() throws IOException, ShellCommandException {
+    Table table = mock(Table.class);
+    ResultScanner scanner = mock(ResultScanner.class);
+    when(scanner.iterator()).thenReturn(Collections.emptyIterator());
+    org.apache.hadoop.hbase.client.metrics.ScanMetrics scanMetrics =
+      new org.apache.hadoop.hbase.client.metrics.ScanMetrics();
+    scanMetrics.countOfRPCcalls.incrementAndGet();
+    when(scanner.getScanMetrics()).thenReturn(scanMetrics);
+    when(table.getScanner(any(Scan.class))).thenReturn(scanner);
+    DefaultShellTable shellTable = new DefaultShellTable(table);
+
+    Map<String, Object> options = new HashMap<>();
+    options.put("METRICS", Arrays.asList("RPC_CALLS"));
+    ScanResult result = shellTable.scan(options);
+    result.forEachRow(row -> {
+    });
+
+    ArgumentCaptor<Scan> captor = ArgumentCaptor.forClass(Scan.class);
+    verify(table).getScanner(captor.capture());
+    assertTrue(captor.getValue().isScanMetricsEnabled());
+    assertEquals(Collections.singletonMap("RPC_CALLS", 1L), result.metrics());
+  }
+
+  @Test
+  public void scanWithoutMetricOptionsLeavesMetricsOffAndEmpty()
+    throws IOException, ShellCommandException {
+    Table table = mock(Table.class);
+    ResultScanner scanner = mock(ResultScanner.class);
+    when(scanner.iterator()).thenReturn(Collections.emptyIterator());
+    when(table.getScanner(any(Scan.class))).thenReturn(scanner);
+    ScanResult result = new DefaultShellTable(table).scan(new HashMap<>());
+    result.forEachRow(row -> {
+    });
+    assertTrue(result.metrics().isEmpty());
+  }
+
+  @Test
+  public void metaTableServerStartCodeIsShownAsLong() throws IOException, ShellCommandException {
+    Table table = mock(Table.class);
+    when(table.getName()).thenReturn(org.apache.hadoop.hbase.TableName.META_TABLE_NAME);
+    ResultScanner scanner = mock(ResultScanner.class);
+    Result result = Result.create(new org.apache.hadoop.hbase.Cell[] {
+      new org.apache.hadoop.hbase.KeyValue(Bytes.toBytes("r"), Bytes.toBytes("info"),
+        Bytes.toBytes("serverstartcode"), 1L, Bytes.toBytes(1234L)),
+      new org.apache.hadoop.hbase.KeyValue(Bytes.toBytes("r"), Bytes.toBytes("info"),
+        Bytes.toBytes("regioninfo"), 1L, Bytes.toBytes("junk")) });
+    when(scanner.iterator()).thenReturn(Collections.singletonList(result).iterator());
+    when(table.getScanner(any(Scan.class))).thenReturn(scanner);
+
+    List<ScanRow> rows = new java.util.ArrayList<>();
+    new DefaultShellTable(table).scan(new HashMap<>()).forEachRow(rows::add);
+
+    assertEquals("1234", rows.get(0).cells().get(0).value());
+    assertEquals("", rows.get(0).cells().get(1).value());
   }
 }

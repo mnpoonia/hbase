@@ -132,4 +132,112 @@ public class DefaultShellAdminTest {
     assertThrows(IOException.class,
       () -> shellAdmin.alterTable("t", Collections.singletonList(extra)));
   }
+
+  private TableDescriptor alter(Map<String, Object>... specs) throws IOException {
+    when(admin.tableExists(TableName.valueOf("t"))).thenReturn(true);
+    when(admin.getDescriptor(TableName.valueOf("t"))).thenReturn(twoFamilyTable());
+    shellAdmin.alterTable("t", java.util.Arrays.asList(specs));
+    ArgumentCaptor<TableDescriptor> captor = ArgumentCaptor.forClass(TableDescriptor.class);
+    verify(admin).modifyTable(captor.capture());
+    return captor.getValue();
+  }
+
+  private static Map<String, Object> spec(Object... kv) {
+    Map<String, Object> m = new HashMap<>();
+    for (int i = 0; i < kv.length; i += 2) {
+      m.put((String) kv[i], kv[i + 1]);
+    }
+    return m;
+  }
+
+  @Test
+  public void alterAddsMissingFamily() throws IOException {
+    TableDescriptor td = alter(spec("NAME", "f3", "VERSIONS", 4));
+    assertEquals(3, td.getColumnFamilyCount());
+    assertEquals(4, td.getColumnFamily(Bytes.toBytes("f3")).getMaxVersions());
+  }
+
+  @Test
+  public void alterDeleteShortcut() throws IOException {
+    TableDescriptor td = alter(spec("delete", "f1"));
+    assertEquals(1, td.getColumnFamilyCount());
+  }
+
+  @Test
+  public void alterSetsTableAttributesAndCoprocessor() throws IOException {
+    TableDescriptor td = alter(spec("MAX_FILESIZE", "12345", "SPLIT_POLICY", "a.B"),
+      spec("COPROCESSOR", "|org.example.Cp|1001|k=v"));
+    assertEquals(12345L, td.getMaxFileSize());
+    assertEquals("a.B", td.getRegionSplitPolicyClassName());
+    assertTrue(td.hasCoprocessor("org.example.Cp"));
+  }
+
+  @Test
+  public void alterUnsetAttributeAndRemoveCoprocessor() throws IOException {
+    when(admin.tableExists(TableName.valueOf("t"))).thenReturn(true);
+    when(admin.getDescriptor(TableName.valueOf("t")))
+      .thenReturn(TableDescriptorBuilder.newBuilder(twoFamilyTable()).setValue("foo", "bar")
+        .setCoprocessor("org.example.Cp").build());
+    shellAdmin.alterTable("t",
+      java.util.Arrays.asList(spec("METHOD", "table_att_unset", "NAME", "foo"),
+        spec("METHOD", "table_remove_coprocessor", "CLASSNAME", "org.example.Cp")));
+    ArgumentCaptor<TableDescriptor> captor = ArgumentCaptor.forClass(TableDescriptor.class);
+    verify(admin).modifyTable(captor.capture());
+    assertEquals(null, captor.getValue().getValue("foo"));
+    assertTrue(!captor.getValue().hasCoprocessor("org.example.Cp"));
+  }
+
+  @Test
+  public void alterUnsetMissingAttributeFails() throws IOException {
+    when(admin.tableExists(TableName.valueOf("t"))).thenReturn(true);
+    when(admin.getDescriptor(TableName.valueOf("t"))).thenReturn(twoFamilyTable());
+    assertThrows(IOException.class, () -> shellAdmin.alterTable("t",
+      Collections.singletonList(spec("METHOD", "table_conf_unset", "NAME", "nope"))));
+  }
+
+  @Test
+  public void alterReopenRegionsFalseUsesAsyncWithoutReopen() throws Exception {
+    when(admin.tableExists(TableName.valueOf("t"))).thenReturn(true);
+    when(admin.getDescriptor(TableName.valueOf("t"))).thenReturn(twoFamilyTable());
+    when(admin.modifyTableAsync(any(TableDescriptor.class), org.mockito.ArgumentMatchers.eq(false)))
+      .thenReturn(java.util.concurrent.CompletableFuture.completedFuture(null));
+    shellAdmin.alterTable("t",
+      Collections.singletonList(spec("MAX_FILESIZE", 5, "REOPEN_REGIONS", "false")));
+    verify(admin).modifyTableAsync(any(TableDescriptor.class),
+      org.mockito.ArgumentMatchers.eq(false));
+    assertThrows(IOException.class, () -> shellAdmin.alterTable("t",
+      Collections.singletonList(spec("MAX_FILESIZE", 5, "REOPEN_REGIONS", "maybe"))));
+  }
+
+  @Test
+  public void alterRejectsPresplitAttributes() throws IOException {
+    when(admin.tableExists(TableName.valueOf("t"))).thenReturn(true);
+    when(admin.getDescriptor(TableName.valueOf("t"))).thenReturn(twoFamilyTable());
+    assertThrows(IOException.class, () -> shellAdmin.alterTable("t",
+      Collections.singletonList(spec("SPLITS", java.util.Arrays.asList("a")))));
+  }
+
+  @Test
+  public void createAcceptsMissingTableAndFamilyAttributes() throws IOException {
+    Map<String,
+      Object> family = spec("NAME", "f1", "COMPRESS_TAGS", "true", "STORAGE_POLICY", "hot",
+        "COMPRESSION_COMPACT", "none", "IN_MEMORY_COMPACTION", "basic", "DFSR", "2",
+        "PREFETCH_BLOCKS_ON_OPEN", "true", "EVICT_BLOCKS_ON_CLOSE", "true");
+    Map<String, Object> table = spec("METHOD", "table_att", "NORMALIZER_TARGET_REGION_COUNT", 3,
+      "REGION_MEMSTORE_REPLICATION", "false", "FLUSH_POLICY", "x.Y");
+    shellAdmin.createTable("t1", Collections.singletonList(family), table);
+    ArgumentCaptor<TableDescriptor> captor = ArgumentCaptor.forClass(TableDescriptor.class);
+    verify(admin).createTable(captor.capture());
+    TableDescriptor td = captor.getValue();
+    assertEquals(3, td.getNormalizerTargetRegionCount());
+    assertEquals(false, td.hasRegionMemStoreReplication());
+    assertEquals("x.Y", td.getFlushPolicyClassName());
+    org.apache.hadoop.hbase.client.ColumnFamilyDescriptor cf =
+      td.getColumnFamily(Bytes.toBytes("f1"));
+    assertTrue(cf.isCompressTags());
+    assertEquals("HOT", cf.getStoragePolicy());
+    assertEquals(2, cf.getDFSReplication());
+    assertTrue(cf.isPrefetchBlocksOnOpen());
+    assertTrue(cf.isEvictBlocksOnClose());
+  }
 }

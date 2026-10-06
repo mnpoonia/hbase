@@ -27,9 +27,11 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import org.apache.hadoop.hbase.ClusterMetrics;
@@ -116,7 +118,8 @@ public final class DefaultShellAdmin implements ShellAdmin {
     }
     TableDescriptorBuilder tableBuilder = TableDescriptorBuilder.newBuilder(table);
     for (Map<String, Object> familySpec : familySpecs) {
-      tableBuilder.setColumnFamily(ColumnFamilyAttributes.build(familySpec));
+      tableBuilder
+        .setColumnFamily(ColumnFamilyAttributes.build(familySpec, admin.getConfiguration()));
     }
     byte[][] splits =
       TableAttributes.apply(tableBuilder, tableAttributes, admin.getConfiguration());
@@ -230,42 +233,126 @@ public final class DefaultShellAdmin implements ShellAdmin {
   }
 
   @Override
-  public void alterTable(String tableName, List<Map<String, Object>> familySpecs)
-    throws IOException {
+  public void alterTable(String tableName, List<Map<String, Object>> specs) throws IOException {
     TableName table = TableName.valueOf(tableName);
     if (!admin.tableExists(table)) {
       throw new IOException("Table '" + tableName + "' does not exist");
     }
-    TableDescriptor existing = admin.getDescriptor(table);
-    TableDescriptorBuilder tableBuilder = TableDescriptorBuilder.newBuilder(existing);
-    for (Map<String, Object> familySpec : familySpecs) {
-      Object name = familySpec.get("NAME");
-      if (name == null) {
-        throw new IOException("Column family spec requires a NAME");
+    TableDescriptorBuilder tableBuilder =
+      TableDescriptorBuilder.newBuilder(admin.getDescriptor(table));
+    boolean reopenRegions = true;
+    for (Map<String, Object> original : specs) {
+      Map<String, Object> spec = new LinkedHashMap<>(original);
+      // Shortcut delete syntax: alter 't', 'delete' => 'cf'
+      if (spec.containsKey("delete")) {
+        Object family = spec.remove("delete");
+        spec.put("METHOD", "delete");
+        spec.put("NAME", family);
       }
-      byte[] familyName = Bytes.toBytes(name.toString());
-      ColumnFamilyDescriptor existingFamily = existing.getColumnFamily(familyName);
-      if (existingFamily == null) {
-        throw new IOException(
-          "Column family '" + name + "' does not exist on table '" + tableName + "'");
-      }
-      Object method = familySpec.get("METHOD");
-      if (method != null) {
-        if (!"delete".equalsIgnoreCase(method.toString())) {
-          throw new IOException("Unsupported METHOD '" + method + "' (only 'delete' is supported)");
+      Object reopen = spec.remove("REOPEN_REGIONS");
+      if (reopen != null) {
+        String text = reopen.toString().toLowerCase(Locale.ROOT);
+        if (!"true".equals(text) && !"false".equals(text)) {
+          throw new IOException("Invalid 'REOPEN_REGIONS' for non-boolean value: " + reopen);
         }
-        if (familySpec.size() > 2) {
-          throw new IOException("METHOD => 'delete' takes only NAME, got: " + familySpec.keySet());
+        reopenRegions = Boolean.parseBoolean(text);
+      }
+      Object method = spec.remove("METHOD");
+      if (method == null && spec.containsKey("NAME")) {
+        upsertColumnFamily(tableBuilder, spec);
+      } else if (method == null || "table_att".equals(method.toString())) {
+        spec.remove("NAME");
+        TableAttributes.applyToExisting(tableBuilder, spec, admin.getConfiguration());
+      } else {
+        applyAlterMethod(tableBuilder, method.toString(), spec, tableName);
+      }
+    }
+    if (reopenRegions) {
+      admin.modifyTable(tableBuilder.build());
+    } else {
+      try {
+        admin.modifyTableAsync(tableBuilder.build(), false).get();
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+        throw new IOException("Interrupted while modifying table " + tableName, e);
+      } catch (ExecutionException e) {
+        throw new IOException("Failed to modify table " + tableName, e.getCause());
+      }
+    }
+  }
+
+  /** Modifies the named family if it exists, otherwise adds it (hbase-shell alter semantics). */
+  private void upsertColumnFamily(TableDescriptorBuilder tableBuilder,
+    Map<String, Object> familySpec) throws IOException {
+    byte[] familyName = Bytes.toBytes(familySpec.get("NAME").toString());
+    ColumnFamilyDescriptor existingFamily = tableBuilder.build().getColumnFamily(familyName);
+    if (existingFamily == null) {
+      tableBuilder
+        .setColumnFamily(ColumnFamilyAttributes.build(familySpec, admin.getConfiguration()));
+      return;
+    }
+    ColumnFamilyDescriptorBuilder familyBuilder =
+      ColumnFamilyDescriptorBuilder.newBuilder(existingFamily);
+    ColumnFamilyAttributes.applyAttributes(familyBuilder, familySpec, admin.getConfiguration());
+    tableBuilder.modifyColumnFamily(familyBuilder.build());
+  }
+
+  private static void applyAlterMethod(TableDescriptorBuilder tableBuilder, String method,
+    Map<String, Object> spec, String tableName) throws IOException {
+    switch (method) {
+      case "delete": {
+        Object name = requireSpecValue(spec, "NAME", method);
+        if (spec.size() > 1) {
+          throw new IOException("METHOD => 'delete' takes only NAME, got: " + spec.keySet());
+        }
+        byte[] familyName = Bytes.toBytes(name.toString());
+        if (!tableBuilder.build().hasColumnFamily(familyName)) {
+          throw new IOException(
+            "Column family '" + name + "' does not exist on table '" + tableName + "'");
         }
         tableBuilder.removeColumnFamily(familyName);
-        continue;
+        break;
       }
-      ColumnFamilyDescriptorBuilder familyBuilder =
-        ColumnFamilyDescriptorBuilder.newBuilder(existingFamily);
-      ColumnFamilyAttributes.applyAttributes(familyBuilder, familySpec);
-      tableBuilder.modifyColumnFamily(familyBuilder.build());
+      case "table_att_unset":
+      case "table_conf_unset": {
+        String what = "table_att_unset".equals(method) ? "attribute" : "configuration";
+        for (String key : asStrings(requireSpecValue(spec, "NAME", method))) {
+          if (tableBuilder.build().getValue(key) == null) {
+            throw new IOException("Could not find " + what + ": " + key);
+          }
+          tableBuilder.removeValue(key);
+        }
+        break;
+      }
+      case "table_remove_coprocessor":
+        for (String className : asStrings(requireSpecValue(spec, "CLASSNAME", method))) {
+          tableBuilder.removeCoprocessor(className);
+        }
+        break;
+      default:
+        throw new IOException("Unknown method: " + method);
     }
-    admin.modifyTable(tableBuilder.build());
+  }
+
+  private static Object requireSpecValue(Map<String, Object> spec, String key, String method)
+    throws IOException {
+    Object value = spec.get(key);
+    if (value == null) {
+      throw new IOException(key + " parameter missing for " + method + " method");
+    }
+    return value;
+  }
+
+  private static List<String> asStrings(Object value) {
+    List<String> result = new ArrayList<>();
+    if (value instanceof Collection) {
+      for (Object item : (Collection<?>) value) {
+        result.add(String.valueOf(item));
+      }
+    } else {
+      result.add(value.toString());
+    }
+    return result;
   }
 
   @Override

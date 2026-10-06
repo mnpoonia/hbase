@@ -19,7 +19,9 @@ package org.apache.hadoop.hbase.newshell.format;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import org.apache.hadoop.hbase.newshell.command.CommandResult;
 import org.apache.hadoop.hbase.newshell.command.StreamingTabularResult;
 import org.apache.hadoop.hbase.newshell.command.TabularResult;
@@ -62,6 +64,14 @@ public final class DefaultFormatter implements Formatter {
       throw new IllegalStateException("Failed to stream scan result", e);
     }
     out.println(count[0] + " row(s)");
+    Map<String, String> trailer = result.trailer();
+    if (!trailer.isEmpty()) {
+      out.println();
+      out.println(formatRow(Arrays.asList("METRIC", "VALUE"), true));
+      for (Map.Entry<String, String> entry : trailer.entrySet()) {
+        out.println(formatRow(Arrays.asList(entry.getKey(), entry.getValue()), false));
+      }
+    }
   }
 
   /**

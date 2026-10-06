@@ -17,38 +17,42 @@
  */
 package org.apache.hadoop.hbase.newshell.hbase;
 
+import static org.apache.hadoop.hbase.newshell.hbase.OptionValues.enumValue;
+import static org.apache.hadoop.hbase.newshell.hbase.OptionValues.optString;
+import static org.apache.hadoop.hbase.newshell.hbase.OptionValues.requireBoolean;
+import static org.apache.hadoop.hbase.newshell.hbase.OptionValues.requireNumber;
+
 import java.io.IOException;
-import java.nio.charset.CharacterCodingException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.TreeSet;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.HRegionLocation;
+import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Append;
 import org.apache.hadoop.hbase.client.Consistency;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.Increment;
-import org.apache.hadoop.hbase.client.IsolationLevel;
 import org.apache.hadoop.hbase.client.OperationWithAttributes;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Query;
+import org.apache.hadoop.hbase.client.RegionInfo;
 import org.apache.hadoop.hbase.client.RegionLocator;
 import org.apache.hadoop.hbase.client.RegionReplicaUtil;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.client.Table;
-import org.apache.hadoop.hbase.filter.Filter;
 import org.apache.hadoop.hbase.filter.ParseFilter;
 import org.apache.hadoop.hbase.newshell.command.ShellCommandException;
 import org.apache.hadoop.hbase.security.visibility.Authorizations;
@@ -79,13 +83,13 @@ public final class DefaultShellTable implements ShellTable {
       "AUTHORIZATIONS", "CONSISTENCY", "REGION_REPLICA_ID", "FORMATTER", "FORMATTER_CLASS");
   private static final Set<String> PUT_OPTIONS =
     optionSet("TIMESTAMP", "ATTRIBUTES", "VISIBILITY", "TTL");
-  private static final Set<String> SCAN_OPTIONS =
-    optionSet("COLUMN", "COLUMNS", "LIMIT", "STARTROW", "STOPROW", "ROWPREFIXFILTER", "TIMESTAMP",
-      "VERSIONS", "TIMERANGE", "FILTER", "CACHE", "CACHE_BLOCKS", "REVERSED", "RAW", "ATTRIBUTES",
-      "AUTHORIZATIONS", "CONSISTENCY", "REGION_REPLICA_ID", "ISOLATION_LEVEL", "READ_TYPE",
-      "ALLOW_PARTIAL_RESULTS", "BATCH", "MAX_RESULT_SIZE", "FORMATTER", "FORMATTER_CLASS");
-  private static final Set<String> COUNT_OPTIONS = optionSet("COLUMNS", "LIMIT", "STARTROW",
-    "STOPROW", "VERSIONS", "FILTER", "CACHE_BLOCKS", "INTERVAL");
+  private static final Set<String> SCAN_OPTIONS = optionSet("COLUMN", "COLUMNS", "LIMIT",
+    "STARTROW", "STOPROW", "ROWPREFIXFILTER", "TIMESTAMP", "VERSIONS", "TIMERANGE", "FILTER",
+    "CACHE", "CACHE_BLOCKS", "REVERSED", "RAW", "ATTRIBUTES", "AUTHORIZATIONS", "CONSISTENCY",
+    "REGION_REPLICA_ID", "ISOLATION_LEVEL", "READ_TYPE", "ALLOW_PARTIAL_RESULTS", "BATCH",
+    "MAX_RESULT_SIZE", "ALL_METRICS", "METRICS", "FORMATTER", "FORMATTER_CLASS");
+  private static final Set<String> COUNT_OPTIONS = optionSet("COLUMN", "COLUMNS", "LIMIT",
+    "STARTROW", "STOPROW", "ROWPREFIXFILTER", "VERSIONS", "FILTER", "CACHE_BLOCKS", "INTERVAL");
   private static final Set<String> DELETEALL_OPTIONS = optionSet("ROWPREFIXFILTER", "CACHE");
 
   private final Table table;
@@ -100,37 +104,10 @@ public final class DefaultShellTable implements ShellTable {
     rejectUnsupportedOptions("get", options, GET_OPTIONS);
     Get get = new Get(BinaryStrings.toBytes(row));
     Map<String, String> columnConverters = new HashMap<>();
-    Object columns = options.get("COLUMN");
-    if (columns != null) {
-      for (Object column : asList(columns)) {
-        byte[][] spec = parseColumn(column.toString(), columnConverters);
-        if (spec[1] == null) {
-          get.addFamily(spec[0]);
-        } else {
-          get.addColumn(spec[0], spec[1]);
-        }
-      }
-    }
-    Object versions = options.get("VERSIONS");
-    if (versions != null) {
-      get.readVersions(requireNumber(versions, "VERSIONS").intValue());
-    }
-    Object timestamp = options.get("TIMESTAMP");
-    if (timestamp != null) {
-      get.setTimestamp(requireNumber(timestamp, "TIMESTAMP").longValue());
-    }
-    Object timerange = options.get("TIMERANGE");
-    if (timerange != null) {
-      long[] range = parseTimeRange(timerange);
-      get.setTimeRange(range[0], range[1]);
-    }
-    Object filter = options.get("FILTER");
-    if (filter != null) {
-      get.setFilter(parseFilterString(filter));
-    }
+    ReadOptions.parse(options).applyTo(get, columnConverters);
     applyQueryOptions(get, options);
-    ValueConverters converters = new ValueConverters(optionString(options, "FORMATTER_CLASS"),
-      optionString(options, "FORMATTER"));
+    ValueConverters converters =
+      new ValueConverters(optString(options, "FORMATTER_CLASS"), optString(options, "FORMATTER"));
     Result result = table.get(get);
     List<CellView> cells = new ArrayList<>();
     List<Cell> resultCells = result.listCells();
@@ -168,23 +145,12 @@ public final class DefaultShellTable implements ShellTable {
   public ScanResult scan(Map<String, Object> options) throws ShellCommandException, IOException {
     rejectUnsupportedOptions("scan", options, SCAN_OPTIONS);
     Map<String, String> columnConverters = new HashMap<>();
-    Scan scan = buildScan(options, columnConverters);
-    Object timerange = options.get("TIMERANGE");
-    if (timerange != null) {
-      long[] range = parseTimeRange(timerange);
-      scan.setTimeRange(range[0], range[1]);
-    }
-    Object filter = options.get("FILTER");
-    if (filter != null) {
-      scan.setFilter(parseFilterString(filter));
-    }
-    Object timestamp = options.get("TIMESTAMP");
-    if (timestamp != null) {
-      scan.setTimestamp(requireNumber(timestamp, "TIMESTAMP").longValue());
-    }
-    applyScanOptions(scan, options);
-    ValueConverters converters = new ValueConverters(optionString(options, "FORMATTER_CLASS"),
-      optionString(options, "FORMATTER"));
+    Scan scan = ReadOptions.parse(options).newScan(columnConverters);
+    applyQueryOptions(scan, options);
+    Set<String> metricFilter = applyMetricsOptions(scan, options);
+    ValueConverters converters =
+      new ValueConverters(optString(options, "FORMATTER_CLASS"), optString(options, "FORMATTER"));
+    Map<String, Long> metrics = new TreeMap<>();
     return new ScanResult(rowConsumer -> {
       try (ResultScanner scanner = table.getScanner(scan)) {
         for (Result result : scanner) {
@@ -197,22 +163,54 @@ public final class DefaultShellTable implements ShellTable {
           }
           rowConsumer.accept(new ScanRow(converters.convertRow(result.getRow()), cells));
         }
+        if (scan.isScanMetricsEnabled() && scanner.getScanMetrics() != null) {
+          for (Map.Entry<String, Long> metric : scanner.getScanMetrics().getMetricsMap()
+            .entrySet()) {
+            if (metricFilter.isEmpty() || metricFilter.contains(metric.getKey())) {
+              metrics.put(metric.getKey(), metric.getValue());
+            }
+          }
+        }
       } catch (ShellCommandException e) {
         throw new IOException(e.getMessage(), e);
       }
-    });
+    }, metrics);
+  }
+
+  /**
+   * Enables scan metrics for {@code ALL_METRICS => true} or any {@code METRICS => [names]}; returns
+   * the names to keep (empty means all), as in the legacy shell.
+   */
+  private static Set<String> applyMetricsOptions(Scan scan, Map<String, Object> options)
+    throws ShellCommandException {
+    Set<String> names = new HashSet<>();
+    Object metrics = options.get("METRICS");
+    if (metrics != null) {
+      if (!(metrics instanceof List)) {
+        throw new ShellCommandException("METRICS must be a list of metric names");
+      }
+      for (Object name : (List<?>) metrics) {
+        names.add(String.valueOf(name));
+      }
+    }
+    boolean all = options.get("ALL_METRICS") != null
+      && requireBoolean(options.get("ALL_METRICS"), "ALL_METRICS");
+    if (all || metrics != null) {
+      scan.setScanMetricsEnabled(true);
+    }
+    return names;
   }
 
   @Override
   public long count(Map<String, Object> options, CountProgressListener progressListener)
     throws ShellCommandException, IOException {
     rejectUnsupportedOptions("count", options, COUNT_OPTIONS);
-    Scan scan = buildScan(options, new HashMap<>());
-    Object filter = options.get("FILTER");
-    if (filter != null) {
-      scan.setFilter(parseFilterString(filter));
+    ReadOptions readOptions = ReadOptions.parse(options);
+    Scan scan = readOptions.newScan(new HashMap<>());
+    if (!readOptions.hasCacheBlocks()) {
+      // count reads every row once; do not churn the block cache unless asked to.
+      scan.setCacheBlocks(false);
     }
-    scan.setCacheBlocks(resolveCacheBlocks(options.get("CACHE_BLOCKS")));
     long interval = resolveInterval(options.get("INTERVAL"));
     long count = 0;
     try (ResultScanner scanner = table.getScanner(scan)) {
@@ -226,39 +224,15 @@ public final class DefaultShellTable implements ShellTable {
     return count;
   }
 
-  /**
-   * Coerces a {@code CACHE_BLOCKS} option value, matching hbase-shell's {@code count} command:
-   * defaults to {@code false} when absent, accepts a real {@link Boolean}, or a {@link String}
-   * whose value is {@code "true"}/{@code "false"} case-insensitively - any other value is rejected.
-   * Deliberately not reusing {@link AttributeCoercion#toBoolean}, which leniently delegates to
-   * {@link Boolean#parseBoolean} and would silently treat any non-"true" string (e.g. a typo) as
-   * {@code false} instead of raising an error.
-   */
-  private static boolean resolveCacheBlocks(Object cacheBlocksOption) throws ShellCommandException {
-    if (cacheBlocksOption == null) {
-      return false;
-    }
-    if (cacheBlocksOption instanceof Boolean) {
-      return (Boolean) cacheBlocksOption;
-    }
-    if (cacheBlocksOption instanceof String) {
-      String value = ((String) cacheBlocksOption).toLowerCase(Locale.ROOT);
-      if (value.equals("true")) {
-        return true;
-      }
-      if (value.equals("false")) {
-        return false;
-      }
-    }
-    throw new ShellCommandException(
-      "Expected CACHE_BLOCKS value to be a boolean or the string 'true' or 'false'");
-  }
-
   private static long resolveInterval(Object intervalOption) throws ShellCommandException {
     if (intervalOption == null) {
       return 1000L;
     }
-    return requireNumber(intervalOption, "INTERVAL").longValue();
+    long interval = requireNumber(intervalOption, "INTERVAL").longValue();
+    if (interval <= 0) {
+      throw new ShellCommandException("INTERVAL must be a positive number: " + interval);
+    }
+    return interval;
   }
 
   @Override
@@ -391,85 +365,6 @@ public final class DefaultShellTable implements ShellTable {
     }
   }
 
-  private static Scan buildScan(Map<String, Object> options, Map<String, String> columnConverters)
-    throws ShellCommandException {
-    Scan scan = new Scan();
-    Object columns =
-      options.get("COLUMNS") != null ? options.get("COLUMNS") : options.get("COLUMN");
-    if (columns != null) {
-      for (Object column : asList(columns)) {
-        byte[][] spec = parseColumn(column.toString(), columnConverters);
-        if (spec[1] == null) {
-          scan.addFamily(spec[0]);
-        } else {
-          scan.addColumn(spec[0], spec[1]);
-        }
-      }
-    }
-    Object limit = options.get("LIMIT");
-    if (limit != null && requireNumber(limit, "LIMIT").intValue() > 0) {
-      scan.setLimit(requireNumber(limit, "LIMIT").intValue());
-    }
-    Object startRow = options.get("STARTROW");
-    if (startRow != null) {
-      scan.withStartRow(BinaryStrings.toBytes(startRow.toString()));
-    }
-    Object stopRow = options.get("STOPROW");
-    if (stopRow != null) {
-      scan.withStopRow(BinaryStrings.toBytes(stopRow.toString()));
-    }
-    // Like the legacy shell, a prefix overrides any STARTROW/STOPROW.
-    Object prefix = options.get("ROWPREFIXFILTER");
-    if (prefix != null) {
-      scan.setStartStopRowForPrefixScan(BinaryStrings.toBytes(prefix.toString()));
-    }
-    Object versions = options.get("VERSIONS");
-    if (versions != null) {
-      scan.readVersions(requireNumber(versions, "VERSIONS").intValue());
-    }
-    return scan;
-  }
-
-  /** Scan-only options on top of what {@link #buildScan} shares with {@code count}. */
-  private static void applyScanOptions(Scan scan, Map<String, Object> options)
-    throws ShellCommandException, IOException {
-    if (options.get("CACHE_BLOCKS") != null) {
-      scan.setCacheBlocks(requireBoolean(options.get("CACHE_BLOCKS"), "CACHE_BLOCKS"));
-    }
-    if (options.get("REVERSED") != null) {
-      scan.setReversed(requireBoolean(options.get("REVERSED"), "REVERSED"));
-    }
-    if (options.get("RAW") != null) {
-      scan.setRaw(requireBoolean(options.get("RAW"), "RAW"));
-    }
-    if (options.get("ALLOW_PARTIAL_RESULTS") != null) {
-      scan.setAllowPartialResults(
-        requireBoolean(options.get("ALLOW_PARTIAL_RESULTS"), "ALLOW_PARTIAL_RESULTS"));
-    }
-    if (
-      options.get("CACHE") != null && requireNumber(options.get("CACHE"), "CACHE").intValue() > 0
-    ) {
-      scan.setCaching(requireNumber(options.get("CACHE"), "CACHE").intValue());
-    }
-    if (
-      options.get("BATCH") != null && requireNumber(options.get("BATCH"), "BATCH").intValue() > 0
-    ) {
-      scan.setBatch(requireNumber(options.get("BATCH"), "BATCH").intValue());
-    }
-    Object maxResultSize = options.get("MAX_RESULT_SIZE");
-    if (maxResultSize != null && requireNumber(maxResultSize, "MAX_RESULT_SIZE").longValue() > 0) {
-      scan.setMaxResultSize(requireNumber(maxResultSize, "MAX_RESULT_SIZE").longValue());
-    }
-    if (options.get("ISOLATION_LEVEL") != null) {
-      scan.setIsolationLevel(
-        enumValue(IsolationLevel.class, options.get("ISOLATION_LEVEL"), "ISOLATION_LEVEL"));
-    }
-    if (options.get("READ_TYPE") != null) {
-      scan.setReadType(enumValue(Scan.ReadType.class, options.get("READ_TYPE"), "READ_TYPE"));
-    }
-    applyQueryOptions(scan, options);
-  }
-
   private static void applyPutOptions(Put put, Map<String, Object> options)
     throws ShellCommandException {
     applyAttributes(put, options.get("ATTRIBUTES"));
@@ -483,35 +378,11 @@ public final class DefaultShellTable implements ShellTable {
     }
   }
 
-  private static boolean requireBoolean(Object value, String optionName)
-    throws ShellCommandException {
-    if (value instanceof Boolean) {
-      return (Boolean) value;
-    }
-    if (value instanceof String) {
-      String text = ((String) value).toLowerCase(Locale.ROOT);
-      if (text.equals("true") || text.equals("false")) {
-        return Boolean.parseBoolean(text);
-      }
-    }
-    throw new ShellCommandException(optionName + " must be true or false: '" + value + "'");
-  }
-
-  private static <E extends Enum<E>> E enumValue(Class<E> type, Object value, String optionName)
-    throws ShellCommandException {
-    try {
-      return Enum.valueOf(type, value.toString());
-    } catch (IllegalArgumentException e) {
-      throw new ShellCommandException(
-        optionName + " must be one of " + Arrays.toString(type.getEnumConstants()), e);
-    }
-  }
-
   /**
    * Converts a server cell to a view. Delete markers (returned with {@code RAW}) carry their cell
    * type instead of a value, as in the legacy shell.
    */
-  private static CellView toCellView(Cell cell, ValueConverters converters,
+  private CellView toCellView(Cell cell, ValueConverters converters,
     Map<String, String> columnConverters) throws ShellCommandException {
     byte[] family = CellUtil.cloneFamily(cell);
     byte[] qualifier = CellUtil.cloneQualifier(cell);
@@ -521,8 +392,37 @@ public final class DefaultShellTable implements ShellTable {
       return new CellView(family2, qualifier2, cell.getTimestamp(), "", cell.getType().toString());
     }
     String columnKey = Bytes.toStringBinary(family) + ":" + Bytes.toStringBinary(qualifier);
+    if (TableName.META_TABLE_NAME.equals(table.getName())) {
+      String metaValue = metaValue(columnKey, cell);
+      if (metaValue != null) {
+        return new CellView(family2, qualifier2, cell.getTimestamp(), metaValue);
+      }
+    }
     return new CellView(family2, qualifier2, cell.getTimestamp(),
       converters.convert(CellUtil.cloneValue(cell), columnConverters.get(columnKey)));
+  }
+
+  /**
+   * hbase:meta cells whose bytes are not plain strings, rendered as the legacy shell does: region
+   * info (and split/merge references) as a {@code RegionInfo}, the server start code as a long.
+   * Returns {@code null} for every other column so the normal converters apply.
+   */
+  private static String metaValue(String column, Cell cell) {
+    if (
+      column.equals("info:regioninfo") || column.equals("info:splitA")
+        || column.equals("info:splitB") || column.startsWith("info:merge")
+    ) {
+      RegionInfo info = RegionInfo.parseFromOrNull(cell.getValueArray(), cell.getValueOffset(),
+        cell.getValueLength());
+      return info == null ? "" : info.toString();
+    }
+    if (column.equals("info:serverstartcode")) {
+      return cell.getValueLength() == Bytes.SIZEOF_LONG
+        ? String
+          .valueOf(Bytes.toLong(cell.getValueArray(), cell.getValueOffset(), cell.getValueLength()))
+        : Bytes.toStringBinary(cell.getValueArray(), cell.getValueOffset(), cell.getValueLength());
+    }
+    return null;
   }
 
   private static Set<String> optionSet(String... names) {
@@ -544,87 +444,7 @@ public final class DefaultShellTable implements ShellTable {
     }
   }
 
-  /**
-   * Guards an option value that must be numeric (e.g. {@code VERSIONS => 'x'}, a typo) so it raises
-   * a clear {@link ShellCommandException} instead of an unchecked {@link ClassCastException},
-   * matching the guard idiom already used for positional args in {@code DeleteCommand}/
-   * {@code IncrCommand}/{@code DeleteallCommand}.
-   */
-  private static Number requireNumber(Object value, String optionName)
-    throws ShellCommandException {
-    if (!(value instanceof Number)) {
-      throw new ShellCommandException(optionName + " must be numeric: '" + value + "'");
-    }
-    return (Number) value;
-  }
-
-  /**
-   * Parses a {@code TIMERANGE => [minStamp, maxStamp]} option value into a {@code [min, max]}
-   * {@code long} pair, matching old-shell's plain-array {@code TIMERANGE} semantics.
-   */
-  private static long[] parseTimeRange(Object timerangeOption) throws ShellCommandException {
-    if (!(timerangeOption instanceof List)) {
-      throw new ShellCommandException(
-        "TIMERANGE must be a two-element array of [minStamp, maxStamp]");
-    }
-    List<?> range = (List<?>) timerangeOption;
-    if (range.size() != 2) {
-      throw new ShellCommandException(
-        "TIMERANGE must be a two-element array of [minStamp, maxStamp], got " + range.size()
-          + " element(s)");
-    }
-    return new long[] { requireNumber(range.get(0), "TIMERANGE").longValue(),
-      requireNumber(range.get(1), "TIMERANGE").longValue() };
-  }
-
-  /**
-   * Parses a {@code FILTER => "<filter-string>"} option value using {@link ParseFilter}'s textual
-   * filter grammar (HBASE-4176), e.g. {@code "PrefixFilter('row')"}. Raw object-construction syntax
-   * ({@code FILTER => SomeFilter.new(...)}) is not supported.
-   */
-  private static Filter parseFilterString(Object filterOption) throws ShellCommandException {
-    if (!(filterOption instanceof String)) {
-      throw new ShellCommandException(
-        "FILTER must be a filter string such as \"PrefixFilter('row')\", got: " + filterOption);
-    }
-    String filterString = (String) filterOption;
-    try {
-      return new ParseFilter().parseFilterString(filterString);
-    } catch (CharacterCodingException | IllegalArgumentException e) {
-      throw new ShellCommandException(
-        "Invalid FILTER string '" + filterString + "': " + e.getMessage(), e);
-    }
-  }
-
-  /**
-   * Parses {@code FAMILY[:QUALIFIER[:CONVERTER]]} into {@code [family, qualifier-or-null]},
-   * recording any converter against the {@code family:qualifier} it applies to.
-   */
-  private static byte[][] parseColumn(String columnSpec, Map<String, String> converters) {
-    int colonIndex = columnSpec.indexOf(':');
-    if (colonIndex < 0) {
-      return new byte[][] { BinaryStrings.toBytes(columnSpec), null };
-    }
-    String familyPart = columnSpec.substring(0, colonIndex);
-    String qualifierPart = columnSpec.substring(colonIndex + 1);
-    int converterIndex = qualifierPart.lastIndexOf(':');
-    if (
-      converterIndex >= 0
-        && ValueConverters.isConverter(qualifierPart.substring(converterIndex + 1))
-    ) {
-      String qualifierOnly = qualifierPart.substring(0, converterIndex);
-      converters.put(
-        Bytes.toStringBinary(BinaryStrings.toBytes(familyPart)) + ":"
-          + Bytes.toStringBinary(BinaryStrings.toBytes(qualifierOnly)),
-        qualifierPart.substring(converterIndex + 1));
-      qualifierPart = qualifierOnly;
-    }
-    byte[] family = BinaryStrings.toBytes(familyPart);
-    return new byte[][] { family,
-      qualifierPart.isEmpty() ? null : BinaryStrings.toBytes(qualifierPart) };
-  }
-
-  private static String optionString(Map<String, Object> options, String key) {
+  private static String optString(Map<String, Object> options, String key) {
     Object value = options.get(key);
     return value == null ? null : value.toString();
   }
@@ -670,13 +490,5 @@ public final class DefaultShellTable implements ShellTable {
     if (replicaId != null) {
       query.setReplicaId(requireNumber(replicaId, "REGION_REPLICA_ID").intValue());
     }
-  }
-
-  @SuppressWarnings("unchecked")
-  private static List<Object> asList(Object columns) {
-    if (columns instanceof List) {
-      return (List<Object>) columns;
-    }
-    return Arrays.asList(columns);
   }
 }

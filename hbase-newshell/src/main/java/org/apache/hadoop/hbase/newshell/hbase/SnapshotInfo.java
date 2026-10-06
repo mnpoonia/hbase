@@ -17,11 +17,17 @@
  */
 package org.apache.hadoop.hbase.newshell.hbase;
 
+import java.time.Instant;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 import java.util.Objects;
 import org.apache.yetus.audience.InterfaceAudience;
 
 @InterfaceAudience.Private
 public final class SnapshotInfo {
+  private static final DateTimeFormatter CREATION_TIME_FORMAT =
+    DateTimeFormatter.ofPattern("EEE MMM dd HH:mm:ss zzz yyyy");
+
   private final String name;
   private final String tableName;
   private final long creationTime;
@@ -48,6 +54,13 @@ public final class SnapshotInfo {
 
   public long ttl() {
     return ttl;
+  }
+
+  /** {@code table (creation time)}, as printed by the snapshot listing commands. */
+  public String describe() {
+    String created = CREATION_TIME_FORMAT
+      .format(Instant.ofEpochMilli(creationTime).atZone(ZoneOffset.systemDefault()));
+    return tableName + " (" + created + ")";
   }
 
   @Override

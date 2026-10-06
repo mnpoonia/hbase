@@ -630,7 +630,7 @@ at
 
 ### DATA MANIPULATION COMMANDS — dml (0 remaining — fully ported)
 
-> Option parity: `get` / `scan` / `put` now accept the legacy option set (bare `get` columns, `COLUMNS` alias, `MAXLENGTH`, `FORMATTER`/`FORMATTER_CLASS` and per-column `cf:q:CONVERTER`, `ATTRIBUTES`, `AUTHORIZATIONS`, `CONSISTENCY`, `REGION_REPLICA_ID`; `scan` also `ROWPREFIXFILTER`, `RAW`, `REVERSED`, `CACHE`, `CACHE_BLOCKS`, `BATCH`, `MAX_RESULT_SIZE`, `ISOLATION_LEVEL`, `READ_TYPE`, `ALLOW_PARTIAL_RESULTS`; `put` also `VISIBILITY`/`TTL`). Still not ported: scan metrics (`ALL_METRICS`/`METRICS`) and `hbase:meta` value special-casing.
+> Option parity: `get` / `scan` / `put` now accept the legacy option set (bare `get` columns, `COLUMNS` alias, `MAXLENGTH`, `FORMATTER`/`FORMATTER_CLASS` and per-column `cf:q:CONVERTER`, `ATTRIBUTES`, `AUTHORIZATIONS`, `CONSISTENCY`, `REGION_REPLICA_ID`; `scan` also `ROWPREFIXFILTER`, `RAW`, `REVERSED`, `CACHE`, `CACHE_BLOCKS`, `BATCH`, `MAX_RESULT_SIZE`, `ISOLATION_LEVEL`, `READ_TYPE`, `ALLOW_PARTIAL_RESULTS`; `put` also `VISIBILITY`/`TTL`). Scan metrics (`ALL_METRICS`/`METRICS`) and `hbase:meta` value formatting are ported too. `create`/`alter` now cover the full legacy attribute and method set (see SYNTAX_COMPARISON.md).
 
 > Already ported: <span style="color:#4caf50">`get`</span>, <span style="color:#0b6623">`put`</span>, <span style="color:#0b6623">`scan`</span>,
 > <span style="color:#4caf50">`count`</span>, <span style="color:#4caf50">`delete`</span>, <span style="color:#4caf50">`deleteall`</span>,
