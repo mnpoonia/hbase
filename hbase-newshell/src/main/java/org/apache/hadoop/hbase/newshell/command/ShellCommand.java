@@ -32,7 +32,7 @@ public interface ShellCommand {
   /** The command name as typed by the user, e.g. {@code "status"}. Matched case-insensitively. */
   String name();
 
-  /** A one-line usage summary shown by a future {@code help} command. */
+  /** A one-line usage summary shown by the {@code help} command. */
   String help();
 
   /**

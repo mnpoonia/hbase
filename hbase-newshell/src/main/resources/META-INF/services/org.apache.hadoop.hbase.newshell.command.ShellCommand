@@ -180,3 +180,4 @@ org.apache.hadoop.hbase.newshell.command.impl.SetAuthsCommand
 org.apache.hadoop.hbase.newshell.command.impl.GetAuthsCommand
 org.apache.hadoop.hbase.newshell.command.impl.ClearAuthsCommand
 org.apache.hadoop.hbase.newshell.command.impl.SetVisibilityCommand
+org.apache.hadoop.hbase.newshell.command.impl.HelpCommand
