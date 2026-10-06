@@ -41,6 +41,18 @@ public class DescribeCommandTest {
   private static final class RecordingShellAdmin extends StubShellAdmin {
     private String lastDescribedTable;
     private TableDescription description;
+    private boolean quotaEnabled;
+
+    @Override
+    public boolean tableExists(String tableName) {
+      return quotaEnabled && "hbase:quota".equals(tableName);
+    }
+
+    @Override
+    public java.util.List<java.util.List<String>> listQuotas(java.util.Map<String, Object> args) {
+      assertEquals("t1", args.get("TABLE"));
+      return Arrays.asList(Arrays.asList("TABLE => t1", "TYPE => THROTTLE, LIMIT => 10req/sec"));
+    }
 
     @Override
     public TableDescription describeTable(String tableName) {
@@ -63,6 +75,19 @@ public class DescribeCommandTest {
     assertEquals("t1", admin.lastDescribedTable);
     assertEquals(Arrays.asList("Table t1 is ENABLED", "t1, {attr}", "COLUMN FAMILIES DESCRIPTION",
       "{NAME => 'f1'}", "", "1 row(s)", "Quota is disabled"), result.lines());
+  }
+
+  @Test
+  public void listsQuotasWhenQuotaTableExists() throws Exception {
+    admin.quotaEnabled = true;
+    admin.description = new TableDescription(true, "", Arrays.asList("{NAME => 'f1'}"));
+    TextResult result =
+      (TextResult) command.execute(ShellLineParser.parse("describe 't1'"), context);
+
+    assertEquals(
+      Arrays.asList("Table t1 is ENABLED", "t1", "COLUMN FAMILIES DESCRIPTION", "{NAME => 'f1'}",
+        "", "1 row(s)", "QUOTAS", "TYPE => THROTTLE, LIMIT => 10req/sec", "1 row(s)"),
+      result.lines());
   }
 
   @Test

@@ -17,6 +17,8 @@
  */
 package org.apache.hadoop.hbase.newshell;
 
+import java.util.LinkedHashMap;
+import java.util.Map;
 import org.apache.hadoop.hbase.newshell.format.OutputFormat;
 import org.apache.yetus.audience.InterfaceAudience;
 
@@ -29,9 +31,23 @@ final class LaunchArgs {
   final boolean quiet;
   final OutputFormat outputFormat;
   final String scriptFile;
+  final boolean help;
+  /** {@code -Dkey=value} client configuration overrides, in command-line order. */
+  final Map<String, String> properties;
+
+  static final String USAGE = "Usage: newshell [options] [script-file]\n"
+    + "  -n, --noninteractive   run a script, exiting on the first error\n"
+    + "  -y, --yes              answer yes to confirmation prompts\n"
+    + "  -v, --verbose, -d      print stack traces on errors\n"
+    + "  -q, --quiet            suppress error output\n"
+    + "  -o, --output FORMAT    text (default), json or csv\n"
+    + "  -Dkey=value            set a client configuration property\n"
+    + "  -h, --help             show this help";
 
   LaunchArgs(boolean exitOnFirstError, boolean forceYes, boolean verbose, boolean quiet,
-    OutputFormat outputFormat, String scriptFile) {
+    OutputFormat outputFormat, String scriptFile, boolean help, Map<String, String> properties) {
+    this.help = help;
+    this.properties = properties;
     this.exitOnFirstError = exitOnFirstError;
     this.forceYes = forceYes;
     this.verbose = verbose;
@@ -47,6 +63,8 @@ final class LaunchArgs {
     boolean quiet = false;
     OutputFormat outputFormat = OutputFormat.TEXT;
     String scriptFile = null;
+    boolean help = false;
+    Map<String, String> properties = new LinkedHashMap<>();
     for (int i = 0; i < args.length; i++) {
       String arg = args[i];
       if (arg.equals("-n") || arg.equals("--noninteractive")) {
@@ -69,12 +87,24 @@ final class LaunchArgs {
         outputFormat = OutputFormat.parse(arg.substring("--output=".length()));
       } else if (arg.startsWith("-o=") || arg.startsWith("--o=")) {
         outputFormat = OutputFormat.parse(arg.substring(arg.indexOf('=') + 1));
-      } else if (scriptFile == null && !arg.startsWith("-")) {
-        scriptFile = arg;
+      } else if (arg.equals("-h") || arg.equals("--help")) {
+        help = true;
+      } else if (arg.startsWith("-D")) {
+        int eq = arg.indexOf('=');
+        if (eq <= 2) {
+          throw new IllegalArgumentException(arg + " must be of the form -Dkey=value");
+        }
+        properties.put(arg.substring(2, eq), arg.substring(eq + 1));
       } else if (arg.startsWith("-")) {
         throw new IllegalArgumentException("Unknown option: " + arg);
+      } else if (scriptFile == null) {
+        scriptFile = arg;
+      } else {
+        throw new IllegalArgumentException(
+          "Only one script file is supported, got '" + scriptFile + "' and '" + arg + "'");
       }
     }
-    return new LaunchArgs(exitOnFirstError, forceYes, verbose, quiet, outputFormat, scriptFile);
+    return new LaunchArgs(exitOnFirstError, forceYes, verbose, quiet, outputFormat, scriptFile,
+      help, properties);
   }
 }

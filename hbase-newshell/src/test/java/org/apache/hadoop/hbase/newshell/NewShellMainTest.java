@@ -196,6 +196,27 @@ public class NewShellMainTest {
   }
 
   @Test
+  public void exitWithStatusReturnsThatStatus() throws IOException {
+    FakeShellTerminal terminal = new FakeShellTerminal("exit 3", "hello");
+    CommandRegistry registry =
+      new CommandRegistry(java.util.Arrays.asList(new SucceedingCommand()));
+    int code =
+      ShellRepl.run(terminal, newContext(terminal.writer()), registry, new DefaultFormatter());
+    assertEquals(3, code);
+    assertEquals("", terminal.output());
+  }
+
+  @Test
+  public void exitWithNonNumericStatusIsAnErrorAndDoesNotExit() throws IOException {
+    FakeShellTerminal terminal = new FakeShellTerminal("quit abc", "hello", "exit");
+    CommandRegistry registry =
+      new CommandRegistry(java.util.Arrays.asList(new SucceedingCommand()));
+    ShellRepl.run(terminal, newContext(terminal.writer()), registry, new DefaultFormatter());
+    assertTrue(terminal.output().contains("exit status must be an integer"));
+    assertTrue(terminal.output().contains("hello world"));
+  }
+
+  @Test
   public void dispatchesRecognizedCommandThroughFormatter() throws IOException {
     FakeShellTerminal terminal = new FakeShellTerminal("hello", "exit");
     CommandRegistry registry =
@@ -217,7 +238,7 @@ public class NewShellMainTest {
 
   @Test
   public void printsErrorForParseFailureAndContinues() throws IOException {
-    FakeShellTerminal terminal = new FakeShellTerminal("'unterminated", "hello", "exit");
+    FakeShellTerminal terminal = new FakeShellTerminal("get @bad", "hello", "exit");
     CommandRegistry registry =
       new CommandRegistry(java.util.Arrays.asList(new SucceedingCommand()));
     ShellRepl.run(terminal, newContext(terminal.writer()), registry, new DefaultFormatter());
@@ -331,6 +352,40 @@ public class NewShellMainTest {
     assertTrue(args.forceYes);
     assertEquals(org.apache.hadoop.hbase.newshell.format.OutputFormat.JSON, args.outputFormat);
     assertEquals("script.ns", args.scriptFile);
+  }
+
+  @Test
+  public void launchArgsParsesHelpAndDefines() {
+    LaunchArgs args = LaunchArgs.parse(new String[] { "-h", "-Dhbase.zookeeper.quorum=zk1" });
+    assertTrue(args.help);
+    assertEquals("zk1", args.properties.get("hbase.zookeeper.quorum"));
+  }
+
+  @Test
+  public void launchArgsRejectsSecondScriptFileAndBadDefine() {
+    org.junit.jupiter.api.Assertions.assertThrows(IllegalArgumentException.class,
+      () -> LaunchArgs.parse(new String[] { "a.ns", "b.ns" }));
+    org.junit.jupiter.api.Assertions.assertThrows(IllegalArgumentException.class,
+      () -> LaunchArgs.parse(new String[] { "-Dnovalue" }));
+  }
+
+  @Test
+  public void isIncompleteDetectsOpenQuotesBracketsAndTrailingComma() {
+    assertTrue(ShellRepl.isIncomplete("create 't', {NAME => 'f',"));
+    assertTrue(ShellRepl.isIncomplete("put 't', 'r', 'f:c', 'multi"));
+    assertTrue(ShellRepl.isIncomplete("get 't', 'r',"));
+    assertFalse(ShellRepl.isIncomplete("get 't', 'r' # trailing, comment ["));
+    assertFalse(ShellRepl.isIncomplete("get 't', {COLUMNS => ['f:a']}"));
+    assertFalse(ShellRepl.isIncomplete("put 't', 'r', 'f:c', 'it\\'s'"));
+  }
+
+  @Test
+  public void multiLineCommandIsJoinedBeforeDispatch() throws IOException {
+    FakeShellTerminal terminal = new FakeShellTerminal("hello \"a,", "b\"", "exit");
+    CommandRegistry registry =
+      new CommandRegistry(java.util.Arrays.asList(new SucceedingCommand()));
+    ShellRepl.run(terminal, newContext(terminal.writer()), registry, new DefaultFormatter());
+    assertFalse(terminal.output().contains("ERROR"));
   }
 
   @Test

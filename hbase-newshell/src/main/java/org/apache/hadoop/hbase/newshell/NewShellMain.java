@@ -81,6 +81,12 @@ public final class NewShellMain {
       return;
     }
 
+    if (launch.help) {
+      System.out.println(LaunchArgs.USAGE);
+      return;
+    }
+    launch.properties.forEach(conf::set);
+
     boolean interactive = isInteractive(launch, System.console() != null);
     SessionOptions options = new SessionOptions(launch.outputFormat, launch.verbose,
       launch.forceYes, launch.quiet, interactive);

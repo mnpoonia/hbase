@@ -39,6 +39,11 @@ public class DescribeNamespaceCommandTest {
     private String lastNamespace;
 
     @Override
+    public boolean tableExists(String tableName) {
+      return false;
+    }
+
+    @Override
     public String describeNamespace(String namespace) {
       this.lastNamespace = namespace;
       return "{NAME => 'ns1'}";

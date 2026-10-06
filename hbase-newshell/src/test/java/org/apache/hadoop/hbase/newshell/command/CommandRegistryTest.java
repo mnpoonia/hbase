@@ -64,6 +64,15 @@ public class CommandRegistryTest {
   }
 
   @Test
+  public void resolvesLegacyAliasesButDoesNotListThem() {
+    CommandRegistry registry =
+      new CommandRegistry(Arrays.asList(new FakeCommand("describe"), new FakeCommand("wal_roll")));
+    assertEquals("describe", registry.lookup("desc").get().name());
+    assertEquals("wal_roll", registry.lookup("hlog_roll").get().name());
+    assertEquals(Arrays.asList("describe", "wal_roll"), registry.commandNames());
+  }
+
+  @Test
   public void returnsEmptyForUnknownCommand() {
     CommandRegistry registry = new CommandRegistry(Arrays.asList(new FakeCommand("status")));
     assertFalse(registry.lookup("nope").isPresent());

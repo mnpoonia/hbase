@@ -32,9 +32,8 @@ import org.apache.yetus.audience.InterfaceAudience;
 
 /**
  * Ported from hbase-shell's {@code shell/commands/describe.rb}: a single table-name positional
- * argument, printing enabled/disabled status, table attributes, and one line per column family. The
- * QUOTAS section is explicitly not ported for this pilot slice - "Quota is disabled" is always
- * printed instead of checking whether the {@code hbase:quota} table actually exists.
+ * argument, printing enabled/disabled status, table attributes, one line per column family, and the
+ * QUOTAS section (or "Quota is disabled" when {@code hbase:quota} does not exist).
  */
 @InterfaceAudience.Private
 public final class DescribeCommand implements ShellCommand {
@@ -62,7 +61,10 @@ public final class DescribeCommand implements ShellCommand {
     lines.addAll(description.columnFamilies());
     lines.add("");
     lines.add(description.columnFamilies().size() + " row(s)");
-    lines.add("Quota is disabled");
+    if (!"hbase:meta".equals(tableName)) {
+      // hbase:meta has no QUOTAS section in the legacy shell either.
+      lines.addAll(QuotaSection.lines(context, "TABLE", tableName));
+    }
     return new TextResult(lines);
   }
 }

@@ -18,7 +18,9 @@
 package org.apache.hadoop.hbase.newshell.command.impl;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import org.apache.hadoop.hbase.newshell.command.ArgParsing;
 import org.apache.hadoop.hbase.newshell.command.CommandResult;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
@@ -30,8 +32,7 @@ import org.apache.yetus.audience.InterfaceAudience;
 
 /**
  * Ported, minimal slice, from hbase-shell's {@code shell/commands/describe_namespace.rb}: the
- * namespace descriptor's string form. The Ruby original's QUOTAS section (only relevant when quotas
- * are enabled) is not ported.
+ * namespace descriptor's string form plus the QUOTAS section.
  */
 @InterfaceAudience.Private
 public final class DescribeNamespaceCommand implements ShellCommand {
@@ -52,6 +53,8 @@ public final class DescribeNamespaceCommand implements ShellCommand {
     String namespace =
       ArgParsing.requireArg(command, 0, "describe_namespace requires a namespace name argument");
     String description = context.namespaceAdmin().describeNamespace(namespace);
-    return new TextResult(Arrays.asList("DESCRIPTION", description, "Quota is disabled"));
+    List<String> lines = new ArrayList<>(Arrays.asList("DESCRIPTION", description));
+    lines.addAll(QuotaSection.lines(context, "NAMESPACE", namespace));
+    return new TextResult(lines);
   }
 }

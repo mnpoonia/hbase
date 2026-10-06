@@ -44,6 +44,14 @@ public class LexerTest {
     assertEquals("it's a test", tokens.get(0).text());
   }
 
+  @Test
+  public void trailingCommentIsIgnoredButQuotedHashIsKept() throws ShellParseException {
+    List<Token> tokens = new Lexer("get 't#1', 'r' # fetch it").tokenize();
+    assertEquals(5, tokens.size());
+    assertEquals("t#1", tokens.get(1).text());
+    assertEquals(TokenType.EOF, tokens.get(4).type());
+  }
+
   private static String lex(String input) throws ShellParseException {
     return new Lexer(input).tokenize().get(0).text();
   }

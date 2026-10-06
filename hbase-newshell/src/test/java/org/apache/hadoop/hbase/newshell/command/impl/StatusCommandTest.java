@@ -100,6 +100,31 @@ public class StatusCommandTest {
   }
 
   @Test
+  public void simpleReportsAggregateLoadAndTasksReportsNoActiveTasks() throws Exception {
+    ServerName master = ServerName.valueOf("master.example.com", 16000, 1L);
+    ServerName live = ServerName.valueOf("rs.example.com", 16020, 2L);
+    ClusterMetrics metrics = ClusterMetricsBuilder.newBuilder().setHBaseVersion("3.0.0")
+      .setMasterName(master).setBackerMasterNames(Collections.emptyList())
+      .setMasterCoprocessorNames(Collections.emptyList()).setMasterTasks(Collections.emptyList())
+      .setLiveServerMetrics(
+        Collections.singletonMap(live, org.apache.hadoop.hbase.ServerMetricsBuilder.of(live)))
+      .setDeadServerNames(Collections.emptyList()).build();
+
+    List<String> simple =
+      ((TextResult) command.execute(ShellLineParser.parse("status 'simple'"), contextFor(metrics)))
+        .lines();
+    assertTrue(simple.contains("active master:  master.example.com:16000 1"));
+    assertTrue(simple.contains("1 live servers"));
+    assertTrue(simple.contains("Aggregate load: 0, regions: 0"));
+
+    List<String> tasks =
+      ((TextResult) command.execute(ShellLineParser.parse("status 'tasks'"), contextFor(metrics)))
+        .lines();
+    assertTrue(tasks.contains("    no active tasks"));
+    assertTrue(tasks.contains("        no active tasks"));
+  }
+
+  @Test
   public void summaryMatchesLegacyShellFormat() throws Exception {
     ServerName master = ServerName.valueOf("master.example.com", 16000, 1L);
     ServerName live = ServerName.valueOf("rs.example.com", 16020, 2L);

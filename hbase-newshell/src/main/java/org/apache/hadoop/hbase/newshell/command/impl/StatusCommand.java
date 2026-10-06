@@ -30,8 +30,8 @@ import org.apache.yetus.audience.InterfaceAudience;
 
 /**
  * Ported from hbase-shell's {@code status.rb} / {@code hbase/admin.rb#status}: {@code summary}
- * (default, no argument) and {@code detailed}. The {@code replication}/{@code tasks}/
- * {@code simple} format branches are not ported.
+ * (default, no argument), {@code simple}, {@code tasks} and {@code detailed}. The
+ * {@code replication} format is not ported.
  */
 @InterfaceAudience.Private
 public final class StatusCommand implements ShellCommand {
@@ -44,7 +44,7 @@ public final class StatusCommand implements ShellCommand {
 
   @Override
   public String help() {
-    return "status ['detailed'] - show a summary, or a detailed report, of cluster status";
+    return "status ['summary'|'simple'|'tasks'|'detailed'] - show cluster status";
   }
 
   @Override
@@ -55,6 +55,12 @@ public final class StatusCommand implements ShellCommand {
     StatusView status = context.tableAdmin().status();
     if (format.equalsIgnoreCase(DETAILED)) {
       return new TextResult(status.detailedLines());
+    }
+    if (format.equalsIgnoreCase("simple")) {
+      return new TextResult(status.simpleLines());
+    }
+    if (format.equalsIgnoreCase("tasks")) {
+      return new TextResult(status.tasksLines());
     }
     if (!format.equalsIgnoreCase("summary")) {
       throw new ShellCommandException("status format '" + format + "' is not supported");

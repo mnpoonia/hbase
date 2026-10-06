@@ -36,7 +36,17 @@ import org.apache.yetus.audience.InterfaceAudience;
  */
 @InterfaceAudience.Private
 public final class CommandRegistry {
+  /** Legacy hbase-shell command aliases, resolved by {@link #lookup} but not listed by help. */
+  private static final Map<String, String> ALIASES = aliases();
+
   private final Map<String, ShellCommand> commandsByName;
+
+  private static Map<String, String> aliases() {
+    Map<String, String> aliases = new LinkedHashMap<>();
+    aliases.put("desc", "describe");
+    aliases.put("hlog_roll", "wal_roll");
+    return aliases;
+  }
 
   public CommandRegistry() {
     this(loadCommands());
@@ -64,7 +74,12 @@ public final class CommandRegistry {
   }
 
   public Optional<ShellCommand> lookup(String name) {
-    return Optional.ofNullable(commandsByName.get(name.toLowerCase(Locale.ROOT)));
+    String key = name.toLowerCase(Locale.ROOT);
+    ShellCommand command = commandsByName.get(key);
+    if (command == null && ALIASES.containsKey(key)) {
+      command = commandsByName.get(ALIASES.get(key));
+    }
+    return Optional.ofNullable(command);
   }
 
   /** Returns every registered command name, sorted for stable completion/help-listing order */

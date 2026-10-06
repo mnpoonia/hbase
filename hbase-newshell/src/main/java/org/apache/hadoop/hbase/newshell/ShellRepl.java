@@ -59,12 +59,33 @@ final class ShellRepl {
     String line;
     String prompt = context.options().interactive() ? "newshell> " : "";
     while ((line = terminal.readLine(prompt)) != null) {
+      // A command may span lines: keep reading while a quote or bracket is open or it ends in ','.
+      while (isIncomplete(line)) {
+        String more = terminal.readLine(context.options().interactive() ? "      > " : "");
+        if (more == null) {
+          break;
+        }
+        line = line + "\n" + more;
+      }
       String trimmed = line.trim();
       if (trimmed.isEmpty() || trimmed.startsWith("#")) {
         continue;
       }
-      if (trimmed.equalsIgnoreCase(EXIT_COMMAND) || trimmed.equalsIgnoreCase(QUIT_COMMAND)) {
-        break;
+      String[] words = trimmed.split("\\s+");
+      if (words[0].equalsIgnoreCase(EXIT_COMMAND) || words[0].equalsIgnoreCase(QUIT_COMMAND)) {
+        if (words.length == 1) {
+          break;
+        }
+        try {
+          return Integer.parseInt(words[1]);
+        } catch (NumberFormatException e) {
+          printError(context, formatter, out,
+            words[0] + ": exit status must be an integer: '" + words[1] + "'", e);
+          if (exitOnFirstError) {
+            return ExitCodes.CLIENT_ERROR;
+          }
+          continue;
+        }
       }
       int code = dispatch(trimmed, context, registry, formatter, out);
       if (code != ExitCodes.SUCCESS && exitOnFirstError) {
@@ -72,6 +93,38 @@ final class ShellRepl {
       }
     }
     return ExitCodes.SUCCESS;
+  }
+
+  /** True when {@code line} has an unterminated string, unclosed bracket, or trailing comma. */
+  static boolean isIncomplete(String line) {
+    char quote = 0;
+    int depth = 0;
+    char last = 0;
+    for (int i = 0; i < line.length(); i++) {
+      char c = line.charAt(i);
+      if (quote != 0) {
+        if (c == '\\') {
+          i++;
+        } else if (c == quote) {
+          quote = 0;
+        }
+        continue;
+      }
+      if (c == '#') {
+        break;
+      }
+      if (c == '\'' || c == '"') {
+        quote = c;
+      } else if (c == '{' || c == '[') {
+        depth++;
+      } else if (c == '}' || c == ']') {
+        depth--;
+      }
+      if (!Character.isWhitespace(c)) {
+        last = c;
+      }
+    }
+    return quote != 0 || depth > 0 || last == ',';
   }
 
   private static int dispatch(String line, ExecutionContext context, CommandRegistry registry,
