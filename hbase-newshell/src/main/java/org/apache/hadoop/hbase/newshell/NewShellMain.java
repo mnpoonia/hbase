@@ -35,7 +35,6 @@ import org.apache.hadoop.hbase.newshell.format.Formatters;
 import org.apache.hadoop.hbase.newshell.hbase.DefaultShellAdmin;
 import org.apache.hadoop.hbase.newshell.hbase.DefaultShellTableFactory;
 import org.apache.hadoop.hbase.newshell.hbase.ShellAdmin;
-import org.apache.hadoop.hbase.newshell.hbase.ShellTableFactory;
 import org.apache.hadoop.hbase.newshell.spi.ShellTerminal;
 import org.apache.hadoop.hbase.newshell.spi.SupportsHistory;
 import org.apache.hadoop.hbase.newshell.spi.TerminalConfig;
@@ -94,9 +93,9 @@ public final class NewShellMain {
 
     int exitCode = ExitCodes.SUCCESS;
     try (ShellTerminal terminal = openTerminal(launch.scriptFile);
-      Connection connection = ConnectionFactory.createConnection(conf)) {
-      ShellAdmin admin = new DefaultShellAdmin(connection.getAdmin());
-      ShellTableFactory tables = new DefaultShellTableFactory(connection);
+      Connection connection = ConnectionFactory.createConnection(conf);
+      DefaultShellTableFactory tables = new DefaultShellTableFactory(connection)) {
+      ShellAdmin admin = DefaultShellAdmin.create(connection.getAdmin());
       ExecutionContext context = new ExecutionContext(admin, tables, terminal.writer(), options,
         options.interactive() ? terminal::readLine : null);
       CommandRegistry registry = new CommandRegistry();

@@ -79,14 +79,14 @@ public class TestPilotCommandsAgainstMiniCluster {
 
   @Test
   public void statusReturnsNonNullStatusView() throws Exception {
-    ShellAdmin admin = new DefaultShellAdmin(connection.getAdmin());
+    ShellAdmin admin = DefaultShellAdmin.create(connection.getAdmin());
     assertNotNull(admin.status());
   }
 
   @Test
   public void createBuildsTableWithNamedFamily() throws Exception {
     String tableName = "newshell_create_test";
-    ShellAdmin admin = new DefaultShellAdmin(connection.getAdmin());
+    ShellAdmin admin = DefaultShellAdmin.create(connection.getAdmin());
     admin.createTable(tableName, Arrays.asList(Collections.singletonMap("NAME", "f1")),
       Collections.emptyMap());
 
@@ -99,7 +99,7 @@ public class TestPilotCommandsAgainstMiniCluster {
   @Test
   public void createBuildsTableWithMultipleNamedFamilies() throws Exception {
     String tableName = "newshell_create_multi_family_test";
-    ShellAdmin admin = new DefaultShellAdmin(connection.getAdmin());
+    ShellAdmin admin = DefaultShellAdmin.create(connection.getAdmin());
     admin.createTable(tableName,
       Arrays.asList(Collections.singletonMap("NAME", "f1"), mapOf("NAME", "f2", "VERSIONS", 5L)),
       Collections.emptyMap());
@@ -115,7 +115,7 @@ public class TestPilotCommandsAgainstMiniCluster {
   @Test
   public void createAppliesTableLevelSplitsAndAttributes() throws Exception {
     String tableName = "newshell_create_table_attrs_test";
-    ShellAdmin admin = new DefaultShellAdmin(connection.getAdmin());
+    ShellAdmin admin = DefaultShellAdmin.create(connection.getAdmin());
     admin.createTable(tableName, Arrays.asList(Collections.singletonMap("NAME", "f1")),
       mapOf("SPLITS", Arrays.asList("1000", "2000"), "REGION_REPLICATION", 2L));
 
@@ -134,7 +134,7 @@ public class TestPilotCommandsAgainstMiniCluster {
     Admin realAdmin = connection.getAdmin();
     TEST_UTIL.createTable(TableName.valueOf(tableName), Bytes.toBytes("f1"));
 
-    ShellAdmin admin = new DefaultShellAdmin(realAdmin);
+    ShellAdmin admin = DefaultShellAdmin.create(realAdmin);
     admin.disableTable(tableName);
     assertTrue(realAdmin.isTableDisabled(TableName.valueOf(tableName)));
   }
@@ -198,7 +198,7 @@ public class TestPilotCommandsAgainstMiniCluster {
     TEST_UTIL.createTable(TableName.valueOf(tableName), Bytes.toBytes("f1"));
     realAdmin.disableTable(TableName.valueOf(tableName));
 
-    ShellAdmin admin = new DefaultShellAdmin(realAdmin);
+    ShellAdmin admin = DefaultShellAdmin.create(realAdmin);
     admin.enableTable(tableName);
     assertTrue(realAdmin.isTableEnabled(TableName.valueOf(tableName)));
   }
@@ -210,7 +210,7 @@ public class TestPilotCommandsAgainstMiniCluster {
     TEST_UTIL.createTable(TableName.valueOf(tableName), Bytes.toBytes("f1"));
     realAdmin.disableTable(TableName.valueOf(tableName));
 
-    ShellAdmin admin = new DefaultShellAdmin(realAdmin);
+    ShellAdmin admin = DefaultShellAdmin.create(realAdmin);
     admin.dropTable(tableName);
     assertTrue(!realAdmin.tableExists(TableName.valueOf(tableName)));
   }
@@ -233,7 +233,7 @@ public class TestPilotCommandsAgainstMiniCluster {
     String tableName = "newshell_list_test";
     TEST_UTIL.createTable(TableName.valueOf(tableName), Bytes.toBytes("f1"));
 
-    ShellAdmin admin = new DefaultShellAdmin(connection.getAdmin());
+    ShellAdmin admin = DefaultShellAdmin.create(connection.getAdmin());
     assertTrue(admin.listTables(tableName).contains(tableName));
     assertTrue(!admin.listTables("no_such_table_.*").contains(tableName));
   }
@@ -243,7 +243,7 @@ public class TestPilotCommandsAgainstMiniCluster {
     String tableName = "newshell_describe_test";
     TEST_UTIL.createTable(TableName.valueOf(tableName), Bytes.toBytes("f1"));
 
-    ShellAdmin admin = new DefaultShellAdmin(connection.getAdmin());
+    ShellAdmin admin = DefaultShellAdmin.create(connection.getAdmin());
     TableDescription description = admin.describeTable(tableName);
     assertTrue(description.enabled());
     assertTrue(description.columnFamilies().get(0).contains("f1"));
@@ -261,7 +261,7 @@ public class TestPilotCommandsAgainstMiniCluster {
     ServerName liveServer =
       realAdmin.getClusterMetrics().getLiveServerMetrics().keySet().iterator().next();
 
-    ShellAdmin admin = new DefaultShellAdmin(realAdmin);
+    ShellAdmin admin = DefaultShellAdmin.create(realAdmin);
     admin.decommissionRegionServers(Arrays.asList(liveServer.getHostname()), false);
     assertTrue(admin.listDecommissionedRegionServers().contains(liveServer.getServerName()));
 
@@ -274,7 +274,7 @@ public class TestPilotCommandsAgainstMiniCluster {
     String tableName = "newshell_alter_test";
     TEST_UTIL.createTable(TableName.valueOf(tableName), Bytes.toBytes("f1"));
 
-    ShellAdmin admin = new DefaultShellAdmin(connection.getAdmin());
+    ShellAdmin admin = DefaultShellAdmin.create(connection.getAdmin());
     admin.alterTable(tableName, Arrays.asList(mapOf("NAME", "f1", "TTL", 100)));
 
     TableDescriptor descriptor = connection.getAdmin().getDescriptor(TableName.valueOf(tableName));
@@ -286,7 +286,7 @@ public class TestPilotCommandsAgainstMiniCluster {
     String tableName = "newshell_exists_test";
     TEST_UTIL.createTable(TableName.valueOf(tableName), Bytes.toBytes("f1"));
 
-    ShellAdmin admin = new DefaultShellAdmin(connection.getAdmin());
+    ShellAdmin admin = DefaultShellAdmin.create(connection.getAdmin());
     assertTrue(admin.tableExists(tableName));
     assertFalse(admin.tableExists("newshell_exists_missing_test"));
   }
@@ -296,7 +296,7 @@ public class TestPilotCommandsAgainstMiniCluster {
     String tableName = "newshell_compact_test";
     TEST_UTIL.createTable(TableName.valueOf(tableName), Bytes.toBytes("f1"));
 
-    ShellAdmin admin = new DefaultShellAdmin(connection.getAdmin());
+    ShellAdmin admin = DefaultShellAdmin.create(connection.getAdmin());
     assertDoesNotThrow(() -> admin.compact(tableName, null, null));
   }
 
@@ -305,7 +305,7 @@ public class TestPilotCommandsAgainstMiniCluster {
     String tableName = "newshell_major_compact_test";
     TEST_UTIL.createTable(TableName.valueOf(tableName), Bytes.toBytes("f1"));
 
-    ShellAdmin admin = new DefaultShellAdmin(connection.getAdmin());
+    ShellAdmin admin = DefaultShellAdmin.create(connection.getAdmin());
     assertDoesNotThrow(() -> admin.majorCompact(tableName, null, null));
   }
 
@@ -314,14 +314,14 @@ public class TestPilotCommandsAgainstMiniCluster {
     String tableName = "newshell_split_test";
     TEST_UTIL.createTable(TableName.valueOf(tableName), Bytes.toBytes("f1"));
 
-    ShellAdmin admin = new DefaultShellAdmin(connection.getAdmin());
+    ShellAdmin admin = DefaultShellAdmin.create(connection.getAdmin());
     assertDoesNotThrow(() -> admin.split(tableName, "m"));
   }
 
   @Test
   public void addPeerThenListPeersThenRemovePeerRoundTrips() throws Exception {
     String peerId = "newshell_peer_" + UUID.randomUUID().toString().replace("-", "");
-    ShellAdmin admin = new DefaultShellAdmin(connection.getAdmin());
+    ShellAdmin admin = DefaultShellAdmin.create(connection.getAdmin());
 
     admin.addPeer(peerId, mapOf("CLUSTER_KEY", TEST_UTIL.getClusterKey(), "ENDPOINT_CLASSNAME",
       SelfReplicationEndpointForTest.class.getName()));
@@ -337,7 +337,7 @@ public class TestPilotCommandsAgainstMiniCluster {
     String snapshotName = "newshell_snapshot_test_snap";
     TEST_UTIL.createTable(TableName.valueOf(tableName), Bytes.toBytes("f1"));
 
-    ShellAdmin admin = new DefaultShellAdmin(connection.getAdmin());
+    ShellAdmin admin = DefaultShellAdmin.create(connection.getAdmin());
     admin.snapshot(tableName, snapshotName);
     assertTrue(
       admin.listSnapshots(".*").stream().anyMatch(snap -> snap.name().equals(snapshotName)));
@@ -350,7 +350,7 @@ public class TestPilotCommandsAgainstMiniCluster {
   @Test
   public void balanceSwitchNormalizerSwitchAndCatalogJanitorSwitchToggleAndRestore()
     throws Exception {
-    ShellAdmin admin = new DefaultShellAdmin(connection.getAdmin());
+    ShellAdmin admin = DefaultShellAdmin.create(connection.getAdmin());
     Admin realAdmin = connection.getAdmin();
 
     boolean previousBalancer = admin.balancerSwitch(false);
@@ -374,7 +374,7 @@ public class TestPilotCommandsAgainstMiniCluster {
 
   @Test
   public void compactionSwitchTogglesAllRegionServers() throws Exception {
-    ShellAdmin admin = new DefaultShellAdmin(connection.getAdmin());
+    ShellAdmin admin = DefaultShellAdmin.create(connection.getAdmin());
 
     Map<String, Boolean> previousStates = admin.compactionSwitch(false, Collections.emptyList());
     assertFalse(previousStates.isEmpty());
@@ -384,7 +384,7 @@ public class TestPilotCommandsAgainstMiniCluster {
 
   @Test
   public void splitOrMergeSwitchTogglesSplitAndMerge() throws Exception {
-    ShellAdmin admin = new DefaultShellAdmin(connection.getAdmin());
+    ShellAdmin admin = DefaultShellAdmin.create(connection.getAdmin());
     Admin realAdmin = connection.getAdmin();
 
     boolean previousSplit = admin.splitOrMergeSwitch("SPLIT", false);
@@ -495,7 +495,7 @@ public class TestPilotCommandsAgainstMiniCluster {
     }
 
     ShellTableFactory factory = new DefaultShellTableFactory(connection);
-    factory.forTable(tableName).delete("r1", "f1:c1", null);
+    factory.forTable(tableName).delete("r1", "f1:c1", null, java.util.Collections.emptyMap());
 
     GetResult result = factory.forTable(tableName).get("r1", Collections.emptyMap());
     assertEquals(1, result.cells().size());
@@ -582,7 +582,7 @@ public class TestPilotCommandsAgainstMiniCluster {
   @Test
   public void getSplitsExcludesTheFirstEmptyStartKey() throws Exception {
     String tableName = "newshell_get_splits_test";
-    ShellAdmin admin = new DefaultShellAdmin(connection.getAdmin());
+    ShellAdmin admin = DefaultShellAdmin.create(connection.getAdmin());
     admin.createTable(tableName, Arrays.asList(Collections.singletonMap("NAME", "f1")),
       Collections.singletonMap("SPLITS", Arrays.asList("1000", "2000")));
 
@@ -600,7 +600,7 @@ public class TestPilotCommandsAgainstMiniCluster {
       table.put(put);
     }
 
-    ShellAdmin admin = new DefaultShellAdmin(connection.getAdmin());
+    ShellAdmin admin = DefaultShellAdmin.create(connection.getAdmin());
     admin.truncateTable(tableName, false);
 
     ShellTableFactory factory = new DefaultShellTableFactory(connection);
@@ -610,7 +610,7 @@ public class TestPilotCommandsAgainstMiniCluster {
   @Test
   public void truncatePreserveKeepsSplitsAfterTruncate() throws Exception {
     String tableName = "newshell_truncate_preserve_test";
-    ShellAdmin admin = new DefaultShellAdmin(connection.getAdmin());
+    ShellAdmin admin = DefaultShellAdmin.create(connection.getAdmin());
     admin.createTable(tableName, Arrays.asList(Collections.singletonMap("NAME", "f1")),
       Collections.singletonMap("SPLITS", Arrays.asList("1000", "2000")));
 
@@ -628,7 +628,7 @@ public class TestPilotCommandsAgainstMiniCluster {
     Admin realAdmin = connection.getAdmin();
     TEST_UTIL.createTable(TableName.valueOf(tableName), Bytes.toBytes("f1"));
 
-    ShellAdmin admin = new DefaultShellAdmin(realAdmin);
+    ShellAdmin admin = DefaultShellAdmin.create(realAdmin);
     assertTrue(admin.isTableEnabled(tableName));
     assertFalse(admin.isTableDisabled(tableName));
 
@@ -646,7 +646,7 @@ public class TestPilotCommandsAgainstMiniCluster {
     TEST_UTIL.createTable(TableName.valueOf(disabledTable), Bytes.toBytes("f1"));
     realAdmin.disableTable(TableName.valueOf(disabledTable));
 
-    ShellAdmin admin = new DefaultShellAdmin(realAdmin);
+    ShellAdmin admin = DefaultShellAdmin.create(realAdmin);
     assertTrue(admin.listTablesByState(true).contains(enabledTable));
     assertFalse(admin.listTablesByState(true).contains(disabledTable));
     assertTrue(admin.listTablesByState(false).contains(disabledTable));
@@ -658,7 +658,7 @@ public class TestPilotCommandsAgainstMiniCluster {
     String tableName = "newshell_alter_status_test";
     TEST_UTIL.createTable(TableName.valueOf(tableName), Bytes.toBytes("f1"));
 
-    ShellAdmin admin = new DefaultShellAdmin(connection.getAdmin());
+    ShellAdmin admin = DefaultShellAdmin.create(connection.getAdmin());
     admin.alterTable(tableName, Arrays.asList(mapOf("NAME", "f1", "TTL", 100)));
 
     AlterStatusView status = admin.alterStatus(tableName);
@@ -676,7 +676,7 @@ public class TestPilotCommandsAgainstMiniCluster {
       table.put(put);
     }
 
-    ShellAdmin admin = new DefaultShellAdmin(connection.getAdmin());
+    ShellAdmin admin = DefaultShellAdmin.create(connection.getAdmin());
     admin.cloneTableSchema(tableName, newTableName, true);
 
     Admin realAdmin = connection.getAdmin();
@@ -692,7 +692,7 @@ public class TestPilotCommandsAgainstMiniCluster {
     String tableName = "newshell_locate_region_test";
     TEST_UTIL.createTable(TableName.valueOf(tableName), Bytes.toBytes("f1"));
 
-    ShellAdmin admin = new DefaultShellAdmin(connection.getAdmin());
+    ShellAdmin admin = DefaultShellAdmin.create(connection.getAdmin());
     RegionLocationView location = admin.locateRegion(tableName, "r1");
     assertNotNull(location.hostnamePort());
     assertTrue(location.regionName().contains("ENCODED"));
@@ -702,7 +702,7 @@ public class TestPilotCommandsAgainstMiniCluster {
   @Test
   public void listRegionsReturnsOneRowPerRegion() throws Exception {
     String tableName = "newshell_list_regions_test";
-    ShellAdmin admin = new DefaultShellAdmin(connection.getAdmin());
+    ShellAdmin admin = DefaultShellAdmin.create(connection.getAdmin());
     admin.createTable(tableName, Arrays.asList(Collections.singletonMap("NAME", "f1")),
       Collections.singletonMap("SPLITS", Arrays.asList("1000", "2000")));
 

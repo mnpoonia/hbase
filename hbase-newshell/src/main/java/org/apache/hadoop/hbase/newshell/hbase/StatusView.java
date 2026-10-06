@@ -27,6 +27,8 @@ import org.apache.hadoop.hbase.ServerMetrics;
 import org.apache.hadoop.hbase.ServerName;
 import org.apache.hadoop.hbase.ServerTask;
 import org.apache.hadoop.hbase.master.RegionState;
+import org.apache.hadoop.hbase.replication.ReplicationLoadSink;
+import org.apache.hadoop.hbase.replication.ReplicationLoadSource;
 import org.apache.yetus.audience.InterfaceAudience;
 
 /**
@@ -103,6 +105,88 @@ public final class StatusView {
       appendRunningTasks(lines, entry.getValue().getTasks(), "        ");
     }
     return lines;
+  }
+
+  /**
+   * The {@code replication} format of {@code admin.rb#status}. {@code type} is {@code SOURCE},
+   * {@code SINK} or {@code BOTH}; servers without a sink report are skipped, as in the old shell.
+   */
+  public List<String> replicationLines(String type) {
+    List<String> lines = new ArrayList<>();
+    lines.add(String.format("version %s", metrics.getHBaseVersion()));
+    Map<ServerName, ServerMetrics> liveServers = metrics.getLiveServerMetrics();
+    lines.add(String.format("%d live servers", liveServers.size()));
+    for (Map.Entry<ServerName, ServerMetrics> entry : liveServers.entrySet()) {
+      ReplicationLoadSink sink = entry.getValue().getReplicationLoadSink();
+      if (sink == null) {
+        continue;
+      }
+      ServerName server = entry.getKey();
+      lines.add(String.format("    %s:%s %s", server.getHostname(), server.getPort(),
+        server.getStartcode()));
+      if (!"SINK".equalsIgnoreCase(type)) {
+        addAll(lines, sourceString(entry.getValue().getReplicationLoadSourceMap()));
+      }
+      if (!"SOURCE".equalsIgnoreCase(type)) {
+        addAll(lines, sinkString(sink));
+      }
+    }
+    return lines;
+  }
+
+  private static void addAll(List<String> lines, String block) {
+    lines.addAll(Arrays.asList(block.split("\n", -1)));
+  }
+
+  private static String sinkString(ReplicationLoadSink sink) {
+    StringBuilder sb = new StringBuilder("        SINK:");
+    sb.append("\n            TimeStampStarted=").append(sink.getTimestampStarted());
+    if (sink.getTimestampsOfLastAppliedOp() == sink.getTimestampStarted()) {
+      // nothing applied since start: this server is not acting as a sink
+      sb.append(",\n            Waiting for OPs... ");
+    } else {
+      sb.append(",\n            AgeOfLastAppliedOp=").append(sink.getAgeOfLastAppliedOp());
+      sb.append(",\n            TimeStampsOfLastAppliedOp=")
+        .append(sink.getTimestampsOfLastAppliedOp());
+    }
+    return sb.toString();
+  }
+
+  private static String sourceString(Map<String, List<ReplicationLoadSource>> sources) {
+    StringBuilder sb = new StringBuilder("        SOURCE:");
+    for (Map.Entry<String, List<ReplicationLoadSource>> peer : sources.entrySet()) {
+      sb.append("\n            PeerID=").append(peer.getKey());
+      for (ReplicationLoadSource source : peer.getValue()) {
+        sb.append(source.isRecovered()
+          ? ",\n            Queue(Recovered)="
+          : ",\n            Queue(Normal)=").append(source.getQueueId());
+        if (source.isRunning()) {
+          if (source.getTimestampOfLastShippedOp() == 0) {
+            sb.append(
+              ",\n            TimeStampOfLastShippedOp=0, No Ops shipped since last restart");
+          } else {
+            sb.append(",\n            AgeOfLastShippedOp=").append(source.getAgeOfLastShippedOp())
+              .append(",\n            TimeStampOfLastShippedOp=")
+              .append(source.getTimestampOfLastShippedOp());
+          }
+          sb.append(",\n            SizeOfLogQueue=").append(source.getSizeOfLogQueue())
+            .append(",\n            EditsReadFromLogQueue=").append(source.getEditsRead())
+            .append(",\n            OpsShippedToTarget=").append(source.getOPsShipped());
+          if (source.hasEditsSinceRestart()) {
+            sb.append(",\n            TimeStampOfNextToReplicate=")
+              .append(source.getTimeStampOfNextToReplicate());
+          } else {
+            sb.append(",\n            HasEditsSinceRestart=false, "
+              + "No edits for this source since it started");
+          }
+          sb.append(",\n            ReplicationLag=").append(source.getReplicationLag());
+        } else {
+          sb.append(",\n            IsRunning=false, No Reader/Shipper threads runnning yet.");
+        }
+        sb.append("\n");
+      }
+    }
+    return sb.toString();
   }
 
   private static void appendRunningTasks(List<String> lines, List<ServerTask> tasks,

@@ -69,16 +69,27 @@ public final class DeleteTableSnapshotsCommand implements ShellCommand {
     DestructiveBatchConfirm.confirmSnapshotDelete(context, command, "delete_table_snapshots",
       list.size());
     List<String> lines = new ArrayList<>();
+    int failures = 0;
     for (SnapshotInfo snapshot : list) {
       try {
         context.snapshotAdmin().deleteSnapshot(snapshot.name());
         lines.add("Successfully deleted snapshot: " + snapshot.name());
         lines.add("");
       } catch (IOException e) {
+        failures++;
         lines.add("Failed to delete snapshot: " + snapshot.name() + ", due to below exception,");
         lines.add(e.toString());
         lines.add("");
       }
+    }
+    if (failures > 0) {
+      // The per-snapshot report must still be seen, but a partial failure must not exit 0.
+      for (String line : lines) {
+        out.println(line);
+      }
+      out.flush();
+      throw new IOException(
+        "Failed to delete " + failures + " of " + list.size() + " matching snapshots");
     }
     return new TextResult(lines);
   }

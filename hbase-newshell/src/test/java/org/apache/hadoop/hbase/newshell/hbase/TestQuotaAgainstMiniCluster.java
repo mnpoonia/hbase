@@ -61,7 +61,7 @@ public class TestQuotaAgainstMiniCluster {
 
   @Test
   public void setQuotaThenListQuotasFindsAUserThrottle() throws Exception {
-    ShellAdmin admin = new DefaultShellAdmin(connection.getAdmin());
+    ShellAdmin admin = DefaultShellAdmin.create(connection.getAdmin());
     String user = "newshell_quota_user";
 
     admin.setQuota(
@@ -77,7 +77,7 @@ public class TestQuotaAgainstMiniCluster {
 
   @Test
   public void setQuotaAppliesANamespaceThrottle() throws Exception {
-    ShellAdmin admin = new DefaultShellAdmin(connection.getAdmin());
+    ShellAdmin admin = DefaultShellAdmin.create(connection.getAdmin());
     String namespace = "newshell_quota_ns";
     connection.getAdmin()
       .createNamespace(org.apache.hadoop.hbase.NamespaceDescriptor.create(namespace).build());
@@ -92,7 +92,7 @@ public class TestQuotaAgainstMiniCluster {
 
   @Test
   public void rpcThrottleSwitchRoundTrips() throws Exception {
-    ShellAdmin admin = new DefaultShellAdmin(connection.getAdmin());
+    ShellAdmin admin = DefaultShellAdmin.create(connection.getAdmin());
 
     boolean beforeDisable = admin.switchRpcThrottle(false);
     assertFalse(admin.isRpcThrottleEnabled());
@@ -107,7 +107,7 @@ public class TestQuotaAgainstMiniCluster {
 
   @Test
   public void exceedThrottleQuotaSwitchRoundTrips() throws Exception {
-    ShellAdmin admin = new DefaultShellAdmin(connection.getAdmin());
+    ShellAdmin admin = DefaultShellAdmin.create(connection.getAdmin());
 
     // Enabling exceed-throttle requires region-server READ+WRITE quotas in seconds.
     admin.setQuota(mapOf("TYPE", "THROTTLE", "REGIONSERVER", "all", "THROTTLE_TYPE", "WRITE",
@@ -125,7 +125,7 @@ public class TestQuotaAgainstMiniCluster {
 
   @Test
   public void listQuotaTableSizesSnapshotsAndSnapshotSizesDoNotThrow() throws Exception {
-    ShellAdmin admin = new DefaultShellAdmin(connection.getAdmin());
+    ShellAdmin admin = DefaultShellAdmin.create(connection.getAdmin());
 
     assertDoesNotThrow(admin::listQuotaTableSizes);
     assertDoesNotThrow(() -> admin.listQuotaSnapshots(Collections.emptyMap()));

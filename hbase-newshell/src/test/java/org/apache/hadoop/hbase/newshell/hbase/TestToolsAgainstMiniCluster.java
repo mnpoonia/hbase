@@ -72,7 +72,7 @@ public class TestToolsAgainstMiniCluster {
     String tableName = "newshell_flush_test";
     TEST_UTIL.createTable(TableName.valueOf(tableName), Bytes.toBytes("f1"));
 
-    ShellAdmin admin = new DefaultShellAdmin(connection.getAdmin());
+    ShellAdmin admin = DefaultShellAdmin.create(connection.getAdmin());
     assertDoesNotThrow(() -> admin.flush(tableName, null));
   }
 
@@ -86,7 +86,7 @@ public class TestToolsAgainstMiniCluster {
     String encodedName = realAdmin.getRegions(TableName.valueOf(tableName)).get(0).getEncodedName();
     realAdmin.unassign(regionName, false);
 
-    ShellAdmin admin = new DefaultShellAdmin(realAdmin);
+    ShellAdmin admin = DefaultShellAdmin.create(realAdmin);
     assertDoesNotThrow(() -> admin.assign(encodedName));
     TEST_UTIL.waitUntilNoRegionsInTransition(10000);
   }
@@ -101,7 +101,7 @@ public class TestToolsAgainstMiniCluster {
     Admin realAdmin = connection.getAdmin();
     realAdmin.snapshot(snapshotName, TableName.valueOf(tableName));
 
-    ShellAdmin admin = new DefaultShellAdmin(realAdmin);
+    ShellAdmin admin = DefaultShellAdmin.create(realAdmin);
     admin.cloneSnapshot(snapshotName, cloneName, false, null);
     assertTrue(realAdmin.tableExists(TableName.valueOf(cloneName)));
 
@@ -119,7 +119,7 @@ public class TestToolsAgainstMiniCluster {
     String snap2 = "newshell_table_snap_list_s2";
     TEST_UTIL.createTable(TableName.valueOf(tableName), Bytes.toBytes("f1"));
 
-    ShellAdmin admin = new DefaultShellAdmin(connection.getAdmin());
+    ShellAdmin admin = DefaultShellAdmin.create(connection.getAdmin());
     admin.snapshot(tableName, snap1);
     admin.snapshot(tableName, snap2);
 
@@ -138,7 +138,7 @@ public class TestToolsAgainstMiniCluster {
     String drop = "newshell_delete_table_snaps_drop";
     TEST_UTIL.createTable(TableName.valueOf(tableName), Bytes.toBytes("f1"));
 
-    ShellAdmin admin = new DefaultShellAdmin(connection.getAdmin());
+    ShellAdmin admin = DefaultShellAdmin.create(connection.getAdmin());
     admin.snapshot(tableName, keep);
     admin.snapshot(tableName, drop);
 
@@ -155,14 +155,14 @@ public class TestToolsAgainstMiniCluster {
 
   @Test
   public void listSecurityCapabilitiesDoesNotThrow() throws Exception {
-    ShellAdmin admin = new DefaultShellAdmin(connection.getAdmin());
+    ShellAdmin admin = DefaultShellAdmin.create(connection.getAdmin());
     List<String> caps = admin.listSecurityCapabilities();
     assertFalse(caps.isEmpty());
   }
 
   @Test
   public void updateAllConfigDoesNotThrow() throws Exception {
-    ShellAdmin admin = new DefaultShellAdmin(connection.getAdmin());
+    ShellAdmin admin = DefaultShellAdmin.create(connection.getAdmin());
     assertDoesNotThrow(admin::updateAllConfig);
   }
 
@@ -172,13 +172,13 @@ public class TestToolsAgainstMiniCluster {
     ServerName liveServer =
       realAdmin.getClusterMetrics().getLiveServerMetrics().keySet().iterator().next();
 
-    ShellAdmin admin = new DefaultShellAdmin(realAdmin);
+    ShellAdmin admin = DefaultShellAdmin.create(realAdmin);
     assertDoesNotThrow(() -> admin.updateConfig(liveServer.getServerName()));
   }
 
   @Test
   public void listProceduresReturnsAtLeastOneRow() throws Exception {
-    ShellAdmin admin = new DefaultShellAdmin(connection.getAdmin());
+    ShellAdmin admin = DefaultShellAdmin.create(connection.getAdmin());
 
     String tableName = "newshell_list_procedures_test";
     TEST_UTIL.createTable(TableName.valueOf(tableName), Bytes.toBytes("f1"));
@@ -190,7 +190,7 @@ public class TestToolsAgainstMiniCluster {
 
   @Test
   public void listLocksDoesNotThrow() throws Exception {
-    ShellAdmin admin = new DefaultShellAdmin(connection.getAdmin());
+    ShellAdmin admin = DefaultShellAdmin.create(connection.getAdmin());
     assertDoesNotThrow(admin::listLocks);
   }
 
@@ -199,7 +199,7 @@ public class TestToolsAgainstMiniCluster {
     String tableName = "newshell_change_sft_test";
     TEST_UTIL.createTable(TableName.valueOf(tableName), Bytes.toBytes("f1"));
 
-    ShellAdmin admin = new DefaultShellAdmin(connection.getAdmin());
+    ShellAdmin admin = DefaultShellAdmin.create(connection.getAdmin());
     admin.changeSft(tableName, null, "FILE");
     admin.changeSft(tableName, "f1", "FILE");
 
@@ -212,7 +212,7 @@ public class TestToolsAgainstMiniCluster {
     String tableName = "newshell_change_sft_all_test";
     TEST_UTIL.createTable(TableName.valueOf(tableName), Bytes.toBytes("f1"));
 
-    ShellAdmin admin = new DefaultShellAdmin(connection.getAdmin());
+    ShellAdmin admin = DefaultShellAdmin.create(connection.getAdmin());
     admin.changeSftAll(tableName, "FILE");
 
     TableDescriptor descriptor = connection.getAdmin().getDescriptor(TableName.valueOf(tableName));
@@ -222,7 +222,7 @@ public class TestToolsAgainstMiniCluster {
   @Test
   public void enablePeerThenDisablePeerRoundTrips() throws Exception {
     String peerId = "newshell_toggle_peer_" + UUID.randomUUID().toString().replace("-", "");
-    ShellAdmin admin = new DefaultShellAdmin(connection.getAdmin());
+    ShellAdmin admin = DefaultShellAdmin.create(connection.getAdmin());
 
     admin.addPeer(peerId, mapOf("CLUSTER_KEY", TEST_UTIL.getClusterKey(), "ENDPOINT_CLASSNAME",
       SelfReplicationEndpointForTest.class.getName()));
@@ -240,7 +240,7 @@ public class TestToolsAgainstMiniCluster {
 
   @Test
   public void toolsChoresAndSwitchesDoNotThrow() throws Exception {
-    ShellAdmin admin = new DefaultShellAdmin(connection.getAdmin());
+    ShellAdmin admin = DefaultShellAdmin.create(connection.getAdmin());
     assertDoesNotThrow(admin::isInMaintenanceMode);
     assertDoesNotThrow(admin::cleanerChoreEnabled);
     assertDoesNotThrow(admin::snapshotCleanupEnabled);
@@ -270,7 +270,7 @@ public class TestToolsAgainstMiniCluster {
   public void compactionStateAndClearBlockCacheRoundTrip() throws Exception {
     String tableName = "newshell_compaction_state_test";
     TEST_UTIL.createTable(TableName.valueOf(tableName), Bytes.toBytes("f1"));
-    ShellAdmin admin = new DefaultShellAdmin(connection.getAdmin());
+    ShellAdmin admin = DefaultShellAdmin.create(connection.getAdmin());
     assertEquals("NONE", admin.getCompactionState(tableName));
     assertDoesNotThrow(() -> admin.clearBlockCache(tableName));
   }
@@ -278,7 +278,7 @@ public class TestToolsAgainstMiniCluster {
   @Test
   public void peerConfigMutatorsRoundTrip() throws Exception {
     String peerId = "newshell_peer_cfg_" + UUID.randomUUID().toString().replace("-", "");
-    ShellAdmin admin = new DefaultShellAdmin(connection.getAdmin());
+    ShellAdmin admin = DefaultShellAdmin.create(connection.getAdmin());
     admin.addPeer(peerId, mapOf("CLUSTER_KEY", TEST_UTIL.getClusterKey(), "ENDPOINT_CLASSNAME",
       SelfReplicationEndpointForTest.class.getName()));
 
@@ -301,7 +301,7 @@ public class TestToolsAgainstMiniCluster {
     String tableName = "newshell_table_rep_test";
     String peerId = "newshell_table_rep_peer_" + UUID.randomUUID().toString().replace("-", "");
     TEST_UTIL.createTable(TableName.valueOf(tableName), Bytes.toBytes("f1"));
-    ShellAdmin admin = new DefaultShellAdmin(connection.getAdmin());
+    ShellAdmin admin = DefaultShellAdmin.create(connection.getAdmin());
     // enableTableReplication requires at least one peer to sync CF scopes against.
     admin.addPeer(peerId, mapOf("CLUSTER_KEY", TEST_UTIL.getClusterKey(), "ENDPOINT_CLASSNAME",
       SelfReplicationEndpointForTest.class.getName()));

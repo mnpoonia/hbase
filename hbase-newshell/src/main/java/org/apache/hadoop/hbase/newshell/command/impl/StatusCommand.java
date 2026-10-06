@@ -30,8 +30,8 @@ import org.apache.yetus.audience.InterfaceAudience;
 
 /**
  * Ported from hbase-shell's {@code status.rb} / {@code hbase/admin.rb#status}: {@code summary}
- * (default, no argument), {@code simple}, {@code tasks} and {@code detailed}. The
- * {@code replication} format is not ported.
+ * (default, no argument), {@code simple}, {@code tasks}, {@code detailed} and {@code replication}
+ * (with an optional {@code SOURCE}/{@code SINK}/{@code BOTH} type).
  */
 @InterfaceAudience.Private
 public final class StatusCommand implements ShellCommand {
@@ -44,7 +44,7 @@ public final class StatusCommand implements ShellCommand {
 
   @Override
   public String help() {
-    return "status ['summary'|'simple'|'tasks'|'detailed'] - show cluster status";
+    return "status ['summary'|'simple'|'tasks'|'detailed'|'replication' [, 'SOURCE'|'SINK'|'BOTH']] - show cluster status";
   }
 
   @Override
@@ -61,6 +61,16 @@ public final class StatusCommand implements ShellCommand {
     }
     if (format.equalsIgnoreCase("tasks")) {
       return new TextResult(status.tasksLines());
+    }
+    if (format.equalsIgnoreCase("replication")) {
+      String type = positionals.size() > 1 ? String.valueOf(positionals.get(1)) : "BOTH";
+      if (
+        !type.equalsIgnoreCase("SOURCE") && !type.equalsIgnoreCase("SINK")
+          && !type.equalsIgnoreCase("BOTH")
+      ) {
+        throw new ShellCommandException("replication status type must be SOURCE, SINK or BOTH");
+      }
+      return new TextResult(status.replicationLines(type));
     }
     if (!format.equalsIgnoreCase("summary")) {
       throw new ShellCommandException("status format '" + format + "' is not supported");

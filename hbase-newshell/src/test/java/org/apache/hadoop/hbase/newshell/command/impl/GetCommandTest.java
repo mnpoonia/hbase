@@ -88,6 +88,22 @@ public class GetCommandTest {
   }
 
   @Test
+  public void bareColumnsCombineWithMaxLength() throws Exception {
+    command.execute(ShellLineParser.parse("get 't1', 'r1', 'f:a', {MAXLENGTH => 5}"), context);
+
+    assertEquals(Arrays.asList("f:a"), table.lastOptions.get("COLUMN"));
+    assertEquals(null, table.lastOptions.get("MAXLENGTH"));
+  }
+
+  @Test
+  public void fractionalMaxLengthIsRejected() throws Exception {
+    ParsedCommand parsed = ShellLineParser.parse("get 't1', 'r1', {MAXLENGTH => 2.5}");
+    org.junit.jupiter.api.Assertions.assertThrows(
+      org.apache.hadoop.hbase.newshell.command.ShellCommandException.class,
+      () -> command.execute(parsed, context));
+  }
+
+  @Test
   public void passesFilterAndTimerangeOptionsThrough() throws Exception {
     ParsedCommand parsed = ShellLineParser.parse(
       "get 't1', 'r1', {FILTER => \"ValueFilter(=, 'binary:abc')\", TIMERANGE => [100, 200]}");

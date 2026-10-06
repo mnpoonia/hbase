@@ -30,8 +30,8 @@ import org.apache.yetus.audience.InterfaceAudience;
 /**
  * Ported from hbase-shell's {@code hbase/table.rb#_delete_internal}: table name, row key, a
  * required {@code family[:qualifier]} column, and an optional timestamp - deletes a single version
- * of that column, matching the ruby original's {@code all_version=false}. ATTRIBUTES and VISIBILITY
- * are explicitly not ported.
+ * of that column, matching the ruby original's {@code all_version=false}. The {@code ATTRIBUTES}
+ * and {@code VISIBILITY} options are supported.
  */
 @InterfaceAudience.Private
 public final class DeleteCommand implements ShellCommand {
@@ -42,16 +42,13 @@ public final class DeleteCommand implements ShellCommand {
 
   @Override
   public String help() {
-    return "delete 'table', 'row', 'family:qualifier' - delete a single cell version";
+    return "delete 'table', 'row', 'family:qualifier' [, timestamp] [, {ATTRIBUTES=>{..}, VISIBILITY=>'expr'}]"
+      + " - delete a single cell version";
   }
 
   @Override
   public CommandResult execute(ParsedCommand command, ExecutionContext context)
     throws ShellCommandException, IOException {
-    if (!ArgParsing.allOptions(command).isEmpty()) {
-      throw new ShellCommandException("delete: options are not supported: "
-        + ArgParsing.allOptions(command).keySet() + " (ATTRIBUTES/VISIBILITY are not ported)");
-    }
     ArgParsing.requireMaxArgs(command, "delete", 4);
     ArgParsing.requireArgs(command, 3, "delete requires a table name, row key and column argument");
     String tableName = ArgParsing.string(command, 0);
@@ -65,7 +62,8 @@ public final class DeleteCommand implements ShellCommand {
       }
       timestamp = ((Number) timestampArg).longValue();
     }
-    context.tables().forTable(tableName).delete(row, column, timestamp);
+    context.tables().forTable(tableName).delete(row, column, timestamp,
+      ArgParsing.allOptions(command));
     return TextResult.of();
   }
 }

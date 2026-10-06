@@ -153,7 +153,56 @@ public class StatusCommandTest {
       .setLiveServerMetrics(Collections.emptyMap()).setDeadServerNames(Collections.emptyList())
       .build();
 
-    ParsedCommand parsed = ShellLineParser.parse("status 'replication'");
+    ParsedCommand parsed = ShellLineParser.parse("status 'bogus'");
     assertThrows(ShellCommandException.class, () -> command.execute(parsed, contextFor(metrics)));
+  }
+
+  private static ClusterMetrics replicationMetrics() {
+    ServerName live = ServerName.valueOf("rs.example.com", 16020, 2L);
+    org.apache.hadoop.hbase.replication.ReplicationLoadSink sink =
+      org.apache.hadoop.hbase.replication.ReplicationLoadSink.newBuilder().setAgeOfLastAppliedOp(5L)
+        .setTimestampsOfLastAppliedOp(200L).setTimestampStarted(100L).setTotalOpsProcessed(1L)
+        .build();
+    org.apache.hadoop.hbase.replication.ReplicationLoadSource source =
+      org.apache.hadoop.hbase.replication.ReplicationLoadSource.newBuilder().setPeerID("p1")
+        .setQueueId("p1").setRunning(false).build();
+    return ClusterMetricsBuilder.newBuilder().setHBaseVersion("3.0.0")
+      .setBackerMasterNames(Collections.emptyList())
+      .setMasterCoprocessorNames(Collections.emptyList())
+      .setLiveServerMetrics(Collections.singletonMap(live,
+        org.apache.hadoop.hbase.ServerMetricsBuilder.newBuilder(live).setReplicationLoadSink(sink)
+          .setReplicationLoadSources(Collections.singletonList(source)).build()))
+      .setDeadServerNames(Collections.emptyList()).build();
+  }
+
+  @Test
+  public void replicationBothShowsSourceAndSink() throws Exception {
+    List<String> lines =
+      ((TextResult) command.execute(ShellLineParser.parse("status 'replication'"),
+        contextFor(replicationMetrics()))).lines();
+    assertTrue(lines.contains("version 3.0.0"));
+    assertTrue(lines.contains("    rs.example.com:16020 2"));
+    assertTrue(lines.contains("        SOURCE:"));
+    assertTrue(lines.contains("            PeerID=p1,"));
+    assertTrue(
+      lines.contains("            IsRunning=false, No Reader/Shipper threads runnning yet."));
+    assertTrue(lines.contains("        SINK:"));
+    assertTrue(lines.contains("            AgeOfLastAppliedOp=5,"));
+  }
+
+  @Test
+  public void replicationSinkOnlyOmitsSource() throws Exception {
+    List<String> lines =
+      ((TextResult) command.execute(ShellLineParser.parse("status 'replication', 'SINK'"),
+        contextFor(replicationMetrics()))).lines();
+    assertTrue(lines.contains("        SINK:"));
+    assertTrue(!lines.contains("        SOURCE:"));
+  }
+
+  @Test
+  public void replicationRejectsUnknownType() throws Exception {
+    ParsedCommand parsed = ShellLineParser.parse("status 'replication', 'BAD'");
+    assertThrows(ShellCommandException.class,
+      () -> command.execute(parsed, contextFor(replicationMetrics())));
   }
 }

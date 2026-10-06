@@ -54,7 +54,9 @@ public interface ShellTable {
     void onProgress(long count, String row);
   }
 
-  void delete(String row, String column, Long timestamp) throws IOException;
+  /** Deletes one version of a column; {@code options} may hold ATTRIBUTES and VISIBILITY. */
+  void delete(String row, String column, Long timestamp, Map<String, Object> options)
+    throws ShellCommandException, IOException;
 
   /**
    * Rewrites every cell matched by the {@code scanSpec} (the options {@link #scan} accepts) with

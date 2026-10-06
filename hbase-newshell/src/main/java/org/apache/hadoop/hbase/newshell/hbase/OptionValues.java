@@ -68,12 +68,27 @@ final class OptionValues {
 
   static Integer optInt(Map<String, Object> options, String name) throws ShellCommandException {
     Object value = options.get(name);
-    return value == null ? null : requireNumber(value, name).intValue();
+    if (value == null) {
+      return null;
+    }
+    try {
+      return AttributeCoercion.toInt(requireNumber(value, name));
+    } catch (IllegalArgumentException e) {
+      throw new ShellCommandException(
+        name + " must be a whole number in int range: '" + value + "'", e);
+    }
   }
 
   static Long optLong(Map<String, Object> options, String name) throws ShellCommandException {
     Object value = options.get(name);
-    return value == null ? null : requireNumber(value, name).longValue();
+    if (value == null) {
+      return null;
+    }
+    try {
+      return AttributeCoercion.toLong(requireNumber(value, name));
+    } catch (IllegalArgumentException e) {
+      throw new ShellCommandException(name + " must be a whole number: '" + value + "'", e);
+    }
   }
 
   /** Like {@link #optInt} but a zero or negative value counts as absent, as in the legacy shell. */

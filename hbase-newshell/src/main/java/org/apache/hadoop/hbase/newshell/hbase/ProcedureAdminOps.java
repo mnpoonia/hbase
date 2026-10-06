@@ -29,7 +29,7 @@ import org.apache.hbase.thirdparty.com.google.gson.JsonObject;
 import org.apache.hbase.thirdparty.com.google.gson.JsonParser;
 
 /** Package-private collaborator used by {@link DefaultShellAdmin}. */
-final class ProcedureAdminOps {
+final class ProcedureAdminOps implements ProcedureAdminContract {
   private final org.apache.hadoop.hbase.client.Admin admin;
 
   ProcedureAdminOps(org.apache.hadoop.hbase.client.Admin admin) {
@@ -38,7 +38,7 @@ final class ProcedureAdminOps {
 
   private static final Gson GSON = new Gson();
 
-  List<List<String>> listProcedures() throws IOException {
+  public List<List<String>> listProcedures() throws IOException {
     JsonArray procedures = JsonParser.parseString(admin.getProcedures()).getAsJsonArray();
     List<List<String>> rows = new ArrayList<>();
     for (JsonElement element : procedures) {
@@ -58,7 +58,7 @@ final class ProcedureAdminOps {
     return element.isJsonPrimitive() ? element.getAsString() : element.toString();
   }
 
-  List<String> listLocks() throws IOException {
+  public List<String> listLocks() throws IOException {
     JsonArray locks = JsonParser.parseString(admin.getLocks()).getAsJsonArray();
     List<String> lines = new ArrayList<>();
     for (JsonElement element : locks) {

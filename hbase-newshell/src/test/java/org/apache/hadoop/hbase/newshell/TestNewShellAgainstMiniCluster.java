@@ -145,7 +145,7 @@ public class TestNewShellAgainstMiniCluster {
   }
 
   private void runScript(String... lines) throws IOException {
-    ShellAdmin admin = new DefaultShellAdmin(connection.getAdmin());
+    ShellAdmin admin = DefaultShellAdmin.create(connection.getAdmin());
     ShellTableFactory tables = new DefaultShellTableFactory(connection);
     ScriptedShellTerminal terminal = new ScriptedShellTerminal(lines);
     ExecutionContext context = new ExecutionContext(admin, tables, terminal.writer());

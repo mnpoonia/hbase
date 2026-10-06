@@ -45,6 +45,7 @@ public class DeleteTableSnapshotsCommandTest {
   private static final class RecordingShellAdmin extends StubShellAdmin {
     final List<SnapshotInfo> snapshots = new ArrayList<>();
     final List<String> deleted = new ArrayList<>();
+    final List<String> failing = new ArrayList<>();
 
     @Override
     public List<SnapshotInfo> listTableSnapshots(String tableNameRegex, String snapshotNameRegex) {
@@ -52,7 +53,10 @@ public class DeleteTableSnapshotsCommandTest {
     }
 
     @Override
-    public void deleteSnapshot(String snapshotName) {
+    public void deleteSnapshot(String snapshotName) throws java.io.IOException {
+      if (failing.contains(snapshotName)) {
+        throw new java.io.IOException("boom " + snapshotName);
+      }
       deleted.add(snapshotName);
     }
   }
@@ -70,6 +74,18 @@ public class DeleteTableSnapshotsCommandTest {
     TextResult result = (TextResult) command.execute(parsed, context);
     assertEquals(Arrays.asList("snap1", "snap2"), admin.deleted);
     assertTrue(result.lines().get(0).contains("Successfully deleted snapshot: snap1"));
+  }
+
+  @Test
+  public void partialFailureIsReportedAndRaisedSoExitCodeIsNonZero() throws Exception {
+    admin.snapshots.add(new SnapshotInfo("snap1", "t1", 0L, 0L));
+    admin.snapshots.add(new SnapshotInfo("snap2", "t1", 0L, 0L));
+    admin.failing.add("snap1");
+    ParsedCommand parsed = ShellLineParser.parse("delete_table_snapshots 't.*'");
+    java.io.IOException e =
+      assertThrows(java.io.IOException.class, () -> command.execute(parsed, context));
+    assertTrue(e.getMessage().contains("1 of 2"));
+    assertEquals(Arrays.asList("snap2"), admin.deleted);
   }
 
   @Test

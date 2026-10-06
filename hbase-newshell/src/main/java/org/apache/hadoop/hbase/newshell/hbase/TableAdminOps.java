@@ -44,6 +44,7 @@ import org.apache.hadoop.hbase.client.ColumnFamilyDescriptor;
 import org.apache.hadoop.hbase.client.ColumnFamilyDescriptorBuilder;
 import org.apache.hadoop.hbase.client.CompactType;
 import org.apache.hadoop.hbase.client.RegionInfo;
+import org.apache.hadoop.hbase.client.RegionLocator;
 import org.apache.hadoop.hbase.client.RegionStatesCount;
 import org.apache.hadoop.hbase.client.TableDescriptor;
 import org.apache.hadoop.hbase.client.TableDescriptorBuilder;
@@ -427,8 +428,11 @@ final class TableAdminOps implements TableAdminContract {
 
   @Override
   public RegionLocationView locateRegion(String tableName, String rowKey) throws IOException {
-    HRegionLocation location = admin.getConnection().getRegionLocator(TableName.valueOf(tableName))
-      .getRegionLocation(Bytes.toBytes(rowKey));
+    HRegionLocation location;
+    try (RegionLocator locator =
+      admin.getConnection().getRegionLocator(TableName.valueOf(tableName))) {
+      location = locator.getRegionLocation(Bytes.toBytes(rowKey));
+    }
     // Ruby locate_region prints RegionInfo#toString (ENCODED/NAME/STARTKEY/ENDKEY dict).
     return new RegionLocationView(location.getHostnamePort(), location.getRegion().toString());
   }
@@ -442,8 +446,11 @@ final class TableAdminOps implements TableAdminContract {
     ClusterMetrics clusterMetrics = admin.getClusterMetrics();
     List<String> warnings = new ArrayList<>();
     List<List<String>> rows = new ArrayList<>();
-    for (HRegionLocation location : admin.getConnection().getRegionLocator(table)
-      .getAllRegionLocations()) {
+    List<HRegionLocation> locations;
+    try (RegionLocator locator = admin.getConnection().getRegionLocator(table)) {
+      locations = locator.getAllRegionLocations();
+    }
+    for (HRegionLocation location : locations) {
       RegionInfo regionInfo = location.getRegion();
       ServerName serverName = location.getServerName();
       ServerMetrics serverMetrics = clusterMetrics.getLiveServerMetrics().get(serverName);

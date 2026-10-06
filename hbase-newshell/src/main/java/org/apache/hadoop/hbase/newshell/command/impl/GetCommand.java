@@ -66,8 +66,10 @@ public final class GetCommand implements ShellCommand {
     ArgParsing.requireArgs(command, 2, "get requires a table name and a row key argument");
     String tableName = ArgParsing.string(command, 0);
     String row = ArgParsing.string(command, 1);
-    Map<String, Object> options = withColumns(command);
-    int maxLength = ArgParsing.maxLength(options.remove("MAXLENGTH"));
+    // MAXLENGTH only affects display, so it must not count as a "hash" next to bare columns.
+    Map<String, Object> displayOptions = new LinkedHashMap<>(command.options());
+    int maxLength = ArgParsing.maxLength(displayOptions.remove("MAXLENGTH"));
+    Map<String, Object> options = withColumns(command, displayOptions);
     GetResult result = context.tables().forTable(tableName).get(row, options);
     List<List<String>> rows = new ArrayList<>();
     for (CellView cell : result.cells()) {
@@ -80,9 +82,8 @@ public final class GetCommand implements ShellCommand {
    * Folds bare column arguments and the {@code COLUMNS} alias into the {@code COLUMN} option.
    * Mixing bare columns with a hash is rejected rather than silently dropping one of them.
    */
-  private static Map<String, Object> withColumns(ParsedCommand command)
+  private static Map<String, Object> withColumns(ParsedCommand command, Map<String, Object> options)
     throws ShellCommandException {
-    Map<String, Object> options = new LinkedHashMap<>(command.options());
     if (options.containsKey("COLUMNS")) {
       if (options.containsKey("COLUMN")) {
         throw new ShellCommandException("get accepts only one of COLUMN or COLUMNS");

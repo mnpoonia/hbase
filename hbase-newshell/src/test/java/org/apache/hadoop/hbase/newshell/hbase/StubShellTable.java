@@ -51,7 +51,8 @@ public class StubShellTable implements ShellTable {
   }
 
   @Override
-  public void delete(String row, String column, Long timestamp) {
+  public void delete(String row, String column, Long timestamp,
+    java.util.Map<String, Object> options) {
     throw notNeeded();
   }
 

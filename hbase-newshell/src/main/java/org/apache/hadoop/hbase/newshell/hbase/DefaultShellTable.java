@@ -97,6 +97,7 @@ public final class DefaultShellTable implements ShellTable {
     "MAX_RESULT_SIZE", "ALL_METRICS", "METRICS", "FORMATTER", "FORMATTER_CLASS");
   private static final Set<String> COUNT_OPTIONS = optionSet("COLUMN", "COLUMNS", "LIMIT",
     "STARTROW", "STOPROW", "ROWPREFIXFILTER", "VERSIONS", "FILTER", "CACHE_BLOCKS", "INTERVAL");
+  private static final Set<String> DELETE_OPTIONS = optionSet("ATTRIBUTES", "VISIBILITY");
   private static final Set<String> DELETEALL_OPTIONS = optionSet("ROWPREFIXFILTER", "CACHE");
 
   private final Table table;
@@ -282,10 +283,17 @@ public final class DefaultShellTable implements ShellTable {
   }
 
   @Override
-  public void delete(String row, String column, Long timestamp) throws IOException {
+  public void delete(String row, String column, Long timestamp, Map<String, Object> options)
+    throws ShellCommandException, IOException {
+    rejectUnsupportedOptions("delete", options, DELETE_OPTIONS);
     long ts = timestamp == null ? HConstants.LATEST_TIMESTAMP : timestamp;
     Delete delete = new Delete(BinaryStrings.toBytes(row), ts);
     addDeleteColumn(delete, column, ts, false);
+    applyAttributes(delete, options);
+    String visibility = optString(options, "VISIBILITY");
+    if (visibility != null) {
+      delete.setCellVisibility(new CellVisibility(visibility));
+    }
     table.delete(delete);
   }
 
@@ -353,6 +361,11 @@ public final class DefaultShellTable implements ShellTable {
     }
     Cell cell = result.listCells().get(0);
     return Bytes.toStringBinary(cell.getValueArray(), cell.getValueOffset(), cell.getValueLength());
+  }
+
+  /** Releases the underlying {@link Table}. */
+  void close() throws IOException {
+    table.close();
   }
 
   @Override

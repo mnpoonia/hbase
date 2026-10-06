@@ -39,8 +39,8 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /**
- * End-to-end verification of {@link DefaultShellAdmin#getRsGroup} and
- * {@link DefaultShellAdmin#moveServersToRsGroup} against a real minicluster with RSGroups enabled.
+ * End-to-end verification of {@link ShellAdmin#getRsGroup} and
+ * {@link ShellAdmin#moveServersToRsGroup} against a real minicluster with RSGroups enabled.
  */
 @Tag(LargeTests.TAG)
 @Tag(ClientTests.TAG)
@@ -66,7 +66,7 @@ public class TestRsGroupAgainstMiniCluster {
 
   @Test
   public void getRsGroupReturnsDefaultGroupWithAllServers() throws Exception {
-    ShellAdmin admin = new DefaultShellAdmin(connection.getAdmin());
+    ShellAdmin admin = DefaultShellAdmin.create(connection.getAdmin());
 
     RsGroupView view = admin.getRsGroup(RSGroupInfo.DEFAULT_GROUP);
     assertEquals(2, view.servers().size());
@@ -82,7 +82,7 @@ public class TestRsGroupAgainstMiniCluster {
     RSGroupInfo defaultGroup = realAdmin.getRSGroup(RSGroupInfo.DEFAULT_GROUP);
     String hostPort = defaultGroup.getServers().iterator().next().toString();
 
-    ShellAdmin admin = new DefaultShellAdmin(realAdmin);
+    ShellAdmin admin = DefaultShellAdmin.create(realAdmin);
     admin.moveServersToRsGroup(Arrays.asList(hostPort), groupName);
 
     RsGroupView movedGroup = admin.getRsGroup(groupName);
@@ -100,7 +100,7 @@ public class TestRsGroupAgainstMiniCluster {
     Admin realAdmin = connection.getAdmin();
     String groupName = "newshell_add_list_rsgroup_test";
 
-    ShellAdmin admin = new DefaultShellAdmin(realAdmin);
+    ShellAdmin admin = DefaultShellAdmin.create(realAdmin);
     admin.addRsGroup(groupName);
 
     List<RsGroupSummary> groups = admin.listRsGroups(".*");
@@ -111,7 +111,7 @@ public class TestRsGroupAgainstMiniCluster {
 
   @Test
   public void listRsGroupsFiltersByRegexAndIncludesDefaultGroupServers() throws Exception {
-    ShellAdmin admin = new DefaultShellAdmin(connection.getAdmin());
+    ShellAdmin admin = DefaultShellAdmin.create(connection.getAdmin());
 
     List<RsGroupSummary> groups = admin.listRsGroups(RSGroupInfo.DEFAULT_GROUP);
     assertEquals(1, groups.size());
@@ -123,7 +123,7 @@ public class TestRsGroupAgainstMiniCluster {
 
   @Test
   public void updateRsGroupConfigDoesNotThrowForDefaultGroup() throws Exception {
-    ShellAdmin admin = new DefaultShellAdmin(connection.getAdmin());
+    ShellAdmin admin = DefaultShellAdmin.create(connection.getAdmin());
     assertDoesNotThrow(() -> admin.updateRsGroupConfig(RSGroupInfo.DEFAULT_GROUP));
   }
 }

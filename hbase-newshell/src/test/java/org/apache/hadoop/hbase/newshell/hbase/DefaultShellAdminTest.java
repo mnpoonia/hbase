@@ -46,12 +46,12 @@ import org.mockito.ArgumentCaptor;
 public class DefaultShellAdminTest {
 
   private Admin admin;
-  private DefaultShellAdmin shellAdmin;
+  private ShellAdmin shellAdmin;
 
   @BeforeEach
   public void setUp() {
     admin = mock(Admin.class);
-    shellAdmin = new DefaultShellAdmin(admin);
+    shellAdmin = DefaultShellAdmin.create(admin);
   }
 
   @Test

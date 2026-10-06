@@ -41,7 +41,7 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /**
- * End-to-end verification of {@link DefaultShellAdmin#grant} against a real minicluster with the
+ * End-to-end verification of {@link ShellAdmin#grant} against a real minicluster with the
  * {@link AccessController} coprocessor enabled - mirrors {@code hbase/security_manager.rb}'s
  * expectations for the global/namespace/table+family+qualifier grant forms.
  */
@@ -82,7 +82,7 @@ public class TestGrantAgainstMiniCluster {
 
   @Test
   public void grantsGlobalPermissions() throws Throwable {
-    ShellAdmin admin = new DefaultShellAdmin(connection.getAdmin());
+    ShellAdmin admin = DefaultShellAdmin.create(connection.getAdmin());
     admin.grant("newshell_global_user", "RWXCA", null, null, null, null);
 
     Permission granted = onlyPermissionFor("newshell_global_user", null);
@@ -97,7 +97,7 @@ public class TestGrantAgainstMiniCluster {
     Admin realAdmin = connection.getAdmin();
     realAdmin.createNamespace(NamespaceDescriptor.create(namespace).build());
 
-    ShellAdmin admin = new DefaultShellAdmin(realAdmin);
+    ShellAdmin admin = DefaultShellAdmin.create(realAdmin);
     admin.grant("newshell_ns_user", "RW", null, null, null, namespace);
 
     Permission granted = onlyPermissionFor("newshell_ns_user", "@" + namespace);
@@ -110,7 +110,7 @@ public class TestGrantAgainstMiniCluster {
     String tableName = "newshell_grant_table_test";
     TEST_UTIL.createTable(TableName.valueOf(tableName), Bytes.toBytes("f1"));
 
-    ShellAdmin admin = new DefaultShellAdmin(connection.getAdmin());
+    ShellAdmin admin = DefaultShellAdmin.create(connection.getAdmin());
     admin.grant("newshell_table_user", "RW", tableName, "f1", "c1", null);
 
     Permission granted = onlyPermissionFor("newshell_table_user", tableName);
@@ -120,7 +120,7 @@ public class TestGrantAgainstMiniCluster {
 
   @Test
   public void revokeRemovesPreviouslyGrantedGlobalPermissions() throws Throwable {
-    ShellAdmin admin = new DefaultShellAdmin(connection.getAdmin());
+    ShellAdmin admin = DefaultShellAdmin.create(connection.getAdmin());
     admin.grant("newshell_revoke_global_user", "RW", null, null, null, null);
     assertTrue(onlyPermissionFor("newshell_revoke_global_user", null) != null);
 
@@ -134,7 +134,7 @@ public class TestGrantAgainstMiniCluster {
     Admin realAdmin = connection.getAdmin();
     realAdmin.createNamespace(NamespaceDescriptor.create(namespace).build());
 
-    ShellAdmin admin = new DefaultShellAdmin(realAdmin);
+    ShellAdmin admin = DefaultShellAdmin.create(realAdmin);
     admin.grant("newshell_revoke_ns_user", "RW", null, null, null, namespace);
     assertTrue(onlyPermissionFor("newshell_revoke_ns_user", "@" + namespace) != null);
 
@@ -147,7 +147,7 @@ public class TestGrantAgainstMiniCluster {
     String tableName = "newshell_revoke_table_test";
     TEST_UTIL.createTable(TableName.valueOf(tableName), Bytes.toBytes("f1"));
 
-    ShellAdmin admin = new DefaultShellAdmin(connection.getAdmin());
+    ShellAdmin admin = DefaultShellAdmin.create(connection.getAdmin());
     admin.grant("newshell_revoke_table_user", "RW", tableName, null, null, null);
     assertTrue(onlyPermissionFor("newshell_revoke_table_user", tableName) != null);
 
@@ -160,7 +160,7 @@ public class TestGrantAgainstMiniCluster {
     String tableName = "newshell_user_permission_table_test";
     TEST_UTIL.createTable(TableName.valueOf(tableName), Bytes.toBytes("f1"));
 
-    ShellAdmin admin = new DefaultShellAdmin(connection.getAdmin());
+    ShellAdmin admin = DefaultShellAdmin.create(connection.getAdmin());
     admin.grant("newshell_user_permission_user", "RW", tableName, null, null, null);
 
     List<List<String>> rows = admin.userPermission(tableName);

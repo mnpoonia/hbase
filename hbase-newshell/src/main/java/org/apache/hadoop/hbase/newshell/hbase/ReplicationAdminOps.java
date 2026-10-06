@@ -41,7 +41,7 @@ import org.apache.hadoop.hbase.replication.SyncReplicationState;
 import org.apache.hadoop.hbase.util.Bytes;
 
 /** Package-private collaborator used by {@link DefaultShellAdmin}. */
-final class ReplicationAdminOps {
+final class ReplicationAdminOps implements ReplicationPeerContract {
   private static final Set<String> ADD_PEER_OPTIONS =
     new java.util.TreeSet<>(Arrays.asList("CLUSTER_KEY", "ENDPOINT_CLASSNAME", "CONFIG", "DATA",
       "TABLE_CFS", "NAMESPACES", "STATE", "REMOTE_WAL_DIR", "SERIAL"));
@@ -52,7 +52,7 @@ final class ReplicationAdminOps {
     this.admin = admin;
   }
 
-  void addPeer(String peerId, Map<String, Object> peerConfigSpec) throws IOException {
+  public void addPeer(String peerId, Map<String, Object> peerConfigSpec) throws IOException {
     for (String key : peerConfigSpec.keySet()) {
       if (!ADD_PEER_OPTIONS.contains(key)) {
         throw new ClientErrorException(
@@ -109,11 +109,11 @@ final class ReplicationAdminOps {
     admin.addReplicationPeer(peerId, builder.build(), enabled);
   }
 
-  void removePeer(String peerId) throws IOException {
+  public void removePeer(String peerId) throws IOException {
     admin.removeReplicationPeer(peerId);
   }
 
-  List<PeerDescription> listPeers() throws IOException {
+  public List<PeerDescription> listPeers() throws IOException {
     List<PeerDescription> descriptions = new ArrayList<>();
     for (ReplicationPeerDescription peer : admin.listReplicationPeers()) {
       ReplicationPeerConfig config = peer.getPeerConfig();
@@ -139,27 +139,27 @@ final class ReplicationAdminOps {
     return descriptions;
   }
 
-  void enablePeer(String peerId) throws IOException {
+  public void enablePeer(String peerId) throws IOException {
     admin.enableReplicationPeer(peerId);
   }
 
-  void disablePeer(String peerId) throws IOException {
+  public void disablePeer(String peerId) throws IOException {
     admin.disableReplicationPeer(peerId);
   }
 
-  void setPeerReplicateAll(String peerId, boolean replicateAll) throws IOException {
+  public void setPeerReplicateAll(String peerId, boolean replicateAll) throws IOException {
     ReplicationPeerConfig rpc = admin.getReplicationPeerConfig(peerId);
     admin.updateReplicationPeerConfig(peerId,
       ReplicationPeerConfig.newBuilder(rpc).setReplicateAllUserTables(replicateAll).build());
   }
 
-  void setPeerSerial(String peerId, boolean serial) throws IOException {
+  public void setPeerSerial(String peerId, boolean serial) throws IOException {
     ReplicationPeerConfig rpc = admin.getReplicationPeerConfig(peerId);
     admin.updateReplicationPeerConfig(peerId,
       ReplicationPeerConfig.newBuilder(rpc).setSerial(serial).build());
   }
 
-  void setPeerNamespaces(String peerId, List<String> namespaces) throws IOException {
+  public void setPeerNamespaces(String peerId, List<String> namespaces) throws IOException {
     ReplicationPeerConfig rpc = admin.getReplicationPeerConfig(peerId);
     admin.updateReplicationPeerConfig(peerId,
       ReplicationPeerConfig.newBuilder(rpc)
@@ -167,7 +167,7 @@ final class ReplicationAdminOps {
         .build());
   }
 
-  void appendPeerNamespaces(String peerId, List<String> namespaces) throws IOException {
+  public void appendPeerNamespaces(String peerId, List<String> namespaces) throws IOException {
     if (namespaces == null) {
       return;
     }
@@ -179,7 +179,7 @@ final class ReplicationAdminOps {
       ReplicationPeerConfig.newBuilder(rpc).setNamespaces(ns).build());
   }
 
-  void removePeerNamespaces(String peerId, List<String> namespaces) throws IOException {
+  public void removePeerNamespaces(String peerId, List<String> namespaces) throws IOException {
     if (namespaces == null) {
       return;
     }
@@ -193,7 +193,7 @@ final class ReplicationAdminOps {
       ReplicationPeerConfig.newBuilder(rpc).setNamespaces(ns).build());
   }
 
-  void setPeerExcludeNamespaces(String peerId, List<String> namespaces) throws IOException {
+  public void setPeerExcludeNamespaces(String peerId, List<String> namespaces) throws IOException {
     if (namespaces == null) {
       return;
     }
@@ -202,7 +202,8 @@ final class ReplicationAdminOps {
       .setExcludeNamespaces(new HashSet<>(namespaces)).build());
   }
 
-  void appendPeerExcludeNamespaces(String peerId, List<String> namespaces) throws IOException {
+  public void appendPeerExcludeNamespaces(String peerId, List<String> namespaces)
+    throws IOException {
     if (namespaces == null) {
       return;
     }
@@ -215,7 +216,8 @@ final class ReplicationAdminOps {
       ReplicationPeerConfig.newBuilder(rpc).setExcludeNamespaces(ns).build());
   }
 
-  void removePeerExcludeNamespaces(String peerId, List<String> namespaces) throws IOException {
+  public void removePeerExcludeNamespaces(String peerId, List<String> namespaces)
+    throws IOException {
     if (namespaces == null) {
       return;
     }
@@ -229,12 +231,12 @@ final class ReplicationAdminOps {
       ReplicationPeerConfig.newBuilder(rpc).setExcludeNamespaces(ns).build());
   }
 
-  String showPeerTableCFs(String peerId) throws IOException {
+  public String showPeerTableCFs(String peerId) throws IOException {
     return orEmpty(ReplicationPeerConfigUtil
       .convertToString(admin.getReplicationPeerConfig(peerId).getTableCFsMap()));
   }
 
-  void setPeerTableCFs(String peerId, Map<String, Object> tableCFs) throws IOException {
+  public void setPeerTableCFs(String peerId, Map<String, Object> tableCFs) throws IOException {
     ReplicationPeerConfig rpc = admin.getReplicationPeerConfig(peerId);
     Map<TableName, List<String>> map =
       tableCFs == null ? Collections.emptyMap() : toTableCfsMap(tableCFs);
@@ -242,7 +244,7 @@ final class ReplicationAdminOps {
       ReplicationPeerConfig.newBuilder(rpc).setTableCFsMap(map).build());
   }
 
-  void appendPeerTableCFs(String peerId, Map<String, Object> tableCFs) throws IOException {
+  public void appendPeerTableCFs(String peerId, Map<String, Object> tableCFs) throws IOException {
     if (tableCFs == null) {
       return;
     }
@@ -253,7 +255,7 @@ final class ReplicationAdminOps {
     }
   }
 
-  void removePeerTableCFs(String peerId, Map<String, Object> tableCFs) throws IOException {
+  public void removePeerTableCFs(String peerId, Map<String, Object> tableCFs) throws IOException {
     if (tableCFs == null) {
       return;
     }
@@ -264,7 +266,8 @@ final class ReplicationAdminOps {
     }
   }
 
-  void setPeerExcludeTableCFs(String peerId, Map<String, Object> tableCFs) throws IOException {
+  public void setPeerExcludeTableCFs(String peerId, Map<String, Object> tableCFs)
+    throws IOException {
     if (tableCFs == null) {
       return;
     }
@@ -273,7 +276,8 @@ final class ReplicationAdminOps {
       ReplicationPeerConfig.newBuilder(rpc).setExcludeTableCFsMap(toTableCfsMap(tableCFs)).build());
   }
 
-  void appendPeerExcludeTableCFs(String peerId, Map<String, Object> tableCFs) throws IOException {
+  public void appendPeerExcludeTableCFs(String peerId, Map<String, Object> tableCFs)
+    throws IOException {
     if (tableCFs == null) {
       return;
     }
@@ -286,7 +290,8 @@ final class ReplicationAdminOps {
     }
   }
 
-  void removePeerExcludeTableCFs(String peerId, Map<String, Object> tableCFs) throws IOException {
+  public void removePeerExcludeTableCFs(String peerId, Map<String, Object> tableCFs)
+    throws IOException {
     if (tableCFs == null) {
       return;
     }
@@ -299,13 +304,13 @@ final class ReplicationAdminOps {
     }
   }
 
-  void setPeerBandwidth(String peerId, long bandwidth) throws IOException {
+  public void setPeerBandwidth(String peerId, long bandwidth) throws IOException {
     ReplicationPeerConfig rpc = admin.getReplicationPeerConfig(peerId);
     admin.updateReplicationPeerConfig(peerId,
       ReplicationPeerConfig.newBuilder(rpc).setBandwidth(bandwidth).build());
   }
 
-  List<List<String>> listReplicatedTables(String regex) throws IOException {
+  public List<List<String>> listReplicatedTables(String regex) throws IOException {
     Pattern pattern = Pattern.compile(regex == null ? ".*" : regex);
     List<List<String>> rows = new ArrayList<>();
     for (TableCFs tableCFs : admin.listReplicatedTableCFs()) {
@@ -329,19 +334,19 @@ final class ReplicationAdminOps {
     return rows;
   }
 
-  void enableTableReplication(String tableName) throws IOException {
+  public void enableTableReplication(String tableName) throws IOException {
     admin.enableTableReplication(TableName.valueOf(tableName));
   }
 
-  void disableTableReplication(String tableName) throws IOException {
+  public void disableTableReplication(String tableName) throws IOException {
     admin.disableTableReplication(TableName.valueOf(tableName));
   }
 
-  List<List<String>> getPeerConfigRows(String peerId) throws IOException {
+  public List<List<String>> getPeerConfigRows(String peerId) throws IOException {
     return formatPeerConfig(admin.getReplicationPeerConfig(peerId));
   }
 
-  List<List<String>> listPeerConfigRows() throws IOException {
+  public List<List<String>> listPeerConfigRows() throws IOException {
     List<List<String>> rows = new ArrayList<>();
     for (ReplicationPeerDescription peer : admin.listReplicationPeers()) {
       rows.add(Arrays.asList("PeerId", peer.getPeerId()));
@@ -351,7 +356,7 @@ final class ReplicationAdminOps {
     return rows;
   }
 
-  void updatePeerConfig(String peerId, Map<String, Object> args) throws IOException {
+  public void updatePeerConfig(String peerId, Map<String, Object> args) throws IOException {
     ReplicationPeerConfig rpc = admin.getReplicationPeerConfig(peerId);
     ReplicationPeerConfigBuilder builder = ReplicationPeerConfig.newBuilder(rpc);
     Object config = args == null ? null : args.get("CONFIG");
@@ -372,7 +377,7 @@ final class ReplicationAdminOps {
     admin.updateReplicationPeerConfig(peerId, builder.build());
   }
 
-  void transitPeerSyncReplicationState(String peerId, String state) throws IOException {
+  public void transitPeerSyncReplicationState(String peerId, String state) throws IOException {
     SyncReplicationState syncState;
     if ("ACTIVE".equalsIgnoreCase(state)) {
       syncState = SyncReplicationState.ACTIVE;
@@ -387,11 +392,11 @@ final class ReplicationAdminOps {
     admin.transitReplicationPeerSyncReplicationState(peerId, syncState);
   }
 
-  boolean peerModificationSwitch(boolean enabled, boolean drainProcs) throws IOException {
+  public boolean peerModificationSwitch(boolean enabled, boolean drainProcs) throws IOException {
     return admin.replicationPeerModificationSwitch(enabled, drainProcs);
   }
 
-  boolean peerModificationEnabled() throws IOException {
+  public boolean peerModificationEnabled() throws IOException {
     return admin.isReplicationPeerModificationEnabled();
   }
 

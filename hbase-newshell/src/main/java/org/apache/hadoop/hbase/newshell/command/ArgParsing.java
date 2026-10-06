@@ -71,7 +71,11 @@ public final class ArgParsing {
     if (!(value instanceof Number)) {
       throw new ShellCommandException("MAXLENGTH must be a number");
     }
-    return ((Number) value).intValue();
+    double d = ((Number) value).doubleValue();
+    if (d != Math.rint(d) || d < Integer.MIN_VALUE || d > Integer.MAX_VALUE) {
+      throw new ShellCommandException("MAXLENGTH must be a whole number: " + value);
+    }
+    return (int) d;
   }
 
   /** Fails with {@code message} unless at least {@code min} positional arguments were given. */

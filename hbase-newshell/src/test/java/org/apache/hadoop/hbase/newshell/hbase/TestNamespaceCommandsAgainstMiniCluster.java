@@ -65,7 +65,7 @@ public class TestNamespaceCommandsAgainstMiniCluster {
   @Test
   public void createNamespaceThenListNamespaceThenDropNamespaceRoundTrips() throws Exception {
     String namespace = "newshell_ns_" + UUID.randomUUID().toString().replace("-", "");
-    ShellAdmin admin = new DefaultShellAdmin(connection.getAdmin());
+    ShellAdmin admin = DefaultShellAdmin.create(connection.getAdmin());
 
     admin.createNamespace(namespace, Collections.emptyMap());
     assertTrue(admin.listNamespaces(".*").contains(namespace));
@@ -77,7 +77,7 @@ public class TestNamespaceCommandsAgainstMiniCluster {
   @Test
   public void createNamespaceAppliesConfigurationProperties() throws Exception {
     String namespace = "newshell_ns_props_" + UUID.randomUUID().toString().replace("-", "");
-    ShellAdmin admin = new DefaultShellAdmin(connection.getAdmin());
+    ShellAdmin admin = DefaultShellAdmin.create(connection.getAdmin());
 
     admin.createNamespace(namespace, Collections.singletonMap("PROPERTY_NAME", "PROPERTY_VALUE"));
 
@@ -91,7 +91,7 @@ public class TestNamespaceCommandsAgainstMiniCluster {
   @Test
   public void alterNamespaceSetsAndUnsetsProperties() throws Exception {
     String namespace = "newshell_ns_alter_" + UUID.randomUUID().toString().replace("-", "");
-    ShellAdmin admin = new DefaultShellAdmin(connection.getAdmin());
+    ShellAdmin admin = DefaultShellAdmin.create(connection.getAdmin());
     admin.createNamespace(namespace, Collections.emptyMap());
 
     admin.alterNamespace(namespace, mapOf("METHOD", "set", "PROP", "VAL"));
@@ -107,7 +107,7 @@ public class TestNamespaceCommandsAgainstMiniCluster {
   @Test
   public void describeNamespaceIncludesNamespaceName() throws Exception {
     String namespace = "newshell_ns_describe_" + UUID.randomUUID().toString().replace("-", "");
-    ShellAdmin admin = new DefaultShellAdmin(connection.getAdmin());
+    ShellAdmin admin = DefaultShellAdmin.create(connection.getAdmin());
     admin.createNamespace(namespace, Collections.emptyMap());
 
     assertTrue(admin.describeNamespace(namespace).contains(namespace));
@@ -119,7 +119,7 @@ public class TestNamespaceCommandsAgainstMiniCluster {
   public void listNamespaceTablesReturnsOnlyTablesInThatNamespace() throws Exception {
     String namespace = "newshell_ns_tables_" + UUID.randomUUID().toString().replace("-", "");
     Admin realAdmin = connection.getAdmin();
-    ShellAdmin admin = new DefaultShellAdmin(realAdmin);
+    ShellAdmin admin = DefaultShellAdmin.create(realAdmin);
     admin.createNamespace(namespace, Collections.emptyMap());
     String tableName = namespace + ":t1";
     TEST_UTIL.createTable(TableName.valueOf(tableName), Bytes.toBytes("f1"));

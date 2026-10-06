@@ -38,14 +38,14 @@ import org.apache.hadoop.hbase.quotas.SpaceQuotaSnapshotView;
 import org.apache.hadoop.hbase.quotas.ThrottleType;
 
 /** Package-private collaborator used by {@link DefaultShellAdmin}. */
-final class QuotaAdminOps {
+final class QuotaAdminOps implements QuotaAdminContract {
   private final org.apache.hadoop.hbase.client.Admin admin;
 
   QuotaAdminOps(org.apache.hadoop.hbase.client.Admin admin) {
     this.admin = admin;
   }
 
-  void setQuota(Map<String, Object> args) throws IOException {
+  public void setQuota(Map<String, Object> args) throws IOException {
     Map<String, Object> spec = new LinkedHashMap<>(args);
     Object type = spec.remove("TYPE");
     if (!"THROTTLE".equals(type)) {
@@ -183,7 +183,7 @@ final class QuotaAdminOps {
     }
   }
 
-  List<List<String>> listQuotas(Map<String, Object> filterArgs) throws IOException {
+  public List<List<String>> listQuotas(Map<String, Object> filterArgs) throws IOException {
     QuotaFilter filter = new QuotaFilter();
     if (filterArgs.containsKey("USER")) {
       filter.setUserFilter(String.valueOf(filterArgs.get("USER")));
@@ -216,7 +216,7 @@ final class QuotaAdminOps {
     return rows;
   }
 
-  List<List<String>> listQuotaTableSizes() throws IOException {
+  public List<List<String>> listQuotaTableSizes() throws IOException {
     List<List<String>> rows = new ArrayList<>();
     for (Map.Entry<TableName, Long> entry : admin.getSpaceQuotaTableSizes().entrySet()) {
       rows.add(Arrays.asList(entry.getKey().toString(), String.valueOf(entry.getValue())));
@@ -224,7 +224,7 @@ final class QuotaAdminOps {
     return rows;
   }
 
-  List<List<String>> listQuotaSnapshots(Map<String, Object> filterArgs) throws IOException {
+  public List<List<String>> listQuotaSnapshots(Map<String, Object> filterArgs) throws IOException {
     Map<String, Object> args = filterArgs == null ? Collections.emptyMap() : filterArgs;
     Object desiredTable = args.get("TABLE");
     Object desiredNamespace = args.get("NAMESPACE");
@@ -269,7 +269,7 @@ final class QuotaAdminOps {
     return true;
   }
 
-  List<List<String>> listSnapshotSizes() throws IOException {
+  public List<List<String>> listSnapshotSizes() throws IOException {
     List<List<String>> rows = new ArrayList<>();
     for (Map.Entry<String, Long> entry : QuotaTableUtil
       .getObservedSnapshotSizes(admin.getConnection()).entrySet()) {
@@ -278,15 +278,15 @@ final class QuotaAdminOps {
     return rows;
   }
 
-  boolean switchRpcThrottle(boolean enabled) throws IOException {
+  public boolean switchRpcThrottle(boolean enabled) throws IOException {
     return admin.switchRpcThrottle(enabled);
   }
 
-  boolean isRpcThrottleEnabled() throws IOException {
+  public boolean isRpcThrottleEnabled() throws IOException {
     return admin.isRpcThrottleEnabled();
   }
 
-  boolean switchExceedThrottleQuota(boolean enabled) throws IOException {
+  public boolean switchExceedThrottleQuota(boolean enabled) throws IOException {
     return admin.exceedThrottleQuotaSwitch(enabled);
   }
 }

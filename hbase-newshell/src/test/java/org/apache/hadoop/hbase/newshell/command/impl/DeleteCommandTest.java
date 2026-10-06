@@ -20,6 +20,7 @@ package org.apache.hadoop.hbase.newshell.command.impl;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -42,9 +43,12 @@ public class DeleteCommandTest {
     private String lastRow;
     private String lastColumn;
     private Long lastTimestamp;
+    private java.util.Map<String, Object> lastOptions;
 
     @Override
-    public void delete(String row, String column, Long timestamp) {
+    public void delete(String row, String column, Long timestamp,
+      java.util.Map<String, Object> options) {
+      this.lastOptions = options;
       this.lastRow = row;
       this.lastColumn = column;
       this.lastTimestamp = timestamp;
@@ -73,10 +77,11 @@ public class DeleteCommandTest {
     new ExecutionContext(new StubShellAdmin(), tables, new PrintWriter(new StringWriter()));
 
   @Test
-  public void rejectsOptionsInsteadOfDroppingThem() throws Exception {
-    ParsedCommand parsed =
-      ShellLineParser.parse("delete 't1', 'r1', 'f:q', {VISIBILITY => 'secret'}");
-    assertThrows(ShellCommandException.class, () -> command.execute(parsed, context));
+  public void passesVisibilityAndAttributesThrough() throws Exception {
+    command.execute(ShellLineParser.parse(
+      "delete 't1', 'r1', 'f:q', {VISIBILITY => 'secret', ATTRIBUTES => {'k' => 'v'}}"), context);
+    assertEquals("secret", table.lastOptions.get("VISIBILITY"));
+    assertTrue(table.lastOptions.containsKey("ATTRIBUTES"));
   }
 
   @Test

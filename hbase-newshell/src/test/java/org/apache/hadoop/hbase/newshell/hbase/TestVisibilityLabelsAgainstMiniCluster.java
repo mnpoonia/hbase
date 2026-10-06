@@ -75,7 +75,7 @@ public class TestVisibilityLabelsAgainstMiniCluster {
   @Test
   public void addLabelsThenListLabelsFindsTheNewLabel() throws Exception {
     String label = "newshell_label_" + UUID.randomUUID().toString().replace("-", "");
-    ShellAdmin admin = new DefaultShellAdmin(connection.getAdmin());
+    ShellAdmin admin = DefaultShellAdmin.create(connection.getAdmin());
 
     admin.addLabels(Arrays.asList(label));
 
@@ -86,7 +86,7 @@ public class TestVisibilityLabelsAgainstMiniCluster {
   @Test
   public void listLabelsFiltersByRegex() throws Exception {
     String label = "newshell_regex_label_" + UUID.randomUUID().toString().replace("-", "");
-    ShellAdmin admin = new DefaultShellAdmin(connection.getAdmin());
+    ShellAdmin admin = DefaultShellAdmin.create(connection.getAdmin());
 
     admin.addLabels(Arrays.asList(label));
 
@@ -98,7 +98,7 @@ public class TestVisibilityLabelsAgainstMiniCluster {
   public void setAuthsThenGetAuthsThenClearAuthsRoundTrips() throws Exception {
     String label = "newshell_auth_label_" + UUID.randomUUID().toString().replace("-", "");
     String user = "newshell_auth_user_" + UUID.randomUUID().toString().replace("-", "");
-    ShellAdmin admin = new DefaultShellAdmin(connection.getAdmin());
+    ShellAdmin admin = DefaultShellAdmin.create(connection.getAdmin());
 
     admin.addLabels(Arrays.asList(label));
     int before = admin.getAuths(user).size();
@@ -117,7 +117,7 @@ public class TestVisibilityLabelsAgainstMiniCluster {
   public void setVisibilityRewritesExistingCells() throws Exception {
     String label = "newshell_vis_label_" + UUID.randomUUID().toString().replace("-", "");
     String tableName = "newshell_set_visibility_" + UUID.randomUUID().toString().replace("-", "");
-    ShellAdmin admin = new DefaultShellAdmin(connection.getAdmin());
+    ShellAdmin admin = DefaultShellAdmin.create(connection.getAdmin());
     admin.addLabels(Arrays.asList(label));
 
     TEST_UTIL.createTable(TableName.valueOf(tableName), Bytes.toBytes("cf"));
@@ -133,7 +133,7 @@ public class TestVisibilityLabelsAgainstMiniCluster {
 
   @Test
   public void listSecurityCapabilitiesIncludesCellVisibility() throws Exception {
-    ShellAdmin admin = new DefaultShellAdmin(connection.getAdmin());
+    ShellAdmin admin = DefaultShellAdmin.create(connection.getAdmin());
     List<String> caps = admin.listSecurityCapabilities();
     assertTrue(caps.contains("CELL_VISIBILITY"));
   }
