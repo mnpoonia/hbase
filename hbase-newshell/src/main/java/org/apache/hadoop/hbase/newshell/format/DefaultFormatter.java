@@ -23,31 +23,41 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import org.apache.hadoop.hbase.newshell.command.CommandResult;
+import org.apache.hadoop.hbase.newshell.command.ResultVisitor;
 import org.apache.hadoop.hbase.newshell.command.StreamingTabularResult;
 import org.apache.hadoop.hbase.newshell.command.TabularResult;
 import org.apache.hadoop.hbase.newshell.command.TextResult;
 import org.apache.yetus.audience.InterfaceAudience;
 
 /**
- * Plain-text renderer for the {@link CommandResult} shapes. Uses {@code instanceof} rather than a
- * pattern-matching {@code switch} because this module's release target is Java 8, which has neither
- * pattern matching nor switch expressions.
+ * Plain-text renderer for the {@link CommandResult} shapes, dispatched through a
+ * {@link ResultVisitor}.
  */
 @InterfaceAudience.Private
 public final class DefaultFormatter implements Formatter {
   @Override
   public void format(String commandName, CommandResult result, PrintWriter out) {
-    if (result instanceof TextResult) {
-      TextResult textResult = (TextResult) result;
-      for (String line : textResult.lines()) {
-        out.println(line);
-      }
-    } else if (result instanceof TabularResult) {
-      formatTabular((TabularResult) result, out);
-    } else if (result instanceof StreamingTabularResult) {
-      formatStreamingTabular((StreamingTabularResult) result, out);
-    } else {
-      throw new IllegalArgumentException("Unknown CommandResult type: " + result.getClass());
+    try {
+      result.accept(new ResultVisitor() {
+        @Override
+        public void visit(TextResult text) {
+          for (String line : text.lines()) {
+            out.println(line);
+          }
+        }
+
+        @Override
+        public void visit(TabularResult tabular) {
+          formatTabular(tabular, out);
+        }
+
+        @Override
+        public void visit(StreamingTabularResult streaming) {
+          formatStreamingTabular(streaming, out);
+        }
+      });
+    } catch (IOException e) {
+      throw new IllegalStateException("Failed to format result", e);
     }
     out.flush();
   }

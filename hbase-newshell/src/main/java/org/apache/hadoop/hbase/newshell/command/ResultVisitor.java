@@ -21,16 +21,14 @@ import java.io.IOException;
 import org.apache.yetus.audience.InterfaceAudience;
 
 /**
- * The result of executing a {@link ShellCommand}, rendered by a
- * {@code org.apache.hadoop.hbase.newshell.format.Formatter}. Deliberately a small, closed set of
- * shapes - {@link TextResult} and {@link TabularResult} for the pilot commands' in-memory results,
- * plus {@link StreamingTabularResult} for producers (like {@code scan}) that must not buffer their
- * full result set - rather than a general "any object graph" result type. If a fourth fundamentally
- * different shape is needed later, add a fourth implementation rather than generalizing this ahead
- * of need.
+ * Double-dispatch over the closed set of {@link CommandResult} shapes, so a renderer that misses a
+ * shape fails to compile instead of falling through an {@code instanceof} chain at runtime.
  */
 @InterfaceAudience.Private
-public interface CommandResult {
-  /** Dispatches to the {@link ResultVisitor} method matching this result's shape. */
-  void accept(ResultVisitor visitor) throws IOException;
+public interface ResultVisitor {
+  void visit(TextResult result) throws IOException;
+
+  void visit(TabularResult result) throws IOException;
+
+  void visit(StreamingTabularResult result) throws IOException;
 }

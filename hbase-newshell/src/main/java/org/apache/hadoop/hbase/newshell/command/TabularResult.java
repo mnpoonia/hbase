@@ -17,6 +17,7 @@
  */
 package org.apache.hadoop.hbase.newshell.command;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Objects;
 import org.apache.yetus.audience.InterfaceAudience;
@@ -60,5 +61,10 @@ public final class TabularResult implements CommandResult {
   @Override
   public String toString() {
     return "TabularResult[header=" + header + ", rows=" + rows + "]";
+  }
+
+  @Override
+  public void accept(ResultVisitor visitor) throws IOException {
+    visitor.visit(this);
   }
 }

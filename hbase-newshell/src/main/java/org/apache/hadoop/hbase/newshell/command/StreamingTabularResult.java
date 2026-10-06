@@ -68,4 +68,9 @@ public final class StreamingTabularResult implements CommandResult {
   public void forEachRow(Consumer<List<String>> rowConsumer) throws IOException {
     rowProducer.produce(rowConsumer);
   }
+
+  @Override
+  public void accept(ResultVisitor visitor) throws IOException {
+    visitor.visit(this);
+  }
 }

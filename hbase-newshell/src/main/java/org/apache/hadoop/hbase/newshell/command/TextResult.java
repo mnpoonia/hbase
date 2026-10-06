@@ -17,6 +17,7 @@
  */
 package org.apache.hadoop.hbase.newshell.command;
 
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
@@ -59,5 +60,10 @@ public final class TextResult implements CommandResult {
   @Override
   public String toString() {
     return "TextResult[lines=" + lines + "]";
+  }
+
+  @Override
+  public void accept(ResultVisitor visitor) throws IOException {
+    visitor.visit(this);
   }
 }

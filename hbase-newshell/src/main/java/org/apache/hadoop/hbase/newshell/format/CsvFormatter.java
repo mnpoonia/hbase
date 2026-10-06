@@ -22,6 +22,7 @@ import java.io.PrintWriter;
 import java.util.List;
 import java.util.Map;
 import org.apache.hadoop.hbase.newshell.command.CommandResult;
+import org.apache.hadoop.hbase.newshell.command.ResultVisitor;
 import org.apache.hadoop.hbase.newshell.command.StreamingTabularResult;
 import org.apache.hadoop.hbase.newshell.command.TabularResult;
 import org.apache.hadoop.hbase.newshell.command.TextResult;
@@ -40,36 +41,40 @@ public final class CsvFormatter implements Formatter {
 
   @Override
   public void format(String commandName, CommandResult result, PrintWriter out) {
-    if (result instanceof TextResult) {
-      TextResult textResult = (TextResult) result;
-      out.println(csvEscape("line"));
-      for (String line : textResult.lines()) {
-        out.println(csvEscape(line));
-      }
-    } else if (result instanceof TabularResult) {
-      TabularResult tabularResult = (TabularResult) result;
-      out.println(joinCsv(tabularResult.header()));
-      for (List<String> row : tabularResult.rows()) {
-        out.println(joinCsv(row));
-      }
-    } else if (result instanceof StreamingTabularResult) {
-      StreamingTabularResult streamingResult = (StreamingTabularResult) result;
-      out.println(joinCsv(streamingResult.header()));
-      try {
-        streamingResult.forEachRow(row -> out.println(joinCsv(row)));
-      } catch (IOException e) {
-        throw new IllegalStateException("Failed to stream scan result", e);
-      }
-      Map<String, String> trailer = streamingResult.trailer();
-      if (!trailer.isEmpty()) {
-        out.println();
-        out.println(joinCsv(java.util.Arrays.asList("METRIC", "VALUE")));
-        for (Map.Entry<String, String> entry : trailer.entrySet()) {
-          out.println(joinCsv(java.util.Arrays.asList(entry.getKey(), entry.getValue())));
+    try {
+      result.accept(new ResultVisitor() {
+        @Override
+        public void visit(TextResult text) {
+          out.println(csvEscape("line"));
+          for (String line : text.lines()) {
+            out.println(csvEscape(line));
+          }
         }
-      }
-    } else {
-      throw new IllegalArgumentException("Unknown CommandResult type: " + result.getClass());
+
+        @Override
+        public void visit(TabularResult tabular) {
+          out.println(joinCsv(tabular.header()));
+          for (List<String> row : tabular.rows()) {
+            out.println(joinCsv(row));
+          }
+        }
+
+        @Override
+        public void visit(StreamingTabularResult streaming) throws IOException {
+          out.println(joinCsv(streaming.header()));
+          streaming.forEachRow(row -> out.println(joinCsv(row)));
+          Map<String, String> trailer = streaming.trailer();
+          if (!trailer.isEmpty()) {
+            out.println();
+            out.println(joinCsv(java.util.Arrays.asList("METRIC", "VALUE")));
+            for (Map.Entry<String, String> entry : trailer.entrySet()) {
+              out.println(joinCsv(java.util.Arrays.asList(entry.getKey(), entry.getValue())));
+            }
+          }
+        }
+      });
+    } catch (IOException e) {
+      throw new IllegalStateException("Failed to stream scan result", e);
     }
     out.flush();
   }

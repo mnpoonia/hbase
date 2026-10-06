@@ -23,6 +23,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import org.apache.hadoop.hbase.newshell.command.CommandResult;
+import org.apache.hadoop.hbase.newshell.command.ResultVisitor;
 import org.apache.hadoop.hbase.newshell.command.StreamingTabularResult;
 import org.apache.hadoop.hbase.newshell.command.TabularResult;
 import org.apache.hadoop.hbase.newshell.command.TextResult;
@@ -54,65 +55,69 @@ public final class JsonFormatter implements Formatter {
   @Override
   public void format(String commandName, CommandResult result, PrintWriter out) {
     try {
-      if (result instanceof TextResult) {
-        TextResult textResult = (TextResult) result;
-        Map<String, Object> envelope = new LinkedHashMap<>();
-        envelope.put("status", "ok");
-        if (commandName != null) {
-          envelope.put("command", commandName);
-        }
-        envelope.put("data", Collections.singletonMap("lines", textResult.lines()));
-        out.println(JsonMapper.writeObjectAsString(envelope));
-      } else if (result instanceof TabularResult) {
-        TabularResult tabularResult = (TabularResult) result;
-        List<String> header = tabularResult.header();
-        for (List<String> row : tabularResult.rows()) {
-          Map<String, Object> obj = new LinkedHashMap<>();
-          for (int i = 0; i < header.size(); i++) {
-            String key = header.get(i);
-            String value = i < row.size() ? row.get(i) : "";
-            obj.put(key, value);
+      result.accept(new ResultVisitor() {
+        @Override
+        public void visit(TextResult text) throws java.io.IOException {
+          Map<String, Object> envelope = new LinkedHashMap<>();
+          envelope.put("status", "ok");
+          if (commandName != null) {
+            envelope.put("command", commandName);
           }
-          out.println(JsonMapper.writeObjectAsString(obj));
+          envelope.put("data", Collections.singletonMap("lines", text.lines()));
+          out.println(JsonMapper.writeObjectAsString(envelope));
         }
-        Map<String, Object> trailer = new LinkedHashMap<>();
-        trailer.put("status", "ok");
-        if (commandName != null) {
-          trailer.put("command", commandName);
-        }
-        trailer.put("rows", tabularResult.rows().size());
-        out.println(JsonMapper.writeObjectAsString(trailer));
-      } else if (result instanceof StreamingTabularResult) {
-        StreamingTabularResult streamingResult = (StreamingTabularResult) result;
-        List<String> header = streamingResult.header();
-        int[] count = { 0 };
-        streamingResult.forEachRow(row -> {
-          Map<String, Object> obj = new LinkedHashMap<>();
-          for (int i = 0; i < header.size(); i++) {
-            String key = header.get(i);
-            String value = i < row.size() ? row.get(i) : "";
-            obj.put(key, value);
-          }
-          count[0]++;
-          try {
+
+        @Override
+        public void visit(TabularResult tabular) throws java.io.IOException {
+          List<String> header = tabular.header();
+          for (List<String> row : tabular.rows()) {
+            Map<String, Object> obj = new LinkedHashMap<>();
+            for (int i = 0; i < header.size(); i++) {
+              String key = header.get(i);
+              String value = i < row.size() ? row.get(i) : "";
+              obj.put(key, value);
+            }
             out.println(JsonMapper.writeObjectAsString(obj));
-          } catch (java.io.IOException e) {
-            throw new java.io.UncheckedIOException(e);
           }
-        });
-        Map<String, Object> trailer = new LinkedHashMap<>();
-        trailer.put("status", "ok");
-        if (commandName != null) {
-          trailer.put("command", commandName);
+          Map<String, Object> trailer = new LinkedHashMap<>();
+          trailer.put("status", "ok");
+          if (commandName != null) {
+            trailer.put("command", commandName);
+          }
+          trailer.put("rows", tabular.rows().size());
+          out.println(JsonMapper.writeObjectAsString(trailer));
         }
-        trailer.put("rows", count[0]);
-        if (!streamingResult.trailer().isEmpty()) {
-          trailer.put("metrics", streamingResult.trailer());
+
+        @Override
+        public void visit(StreamingTabularResult streaming) throws java.io.IOException {
+          List<String> header = streaming.header();
+          int[] count = { 0 };
+          streaming.forEachRow(row -> {
+            Map<String, Object> obj = new LinkedHashMap<>();
+            for (int i = 0; i < header.size(); i++) {
+              String key = header.get(i);
+              String value = i < row.size() ? row.get(i) : "";
+              obj.put(key, value);
+            }
+            count[0]++;
+            try {
+              out.println(JsonMapper.writeObjectAsString(obj));
+            } catch (java.io.IOException e) {
+              throw new java.io.UncheckedIOException(e);
+            }
+          });
+          Map<String, Object> trailer = new LinkedHashMap<>();
+          trailer.put("status", "ok");
+          if (commandName != null) {
+            trailer.put("command", commandName);
+          }
+          trailer.put("rows", count[0]);
+          if (!streaming.trailer().isEmpty()) {
+            trailer.put("metrics", streaming.trailer());
+          }
+          out.println(JsonMapper.writeObjectAsString(trailer));
         }
-        out.println(JsonMapper.writeObjectAsString(trailer));
-      } else {
-        throw new IllegalArgumentException("Unknown CommandResult type: " + result.getClass());
-      }
+      });
     } catch (java.io.IOException | java.io.UncheckedIOException e) {
       throw new IllegalStateException("Failed to serialize JSON output", e);
     }
