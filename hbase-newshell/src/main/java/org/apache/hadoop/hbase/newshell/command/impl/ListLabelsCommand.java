@@ -49,6 +49,6 @@ public final class ListLabelsCommand implements ShellCommand {
     throws ShellCommandException, IOException {
     ArgParsing.requireMaxArgs(command, "list_labels", 1);
     String regex = ArgParsing.optionalArg(command, 0, ".*");
-    return new TextResult(context.admin().listLabels(regex));
+    return new TextResult(context.visibilityLabels().listLabels(regex));
   }
 }

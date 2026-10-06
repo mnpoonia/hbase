@@ -54,7 +54,7 @@ public final class FlushCommand implements ShellCommand {
     }
     String name = String.valueOf(positionals.get(0));
     String family = positionals.size() > 1 ? String.valueOf(positionals.get(1)) : null;
-    context.admin().flush(name, family);
+    context.tableAdmin().flush(name, family);
     return TextResult.of();
   }
 }

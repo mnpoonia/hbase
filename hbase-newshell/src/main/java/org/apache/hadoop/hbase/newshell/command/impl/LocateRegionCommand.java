@@ -52,7 +52,7 @@ public final class LocateRegionCommand implements ShellCommand {
     ArgParsing.requireArgs(command, 2, "locate_region requires a table name and a row key");
     String tableName = ArgParsing.string(command, 0);
     String rowKey = ArgParsing.string(command, 1);
-    RegionLocationView location = context.admin().locateRegion(tableName, rowKey);
+    RegionLocationView location = context.tableAdmin().locateRegion(tableName, rowKey);
     return new TabularResult(Arrays.asList("HOST", "REGION"),
       Arrays.asList(Arrays.asList(location.hostnamePort(), location.regionName())));
   }

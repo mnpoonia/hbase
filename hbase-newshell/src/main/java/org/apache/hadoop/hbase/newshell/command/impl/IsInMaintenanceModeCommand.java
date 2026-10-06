@@ -47,6 +47,6 @@ public final class IsInMaintenanceModeCommand implements ShellCommand {
   public CommandResult execute(ParsedCommand command, ExecutionContext context)
     throws ShellCommandException, IOException {
     ArgParsing.requireMaxArgs(command, "is_in_maintenance_mode", 0);
-    return TextResult.of(String.valueOf(context.admin().isInMaintenanceMode()));
+    return TextResult.of(String.valueOf(context.clusterOps().isInMaintenanceMode()));
   }
 }

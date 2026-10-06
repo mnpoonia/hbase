@@ -52,7 +52,7 @@ public final class RefreshHfilesCommand implements ShellCommand {
     for (Map<String, Object> hash : command.hashLiterals()) {
       args.putAll(hash);
     }
-    long procId = context.admin().refreshHFiles(args);
+    long procId = context.tableAdmin().refreshHFiles(args);
     return TextResult.of("Refresh HFiles procedure submitted. Procedure ID: " + procId);
   }
 }

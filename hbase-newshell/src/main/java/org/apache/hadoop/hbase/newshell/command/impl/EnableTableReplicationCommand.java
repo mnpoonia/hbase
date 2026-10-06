@@ -45,7 +45,7 @@ public final class EnableTableReplicationCommand implements ShellCommand {
     ArgParsing.requireMaxArgs(command, "enable_table_replication", 1);
     String table =
       ArgParsing.requireArg(command, 0, "enable_table_replication requires a table name");
-    context.admin().enableTableReplication(table);
+    context.replicationPeers().enableTableReplication(table);
     return TextResult
       .of(String.format("The replication of table '%s' successfully enabled", table));
   }

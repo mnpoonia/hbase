@@ -51,7 +51,7 @@ public final class SnapshotCommand implements ShellCommand {
     ArgParsing.requireArgs(command, 2, "snapshot requires a table name and a snapshot name");
     String tableName = ArgParsing.string(command, 0);
     String snapshotName = ArgParsing.string(command, 1);
-    context.admin().snapshot(tableName, snapshotName);
+    context.snapshotAdmin().snapshot(tableName, snapshotName);
     return TextResult.of();
   }
 }

@@ -44,6 +44,7 @@ public final class ShowPeerTableCFsCommand implements ShellCommand {
     throws ShellCommandException, IOException {
     ArgParsing.requireMaxArgs(command, "show_peer_tableCFs", 1);
     ArgParsing.requireArgs(command, 1, "show_peer_tableCFs requires a peer id");
-    return TextResult.of(context.admin().showPeerTableCFs(ArgParsing.string(command, 0)));
+    return TextResult
+      .of(context.replicationPeers().showPeerTableCFs(ArgParsing.string(command, 0)));
   }
 }

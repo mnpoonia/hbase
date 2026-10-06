@@ -41,7 +41,7 @@ public final class MoveServersTablesRsgroupCommand implements ShellCommand {
     ArgParsing.requireMaxArgs(command, "move_servers_tables_rsgroup", 3);
     ArgParsing.requireArgs(command, 3,
       "move_servers_tables_rsgroup requires dest, servers, tables");
-    context.admin().moveServersAndTablesToRsGroup(
+    context.rsGroupAdmin().moveServersAndTablesToRsGroup(
       ArgParsing.stringList(command.positionalArgs().get(1)),
       ArgParsing.stringList(command.positionalArgs().get(2)), ArgParsing.string(command, 0));
     return TextResult.of();

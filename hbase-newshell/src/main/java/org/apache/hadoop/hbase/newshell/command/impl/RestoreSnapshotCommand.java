@@ -57,7 +57,7 @@ public final class RestoreSnapshotCommand implements ShellCommand {
       command.hashLiterals().isEmpty() ? command.options() : command.hashLiterals().get(0);
     boolean restoreAcl =
       Boolean.parseBoolean(String.valueOf(args.getOrDefault("RESTORE_ACL", false)));
-    context.admin().restoreSnapshot(snapshotName, restoreAcl);
+    context.snapshotAdmin().restoreSnapshot(snapshotName, restoreAcl);
     return TextResult.of();
   }
 }

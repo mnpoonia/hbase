@@ -47,7 +47,7 @@ public final class StopMasterCommand implements ShellCommand {
   public CommandResult execute(ParsedCommand command, ExecutionContext context)
     throws ShellCommandException, IOException {
     ArgParsing.requireMaxArgs(command, "stop_master", 0);
-    context.admin().stopMaster();
+    context.serverLifecycle().stopMaster();
     return TextResult.of();
   }
 }

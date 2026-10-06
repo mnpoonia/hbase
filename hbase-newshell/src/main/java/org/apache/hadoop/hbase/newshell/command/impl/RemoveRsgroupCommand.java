@@ -40,7 +40,7 @@ public final class RemoveRsgroupCommand implements ShellCommand {
     throws ShellCommandException, IOException {
     ArgParsing.requireMaxArgs(command, "remove_rsgroup", 1);
     ArgParsing.requireArgs(command, 1, "remove_rsgroup requires a group name");
-    context.admin().removeRsGroup(ArgParsing.string(command, 0));
+    context.rsGroupAdmin().removeRsGroup(ArgParsing.string(command, 0));
     return TextResult.of();
   }
 }

@@ -55,7 +55,7 @@ public final class ListRsgroupsCommand implements ShellCommand {
     ArgParsing.requireMaxArgs(command, "list_rsgroups", 1);
     String regex = ArgParsing.optionalArg(command, 0, ".*");
     List<List<String>> rows = new ArrayList<>();
-    for (RsGroupSummary group : context.admin().listRsGroups(regex)) {
+    for (RsGroupSummary group : context.rsGroupAdmin().listRsGroups(regex)) {
       boolean nameWritten = false;
       for (String server : group.servers()) {
         rows.add(Arrays.asList(nameWritten ? "" : group.name(), "server " + server));

@@ -63,7 +63,7 @@ public final class RevokeCommand implements ShellCommand {
       namespace = tableOrNamespace.substring(1);
       tableName = null;
     }
-    context.admin().revoke(userOrGroup, tableName, family, qualifier, namespace);
+    context.securityAdmin().revoke(userOrGroup, tableName, family, qualifier, namespace);
     return TextResult.of();
   }
 }

@@ -40,8 +40,8 @@ public final class MoveNamespacesRsgroupCommand implements ShellCommand {
     throws ShellCommandException, IOException {
     ArgParsing.requireMaxArgs(command, "move_namespaces_rsgroup", 2);
     ArgParsing.requireArgs(command, 2, "move_namespaces_rsgroup requires dest and namespaces");
-    context.admin().moveNamespacesToRsGroup(ArgParsing.stringList(command.positionalArgs().get(1)),
-      ArgParsing.string(command, 0));
+    context.rsGroupAdmin().moveNamespacesToRsGroup(
+      ArgParsing.stringList(command.positionalArgs().get(1)), ArgParsing.string(command, 0));
     return TextResult.of();
   }
 

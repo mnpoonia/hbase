@@ -52,7 +52,7 @@ public final class GetRsgroupCommand implements ShellCommand {
     ArgParsing.requireMaxArgs(command, "get_rsgroup", 1);
     String groupName =
       ArgParsing.requireArg(command, 0, "get_rsgroup requires a group name argument");
-    RsGroupView group = context.admin().getRsGroup(groupName);
+    RsGroupView group = context.rsGroupAdmin().getRsGroup(groupName);
     List<String> lines = new ArrayList<>();
     lines.add("SERVERS");
     for (String server : group.servers()) {

@@ -45,7 +45,7 @@ public final class AssignCommand implements ShellCommand {
     throws ShellCommandException, IOException {
     ArgParsing.requireMaxArgs(command, "assign", 1);
     ArgParsing.requireArgs(command, 1, "assign requires a region name argument");
-    context.admin().assign(ArgParsing.string(command, 0));
+    context.tableAdmin().assign(ArgParsing.string(command, 0));
     return TextResult.of();
   }
 }

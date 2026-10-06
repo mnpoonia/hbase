@@ -50,7 +50,7 @@ public final class SplitCommand implements ShellCommand {
     String tableOrRegionName =
       ArgParsing.requireArg(command, 0, "split requires a table or region name argument");
     String splitPoint = command.positionalArgs().size() > 1 ? ArgParsing.string(command, 1) : null;
-    context.admin().split(tableOrRegionName, splitPoint);
+    context.tableAdmin().split(tableOrRegionName, splitPoint);
     return TextResult.of(tableOrRegionName + " split requested");
   }
 }

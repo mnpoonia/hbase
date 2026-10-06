@@ -66,7 +66,7 @@ public final class GetSlowlogResponsesCommand implements ShellCommand {
     }
     List<String> lines = new ArrayList<>();
     lines.add("Retrieved SlowLog Responses from RegionServers");
-    lines.addAll(context.admin().getSlowLogResponses(servers, args, false));
+    lines.addAll(context.diagnostics().getSlowLogResponses(servers, args, false));
     return new TextResult(lines);
   }
 

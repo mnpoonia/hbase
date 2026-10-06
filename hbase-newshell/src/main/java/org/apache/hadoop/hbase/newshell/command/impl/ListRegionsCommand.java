@@ -63,7 +63,7 @@ public final class ListRegionsCommand implements ShellCommand {
     ArgParsing.requireMaxArgs(command, "list_regions", 1);
     String tableName =
       ArgParsing.requireArg(command, 0, "list_regions requires a table name argument");
-    ListRegionsView view = context.admin().listRegions(tableName);
+    ListRegionsView view = context.tableAdmin().listRegions(tableName);
     return new TextResult(format(view));
   }
 

@@ -46,7 +46,7 @@ public final class SetPeerSerialCommand implements ShellCommand {
     ArgParsing.requireArgs(command, 2, "set_peer_serial requires a peer id and true|false");
     String peerId = ArgParsing.string(command, 0);
     boolean value = ArgParsing.parseBoolean(command.positionalArgs().get(1));
-    context.admin().setPeerSerial(peerId, value);
+    context.replicationPeers().setPeerSerial(peerId, value);
     return TextResult.of();
   }
 }

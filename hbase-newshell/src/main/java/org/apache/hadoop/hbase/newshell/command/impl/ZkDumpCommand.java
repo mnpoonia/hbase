@@ -47,6 +47,6 @@ public final class ZkDumpCommand implements ShellCommand {
   public CommandResult execute(ParsedCommand command, ExecutionContext context)
     throws ShellCommandException, IOException {
     ArgParsing.requireMaxArgs(command, "zk_dump", 0);
-    return TextResult.of(context.admin().zkDump());
+    return TextResult.of(context.diagnostics().zkDump());
   }
 }

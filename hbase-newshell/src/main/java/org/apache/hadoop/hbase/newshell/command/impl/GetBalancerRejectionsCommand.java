@@ -56,7 +56,7 @@ public final class GetBalancerRejectionsCommand implements ShellCommand {
     }
     List<String> lines = new ArrayList<>();
     lines.add("Retrieved BalancerRejection Responses");
-    lines.addAll(context.admin().getBalancerRejections(args));
+    lines.addAll(context.diagnostics().getBalancerRejections(args));
     return new TextResult(lines);
   }
 }

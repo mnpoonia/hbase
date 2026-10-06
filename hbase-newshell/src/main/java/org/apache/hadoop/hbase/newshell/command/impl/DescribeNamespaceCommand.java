@@ -51,7 +51,7 @@ public final class DescribeNamespaceCommand implements ShellCommand {
     ArgParsing.requireMaxArgs(command, "describe_namespace", 1);
     String namespace =
       ArgParsing.requireArg(command, 0, "describe_namespace requires a namespace name argument");
-    String description = context.admin().describeNamespace(namespace);
+    String description = context.namespaceAdmin().describeNamespace(namespace);
     return new TextResult(Arrays.asList("DESCRIPTION", description, "Quota is disabled"));
   }
 }

@@ -48,6 +48,6 @@ public final class RegioninfoCommand implements ShellCommand {
     throws ShellCommandException, IOException {
     ArgParsing.requireMaxArgs(command, "regioninfo", 1);
     ArgParsing.requireArgs(command, 1, "regioninfo requires a region name argument");
-    return TextResult.of(context.admin().regionInfo(ArgParsing.string(command, 0)));
+    return TextResult.of(context.tableAdmin().regionInfo(ArgParsing.string(command, 0)));
   }
 }

@@ -47,7 +47,7 @@ public final class TruncateRegionCommand implements ShellCommand {
     throws ShellCommandException, IOException {
     ArgParsing.requireMaxArgs(command, "truncate_region", 1);
     ArgParsing.requireArgs(command, 1, "truncate_region requires a region name argument");
-    context.admin().truncateRegion(ArgParsing.string(command, 0));
+    context.tableAdmin().truncateRegion(ArgParsing.string(command, 0));
     return TextResult.of();
   }
 }

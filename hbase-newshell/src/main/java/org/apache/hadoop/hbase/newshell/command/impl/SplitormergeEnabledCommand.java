@@ -53,7 +53,7 @@ public final class SplitormergeEnabledCommand implements ShellCommand {
         "splitormerge_enabled requires a switch type ('SPLIT'|'MERGE') argument");
     }
     String switchType = String.valueOf(positionals.get(0));
-    boolean state = context.admin().splitOrMergeEnabled(switchType);
+    boolean state = context.clusterOps().splitOrMergeEnabled(switchType);
     return TextResult.of(String.valueOf(state));
   }
 }

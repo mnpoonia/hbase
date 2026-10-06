@@ -42,6 +42,6 @@ public final class ShowRsgroupConfigCommand implements ShellCommand {
     ArgParsing.requireMaxArgs(command, "show_rsgroup_config", 1);
     ArgParsing.requireArgs(command, 1, "show_rsgroup_config requires a group name");
     return new TabularResult(Arrays.asList("KEY", "VALUE"),
-      context.admin().showRsGroupConfig(ArgParsing.string(command, 0)));
+      context.rsGroupAdmin().showRsGroupConfig(ArgParsing.string(command, 0)));
   }
 }

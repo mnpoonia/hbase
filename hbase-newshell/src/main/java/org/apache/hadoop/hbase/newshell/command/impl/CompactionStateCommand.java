@@ -47,6 +47,6 @@ public final class CompactionStateCommand implements ShellCommand {
     throws ShellCommandException, IOException {
     ArgParsing.requireMaxArgs(command, "compaction_state", 1);
     ArgParsing.requireArgs(command, 1, "compaction_state requires a table name argument");
-    return TextResult.of(context.admin().getCompactionState(ArgParsing.string(command, 0)));
+    return TextResult.of(context.tableAdmin().getCompactionState(ArgParsing.string(command, 0)));
   }
 }

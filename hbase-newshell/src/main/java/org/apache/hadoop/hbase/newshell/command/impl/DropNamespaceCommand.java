@@ -49,7 +49,7 @@ public final class DropNamespaceCommand implements ShellCommand {
     ArgParsing.requireMaxArgs(command, "drop_namespace", 1);
     String namespace =
       ArgParsing.requireArg(command, 0, "drop_namespace requires a namespace name argument");
-    context.admin().dropNamespace(namespace);
+    context.namespaceAdmin().dropNamespace(namespace);
     return TextResult.of();
   }
 }

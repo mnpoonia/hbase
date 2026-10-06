@@ -61,7 +61,8 @@ public final class CompactionSwitchCommand implements ShellCommand {
     for (Object server : positionals.subList(1, positionals.size())) {
       serverNames.add(String.valueOf(server));
     }
-    Map<String, Boolean> previousStates = context.admin().compactionSwitch(enabled, serverNames);
+    Map<String, Boolean> previousStates =
+      context.clusterOps().compactionSwitch(enabled, serverNames);
     List<List<String>> rows = new ArrayList<>();
     for (Map.Entry<String, Boolean> entry : previousStates.entrySet()) {
       rows.add(Arrays.asList(entry.getKey(), String.valueOf(entry.getValue())));

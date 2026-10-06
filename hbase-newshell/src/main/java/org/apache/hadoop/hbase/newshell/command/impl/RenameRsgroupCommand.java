@@ -40,7 +40,8 @@ public final class RenameRsgroupCommand implements ShellCommand {
     throws ShellCommandException, IOException {
     ArgParsing.requireMaxArgs(command, "rename_rsgroup", 2);
     ArgParsing.requireArgs(command, 2, "rename_rsgroup requires old and new names");
-    context.admin().renameRsGroup(ArgParsing.string(command, 0), ArgParsing.string(command, 1));
+    context.rsGroupAdmin().renameRsGroup(ArgParsing.string(command, 0),
+      ArgParsing.string(command, 1));
     return TextResult.of();
   }
 }

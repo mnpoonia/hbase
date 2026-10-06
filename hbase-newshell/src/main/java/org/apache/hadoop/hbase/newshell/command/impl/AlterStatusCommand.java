@@ -52,7 +52,7 @@ public final class AlterStatusCommand implements ShellCommand {
     ArgParsing.requireMaxArgs(command, "alter_status", 1);
     String tableName =
       ArgParsing.requireArg(command, 0, "alter_status requires a table name argument");
-    AlterStatusView status = context.admin().alterStatus(tableName);
+    AlterStatusView status = context.tableAdmin().alterStatus(tableName);
     // Ruby polls until RIT is empty then always prints "Done." — for a one-shot
     // piped invocation we report a single snapshot plus the same trailing Done.
     if (status.totalRegions() == 0) {

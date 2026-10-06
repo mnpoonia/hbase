@@ -48,7 +48,7 @@ public final class ListQuotaTableSizesCommand implements ShellCommand {
   public CommandResult execute(ParsedCommand command, ExecutionContext context)
     throws ShellCommandException, IOException {
     ArgParsing.requireMaxArgs(command, "list_quota_table_sizes", 0);
-    List<List<String>> rows = context.admin().listQuotaTableSizes();
+    List<List<String>> rows = context.quotaAdmin().listQuotaTableSizes();
     return new TabularResult(Arrays.asList("TABLE", "SIZE"), rows);
   }
 }

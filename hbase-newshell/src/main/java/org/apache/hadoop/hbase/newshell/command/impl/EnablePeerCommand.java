@@ -45,7 +45,7 @@ public final class EnablePeerCommand implements ShellCommand {
     throws ShellCommandException, IOException {
     ArgParsing.requireMaxArgs(command, "enable_peer", 1);
     ArgParsing.requireArgs(command, 1, "enable_peer requires a peer id argument");
-    context.admin().enablePeer(ArgParsing.string(command, 0));
+    context.replicationPeers().enablePeer(ArgParsing.string(command, 0));
     return TextResult.of();
   }
 }

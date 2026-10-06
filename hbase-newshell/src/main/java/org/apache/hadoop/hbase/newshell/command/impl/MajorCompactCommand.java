@@ -52,7 +52,7 @@ public final class MajorCompactCommand implements ShellCommand {
       ArgParsing.requireArg(command, 0, "major_compact requires a table or region name argument");
     String family = command.positionalArgs().size() > 1 ? ArgParsing.string(command, 1) : null;
     String type = command.positionalArgs().size() > 2 ? ArgParsing.string(command, 2) : null;
-    context.admin().majorCompact(tableOrRegionName, family, type);
+    context.tableAdmin().majorCompact(tableOrRegionName, family, type);
     return TextResult.of(tableOrRegionName + " major compaction requested");
   }
 }

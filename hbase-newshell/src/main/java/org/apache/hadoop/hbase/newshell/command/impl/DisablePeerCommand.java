@@ -45,7 +45,7 @@ public final class DisablePeerCommand implements ShellCommand {
     throws ShellCommandException, IOException {
     ArgParsing.requireMaxArgs(command, "disable_peer", 1);
     ArgParsing.requireArgs(command, 1, "disable_peer requires a peer id argument");
-    context.admin().disablePeer(ArgParsing.string(command, 0));
+    context.replicationPeers().disablePeer(ArgParsing.string(command, 0));
     return TextResult.of();
   }
 }

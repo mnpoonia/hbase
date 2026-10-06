@@ -50,7 +50,7 @@ public final class BalanceRsgroupCommand implements ShellCommand {
       else throw new ShellCommandException(
         "balance_rsgroup accepts only 'dry_run' and/or 'ignore_rit'");
     }
-    BalanceResult response = context.admin().balanceRsGroup(group, dryRun, ignoreRit);
+    BalanceResult response = context.rsGroupAdmin().balanceRsGroup(group, dryRun, ignoreRit);
     if (response.ran()) {
       return new TextResult(Arrays.asList("Balancer ran", "Moves calculated: "
         + response.movesCalculated() + ", moves executed: " + response.movesExecuted()));

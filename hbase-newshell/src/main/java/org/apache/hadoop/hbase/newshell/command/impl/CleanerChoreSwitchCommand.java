@@ -50,7 +50,7 @@ public final class CleanerChoreSwitchCommand implements ShellCommand {
     ArgParsing.requireMaxArgs(command, "cleaner_chore_switch", 1);
     ArgParsing.requireArgs(command, 1, "cleaner_chore_switch requires a true|false argument");
     boolean enabled = ArgParsing.parseBoolean(command.positionalArgs().get(0));
-    boolean previousState = context.admin().cleanerChoreSwitch(enabled);
+    boolean previousState = context.clusterOps().cleanerChoreSwitch(enabled);
     return TextResult.of(String.valueOf(previousState));
   }
 }

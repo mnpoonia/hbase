@@ -52,7 +52,7 @@ public final class SetPeerBandwidthCommand implements ShellCommand {
     } catch (NumberFormatException e) {
       throw new ShellCommandException("Invalid bandwidth value: " + bandwidthArg);
     }
-    context.admin().setPeerBandwidth(peerId, bandwidth);
+    context.replicationPeers().setPeerBandwidth(peerId, bandwidth);
     return TextResult.of();
   }
 }

@@ -54,7 +54,7 @@ public final class NormalizeCommand implements ShellCommand {
     for (Map<String, Object> hash : command.hashLiterals()) {
       filters.putAll(hash);
     }
-    boolean submitted = context.admin().normalize(filters);
+    boolean submitted = context.clusterOps().normalize(filters);
     return TextResult.of(String.valueOf(submitted));
   }
 }

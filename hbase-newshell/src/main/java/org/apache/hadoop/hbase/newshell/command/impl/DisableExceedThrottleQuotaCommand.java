@@ -46,7 +46,7 @@ public final class DisableExceedThrottleQuotaCommand implements ShellCommand {
   public CommandResult execute(ParsedCommand command, ExecutionContext context)
     throws ShellCommandException, IOException {
     ArgParsing.requireMaxArgs(command, "disable_exceed_throttle_quota", 0);
-    boolean prev = context.admin().switchExceedThrottleQuota(false);
+    boolean prev = context.quotaAdmin().switchExceedThrottleQuota(false);
     return TextResult.of("Previous exceed throttle quota enabled : " + prev);
   }
 }

@@ -50,7 +50,7 @@ public final class NormalizerSwitchCommand implements ShellCommand {
     ArgParsing.requireMaxArgs(command, "normalizer_switch", 1);
     ArgParsing.requireArgs(command, 1, "normalizer_switch requires a true|false argument");
     boolean enabled = ArgParsing.parseBoolean(command.positionalArgs().get(0));
-    boolean previousState = context.admin().normalizerSwitch(enabled);
+    boolean previousState = context.clusterOps().normalizerSwitch(enabled);
     return TextResult.of(String.valueOf(previousState));
   }
 

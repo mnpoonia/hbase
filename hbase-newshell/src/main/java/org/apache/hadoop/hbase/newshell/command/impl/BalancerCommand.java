@@ -59,7 +59,7 @@ public final class BalancerCommand implements ShellCommand {
         throw new ShellCommandException("balancer accepts only 'dry_run' and/or 'ignore_rit'");
       }
     }
-    BalanceResult response = context.admin().balance(dryRun, ignoreRit);
+    BalanceResult response = context.clusterOps().balance(dryRun, ignoreRit);
     if (response.ran()) {
       return new TextResult(Arrays.asList("Balancer ran", "Moves calculated: "
         + response.movesCalculated() + ", moves executed: " + response.movesExecuted()));

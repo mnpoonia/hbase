@@ -58,7 +58,7 @@ public final class AppendPeerExcludeNamespacesCommand implements ShellCommand {
         namespaces.add(String.valueOf(arg));
       }
     }
-    context.admin().appendPeerExcludeNamespaces(peerId, namespaces);
+    context.replicationPeers().appendPeerExcludeNamespaces(peerId, namespaces);
     return TextResult.of();
   }
 }

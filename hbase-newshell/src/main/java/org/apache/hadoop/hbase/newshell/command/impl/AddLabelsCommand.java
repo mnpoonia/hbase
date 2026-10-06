@@ -55,7 +55,7 @@ public final class AddLabelsCommand implements ShellCommand {
     for (Object positional : positionals) {
       labels.addAll(ArgParsing.stringList(positional));
     }
-    context.admin().addLabels(labels);
+    context.visibilityLabels().addLabels(labels);
     return TextResult.of();
   }
 

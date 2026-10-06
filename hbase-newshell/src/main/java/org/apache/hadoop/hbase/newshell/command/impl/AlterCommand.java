@@ -77,7 +77,7 @@ public final class AlterCommand implements ShellCommand {
       throw new ShellCommandException(
         "alter requires at least one change, e.g. {NAME => 'f1', TTL => 100}");
     }
-    context.admin().alterTable(tableName, specs);
+    context.tableAdmin().alterTable(tableName, specs);
     return TextResult.of("Updating all regions with the new schema...");
   }
 }

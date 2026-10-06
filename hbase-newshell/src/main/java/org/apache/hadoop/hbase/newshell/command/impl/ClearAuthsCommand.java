@@ -57,7 +57,7 @@ public final class ClearAuthsCommand implements ShellCommand {
     for (int i = 1; i < positionals.size(); i++) {
       labels.addAll(ArgParsing.stringList(positionals.get(i)));
     }
-    context.admin().clearAuths(user, labels);
+    context.visibilityLabels().clearAuths(user, labels);
     return TextResult.of();
   }
 

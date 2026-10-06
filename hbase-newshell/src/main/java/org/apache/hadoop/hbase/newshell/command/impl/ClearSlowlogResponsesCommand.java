@@ -57,6 +57,6 @@ public final class ClearSlowlogResponsesCommand implements ShellCommand {
         servers.add(String.valueOf(arg));
       }
     }
-    return TextResult.of(context.admin().clearSlowLogResponses(servers));
+    return TextResult.of(context.diagnostics().clearSlowLogResponses(servers));
   }
 }

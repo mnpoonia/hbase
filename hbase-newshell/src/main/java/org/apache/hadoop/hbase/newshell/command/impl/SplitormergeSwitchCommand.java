@@ -55,7 +55,7 @@ public final class SplitormergeSwitchCommand implements ShellCommand {
     }
     String switchType = String.valueOf(positionals.get(0));
     boolean enabled = ArgParsing.parseBoolean(positionals.get(1));
-    boolean previousState = context.admin().splitOrMergeSwitch(switchType, enabled);
+    boolean previousState = context.clusterOps().splitOrMergeSwitch(switchType, enabled);
     return TextResult.of(String.valueOf(previousState));
   }
 

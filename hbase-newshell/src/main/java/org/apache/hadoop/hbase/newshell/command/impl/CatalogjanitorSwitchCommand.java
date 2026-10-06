@@ -50,7 +50,7 @@ public final class CatalogjanitorSwitchCommand implements ShellCommand {
     ArgParsing.requireMaxArgs(command, "catalogjanitor_switch", 1);
     ArgParsing.requireArgs(command, 1, "catalogjanitor_switch requires a true|false argument");
     boolean enabled = ArgParsing.parseBoolean(command.positionalArgs().get(0));
-    boolean previousState = context.admin().catalogJanitorSwitch(enabled);
+    boolean previousState = context.clusterOps().catalogJanitorSwitch(enabled);
     return TextResult.of(String.valueOf(previousState));
   }
 

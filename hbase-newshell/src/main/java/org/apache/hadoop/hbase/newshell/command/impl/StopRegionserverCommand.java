@@ -48,7 +48,7 @@ public final class StopRegionserverCommand implements ShellCommand {
     throws ShellCommandException, IOException {
     ArgParsing.requireMaxArgs(command, "stop_regionserver", 1);
     ArgParsing.requireArgs(command, 1, "stop_regionserver requires a hostname:port argument");
-    context.admin().stopRegionServer(ArgParsing.string(command, 0));
+    context.serverLifecycle().stopRegionServer(ArgParsing.string(command, 0));
     return TextResult.of();
   }
 }

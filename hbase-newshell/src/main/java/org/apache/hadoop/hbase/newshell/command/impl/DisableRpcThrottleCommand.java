@@ -46,7 +46,7 @@ public final class DisableRpcThrottleCommand implements ShellCommand {
   public CommandResult execute(ParsedCommand command, ExecutionContext context)
     throws ShellCommandException, IOException {
     ArgParsing.requireMaxArgs(command, "disable_rpc_throttle", 0);
-    boolean prev = context.admin().switchRpcThrottle(false);
+    boolean prev = context.quotaAdmin().switchRpcThrottle(false);
     return TextResult.of("Previous rpc throttle state : " + prev);
   }
 }

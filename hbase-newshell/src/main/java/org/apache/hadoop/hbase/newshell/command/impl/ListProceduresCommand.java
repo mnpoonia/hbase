@@ -49,7 +49,7 @@ public final class ListProceduresCommand implements ShellCommand {
   public CommandResult execute(ParsedCommand command, ExecutionContext context)
     throws ShellCommandException, IOException {
     ArgParsing.requireMaxArgs(command, "list_procedures", 0);
-    List<List<String>> rows = context.admin().listProcedures();
+    List<List<String>> rows = context.procedureAdmin().listProcedures();
     return new TabularResult(
       Arrays.asList("PID", "Name", "State", "Submitted", "Last_Update", "Parameters"), rows);
   }

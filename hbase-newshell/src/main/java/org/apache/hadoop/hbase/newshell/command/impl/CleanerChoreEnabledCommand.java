@@ -47,6 +47,6 @@ public final class CleanerChoreEnabledCommand implements ShellCommand {
   public CommandResult execute(ParsedCommand command, ExecutionContext context)
     throws ShellCommandException, IOException {
     ArgParsing.requireMaxArgs(command, "cleaner_chore_enabled", 0);
-    return TextResult.of(String.valueOf(context.admin().cleanerChoreEnabled()));
+    return TextResult.of(String.valueOf(context.clusterOps().cleanerChoreEnabled()));
   }
 }

@@ -47,7 +47,7 @@ public final class ListDisabledTablesCommand implements ShellCommand {
   public CommandResult execute(ParsedCommand command, ExecutionContext context)
     throws ShellCommandException, IOException {
     ArgParsing.requireMaxArgs(command, "list_disabled_tables", 0);
-    List<String> tableNames = context.admin().listTablesByState(false);
+    List<String> tableNames = context.tableAdmin().listTablesByState(false);
     List<List<String>> rows = new ArrayList<>();
     for (String tableName : tableNames) {
       rows.add(Arrays.asList(tableName));

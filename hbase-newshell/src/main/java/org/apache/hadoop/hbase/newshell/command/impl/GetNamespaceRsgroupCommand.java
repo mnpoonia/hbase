@@ -44,7 +44,7 @@ public final class GetNamespaceRsgroupCommand implements ShellCommand {
     throws ShellCommandException, IOException {
     ArgParsing.requireMaxArgs(command, "get_namespace_rsgroup", 1);
     ArgParsing.requireArgs(command, 1, "get_namespace_rsgroup requires a namespace");
-    String group = context.admin().getNamespaceRsGroup(ArgParsing.string(command, 0));
+    String group = context.namespaceAdmin().getNamespaceRsGroup(ArgParsing.string(command, 0));
     List<List<String>> rows = new ArrayList<>();
     if (group != null) {
       rows.add(Arrays.asList(group));

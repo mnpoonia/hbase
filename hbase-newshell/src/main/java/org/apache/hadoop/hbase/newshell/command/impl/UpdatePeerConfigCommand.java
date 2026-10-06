@@ -50,7 +50,7 @@ public final class UpdatePeerConfigCommand implements ShellCommand {
     for (Map<String, Object> hash : command.hashLiterals()) {
       args.putAll(hash);
     }
-    context.admin().updatePeerConfig(peerId, args);
+    context.replicationPeers().updatePeerConfig(peerId, args);
     return TextResult.of();
   }
 }

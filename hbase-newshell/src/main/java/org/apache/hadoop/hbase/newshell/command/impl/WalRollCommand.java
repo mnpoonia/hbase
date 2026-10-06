@@ -48,7 +48,7 @@ public final class WalRollCommand implements ShellCommand {
     throws ShellCommandException, IOException {
     ArgParsing.requireMaxArgs(command, "wal_roll", 1);
     ArgParsing.requireArgs(command, 1, "wal_roll requires a server name argument");
-    context.admin().walRoll(ArgParsing.string(command, 0));
+    context.clusterOps().walRoll(ArgParsing.string(command, 0));
     return TextResult.of();
   }
 }

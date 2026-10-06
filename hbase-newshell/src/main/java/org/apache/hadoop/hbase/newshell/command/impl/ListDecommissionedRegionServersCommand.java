@@ -51,7 +51,7 @@ public final class ListDecommissionedRegionServersCommand implements ShellComman
   public CommandResult execute(ParsedCommand command, ExecutionContext context)
     throws ShellCommandException, IOException {
     ArgParsing.requireMaxArgs(command, "list_decommissioned_regionservers", 0);
-    List<String> serverNames = context.admin().listDecommissionedRegionServers();
+    List<String> serverNames = context.serverLifecycle().listDecommissionedRegionServers();
     List<List<String>> rows = new ArrayList<>();
     for (String serverName : serverNames) {
       rows.add(Arrays.asList(serverName));

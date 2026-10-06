@@ -50,7 +50,7 @@ public final class ListUnknownserversCommand implements ShellCommand {
   public CommandResult execute(ParsedCommand command, ExecutionContext context)
     throws ShellCommandException, IOException {
     ArgParsing.requireMaxArgs(command, "list_unknownservers", 0);
-    List<String> servers = context.admin().listUnknownServers();
+    List<String> servers = context.serverLifecycle().listUnknownServers();
     List<List<String>> rows = new ArrayList<>();
     for (String server : servers) {
       rows.add(Arrays.asList(server));

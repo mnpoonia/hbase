@@ -56,9 +56,9 @@ public final class ChangeSftAllCommand implements ShellCommand {
     }
     String regex = String.valueOf(positionals.get(0));
     String impl = String.valueOf(positionals.get(1));
-    List<String> tables = context.admin().listTables(regex);
+    List<String> tables = context.tableAdmin().listTables(regex);
     DestructiveBatchConfirm.confirm(context, command, "change_sft_all", tables);
-    context.admin().changeSftAll(regex, impl);
+    context.tableAdmin().changeSftAll(regex, impl);
     return TextResult.of();
   }
 }

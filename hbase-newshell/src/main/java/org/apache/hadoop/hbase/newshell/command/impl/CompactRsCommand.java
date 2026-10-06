@@ -51,7 +51,7 @@ public final class CompactRsCommand implements ShellCommand {
       ArgParsing.requireArg(command, 0, "compact_rs requires a regionserver name argument");
     boolean major = command.positionalArgs().size() > 1
       && ArgParsing.parseBoolean(command.positionalArgs().get(1));
-    context.admin().compactRegionServer(server, major);
+    context.tableAdmin().compactRegionServer(server, major);
     return TextResult.of();
   }
 }

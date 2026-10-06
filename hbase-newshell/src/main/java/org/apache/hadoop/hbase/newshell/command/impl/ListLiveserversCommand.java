@@ -50,7 +50,7 @@ public final class ListLiveserversCommand implements ShellCommand {
   public CommandResult execute(ParsedCommand command, ExecutionContext context)
     throws ShellCommandException, IOException {
     ArgParsing.requireMaxArgs(command, "list_liveservers", 0);
-    List<String> servers = context.admin().listLiveServers();
+    List<String> servers = context.serverLifecycle().listLiveServers();
     List<List<String>> rows = new ArrayList<>();
     for (String server : servers) {
       rows.add(Arrays.asList(server));

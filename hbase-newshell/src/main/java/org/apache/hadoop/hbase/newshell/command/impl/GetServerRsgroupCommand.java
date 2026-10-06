@@ -42,7 +42,7 @@ public final class GetServerRsgroupCommand implements ShellCommand {
     throws ShellCommandException, IOException {
     ArgParsing.requireMaxArgs(command, "get_server_rsgroup", 1);
     ArgParsing.requireArgs(command, 1, "get_server_rsgroup requires an argument");
-    String group = context.admin().getRsGroupOfServer(ArgParsing.string(command, 0));
+    String group = context.rsGroupAdmin().getRsGroupOfServer(ArgParsing.string(command, 0));
     return new TabularResult(Collections.emptyList(), Arrays.asList(Arrays.asList(group)));
   }
 }

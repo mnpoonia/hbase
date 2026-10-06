@@ -45,7 +45,7 @@ public final class AddRsgroupCommand implements ShellCommand {
     throws ShellCommandException, IOException {
     ArgParsing.requireMaxArgs(command, "add_rsgroup", 1);
     ArgParsing.requireArgs(command, 1, "add_rsgroup requires a group name argument");
-    context.admin().addRsGroup(ArgParsing.string(command, 0));
+    context.rsGroupAdmin().addRsGroup(ArgParsing.string(command, 0));
     return TextResult.of();
   }
 }

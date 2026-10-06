@@ -60,7 +60,7 @@ public final class CloneSnapshotCommand implements ShellCommand {
     boolean restoreAcl =
       Boolean.parseBoolean(String.valueOf(args.getOrDefault("RESTORE_ACL", false)));
     Object cloneSft = args.get("CLONE_SFT");
-    context.admin().cloneSnapshot(snapshotName, tableName, restoreAcl,
+    context.snapshotAdmin().cloneSnapshot(snapshotName, tableName, restoreAcl,
       cloneSft == null ? null : String.valueOf(cloneSft));
     return TextResult.of();
   }

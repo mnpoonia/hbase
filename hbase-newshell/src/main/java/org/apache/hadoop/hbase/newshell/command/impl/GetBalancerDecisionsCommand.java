@@ -56,7 +56,7 @@ public final class GetBalancerDecisionsCommand implements ShellCommand {
     }
     List<String> lines = new ArrayList<>();
     lines.add("Retrieved BalancerDecision Responses");
-    lines.addAll(context.admin().getBalancerDecisions(args));
+    lines.addAll(context.diagnostics().getBalancerDecisions(args));
     return new TextResult(lines);
   }
 }

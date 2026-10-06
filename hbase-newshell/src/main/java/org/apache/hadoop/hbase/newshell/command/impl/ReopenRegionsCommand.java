@@ -62,7 +62,7 @@ public final class ReopenRegionsCommand implements ShellCommand {
         regions.add(String.valueOf(second));
       }
     }
-    context.admin().reopenRegions(tableName, regions);
+    context.tableAdmin().reopenRegions(tableName, regions);
     return TextResult.of();
   }
 }

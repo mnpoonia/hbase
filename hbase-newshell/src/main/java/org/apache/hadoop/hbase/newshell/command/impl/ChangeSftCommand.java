@@ -49,10 +49,10 @@ public final class ChangeSftCommand implements ShellCommand {
     throws ShellCommandException, IOException {
     List<Object> positionals = command.positionalArgs();
     if (positionals.size() == 2) {
-      context.admin().changeSft(String.valueOf(positionals.get(0)), null,
+      context.tableAdmin().changeSft(String.valueOf(positionals.get(0)), null,
         String.valueOf(positionals.get(1)));
     } else if (positionals.size() == 3) {
-      context.admin().changeSft(String.valueOf(positionals.get(0)),
+      context.tableAdmin().changeSft(String.valueOf(positionals.get(0)),
         String.valueOf(positionals.get(1)), String.valueOf(positionals.get(2)));
     } else {
       throw new ShellCommandException("change_sft requires two or three arguments");

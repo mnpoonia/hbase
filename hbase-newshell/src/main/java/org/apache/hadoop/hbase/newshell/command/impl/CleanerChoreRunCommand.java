@@ -47,7 +47,7 @@ public final class CleanerChoreRunCommand implements ShellCommand {
   public CommandResult execute(ParsedCommand command, ExecutionContext context)
     throws ShellCommandException, IOException {
     ArgParsing.requireMaxArgs(command, "cleaner_chore_run", 0);
-    context.admin().cleanerChoreRun();
+    context.clusterOps().cleanerChoreRun();
     return TextResult.of();
   }
 }

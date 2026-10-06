@@ -40,8 +40,8 @@ public final class MoveTablesRsgroupCommand implements ShellCommand {
     throws ShellCommandException, IOException {
     ArgParsing.requireMaxArgs(command, "move_tables_rsgroup", 2);
     ArgParsing.requireArgs(command, 2, "move_tables_rsgroup requires dest and tables");
-    context.admin().moveTablesToRsGroup(ArgParsing.stringList(command.positionalArgs().get(1)),
-      ArgParsing.string(command, 0));
+    context.rsGroupAdmin().moveTablesToRsGroup(
+      ArgParsing.stringList(command.positionalArgs().get(1)), ArgParsing.string(command, 0));
     return TextResult.of();
   }
 

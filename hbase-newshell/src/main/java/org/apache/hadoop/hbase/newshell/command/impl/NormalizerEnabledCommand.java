@@ -47,7 +47,7 @@ public final class NormalizerEnabledCommand implements ShellCommand {
   public CommandResult execute(ParsedCommand command, ExecutionContext context)
     throws ShellCommandException, IOException {
     ArgParsing.requireMaxArgs(command, "normalizer_enabled", 0);
-    boolean state = context.admin().normalizerEnabled();
+    boolean state = context.clusterOps().normalizerEnabled();
     return TextResult.of(String.valueOf(state));
   }
 }

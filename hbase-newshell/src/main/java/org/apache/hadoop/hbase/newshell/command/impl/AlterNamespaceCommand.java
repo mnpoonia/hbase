@@ -56,7 +56,7 @@ public final class AlterNamespaceCommand implements ShellCommand {
         "alter_namespace requires a property dictionary, e.g. {METHOD => 'set', 'PROP'=>'VAL'}");
     }
     Map<String, Object> properties = command.hashLiterals().get(0);
-    context.admin().alterNamespace(namespace, properties);
+    context.namespaceAdmin().alterNamespace(namespace, properties);
     return TextResult.of();
   }
 }

@@ -49,7 +49,7 @@ public final class PeerModificationSwitchCommand implements ShellCommand {
     if (command.positionalArgs().size() > 1) {
       drain = ArgParsing.parseBoolean(command.positionalArgs().get(1));
     }
-    boolean previous = context.admin().peerModificationSwitch(enabled, drain);
+    boolean previous = context.replicationPeers().peerModificationSwitch(enabled, drain);
     return TextResult.of("Previous peer modification state : " + previous);
   }
 }

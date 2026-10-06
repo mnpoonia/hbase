@@ -60,7 +60,7 @@ public final class ListSnapshotsCommand implements ShellCommand {
     throws ShellCommandException, IOException {
     ArgParsing.requireMaxArgs(command, "list_snapshots", 1);
     String regex = ArgParsing.optionalArg(command, 0, ".*");
-    List<SnapshotInfo> snapshots = context.admin().listSnapshots(regex);
+    List<SnapshotInfo> snapshots = context.snapshotAdmin().listSnapshots(regex);
     List<List<String>> rows = new ArrayList<>();
     for (SnapshotInfo snapshot : snapshots) {
       String creationTime = CREATION_TIME_FORMAT

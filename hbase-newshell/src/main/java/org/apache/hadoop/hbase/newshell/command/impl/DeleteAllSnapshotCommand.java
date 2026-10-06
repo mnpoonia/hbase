@@ -53,7 +53,7 @@ public final class DeleteAllSnapshotCommand implements ShellCommand {
     ArgParsing.requireMaxArgs(command, "delete_all_snapshot", 1);
     String regex =
       ArgParsing.requireArg(command, 0, "delete_all_snapshot requires a snapshot regex argument");
-    List<SnapshotInfo> list = context.admin().listSnapshots(regex);
+    List<SnapshotInfo> list = context.snapshotAdmin().listSnapshots(regex);
     PrintWriter out = context.out();
     out.println("SNAPSHOT  TABLE + CREATION TIME");
     for (SnapshotInfo snapshot : list) {
@@ -65,8 +65,8 @@ public final class DeleteAllSnapshotCommand implements ShellCommand {
     }
     DestructiveBatchConfirm.confirmSnapshotDelete(context, command, "delete_all_snapshot",
       list.size());
-    context.admin().deleteAllSnapshots(regex);
-    List<SnapshotInfo> leftover = context.admin().listSnapshots(regex);
+    context.snapshotAdmin().deleteAllSnapshots(regex);
+    List<SnapshotInfo> leftover = context.snapshotAdmin().listSnapshots(regex);
     int deleted = list.size() - leftover.size();
     List<String> lines = new ArrayList<>();
     if (deleted != 0) {

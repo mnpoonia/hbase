@@ -47,7 +47,7 @@ public final class BalancerEnabledCommand implements ShellCommand {
   public CommandResult execute(ParsedCommand command, ExecutionContext context)
     throws ShellCommandException, IOException {
     ArgParsing.requireMaxArgs(command, "balancer_enabled", 0);
-    boolean state = context.admin().balancerEnabled();
+    boolean state = context.clusterOps().balancerEnabled();
     return TextResult.of(String.valueOf(state));
   }
 }

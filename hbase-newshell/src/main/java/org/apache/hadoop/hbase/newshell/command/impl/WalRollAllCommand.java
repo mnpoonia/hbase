@@ -47,7 +47,7 @@ public final class WalRollAllCommand implements ShellCommand {
   public CommandResult execute(ParsedCommand command, ExecutionContext context)
     throws ShellCommandException, IOException {
     ArgParsing.requireMaxArgs(command, "wal_roll_all", 0);
-    context.admin().walRollAll();
+    context.clusterOps().walRollAll();
     return TextResult.of();
   }
 }

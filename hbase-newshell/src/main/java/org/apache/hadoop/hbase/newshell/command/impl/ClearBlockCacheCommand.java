@@ -47,6 +47,6 @@ public final class ClearBlockCacheCommand implements ShellCommand {
     throws ShellCommandException, IOException {
     ArgParsing.requireMaxArgs(command, "clear_block_cache", 1);
     ArgParsing.requireArgs(command, 1, "clear_block_cache requires a table name argument");
-    return TextResult.of(context.admin().clearBlockCache(ArgParsing.string(command, 0)));
+    return TextResult.of(context.tableAdmin().clearBlockCache(ArgParsing.string(command, 0)));
   }
 }

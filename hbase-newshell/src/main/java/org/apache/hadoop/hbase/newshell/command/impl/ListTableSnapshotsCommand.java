@@ -60,7 +60,8 @@ public final class ListTableSnapshotsCommand implements ShellCommand {
     String tableRegex = ArgParsing.requireArg(command, 0,
       "list_table_snapshots requires a table name regular expression");
     String snapshotRegex = ArgParsing.optionalArg(command, 1, ".*");
-    List<SnapshotInfo> snapshots = context.admin().listTableSnapshots(tableRegex, snapshotRegex);
+    List<SnapshotInfo> snapshots =
+      context.snapshotAdmin().listTableSnapshots(tableRegex, snapshotRegex);
     List<List<String>> rows = new ArrayList<>();
     for (SnapshotInfo snapshot : snapshots) {
       String creationTime = CREATION_TIME_FORMAT

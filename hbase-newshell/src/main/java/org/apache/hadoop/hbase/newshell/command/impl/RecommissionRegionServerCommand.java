@@ -59,7 +59,7 @@ public final class RecommissionRegionServerCommand implements ShellCommand {
     String hostOrServer = String.valueOf(positionals.get(0));
     List<String> encodedRegionNames =
       positionals.size() > 1 ? ArgParsing.stringList(positionals.get(1)) : Collections.emptyList();
-    context.admin().recommissionRegionServer(hostOrServer, encodedRegionNames);
+    context.serverLifecycle().recommissionRegionServer(hostOrServer, encodedRegionNames);
     return TextResult.of();
   }
 

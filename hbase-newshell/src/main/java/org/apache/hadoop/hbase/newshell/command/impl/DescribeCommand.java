@@ -53,7 +53,7 @@ public final class DescribeCommand implements ShellCommand {
     throws ShellCommandException, IOException {
     ArgParsing.requireMaxArgs(command, "describe", 1);
     String tableName = ArgParsing.requireArg(command, 0, "describe requires a table name argument");
-    TableDescription description = context.admin().describeTable(tableName);
+    TableDescription description = context.tableAdmin().describeTable(tableName);
 
     List<String> lines = new ArrayList<>();
     lines.add("Table " + tableName + " is " + (description.enabled() ? "ENABLED" : "DISABLED"));

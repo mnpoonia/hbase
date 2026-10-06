@@ -54,7 +54,7 @@ public final class CloneTableSchemaCommand implements ShellCommand {
     String newTableName = ArgParsing.string(command, 1);
     boolean preserveSplits = command.positionalArgs().size() < 3
       || !"false".equalsIgnoreCase(ArgParsing.string(command, 2));
-    context.admin().cloneTableSchema(tableName, newTableName, preserveSplits);
+    context.tableAdmin().cloneTableSchema(tableName, newTableName, preserveSplits);
     return TextResult.of();
   }
 }

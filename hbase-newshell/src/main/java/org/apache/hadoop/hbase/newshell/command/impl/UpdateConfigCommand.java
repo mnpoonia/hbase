@@ -45,7 +45,7 @@ public final class UpdateConfigCommand implements ShellCommand {
     throws ShellCommandException, IOException {
     ArgParsing.requireMaxArgs(command, "update_config", 1);
     ArgParsing.requireArgs(command, 1, "update_config requires a server name argument");
-    context.admin().updateConfig(ArgParsing.string(command, 0));
+    context.clusterOps().updateConfig(ArgParsing.string(command, 0));
     return TextResult.of();
   }
 }

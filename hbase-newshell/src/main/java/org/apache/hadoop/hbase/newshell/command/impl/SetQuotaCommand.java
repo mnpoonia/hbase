@@ -56,7 +56,7 @@ public final class SetQuotaCommand implements ShellCommand {
     if (args.isEmpty()) {
       throw new ShellCommandException("set_quota requires a TYPE argument");
     }
-    context.admin().setQuota(args);
+    context.quotaAdmin().setQuota(args);
     return TextResult.of();
   }
 }

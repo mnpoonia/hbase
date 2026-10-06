@@ -45,7 +45,7 @@ public final class TransitPeerSyncReplicationStateCommand implements ShellComman
     ArgParsing.requireMaxArgs(command, "transit_peer_sync_replication_state", 2);
     ArgParsing.requireArgs(command, 2,
       "transit_peer_sync_replication_state requires peer id and state");
-    context.admin().transitPeerSyncReplicationState(ArgParsing.string(command, 0),
+    context.replicationPeers().transitPeerSyncReplicationState(ArgParsing.string(command, 0),
       ArgParsing.string(command, 1));
     return TextResult.of();
   }

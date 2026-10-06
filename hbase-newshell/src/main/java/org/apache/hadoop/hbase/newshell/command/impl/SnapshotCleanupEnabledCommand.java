@@ -47,6 +47,6 @@ public final class SnapshotCleanupEnabledCommand implements ShellCommand {
   public CommandResult execute(ParsedCommand command, ExecutionContext context)
     throws ShellCommandException, IOException {
     ArgParsing.requireMaxArgs(command, "snapshot_cleanup_enabled", 0);
-    return TextResult.of(String.valueOf(context.admin().snapshotCleanupEnabled()));
+    return TextResult.of(String.valueOf(context.snapshotAdmin().snapshotCleanupEnabled()));
   }
 }

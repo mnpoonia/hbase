@@ -43,6 +43,6 @@ public final class PeerModificationEnabledCommand implements ShellCommand {
   public CommandResult execute(ParsedCommand command, ExecutionContext context)
     throws ShellCommandException, IOException {
     ArgParsing.requireMaxArgs(command, "peer_modification_enabled", 0);
-    return TextResult.of(String.valueOf(context.admin().peerModificationEnabled()));
+    return TextResult.of(String.valueOf(context.replicationPeers().peerModificationEnabled()));
   }
 }

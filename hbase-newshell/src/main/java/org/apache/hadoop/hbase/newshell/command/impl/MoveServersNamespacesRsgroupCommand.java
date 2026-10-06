@@ -41,7 +41,7 @@ public final class MoveServersNamespacesRsgroupCommand implements ShellCommand {
     ArgParsing.requireMaxArgs(command, "move_servers_namespaces_rsgroup", 3);
     ArgParsing.requireArgs(command, 3,
       "move_servers_namespaces_rsgroup requires dest, servers, namespaces");
-    context.admin().moveServersAndNamespacesToRsGroup(
+    context.rsGroupAdmin().moveServersAndNamespacesToRsGroup(
       ArgParsing.stringList(command.positionalArgs().get(1)),
       ArgParsing.stringList(command.positionalArgs().get(2)), ArgParsing.string(command, 0));
     return TextResult.of();

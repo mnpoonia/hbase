@@ -54,8 +54,7 @@ import org.apache.yetus.audience.InterfaceAudience;
  * <p>
  * To run with the sample data provided in index-builder-setup.txt (create it with
  * <tt>bin/hbase newshell hbase-examples/src/main/shell/index-builder-setup.txt</tt>), use the
- * arguments
- * <strong><tt>people attributes name email phone</tt></strong>.
+ * arguments <strong><tt>people attributes name email phone</tt></strong>.
  * </p>
  * <p>
  * This code was written against HBase 0.21 trunk.

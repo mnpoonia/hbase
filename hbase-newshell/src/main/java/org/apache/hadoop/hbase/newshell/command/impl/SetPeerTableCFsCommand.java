@@ -47,7 +47,7 @@ public final class SetPeerTableCFsCommand implements ShellCommand {
     String peerId = ArgParsing.requireArg(command, 0, "set_peer_tableCFs requires a peer id");
     Map<String, Object> tableCFs = ArgParsing.tableCfs(command);
 
-    context.admin().setPeerTableCFs(peerId, tableCFs);
+    context.replicationPeers().setPeerTableCFs(peerId, tableCFs);
     return TextResult.of();
   }
 

@@ -52,11 +52,11 @@ public final class TruncateCommand implements ShellCommand {
     String tableName = ArgParsing.requireArg(command, 0, "truncate requires a table name argument");
     List<String> lines = new ArrayList<>();
     lines.add("Truncating '" + tableName + "' table (it may take a while):");
-    if (context.admin().isTableEnabled(tableName)) {
+    if (context.tableAdmin().isTableEnabled(tableName)) {
       lines.add("Disabling table...");
     }
     lines.add("Truncating table...");
-    context.admin().truncateTable(tableName, false);
+    context.tableAdmin().truncateTable(tableName, false);
     return new TextResult(lines);
   }
 }

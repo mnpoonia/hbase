@@ -47,7 +47,7 @@ public final class HbckChoreRunCommand implements ShellCommand {
   public CommandResult execute(ParsedCommand command, ExecutionContext context)
     throws ShellCommandException, IOException {
     ArgParsing.requireMaxArgs(command, "hbck_chore_run", 0);
-    context.admin().hbckChoreRun();
+    context.clusterOps().hbckChoreRun();
     return TextResult.of();
   }
 }

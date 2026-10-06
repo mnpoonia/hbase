@@ -52,7 +52,7 @@ public final class ListQuotaSnapshotsCommand implements ShellCommand {
     ArgParsing.requireMaxArgs(command, "list_quota_snapshots", 0);
     Map<String, Object> args =
       command.hashLiterals().isEmpty() ? command.options() : command.hashLiterals().get(0);
-    List<List<String>> rows = context.admin().listQuotaSnapshots(args);
+    List<List<String>> rows = context.quotaAdmin().listQuotaSnapshots(args);
     return new TabularResult(Arrays.asList("TABLE", "USAGE", "LIMIT", "IN_VIOLATION", "POLICY"),
       rows);
   }

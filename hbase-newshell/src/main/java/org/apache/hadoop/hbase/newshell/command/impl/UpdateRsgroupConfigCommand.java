@@ -48,7 +48,7 @@ public final class UpdateRsgroupConfigCommand implements ShellCommand {
     throws ShellCommandException, IOException {
     ArgParsing.requireMaxArgs(command, "update_rsgroup_config", 1);
     ArgParsing.requireArgs(command, 1, "update_rsgroup_config requires a group name argument");
-    context.admin().updateRsGroupConfig(ArgParsing.string(command, 0));
+    context.clusterOps().updateRsGroupConfig(ArgParsing.string(command, 0));
     return TextResult.of();
   }
 }

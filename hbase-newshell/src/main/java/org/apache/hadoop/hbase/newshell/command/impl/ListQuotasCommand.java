@@ -53,7 +53,7 @@ public final class ListQuotasCommand implements ShellCommand {
     ArgParsing.requireMaxArgs(command, "list_quotas", 0);
     Map<String, Object> filterArgs =
       command.hashLiterals().isEmpty() ? command.options() : command.hashLiterals().get(0);
-    List<List<String>> rows = context.admin().listQuotas(filterArgs);
+    List<List<String>> rows = context.quotaAdmin().listQuotas(filterArgs);
     return new TabularResult(Arrays.asList("OWNER", "QUOTAS"), rows);
   }
 }

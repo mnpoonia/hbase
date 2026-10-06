@@ -48,7 +48,7 @@ public final class ExistsCommand implements ShellCommand {
     throws ShellCommandException, IOException {
     ArgParsing.requireMaxArgs(command, "exists", 1);
     String tableName = ArgParsing.requireArg(command, 0, "exists requires a table name argument");
-    boolean exists = context.admin().tableExists(tableName);
+    boolean exists = context.tableAdmin().tableExists(tableName);
     return TextResult.of("Table " + tableName + " " + (exists ? "does exist" : "does not exist"));
   }
 }

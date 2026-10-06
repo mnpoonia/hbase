@@ -52,7 +52,7 @@ public final class ListNamespaceCommand implements ShellCommand {
     throws ShellCommandException, IOException {
     ArgParsing.requireMaxArgs(command, "list_namespace", 1);
     String regex = ArgParsing.optionalArg(command, 0, ".*");
-    List<String> namespaces = context.admin().listNamespaces(regex);
+    List<String> namespaces = context.namespaceAdmin().listNamespaces(regex);
     List<List<String>> rows = new ArrayList<>();
     for (String namespace : namespaces) {
       rows.add(Arrays.asList(namespace));

@@ -53,7 +53,7 @@ public final class AlterRsgroupConfigCommand implements ShellCommand {
     } else {
       throw new ShellCommandException("alter_rsgroup_config requires a config hash");
     }
-    context.admin().alterRsGroupConfig(group, args);
+    context.rsGroupAdmin().alterRsGroupConfig(group, args);
     return TextResult.of();
   }
 }

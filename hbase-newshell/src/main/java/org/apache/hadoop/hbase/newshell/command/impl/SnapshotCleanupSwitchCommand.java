@@ -50,7 +50,7 @@ public final class SnapshotCleanupSwitchCommand implements ShellCommand {
     ArgParsing.requireMaxArgs(command, "snapshot_cleanup_switch", 1);
     ArgParsing.requireArgs(command, 1, "snapshot_cleanup_switch requires a true|false argument");
     boolean enabled = ArgParsing.parseBoolean(command.positionalArgs().get(0));
-    boolean previousState = context.admin().snapshotCleanupSwitch(enabled);
+    boolean previousState = context.snapshotAdmin().snapshotCleanupSwitch(enabled);
     return TextResult.of("Previous snapshot cleanup state : " + previousState);
   }
 }

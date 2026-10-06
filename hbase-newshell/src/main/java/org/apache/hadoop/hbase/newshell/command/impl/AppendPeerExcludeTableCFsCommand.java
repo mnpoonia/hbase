@@ -50,7 +50,7 @@ public final class AppendPeerExcludeTableCFsCommand implements ShellCommand {
     if (tableCFs == null) {
       throw new ShellCommandException("append_peer_exclude_tableCFs requires a table-cfs map");
     }
-    context.admin().appendPeerExcludeTableCFs(peerId, tableCFs);
+    context.replicationPeers().appendPeerExcludeTableCFs(peerId, tableCFs);
     return TextResult.of();
   }
 

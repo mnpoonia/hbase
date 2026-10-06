@@ -65,7 +65,7 @@ public final class GrantCommand implements ShellCommand {
       namespace = tableOrNamespace.substring(1);
       tableName = null;
     }
-    context.admin().grant(userOrGroup, actions, tableName, family, qualifier, namespace);
+    context.securityAdmin().grant(userOrGroup, actions, tableName, family, qualifier, namespace);
     return TextResult.of();
   }
 }

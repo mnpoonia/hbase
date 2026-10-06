@@ -51,7 +51,7 @@ public final class AddPeerCommand implements ShellCommand {
     throws ShellCommandException, IOException {
     ArgParsing.requireMaxArgs(command, "add_peer", 1);
     String peerId = ArgParsing.requireArg(command, 0, "add_peer requires a peer id argument");
-    context.admin().addPeer(peerId, command.options());
+    context.replicationPeers().addPeer(peerId, command.options());
     return TextResult.of();
   }
 }

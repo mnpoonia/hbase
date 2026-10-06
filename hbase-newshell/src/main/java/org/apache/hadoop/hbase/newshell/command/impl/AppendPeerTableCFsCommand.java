@@ -49,7 +49,7 @@ public final class AppendPeerTableCFsCommand implements ShellCommand {
     if (tableCFs == null) {
       throw new ShellCommandException("append_peer_tableCFs requires a table-cfs map");
     }
-    context.admin().appendPeerTableCFs(peerId, tableCFs);
+    context.replicationPeers().appendPeerTableCFs(peerId, tableCFs);
     return TextResult.of();
   }
 

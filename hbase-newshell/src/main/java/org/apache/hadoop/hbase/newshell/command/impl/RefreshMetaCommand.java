@@ -47,7 +47,7 @@ public final class RefreshMetaCommand implements ShellCommand {
   public CommandResult execute(ParsedCommand command, ExecutionContext context)
     throws ShellCommandException, IOException {
     ArgParsing.requireMaxArgs(command, "refresh_meta", 0);
-    long procId = context.admin().refreshMeta();
+    long procId = context.clusterOps().refreshMeta();
     return TextResult.of("Refresh meta procedure submitted. Procedure ID: " + procId);
   }
 }

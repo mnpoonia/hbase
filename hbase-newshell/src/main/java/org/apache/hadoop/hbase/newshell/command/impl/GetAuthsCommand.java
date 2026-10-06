@@ -47,6 +47,6 @@ public final class GetAuthsCommand implements ShellCommand {
     throws ShellCommandException, IOException {
     ArgParsing.requireMaxArgs(command, "get_auths", 1);
     ArgParsing.requireArgs(command, 1, "get_auths requires a user argument");
-    return new TextResult(context.admin().getAuths(ArgParsing.string(command, 0)));
+    return new TextResult(context.visibilityLabels().getAuths(ArgParsing.string(command, 0)));
   }
 }

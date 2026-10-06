@@ -49,7 +49,7 @@ public final class ListNamespaceTablesCommand implements ShellCommand {
     ArgParsing.requireMaxArgs(command, "list_namespace_tables", 1);
     String namespace =
       ArgParsing.requireArg(command, 0, "list_namespace_tables requires a namespace name argument");
-    List<String> tableNames = context.admin().listNamespaceTables(namespace);
+    List<String> tableNames = context.namespaceAdmin().listNamespaceTables(namespace);
     List<List<String>> rows = new ArrayList<>();
     for (String tableName : tableNames) {
       rows.add(Arrays.asList(tableName));

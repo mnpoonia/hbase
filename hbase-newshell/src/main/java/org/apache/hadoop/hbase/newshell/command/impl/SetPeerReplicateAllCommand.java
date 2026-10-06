@@ -46,7 +46,7 @@ public final class SetPeerReplicateAllCommand implements ShellCommand {
     ArgParsing.requireArgs(command, 2, "set_peer_replicate_all requires a peer id and true|false");
     String peerId = ArgParsing.string(command, 0);
     boolean value = ArgParsing.parseBoolean(command.positionalArgs().get(1));
-    context.admin().setPeerReplicateAll(peerId, value);
+    context.replicationPeers().setPeerReplicateAll(peerId, value);
     return TextResult.of();
   }
 }

@@ -48,7 +48,7 @@ public final class ListSecurityCapabilitiesCommand implements ShellCommand {
     throws ShellCommandException, IOException {
     ArgParsing.requireMaxArgs(command, "list_security_capabilities", 0);
     try {
-      List<String> caps = context.admin().listSecurityCapabilities();
+      List<String> caps = context.securityAdmin().listSecurityCapabilities();
       return new TextResult(caps);
     } catch (UnsupportedOperationException e) {
       return TextResult.of("ERROR: Master does not support getSecurityCapabilities");

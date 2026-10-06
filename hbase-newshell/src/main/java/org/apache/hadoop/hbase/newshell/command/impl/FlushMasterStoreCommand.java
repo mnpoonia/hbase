@@ -47,7 +47,7 @@ public final class FlushMasterStoreCommand implements ShellCommand {
   public CommandResult execute(ParsedCommand command, ExecutionContext context)
     throws ShellCommandException, IOException {
     ArgParsing.requireMaxArgs(command, "flush_master_store", 0);
-    context.admin().flushMasterStore();
+    context.clusterOps().flushMasterStore();
     return TextResult.of();
   }
 }

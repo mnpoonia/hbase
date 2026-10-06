@@ -56,7 +56,7 @@ public final class MoveServersRsgroupCommand implements ShellCommand {
     }
     String groupName = String.valueOf(positionals.get(0));
     List<String> hostPorts = ArgParsing.stringList(positionals.get(1));
-    context.admin().moveServersToRsGroup(hostPorts, groupName);
+    context.rsGroupAdmin().moveServersToRsGroup(hostPorts, groupName);
     return TextResult.of();
   }
 

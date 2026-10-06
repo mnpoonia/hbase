@@ -45,7 +45,7 @@ public final class DisableTableReplicationCommand implements ShellCommand {
     ArgParsing.requireMaxArgs(command, "disable_table_replication", 1);
     String table =
       ArgParsing.requireArg(command, 0, "disable_table_replication requires a table name");
-    context.admin().disableTableReplication(table);
+    context.replicationPeers().disableTableReplication(table);
     return TextResult.of(String.format("Replication of table '%s' successfully disabled.", table));
   }
 }

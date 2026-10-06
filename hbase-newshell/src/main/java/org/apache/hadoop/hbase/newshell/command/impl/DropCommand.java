@@ -49,7 +49,7 @@ public final class DropCommand implements ShellCommand {
     throws ShellCommandException, IOException {
     ArgParsing.requireMaxArgs(command, "drop", 1);
     String tableName = ArgParsing.requireArg(command, 0, "drop requires a table name argument");
-    context.admin().dropTable(tableName);
+    context.tableAdmin().dropTable(tableName);
     return TextResult.of();
   }
 }

@@ -48,7 +48,7 @@ public final class RitCommand implements ShellCommand {
   public CommandResult execute(ParsedCommand command, ExecutionContext context)
     throws ShellCommandException, IOException {
     ArgParsing.requireMaxArgs(command, "rit", 0);
-    List<String> states = context.admin().regionsInTransition();
+    List<String> states = context.tableAdmin().regionsInTransition();
     // Mirror Ruby: formatter.row per state, then formatter.footer(size). No empty header line.
     List<String> lines = new ArrayList<>(states);
     lines.add(states.size() + " row(s)");

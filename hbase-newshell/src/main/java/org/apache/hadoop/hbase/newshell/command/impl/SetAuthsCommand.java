@@ -56,7 +56,7 @@ public final class SetAuthsCommand implements ShellCommand {
     for (int i = 1; i < positionals.size(); i++) {
       labels.addAll(ArgParsing.stringList(positionals.get(i)));
     }
-    context.admin().setAuths(user, labels);
+    context.visibilityLabels().setAuths(user, labels);
     return TextResult.of();
   }
 

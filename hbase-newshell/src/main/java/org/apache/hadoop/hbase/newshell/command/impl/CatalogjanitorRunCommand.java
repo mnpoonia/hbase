@@ -47,7 +47,7 @@ public final class CatalogjanitorRunCommand implements ShellCommand {
   public CommandResult execute(ParsedCommand command, ExecutionContext context)
     throws ShellCommandException, IOException {
     ArgParsing.requireMaxArgs(command, "catalogjanitor_run", 0);
-    context.admin().catalogJanitorRun();
+    context.clusterOps().catalogJanitorRun();
     return TextResult.of();
   }
 }

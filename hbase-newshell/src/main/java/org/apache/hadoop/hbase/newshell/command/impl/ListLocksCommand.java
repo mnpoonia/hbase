@@ -47,6 +47,6 @@ public final class ListLocksCommand implements ShellCommand {
   public CommandResult execute(ParsedCommand command, ExecutionContext context)
     throws ShellCommandException, IOException {
     ArgParsing.requireMaxArgs(command, "list_locks", 0);
-    return new TextResult(context.admin().listLocks());
+    return new TextResult(context.procedureAdmin().listLocks());
   }
 }

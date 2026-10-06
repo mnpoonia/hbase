@@ -61,7 +61,7 @@ public final class ClearCompactionQueuesCommand implements ShellCommand {
         queues.add(String.valueOf(second));
       }
     }
-    context.admin().clearCompactionQueues(server, queues);
+    context.tableAdmin().clearCompactionQueues(server, queues);
     return TextResult.of();
   }
 }

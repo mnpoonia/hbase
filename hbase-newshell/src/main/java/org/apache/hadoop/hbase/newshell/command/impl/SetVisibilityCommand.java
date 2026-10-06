@@ -54,7 +54,7 @@ public final class SetVisibilityCommand implements ShellCommand {
     String visibility = ArgParsing.string(command, 1);
     Map<String, Object> options =
       command.hashLiterals().isEmpty() ? command.options() : command.hashLiterals().get(0);
-    long count = context.admin().setVisibility(tableName, visibility, options);
+    long count = context.visibilityLabels().setVisibility(tableName, visibility, options);
     return TextResult.of(count + " row(s)");
   }
 }

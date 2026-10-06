@@ -47,7 +47,7 @@ public final class RemovePeerCommand implements ShellCommand {
     throws ShellCommandException, IOException {
     ArgParsing.requireMaxArgs(command, "remove_peer", 1);
     String peerId = ArgParsing.requireArg(command, 0, "remove_peer requires a peer id argument");
-    context.admin().removePeer(peerId);
+    context.replicationPeers().removePeer(peerId);
     return TextResult.of();
   }
 }

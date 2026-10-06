@@ -47,7 +47,7 @@ public final class UpdateAllConfigCommand implements ShellCommand {
   public CommandResult execute(ParsedCommand command, ExecutionContext context)
     throws ShellCommandException, IOException {
     ArgParsing.requireMaxArgs(command, "update_all_config", 0);
-    context.admin().updateAllConfig();
+    context.clusterOps().updateAllConfig();
     return TextResult.of();
   }
 }

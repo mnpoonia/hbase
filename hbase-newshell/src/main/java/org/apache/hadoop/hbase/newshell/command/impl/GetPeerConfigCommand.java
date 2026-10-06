@@ -46,7 +46,8 @@ public final class GetPeerConfigCommand implements ShellCommand {
     throws ShellCommandException, IOException {
     ArgParsing.requireMaxArgs(command, "get_peer_config", 1);
     ArgParsing.requireArgs(command, 1, "get_peer_config requires a peer id");
-    List<List<String>> rows = context.admin().getPeerConfigRows(ArgParsing.string(command, 0));
+    List<List<String>> rows =
+      context.replicationPeers().getPeerConfigRows(ArgParsing.string(command, 0));
     return new TabularResult(Collections.emptyList(), rows);
   }
 }

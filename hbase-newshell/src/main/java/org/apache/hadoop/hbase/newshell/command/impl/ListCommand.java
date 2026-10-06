@@ -52,7 +52,7 @@ public final class ListCommand implements ShellCommand {
     throws ShellCommandException, IOException {
     ArgParsing.requireMaxArgs(command, "list", 1);
     String regex = ArgParsing.optionalArg(command, 0, ".*");
-    List<String> tableNames = context.admin().listTables(regex);
+    List<String> tableNames = context.tableAdmin().listTables(regex);
     List<List<String>> rows = new ArrayList<>();
     for (String tableName : tableNames) {
       rows.add(Arrays.asList(tableName));

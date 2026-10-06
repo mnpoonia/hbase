@@ -46,6 +46,6 @@ public final class RpcThrottleEnabledCommand implements ShellCommand {
   public CommandResult execute(ParsedCommand command, ExecutionContext context)
     throws ShellCommandException, IOException {
     ArgParsing.requireMaxArgs(command, "rpc_throttle_enabled", 0);
-    return TextResult.of(String.valueOf(context.admin().isRpcThrottleEnabled()));
+    return TextResult.of(String.valueOf(context.quotaAdmin().isRpcThrottleEnabled()));
   }
 }

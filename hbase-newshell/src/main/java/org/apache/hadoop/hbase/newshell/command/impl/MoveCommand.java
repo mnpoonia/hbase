@@ -53,7 +53,7 @@ public final class MoveCommand implements ShellCommand {
     }
     String encodedRegionName = String.valueOf(positionals.get(0));
     String destServerName = positionals.size() > 1 ? String.valueOf(positionals.get(1)) : null;
-    context.admin().move(encodedRegionName, destServerName);
+    context.tableAdmin().move(encodedRegionName, destServerName);
     return TextResult.of("Moved region " + encodedRegionName
       + (destServerName != null ? " to " + destServerName : " to a randomly chosen server"));
   }

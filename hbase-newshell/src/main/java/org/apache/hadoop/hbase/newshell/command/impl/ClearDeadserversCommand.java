@@ -61,7 +61,7 @@ public final class ClearDeadserversCommand implements ShellCommand {
         requested.add(String.valueOf(arg));
       }
     }
-    List<String> uncleared = context.admin().clearDeadServers(requested);
+    List<String> uncleared = context.serverLifecycle().clearDeadServers(requested);
     if (uncleared.isEmpty()) {
       return TextResult.of("true");
     }

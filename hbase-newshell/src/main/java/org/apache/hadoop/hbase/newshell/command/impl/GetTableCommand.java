@@ -52,7 +52,7 @@ public final class GetTableCommand implements ShellCommand {
     ArgParsing.requireMaxArgs(command, "get_table", 1);
     String tableName =
       ArgParsing.requireArg(command, 0, "get_table requires a table name argument");
-    if (!context.admin().tableExists(tableName)) {
+    if (!context.tableAdmin().tableExists(tableName)) {
       throw new ShellCommandException("Table '" + tableName + "' does not exist");
     }
     return TextResult.of();

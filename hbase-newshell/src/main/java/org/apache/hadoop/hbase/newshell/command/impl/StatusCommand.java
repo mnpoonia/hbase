@@ -52,7 +52,7 @@ public final class StatusCommand implements ShellCommand {
     throws ShellCommandException, IOException {
     List<Object> positionals = command.positionalArgs();
     String format = positionals.isEmpty() ? "summary" : String.valueOf(positionals.get(0));
-    StatusView status = context.admin().status();
+    StatusView status = context.tableAdmin().status();
     if (format.equalsIgnoreCase(DETAILED)) {
       return new TextResult(status.detailedLines());
     }

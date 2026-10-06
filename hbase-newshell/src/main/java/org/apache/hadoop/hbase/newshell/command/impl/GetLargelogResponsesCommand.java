@@ -66,7 +66,7 @@ public final class GetLargelogResponsesCommand implements ShellCommand {
     }
     List<String> lines = new ArrayList<>();
     lines.add("Retrieved LargeLog Responses from RegionServers");
-    lines.addAll(context.admin().getSlowLogResponses(servers, args, true));
+    lines.addAll(context.diagnostics().getSlowLogResponses(servers, args, true));
     return new TextResult(lines);
   }
 

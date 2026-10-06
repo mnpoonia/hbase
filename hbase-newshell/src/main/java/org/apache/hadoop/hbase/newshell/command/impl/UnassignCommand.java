@@ -48,7 +48,7 @@ public final class UnassignCommand implements ShellCommand {
     throws ShellCommandException, IOException {
     ArgParsing.requireMaxArgs(command, "unassign", 1);
     ArgParsing.requireArgs(command, 1, "unassign requires a region name argument");
-    context.admin().unassign(ArgParsing.string(command, 0));
+    context.tableAdmin().unassign(ArgParsing.string(command, 0));
     return TextResult.of();
   }
 }

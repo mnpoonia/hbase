@@ -53,7 +53,7 @@ public final class ListPeersCommand implements ShellCommand {
   public CommandResult execute(ParsedCommand command, ExecutionContext context)
     throws ShellCommandException, IOException {
     ArgParsing.requireMaxArgs(command, "list_peers", 0);
-    List<PeerDescription> peers = context.admin().listPeers();
+    List<PeerDescription> peers = context.replicationPeers().listPeers();
     List<List<String>> rows = new ArrayList<>();
     for (PeerDescription peer : peers) {
       rows.add(Arrays.asList(peer.peerId(), peer.clusterKey(), peer.endpointClassname(),

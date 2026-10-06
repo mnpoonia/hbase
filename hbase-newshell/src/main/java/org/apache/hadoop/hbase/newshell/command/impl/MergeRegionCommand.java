@@ -86,7 +86,7 @@ public final class MergeRegionCommand implements ShellCommand {
     if (regions.size() < 2) {
       throw new ShellCommandException("Must pass at least 2 regions to merge");
     }
-    context.admin().mergeRegion(regions, force);
+    context.tableAdmin().mergeRegion(regions, force);
     return TextResult.of();
   }
 

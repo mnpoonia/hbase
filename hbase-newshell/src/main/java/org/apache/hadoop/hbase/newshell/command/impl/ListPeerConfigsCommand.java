@@ -44,6 +44,7 @@ public final class ListPeerConfigsCommand implements ShellCommand {
   public CommandResult execute(ParsedCommand command, ExecutionContext context)
     throws ShellCommandException, IOException {
     ArgParsing.requireMaxArgs(command, "list_peer_configs", 0);
-    return new TabularResult(Collections.emptyList(), context.admin().listPeerConfigRows());
+    return new TabularResult(Collections.emptyList(),
+      context.replicationPeers().listPeerConfigRows());
   }
 }

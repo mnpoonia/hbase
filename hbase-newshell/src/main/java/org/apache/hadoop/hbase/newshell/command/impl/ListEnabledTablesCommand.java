@@ -47,7 +47,7 @@ public final class ListEnabledTablesCommand implements ShellCommand {
   public CommandResult execute(ParsedCommand command, ExecutionContext context)
     throws ShellCommandException, IOException {
     ArgParsing.requireMaxArgs(command, "list_enabled_tables", 0);
-    List<String> tableNames = context.admin().listTablesByState(true);
+    List<String> tableNames = context.tableAdmin().listTablesByState(true);
     List<List<String>> rows = new ArrayList<>();
     for (String tableName : tableNames) {
       rows.add(Arrays.asList(tableName));

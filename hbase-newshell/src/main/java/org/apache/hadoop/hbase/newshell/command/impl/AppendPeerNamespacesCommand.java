@@ -57,7 +57,7 @@ public final class AppendPeerNamespacesCommand implements ShellCommand {
         namespaces.add(String.valueOf(arg));
       }
     }
-    context.admin().appendPeerNamespaces(peerId, namespaces);
+    context.replicationPeers().appendPeerNamespaces(peerId, namespaces);
     return TextResult.of();
   }
 }

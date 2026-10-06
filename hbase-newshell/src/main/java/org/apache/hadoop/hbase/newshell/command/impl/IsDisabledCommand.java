@@ -49,7 +49,7 @@ public final class IsDisabledCommand implements ShellCommand {
     ArgParsing.requireMaxArgs(command, "is_disabled", 1);
     String tableName =
       ArgParsing.requireArg(command, 0, "is_disabled requires a table name argument");
-    boolean disabled = context.admin().isTableDisabled(tableName);
+    boolean disabled = context.tableAdmin().isTableDisabled(tableName);
     return TextResult.of(String.valueOf(disabled));
   }
 }

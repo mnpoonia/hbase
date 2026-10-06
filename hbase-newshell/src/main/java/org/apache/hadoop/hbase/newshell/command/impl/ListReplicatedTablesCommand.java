@@ -49,7 +49,7 @@ public final class ListReplicatedTablesCommand implements ShellCommand {
     if (!command.positionalArgs().isEmpty()) {
       regex = ArgParsing.string(command, 0);
     }
-    List<List<String>> rows = context.admin().listReplicatedTables(regex);
+    List<List<String>> rows = context.replicationPeers().listReplicatedTables(regex);
     return new TabularResult(Arrays.asList("TABLE:COLUMNFAMILY", "ReplicationType"), rows);
   }
 }

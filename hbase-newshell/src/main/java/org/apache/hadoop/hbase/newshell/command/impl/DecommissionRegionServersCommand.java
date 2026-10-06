@@ -57,7 +57,7 @@ public final class DecommissionRegionServersCommand implements ShellCommand {
     }
     List<String> hostOrServers = ArgParsing.stringList(positionals.get(0));
     boolean offload = positionals.size() > 1 && parseBoolean(positionals.get(1));
-    context.admin().decommissionRegionServers(hostOrServers, offload);
+    context.serverLifecycle().decommissionRegionServers(hostOrServers, offload);
     return TextResult.of();
   }
 

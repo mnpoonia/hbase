@@ -47,7 +47,7 @@ public final class CatalogjanitorEnabledCommand implements ShellCommand {
   public CommandResult execute(ParsedCommand command, ExecutionContext context)
     throws ShellCommandException, IOException {
     ArgParsing.requireMaxArgs(command, "catalogjanitor_enabled", 0);
-    boolean state = context.admin().catalogJanitorEnabled();
+    boolean state = context.clusterOps().catalogJanitorEnabled();
     return TextResult.of(String.valueOf(state));
   }
 }

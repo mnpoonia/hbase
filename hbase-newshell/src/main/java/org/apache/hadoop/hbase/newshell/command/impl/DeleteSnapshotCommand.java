@@ -48,7 +48,7 @@ public final class DeleteSnapshotCommand implements ShellCommand {
     ArgParsing.requireMaxArgs(command, "delete_snapshot", 1);
     String snapshotName =
       ArgParsing.requireArg(command, 0, "delete_snapshot requires a snapshot name argument");
-    context.admin().deleteSnapshot(snapshotName);
+    context.snapshotAdmin().deleteSnapshot(snapshotName);
     return TextResult.of();
   }
 }

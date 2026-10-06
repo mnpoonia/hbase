@@ -49,7 +49,7 @@ public final class BalanceSwitchCommand implements ShellCommand {
     ArgParsing.requireMaxArgs(command, "balance_switch", 1);
     ArgParsing.requireArgs(command, 1, "balance_switch requires a true|false argument");
     boolean enabled = ArgParsing.parseBoolean(command.positionalArgs().get(0));
-    boolean previousState = context.admin().balancerSwitch(enabled);
+    boolean previousState = context.clusterOps().balancerSwitch(enabled);
     return TextResult.of("Previous balancer state : " + previousState);
   }
 

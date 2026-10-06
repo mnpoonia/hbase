@@ -20,7 +20,7 @@ package org.apache.hadoop.hbase.newshell.command;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import org.apache.hadoop.hbase.newshell.hbase.ShellAdmin;
+import org.apache.hadoop.hbase.newshell.hbase.TableAdminContract;
 import org.apache.hadoop.hbase.newshell.parser.ParsedCommand;
 import org.apache.yetus.audience.InterfaceAudience;
 
@@ -32,7 +32,7 @@ import org.apache.yetus.audience.InterfaceAudience;
 public final class BatchTableOp {
   @FunctionalInterface
   public interface TableAction {
-    void apply(ShellAdmin admin, String tableName) throws IOException;
+    void apply(TableAdminContract admin, String tableName) throws IOException;
   }
 
   private BatchTableOp() {
@@ -42,7 +42,7 @@ public final class BatchTableOp {
     String commandName, String pastParticiple, TableAction action)
     throws ShellCommandException, IOException {
     String regex = ArgParsing.requireArg(command, 0, commandName + " requires a regex argument");
-    ShellAdmin admin = context.admin();
+    TableAdminContract admin = context.tableAdmin();
     List<String> tables = admin.listTables(regex);
     if (tables.isEmpty()) {
       return TextResult.of("No tables matched the regex " + regex);

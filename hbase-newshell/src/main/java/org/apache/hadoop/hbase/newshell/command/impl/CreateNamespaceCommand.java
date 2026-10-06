@@ -53,7 +53,7 @@ public final class CreateNamespaceCommand implements ShellCommand {
       ArgParsing.requireArg(command, 0, "create_namespace requires a namespace name argument");
     Map<String, Object> properties =
       command.hashLiterals().isEmpty() ? Collections.emptyMap() : command.hashLiterals().get(0);
-    context.admin().createNamespace(namespace, properties);
+    context.namespaceAdmin().createNamespace(namespace, properties);
     return TextResult.of();
   }
 }

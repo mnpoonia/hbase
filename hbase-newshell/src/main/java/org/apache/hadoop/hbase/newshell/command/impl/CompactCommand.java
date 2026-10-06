@@ -51,7 +51,7 @@ public final class CompactCommand implements ShellCommand {
       ArgParsing.requireArg(command, 0, "compact requires a table or region name argument");
     String family = command.positionalArgs().size() > 1 ? ArgParsing.string(command, 1) : null;
     String type = command.positionalArgs().size() > 2 ? ArgParsing.string(command, 2) : null;
-    context.admin().compact(tableOrRegionName, family, type);
+    context.tableAdmin().compact(tableOrRegionName, family, type);
     return TextResult.of(tableOrRegionName + " compaction requested");
   }
 }

@@ -55,7 +55,7 @@ public final class DeleteTableSnapshotsCommand implements ShellCommand {
     String tableRegex = ArgParsing.requireArg(command, 0,
       "delete_table_snapshots requires a table name regular expression");
     String snapshotRegex = ArgParsing.optionalArg(command, 1, ".*");
-    List<SnapshotInfo> list = context.admin().listTableSnapshots(tableRegex, snapshotRegex);
+    List<SnapshotInfo> list = context.snapshotAdmin().listTableSnapshots(tableRegex, snapshotRegex);
     PrintWriter out = context.out();
     out.println("SNAPSHOT  TABLE + CREATION TIME");
     for (SnapshotInfo snapshot : list) {
@@ -71,7 +71,7 @@ public final class DeleteTableSnapshotsCommand implements ShellCommand {
     List<String> lines = new ArrayList<>();
     for (SnapshotInfo snapshot : list) {
       try {
-        context.admin().deleteSnapshot(snapshot.name());
+        context.snapshotAdmin().deleteSnapshot(snapshot.name());
         lines.add("Successfully deleted snapshot: " + snapshot.name());
         lines.add("");
       } catch (IOException e) {

@@ -48,7 +48,7 @@ public final class ListSnapshotSizesCommand implements ShellCommand {
   public CommandResult execute(ParsedCommand command, ExecutionContext context)
     throws ShellCommandException, IOException {
     ArgParsing.requireMaxArgs(command, "list_snapshot_sizes", 0);
-    List<List<String>> rows = context.admin().listSnapshotSizes();
+    List<List<String>> rows = context.quotaAdmin().listSnapshotSizes();
     return new TabularResult(Arrays.asList("SNAPSHOT", "SIZE"), rows);
   }
 }

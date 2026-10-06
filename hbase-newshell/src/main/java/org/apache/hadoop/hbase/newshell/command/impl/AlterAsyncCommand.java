@@ -60,7 +60,7 @@ public final class AlterAsyncCommand implements ShellCommand {
       throw new ShellCommandException(
         "alter_async requires at least one change, e.g. {NAME => 'f1', TTL => 100}");
     }
-    context.admin().alterTable(tableName, specs);
+    context.tableAdmin().alterTable(tableName, specs);
     return TextResult.of();
   }
 }

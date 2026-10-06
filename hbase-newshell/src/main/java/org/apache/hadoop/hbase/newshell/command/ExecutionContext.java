@@ -18,8 +18,20 @@
 package org.apache.hadoop.hbase.newshell.command;
 
 import java.io.PrintWriter;
+import org.apache.hadoop.hbase.newshell.hbase.ClusterOpsContract;
+import org.apache.hadoop.hbase.newshell.hbase.DiagnosticsContract;
+import org.apache.hadoop.hbase.newshell.hbase.NamespaceAdminContract;
+import org.apache.hadoop.hbase.newshell.hbase.ProcedureAdminContract;
+import org.apache.hadoop.hbase.newshell.hbase.QuotaAdminContract;
+import org.apache.hadoop.hbase.newshell.hbase.ReplicationPeerContract;
+import org.apache.hadoop.hbase.newshell.hbase.RsGroupAdminContract;
+import org.apache.hadoop.hbase.newshell.hbase.SecurityAdminContract;
+import org.apache.hadoop.hbase.newshell.hbase.ServerLifecycleContract;
 import org.apache.hadoop.hbase.newshell.hbase.ShellAdmin;
 import org.apache.hadoop.hbase.newshell.hbase.ShellTableFactory;
+import org.apache.hadoop.hbase.newshell.hbase.SnapshotAdminContract;
+import org.apache.hadoop.hbase.newshell.hbase.TableAdminContract;
+import org.apache.hadoop.hbase.newshell.hbase.VisibilityLabelContract;
 import org.apache.yetus.audience.InterfaceAudience;
 
 /**
@@ -28,6 +40,9 @@ import org.apache.yetus.audience.InterfaceAudience;
  * {@link ShellTableFactory}) - never the underlying
  * {@code org.apache.hadoop.hbase.client.Connection}/{@code Admin} - so commands depend on these
  * narrow interfaces rather than the full HBase client surface, and never reach into globals.
+ * <p>
+ * Admin access is exposed one contract at a time (e.g. {@link #tableAdmin()}) so each command
+ * depends only on the operations it uses, not the whole {@link ShellAdmin}.
  * <p>
  * Intended for single-threaded use: one instance per session, accessed only by that session's REPL
  * loop.
@@ -58,7 +73,51 @@ public final class ExecutionContext {
     this.confirmationReader = confirmationReader;
   }
 
-  public ShellAdmin admin() {
+  public TableAdminContract tableAdmin() {
+    return admin;
+  }
+
+  public NamespaceAdminContract namespaceAdmin() {
+    return admin;
+  }
+
+  public SnapshotAdminContract snapshotAdmin() {
+    return admin;
+  }
+
+  public ReplicationPeerContract replicationPeers() {
+    return admin;
+  }
+
+  public RsGroupAdminContract rsGroupAdmin() {
+    return admin;
+  }
+
+  public ClusterOpsContract clusterOps() {
+    return admin;
+  }
+
+  public ServerLifecycleContract serverLifecycle() {
+    return admin;
+  }
+
+  public DiagnosticsContract diagnostics() {
+    return admin;
+  }
+
+  public SecurityAdminContract securityAdmin() {
+    return admin;
+  }
+
+  public VisibilityLabelContract visibilityLabels() {
+    return admin;
+  }
+
+  public QuotaAdminContract quotaAdmin() {
+    return admin;
+  }
+
+  public ProcedureAdminContract procedureAdmin() {
     return admin;
   }
 
