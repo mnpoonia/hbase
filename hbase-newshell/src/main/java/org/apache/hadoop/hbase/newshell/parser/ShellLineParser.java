@@ -50,6 +50,8 @@ import org.apache.yetus.audience.InterfaceAudience;
  */
 @InterfaceAudience.Private
 public final class ShellLineParser {
+  private static final java.util.Set<String> BOOLEAN_FLAGS = java.util.Collections.singleton("YES");
+
   private final List<Token> tokens;
   private int pos;
 
@@ -127,7 +129,12 @@ public final class ShellLineParser {
     if (check(TokenType.EQUALS)) {
       advance();
       value = parseValue();
-    } else if (check(TokenType.EOF) || check(TokenType.COMMA) || check(TokenType.FLAG)) {
+    } else if (
+      check(TokenType.EOF) || check(TokenType.COMMA) || check(TokenType.FLAG)
+        || BOOLEAN_FLAGS.contains(key)
+    ) {
+      // Known switches never take a value, so --yes before a positional (drop_all --yes 't.*')
+      // leaves that positional alone; write --yes=false to turn one off.
       value = Boolean.TRUE;
     } else {
       value = parseValue();

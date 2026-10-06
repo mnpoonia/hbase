@@ -225,4 +225,11 @@ public class ShellLineParserTest {
     assertThrows(ShellParseException.class, () -> ShellLineParser.parse("describe 1e"));
     assertThrows(ShellParseException.class, () -> ShellLineParser.parse("describe 1e+"));
   }
+
+  @Test
+  public void yesFlagBeforePositionalDoesNotSwallowIt() throws Exception {
+    ParsedCommand parsed = ShellLineParser.parse("drop_all --yes 't.*'");
+    assertEquals(java.util.Arrays.asList("t.*"), parsed.positionalArgs());
+    assertEquals(Boolean.TRUE, parsed.options().get("YES"));
+  }
 }
