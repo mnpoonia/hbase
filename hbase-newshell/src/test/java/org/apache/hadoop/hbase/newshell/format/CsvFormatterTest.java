@@ -50,4 +50,12 @@ public class CsvFormatterTest {
     new CsvFormatter().format("scan", result, new PrintWriter(buf));
     assertEquals("A,B\n1,\"x,y\"\n2,z\n", buf.toString());
   }
+
+  @Test
+  public void errorEmitsCsvRowInsteadOfPlainErrorLine() {
+    java.io.StringWriter sw = new java.io.StringWriter();
+    new CsvFormatter().formatError("bad, \"thing\"", new java.io.PrintWriter(sw));
+    org.junit.jupiter.api.Assertions.assertEquals("status,error" + System.lineSeparator()
+      + "error,\"bad, \"\"thing\"\"\"" + System.lineSeparator(), sw.toString());
+  }
 }

@@ -29,6 +29,14 @@ import org.apache.yetus.audience.InterfaceAudience;
 /** RFC 4180-ish CSV renderer (quotes fields that need it). */
 @InterfaceAudience.Private
 public final class CsvFormatter implements Formatter {
+  /** A failure is a {@code status,error} header plus one {@code error,<message>} row. */
+  @Override
+  public void formatError(String message, PrintWriter out) {
+    out.println(joinCsv(java.util.Arrays.asList("status", "error")));
+    out.println(joinCsv(java.util.Arrays.asList("error", message)));
+    out.flush();
+  }
+
   @Override
   public void format(String commandName, CommandResult result, PrintWriter out) {
     if (result instanceof TextResult) {
