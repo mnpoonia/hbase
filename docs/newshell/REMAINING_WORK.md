@@ -20,7 +20,6 @@ its filesystem path.
 
 - Ruby object syntax in options, e.g. `FILTER => SomeFilter.new(...)`; use the textual filter grammar.
 - Table-reference chaining (`t = get_table 't'; t.count`).
-- `status 'replication'` has unit tests only, no mini-cluster test.
 
 ## 1. Scripts / infrastructure work
 

@@ -65,7 +65,9 @@ final class ShellRepl {
         if (more == null) {
           break;
         }
-        line = line + "\n" + more;
+        // A trailing backslash is a line continuation: drop it and join with a space.
+        line =
+          endsWithContinuation(line) ? stripContinuation(line) + " " + more : line + "\n" + more;
       }
       String trimmed = line.trim();
       if (trimmed.isEmpty() || trimmed.startsWith("#")) {
@@ -95,18 +97,42 @@ final class ShellRepl {
     return ExitCodes.SUCCESS;
   }
 
-  /** True when {@code line} has an unterminated string, unclosed bracket, or trailing comma. */
+  /**
+   * True when {@code line} has an unterminated string, unclosed bracket, trailing comma, or
+   * trailing backslash.
+   */
   static boolean isIncomplete(String line) {
-    char quote = 0;
-    int depth = 0;
-    char last = 0;
+    LineState state = scan(line);
+    return state.quote != 0 || state.depth > 0 || state.last == ',' || state.last == '\\';
+  }
+
+  /** True when {@code line} ends in a backslash that is outside any quoted string. */
+  static boolean endsWithContinuation(String line) {
+    LineState state = scan(line);
+    return state.quote == 0 && state.last == '\\';
+  }
+
+  /** Removes the trailing continuation backslash (and whitespace after it). */
+  static String stripContinuation(String line) {
+    String trimmed = line.replaceAll("\\s+$", "");
+    return trimmed.substring(0, trimmed.length() - 1);
+  }
+
+  private static final class LineState {
+    char quote;
+    int depth;
+    char last;
+  }
+
+  private static LineState scan(String line) {
+    LineState state = new LineState();
     for (int i = 0; i < line.length(); i++) {
       char c = line.charAt(i);
-      if (quote != 0) {
+      if (state.quote != 0) {
         if (c == '\\') {
           i++;
-        } else if (c == quote) {
-          quote = 0;
+        } else if (c == state.quote) {
+          state.quote = 0;
         }
         continue;
       }
@@ -114,17 +140,17 @@ final class ShellRepl {
         break;
       }
       if (c == '\'' || c == '"') {
-        quote = c;
+        state.quote = c;
       } else if (c == '{' || c == '[') {
-        depth++;
+        state.depth++;
       } else if (c == '}' || c == ']') {
-        depth--;
+        state.depth--;
       }
       if (!Character.isWhitespace(c)) {
-        last = c;
+        state.last = c;
       }
     }
-    return quote != 0 || depth > 0 || last == ',';
+    return state;
   }
 
   private static int dispatch(String line, ExecutionContext context, CommandRegistry registry,

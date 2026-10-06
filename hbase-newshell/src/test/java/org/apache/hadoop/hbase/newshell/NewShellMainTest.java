@@ -394,6 +394,21 @@ public class NewShellMainTest {
   }
 
   @Test
+  public void trailingBackslashContinuesTheCommandOntoTheNextLine() throws IOException {
+    assertTrue(ShellRepl.isIncomplete("get 't', \\"));
+    assertTrue(ShellRepl.endsWithContinuation("get 't', \\  "));
+    assertFalse(ShellRepl.endsWithContinuation("put 't', 'r', 'f:c', 'C:\\\\"));
+    assertFalse(ShellRepl.endsWithContinuation("get 't'"));
+    assertEquals("get 't', ", ShellRepl.stripContinuation("get 't', \\  "));
+
+    FakeShellTerminal terminal = new FakeShellTerminal("hello \\", "world", "exit");
+    CommandRegistry registry =
+      new CommandRegistry(java.util.Arrays.asList(new SucceedingCommand()));
+    ShellRepl.run(terminal, newContext(terminal.writer()), registry, new DefaultFormatter());
+    assertFalse(terminal.output().contains("ERROR"));
+  }
+
+  @Test
   public void launchArgsAcceptsLegacyDebugFlag() {
     assertTrue(LaunchArgs.parse(new String[] { "-d" }).verbose);
     assertTrue(LaunchArgs.parse(new String[] { "--debug" }).verbose);

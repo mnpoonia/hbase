@@ -700,6 +700,29 @@ public class TestPilotCommandsAgainstMiniCluster {
   }
 
   @Test
+  public void locateRegionDecodesBinaryRowKeys() throws Exception {
+    String tableName = "newshell_locate_binary_test";
+    TEST_UTIL.createTable(TableName.valueOf(tableName), Bytes.toBytes("f1"),
+      new byte[][] { new byte[] { (byte) 0x80 } });
+
+    ShellAdmin admin = DefaultShellAdmin.create(connection.getAdmin());
+    // \xFF sorts after the 0x80 split; if it were taken as literal text it would land before it.
+    assertTrue(
+      admin.locateRegion(tableName, "\\xFFabc").regionName().contains("STARTKEY => '\\x80'"));
+    assertTrue(admin.locateRegion(tableName, "abc").regionName().contains("STARTKEY => ''"));
+  }
+
+  @Test
+  public void statusReplicationListsServersAndVersion() throws Exception {
+    ShellAdmin admin = DefaultShellAdmin.create(connection.getAdmin());
+    for (String type : new String[] { "BOTH", "SOURCE", "SINK" }) {
+      List<String> lines = admin.status().replicationLines(type);
+      assertTrue(lines.get(0).startsWith("version "));
+      assertTrue(lines.get(1).endsWith(" live servers"), lines.get(1));
+    }
+  }
+
+  @Test
   public void listRegionsReturnsOneRowPerRegion() throws Exception {
     String tableName = "newshell_list_regions_test";
     ShellAdmin admin = DefaultShellAdmin.create(connection.getAdmin());

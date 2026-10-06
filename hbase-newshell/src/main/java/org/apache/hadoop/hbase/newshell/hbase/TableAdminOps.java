@@ -431,7 +431,7 @@ final class TableAdminOps implements TableAdminContract {
     HRegionLocation location;
     try (RegionLocator locator =
       admin.getConnection().getRegionLocator(TableName.valueOf(tableName))) {
-      location = locator.getRegionLocation(Bytes.toBytes(rowKey));
+      location = locator.getRegionLocation(BinaryStrings.toBytes(rowKey));
     }
     // Ruby locate_region prints RegionInfo#toString (ENCODED/NAME/STARTKEY/ENDKEY dict).
     return new RegionLocationView(location.getHostnamePort(), location.getRegion().toString());
