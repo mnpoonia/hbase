@@ -161,7 +161,7 @@ public class TestNewShellAgainstMiniCluster {
       new CompactionSwitchCommand(), new SplitormergeSwitchCommand(), new BalancerEnabledCommand(),
       new CatalogjanitorEnabledCommand(), new NormalizerEnabledCommand(),
       new SplitormergeEnabledCommand()));
-    NewShellMain.run(terminal, context, registry, new DefaultFormatter());
+    ShellRepl.run(terminal, context, registry, new DefaultFormatter());
     lastOutput = terminal.output();
   }
 

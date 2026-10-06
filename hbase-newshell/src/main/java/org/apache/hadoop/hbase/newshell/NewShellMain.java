@@ -27,22 +27,15 @@ import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.client.ConnectionFactory;
 import org.apache.hadoop.hbase.newshell.command.CommandNameCompleter;
 import org.apache.hadoop.hbase.newshell.command.CommandRegistry;
-import org.apache.hadoop.hbase.newshell.command.ErrorMapper;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
 import org.apache.hadoop.hbase.newshell.command.ExitCodes;
 import org.apache.hadoop.hbase.newshell.command.SessionOptions;
-import org.apache.hadoop.hbase.newshell.command.ShellCommand;
-import org.apache.hadoop.hbase.newshell.command.ShellCommandException;
 import org.apache.hadoop.hbase.newshell.format.Formatter;
 import org.apache.hadoop.hbase.newshell.format.Formatters;
-import org.apache.hadoop.hbase.newshell.format.OutputFormat;
 import org.apache.hadoop.hbase.newshell.hbase.DefaultShellAdmin;
 import org.apache.hadoop.hbase.newshell.hbase.DefaultShellTableFactory;
 import org.apache.hadoop.hbase.newshell.hbase.ShellAdmin;
 import org.apache.hadoop.hbase.newshell.hbase.ShellTableFactory;
-import org.apache.hadoop.hbase.newshell.parser.ParsedCommand;
-import org.apache.hadoop.hbase.newshell.parser.ShellLineParser;
-import org.apache.hadoop.hbase.newshell.parser.ShellParseException;
 import org.apache.hadoop.hbase.newshell.spi.ShellTerminal;
 import org.apache.hadoop.hbase.newshell.spi.SupportsHistory;
 import org.apache.hadoop.hbase.newshell.spi.TerminalConfig;
@@ -69,8 +62,6 @@ import org.slf4j.LoggerFactory;
 @InterfaceAudience.Private
 public final class NewShellMain {
   private static final Logger LOG = LoggerFactory.getLogger(NewShellMain.class);
-  static final String EXIT_COMMAND = "exit";
-  static final String QUIT_COMMAND = "quit";
 
   private NewShellMain() {
   }
@@ -104,7 +95,7 @@ public final class NewShellMain {
         options.interactive() ? terminal::readLine : null);
       CommandRegistry registry = new CommandRegistry();
       terminal.setCompleter(new CommandNameCompleter(registry));
-      exitCode = run(terminal, context, registry, formatter, launch.exitOnFirstError);
+      exitCode = ShellRepl.run(terminal, context, registry, formatter, launch.exitOnFirstError);
       saveHistoryQuietly(terminal, context.out());
     }
     if (exitCode != ExitCodes.SUCCESS) {
@@ -147,135 +138,6 @@ public final class NewShellMain {
     } catch (IOException e) {
       out.println("ERROR: " + e.getMessage());
       out.flush();
-    }
-  }
-
-  /** Returns {@link ExitCodes#SUCCESS} unless {@code exitOnFirstError} and a command failed */
-  static int run(ShellTerminal terminal, ExecutionContext context, CommandRegistry registry,
-    Formatter formatter) throws IOException {
-    return run(terminal, context, registry, formatter, false);
-  }
-
-  static int run(ShellTerminal terminal, ExecutionContext context, CommandRegistry registry,
-    Formatter formatter, boolean exitOnFirstError) throws IOException {
-    PrintWriter out = context.out();
-    String line;
-    String prompt = context.options().interactive() ? "newshell> " : "";
-    while ((line = terminal.readLine(prompt)) != null) {
-      String trimmed = line.trim();
-      if (trimmed.isEmpty() || trimmed.startsWith("#")) {
-        continue;
-      }
-      if (trimmed.equalsIgnoreCase(EXIT_COMMAND) || trimmed.equalsIgnoreCase(QUIT_COMMAND)) {
-        break;
-      }
-      int code = dispatch(trimmed, context, registry, formatter, out);
-      if (code != ExitCodes.SUCCESS && exitOnFirstError) {
-        return code;
-      }
-    }
-    return ExitCodes.SUCCESS;
-  }
-
-  private static int dispatch(String line, ExecutionContext context, CommandRegistry registry,
-    Formatter formatter, PrintWriter out) {
-    ParsedCommand parsed;
-    try {
-      parsed = ShellLineParser.parse(line);
-    } catch (ShellParseException e) {
-      printError(context, formatter, out, e.getMessage(), e);
-      return ExitCodes.CLIENT_ERROR;
-    }
-    ShellCommand command = registry.lookup(parsed.commandName()).orElse(null);
-    if (command == null) {
-      printError(context, formatter, out, "unknown command '" + parsed.commandName() + "'", null);
-      return ExitCodes.CLIENT_ERROR;
-    }
-    try {
-      formatter.format(command.name(), command.execute(parsed, context), out);
-      return ExitCodes.SUCCESS;
-    } catch (ShellCommandException | IOException e) {
-      printError(context, formatter, out,
-        e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName(), e);
-      return ErrorMapper.exitCodeFor(e);
-    } catch (RuntimeException e) {
-      // Trust boundary for the REPL: ShellCommand.execute must not leak unchecked
-      // exceptions, but attribute translation / TableName validation / Admin calls
-      // can still throw. Catch here so one bad command cannot kill the session.
-      LOG.warn("Unchecked exception while executing command '{}'", parsed.commandName(), e);
-      printError(context, formatter, out,
-        e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName(), e);
-      // Streaming output wraps scan IOExceptions in unchecked ones; keep the server/client split.
-      return ErrorMapper.exitCodeFor(e);
-    }
-  }
-
-  private static void printError(ExecutionContext context, Formatter formatter, PrintWriter out,
-    String message, Throwable cause) {
-    if (!context.options().quiet()) {
-      formatter.formatError(message, out);
-      if (context.options().verbose() && cause != null) {
-        cause.printStackTrace(out);
-      }
-      out.flush();
-    }
-  }
-
-  /** Parsed argv for {@link NewShellMain#main}. Visible for tests. */
-  static final class LaunchArgs {
-    final boolean exitOnFirstError;
-    final boolean forceYes;
-    final boolean verbose;
-    final boolean quiet;
-    final OutputFormat outputFormat;
-    final String scriptFile;
-
-    LaunchArgs(boolean exitOnFirstError, boolean forceYes, boolean verbose, boolean quiet,
-      OutputFormat outputFormat, String scriptFile) {
-      this.exitOnFirstError = exitOnFirstError;
-      this.forceYes = forceYes;
-      this.verbose = verbose;
-      this.quiet = quiet;
-      this.outputFormat = outputFormat;
-      this.scriptFile = scriptFile;
-    }
-
-    static LaunchArgs parse(String[] args) {
-      boolean exitOnFirstError = false;
-      boolean forceYes = false;
-      boolean verbose = false;
-      boolean quiet = false;
-      OutputFormat outputFormat = OutputFormat.TEXT;
-      String scriptFile = null;
-      for (int i = 0; i < args.length; i++) {
-        String arg = args[i];
-        if (arg.equals("-n") || arg.equals("--noninteractive")) {
-          exitOnFirstError = true;
-        } else if (arg.equals("-y") || arg.equals("--yes")) {
-          forceYes = true;
-        } else if (
-          arg.equals("-v") || arg.equals("--verbose") || arg.equals("-d") || arg.equals("--debug")
-        ) {
-          // -d/--debug is the legacy shell spelling.
-          verbose = true;
-        } else if (arg.equals("-q") || arg.equals("--quiet")) {
-          quiet = true;
-        } else if (arg.equals("-o") || arg.equals("--output")) {
-          if (i + 1 >= args.length) {
-            throw new IllegalArgumentException(arg + " requires a value (text|json|csv)");
-          }
-          outputFormat = OutputFormat.parse(args[++i]);
-        } else if (arg.startsWith("--output=")) {
-          outputFormat = OutputFormat.parse(arg.substring("--output=".length()));
-        } else if (arg.startsWith("-o=") || arg.startsWith("--o=")) {
-          outputFormat = OutputFormat.parse(arg.substring(arg.indexOf('=') + 1));
-        } else if (scriptFile == null && !arg.startsWith("-")) {
-          scriptFile = arg;
-        } else if (arg.startsWith("-")) {
-          throw new IllegalArgumentException("Unknown option: " + arg);
-        }
-      }
-      return new LaunchArgs(exitOnFirstError, forceYes, verbose, quiet, outputFormat, scriptFile);
     }
   }
 }

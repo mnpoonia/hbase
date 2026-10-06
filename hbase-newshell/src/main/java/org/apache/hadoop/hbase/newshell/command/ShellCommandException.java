@@ -21,9 +21,10 @@ import org.apache.yetus.audience.InterfaceAudience;
 
 /**
  * Thrown by {@link ShellCommand#execute} for any command-level failure (bad arguments, an
- * underlying HBase client error, etc). The execution engine catches this - and only this, plus
- * checked {@code IOException} - to print an error and keep the REPL running; commands must not
- * escape via unchecked exceptions.
+ * underlying HBase client error, etc). The execution engine catches this, checked
+ * {@code IOException} (mapped to an exit code by {@link ErrorMapper}) and
+ * {@code IllegalArgumentException} (bad user input from validation helpers) to print an error and
+ * keep the REPL running. Any other unchecked exception is treated as a defect and logged.
  */
 @InterfaceAudience.Private
 public class ShellCommandException extends Exception {

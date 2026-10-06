@@ -164,7 +164,7 @@ public class NewShellMainTest {
   public void stopsCleanlyOnEndOfInput() throws IOException {
     FakeShellTerminal terminal = new FakeShellTerminal();
     CommandRegistry registry = new CommandRegistry(java.util.Collections.emptyList());
-    NewShellMain.run(terminal, newContext(terminal.writer()), registry, new DefaultFormatter());
+    ShellRepl.run(terminal, newContext(terminal.writer()), registry, new DefaultFormatter());
     assertEquals("", terminal.output());
   }
 
@@ -173,7 +173,7 @@ public class NewShellMainTest {
     FakeShellTerminal terminal = new FakeShellTerminal("QUIT", "hello");
     CommandRegistry registry =
       new CommandRegistry(java.util.Arrays.asList(new SucceedingCommand()));
-    NewShellMain.run(terminal, newContext(terminal.writer()), registry, new DefaultFormatter());
+    ShellRepl.run(terminal, newContext(terminal.writer()), registry, new DefaultFormatter());
     assertEquals("", terminal.output());
   }
 
@@ -182,7 +182,7 @@ public class NewShellMainTest {
     FakeShellTerminal terminal = new FakeShellTerminal("hello", "exit");
     CommandRegistry registry =
       new CommandRegistry(java.util.Arrays.asList(new SucceedingCommand()));
-    NewShellMain.run(terminal, newContext(terminal.writer()), registry, new DefaultFormatter());
+    ShellRepl.run(terminal, newContext(terminal.writer()), registry, new DefaultFormatter());
     assertTrue(terminal.output().contains("hello world"));
   }
 
@@ -191,7 +191,7 @@ public class NewShellMainTest {
     FakeShellTerminal terminal = new FakeShellTerminal("nope", "hello", "exit");
     CommandRegistry registry =
       new CommandRegistry(java.util.Arrays.asList(new SucceedingCommand()));
-    NewShellMain.run(terminal, newContext(terminal.writer()), registry, new DefaultFormatter());
+    ShellRepl.run(terminal, newContext(terminal.writer()), registry, new DefaultFormatter());
     String output = terminal.output();
     assertTrue(output.contains("ERROR: unknown command 'nope'"));
     assertTrue(output.contains("hello world"));
@@ -202,7 +202,7 @@ public class NewShellMainTest {
     FakeShellTerminal terminal = new FakeShellTerminal("'unterminated", "hello", "exit");
     CommandRegistry registry =
       new CommandRegistry(java.util.Arrays.asList(new SucceedingCommand()));
-    NewShellMain.run(terminal, newContext(terminal.writer()), registry, new DefaultFormatter());
+    ShellRepl.run(terminal, newContext(terminal.writer()), registry, new DefaultFormatter());
     String output = terminal.output();
     assertTrue(output.contains("ERROR:"));
     assertTrue(output.contains("hello world"));
@@ -213,7 +213,7 @@ public class NewShellMainTest {
     FakeShellTerminal terminal = new FakeShellTerminal("boom", "hello", "exit");
     CommandRegistry registry =
       new CommandRegistry(java.util.Arrays.asList(new SucceedingCommand(), new FailingCommand()));
-    NewShellMain.run(terminal, newContext(terminal.writer()), registry, new DefaultFormatter());
+    ShellRepl.run(terminal, newContext(terminal.writer()), registry, new DefaultFormatter());
     String output = terminal.output();
     assertTrue(output.contains("ERROR: kaboom"));
     assertTrue(output.contains("hello world"));
@@ -224,7 +224,7 @@ public class NewShellMainTest {
     FakeShellTerminal terminal = new FakeShellTerminal("boom", "hello", "exit");
     CommandRegistry registry =
       new CommandRegistry(java.util.Arrays.asList(new SucceedingCommand(), new FailingCommand()));
-    int code = NewShellMain.run(terminal, newContext(terminal.writer()), registry,
+    int code = ShellRepl.run(terminal, newContext(terminal.writer()), registry,
       new DefaultFormatter(), false);
     assertEquals(ExitCodes.SUCCESS, code);
     assertTrue(terminal.output().contains("hello world"));
@@ -235,7 +235,7 @@ public class NewShellMainTest {
     FakeShellTerminal terminal = new FakeShellTerminal("boom", "hello", "exit");
     CommandRegistry registry =
       new CommandRegistry(java.util.Arrays.asList(new SucceedingCommand(), new FailingCommand()));
-    int code = NewShellMain.run(terminal, newContext(terminal.writer()), registry,
+    int code = ShellRepl.run(terminal, newContext(terminal.writer()), registry,
       new DefaultFormatter(), true);
     assertEquals(ExitCodes.CLIENT_ERROR, code);
     assertFalse(terminal.output().contains("hello world"));
@@ -246,7 +246,7 @@ public class NewShellMainTest {
     FakeShellTerminal terminal = new FakeShellTerminal("hello", "exit");
     CommandRegistry registry =
       new CommandRegistry(java.util.Arrays.asList(new SucceedingCommand()));
-    int code = NewShellMain.run(terminal, newContext(terminal.writer()), registry,
+    int code = ShellRepl.run(terminal, newContext(terminal.writer()), registry,
       new DefaultFormatter(), true);
     assertEquals(ExitCodes.SUCCESS, code);
   }
@@ -256,7 +256,7 @@ public class NewShellMainTest {
     FakeShellTerminal terminal = new FakeShellTerminal("boom", "hello", "exit");
     CommandRegistry registry = new CommandRegistry(
       java.util.Arrays.asList(new SucceedingCommand(), new UncheckedThrowingCommand()));
-    NewShellMain.run(terminal, newContext(terminal.writer()), registry, new DefaultFormatter());
+    ShellRepl.run(terminal, newContext(terminal.writer()), registry, new DefaultFormatter());
     String output = terminal.output();
     assertTrue(output.contains("unchecked boom"));
     assertTrue(output.contains("hello world"));
@@ -267,7 +267,7 @@ public class NewShellMainTest {
     FakeShellTerminal terminal = new FakeShellTerminal("boom", "hello", "exit");
     CommandRegistry registry = new CommandRegistry(
       java.util.Arrays.asList(new SucceedingCommand(), new UncheckedThrowingCommand()));
-    int code = NewShellMain.run(terminal, newContext(terminal.writer()), registry,
+    int code = ShellRepl.run(terminal, newContext(terminal.writer()), registry,
       new DefaultFormatter(), true);
     assertEquals(ExitCodes.CLIENT_ERROR, code);
     assertFalse(terminal.output().contains("hello world"));
@@ -278,7 +278,7 @@ public class NewShellMainTest {
     FakeShellTerminal terminal = new FakeShellTerminal("boom", "exit");
     CommandRegistry registry =
       new CommandRegistry(java.util.Arrays.asList(new NullMessageFailingCommand()));
-    NewShellMain.run(terminal, newContext(terminal.writer()), registry, new DefaultFormatter());
+    ShellRepl.run(terminal, newContext(terminal.writer()), registry, new DefaultFormatter());
     String output = terminal.output();
     assertTrue(output.contains("ShellCommandException"));
     assertFalse(output.contains("ERROR: null"));
@@ -289,14 +289,14 @@ public class NewShellMainTest {
     FakeShellTerminal terminal =
       new FakeShellTerminal("# this is a comment", "  # indented too", "exit");
     CommandRegistry registry = new CommandRegistry(java.util.Collections.emptyList());
-    NewShellMain.run(terminal, newContext(terminal.writer()), registry, new DefaultFormatter());
+    ShellRepl.run(terminal, newContext(terminal.writer()), registry, new DefaultFormatter());
     assertFalse(terminal.output().contains("ERROR"));
   }
 
   @Test
   public void launchArgsParsesOutputAndYes() {
-    NewShellMain.LaunchArgs args = NewShellMain.LaunchArgs
-      .parse(new String[] { "-n", "--yes", "--output", "json", "script.ns" });
+    LaunchArgs args =
+      LaunchArgs.parse(new String[] { "-n", "--yes", "--output", "json", "script.ns" });
     assertTrue(args.exitOnFirstError);
     assertTrue(args.forceYes);
     assertEquals(org.apache.hadoop.hbase.newshell.format.OutputFormat.JSON, args.outputFormat);
@@ -305,18 +305,16 @@ public class NewShellMainTest {
 
   @Test
   public void launchArgsAcceptsLegacyDebugFlag() {
-    assertTrue(NewShellMain.LaunchArgs.parse(new String[] { "-d" }).verbose);
-    assertTrue(NewShellMain.LaunchArgs.parse(new String[] { "--debug" }).verbose);
+    assertTrue(LaunchArgs.parse(new String[] { "-d" }).verbose);
+    assertTrue(LaunchArgs.parse(new String[] { "--debug" }).verbose);
   }
 
   @Test
   public void sessionIsInteractiveOnlyOnARealTerminal() {
-    NewShellMain.LaunchArgs plain = NewShellMain.LaunchArgs.parse(new String[0]);
+    LaunchArgs plain = LaunchArgs.parse(new String[0]);
     assertTrue(NewShellMain.isInteractive(plain, true));
     assertFalse(NewShellMain.isInteractive(plain, false));
-    assertFalse(
-      NewShellMain.isInteractive(NewShellMain.LaunchArgs.parse(new String[] { "-n" }), true));
-    assertFalse(
-      NewShellMain.isInteractive(NewShellMain.LaunchArgs.parse(new String[] { "f.ns" }), true));
+    assertFalse(NewShellMain.isInteractive(LaunchArgs.parse(new String[] { "-n" }), true));
+    assertFalse(NewShellMain.isInteractive(LaunchArgs.parse(new String[] { "f.ns" }), true));
   }
 }
