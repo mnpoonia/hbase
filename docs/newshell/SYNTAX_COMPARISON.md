@@ -10,7 +10,11 @@ For each pilot command, three equivalent forms of the same call:
 
 Hash-literal keys (2) are case-sensitive, matching real Ruby — `NAME`, not `name`. Native flag keys (3) are upper-cased by the parser, so `--versions=3` and `--VERSIONS=3` are equivalent.
 
-**Unsupported options fail loudly.** `get`, `put`, `scan`, `count` and `deleteall` only accept the options shown below; anything else (`REVERSED`, `RAW`, `ROWPREFIXFILTER` on `scan`, `ATTRIBUTES`, a non-string `FILTER`, ...) raises an error instead of being ignored.
+**Unsupported options fail loudly.** `get`, `put`, `scan`, `count` and `deleteall` only accept the options shown below; anything else (`ALL_METRICS`/`METRICS` on `scan`, `RAW` on `get`, `TTL` on `scan`, a non-string `FILTER`, ...) raises an error instead of being ignored.
+
+**Option parity with old-shell.** `get` accepts `COLUMN`/`COLUMNS`, bare columns (`get 't1','r1','c1','c2'` or `['c1','c2']`), `VERSIONS`, `TIMESTAMP`, `TIMERANGE`, `FILTER`, `MAXLENGTH`, `FORMATTER`, `FORMATTER_CLASS`, `ATTRIBUTES`, `AUTHORIZATIONS`, `CONSISTENCY` and `REGION_REPLICA_ID`. `scan` adds `STARTROW`, `STOPROW`, `ROWPREFIXFILTER`, `LIMIT`, `CACHE`, `CACHE_BLOCKS`, `REVERSED`, `RAW` (delete markers print as `type=...`), `BATCH`, `MAX_RESULT_SIZE`, `ISOLATION_LEVEL`, `READ_TYPE` and `ALLOW_PARTIAL_RESULTS`. `put` accepts `TIMESTAMP`, `ATTRIBUTES`, `VISIBILITY` and `TTL`. Per-column converters (`cf:q:toInt`, `cf:q:c(pkg.Class).method`) work in `get` and `scan`. Not ported: scan metrics (`ALL_METRICS`/`METRICS`) and the `hbase:meta` special value formatting.
+
+**Errors in machine formats.** With `--output json` a failure is `{"status":"error","error":"..."}`; with `--output csv` it is a `status,error` header plus an `error,<message>` row. Text mode keeps `ERROR: <message>`.
 
 **`alter` is a partial port.** It modifies the attributes of existing families and drops one with `METHOD => 'delete'`. Adding a family and table-scope attributes (`MAX_FILESIZE`, coprocessors, ...) are not ported yet.
 
@@ -101,8 +105,12 @@ newshell> put 't1', 'r1', 'c1', 'value', ts1
 # native flags (positional args stay positional; only the trailing options hash becomes flags)
 newshell> put 't1' 'r1' 'c1' 'value' ts1
 ```
-`put`'s only option-hash use (`ATTRIBUTES`/`VISIBILITY`) is explicitly not ported in newshell
-yet (see `REMAINING_WORK.md`), so there's nothing to express as a flag there today.
+`put` options in flag form:
+```
+hbase>    put 't1', 'r1', 'c1', 'value', ts1, {ATTRIBUTES => {'mykey' => 'myvalue'}}
+newshell> put 't1', 'r1', 'c1', 'value', ts1, {ATTRIBUTES => {'mykey' => 'myvalue'}}
+newshell> put 't1' 'r1' 'c1' 'value' ts1 --VISIBILITY='PRIVATE|SECRET' --TTL=5000
+```
 
 ## scan
 
@@ -113,6 +121,13 @@ newshell> scan 't1', {COLUMNS => ['c1', 'c2'], LIMIT => 10, STARTROW => 'xyz'}
 
 # native flags
 newshell> scan 't1' "--COLUMNS=['c1', 'c2']" --LIMIT=10 --STARTROW=xyz
+```
+
+Formatting and read options:
+```
+hbase>    scan 't1', {COLUMNS => ['f:n:toInt'], MAXLENGTH => 30, RAW => true, VERSIONS => 10}
+newshell> scan 't1', {COLUMNS => ['f:n:toInt'], MAXLENGTH => 30, RAW => true, VERSIONS => 10}
+newshell> scan 't1' "--COLUMNS=['f:n:toInt']" --MAXLENGTH=30 --RAW --VERSIONS=10
 ```
 
 FILTER + TIMERANGE together:
