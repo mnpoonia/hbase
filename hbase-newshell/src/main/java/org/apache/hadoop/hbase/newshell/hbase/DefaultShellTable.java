@@ -98,7 +98,8 @@ public final class DefaultShellTable implements ShellTable {
   private static final Set<String> COUNT_OPTIONS = optionSet("COLUMN", "COLUMNS", "LIMIT",
     "STARTROW", "STOPROW", "ROWPREFIXFILTER", "VERSIONS", "FILTER", "CACHE_BLOCKS", "INTERVAL");
   private static final Set<String> DELETE_OPTIONS = optionSet("ATTRIBUTES", "VISIBILITY");
-  private static final Set<String> DELETEALL_OPTIONS = optionSet("ROWPREFIXFILTER", "CACHE");
+  private static final Set<String> DELETEALL_OPTIONS =
+    optionSet("ROWPREFIXFILTER", "CACHE", "ATTRIBUTES", "VISIBILITY");
 
   private final Table table;
 
@@ -289,11 +290,7 @@ public final class DefaultShellTable implements ShellTable {
     long ts = timestamp == null ? HConstants.LATEST_TIMESTAMP : timestamp;
     Delete delete = new Delete(BinaryStrings.toBytes(row), ts);
     addDeleteColumn(delete, column, ts, false);
-    applyAttributes(delete, options);
-    String visibility = optString(options, "VISIBILITY");
-    if (visibility != null) {
-      delete.setCellVisibility(new CellVisibility(visibility));
-    }
+    applyDeleteOptions(delete, options);
     table.delete(delete);
   }
 
@@ -313,6 +310,7 @@ public final class DefaultShellTable implements ShellTable {
         for (Result result : scanner) {
           Delete rowDelete = new Delete(result.getRow(), ts);
           addDeleteColumn(rowDelete, column, ts, true);
+          applyDeleteOptions(rowDelete, options);
           batch.add(rowDelete);
           if (batch.size() >= cache) {
             table.delete(batch);
@@ -327,6 +325,7 @@ public final class DefaultShellTable implements ShellTable {
     }
     Delete delete = new Delete(BinaryStrings.toBytes(row), ts);
     addDeleteColumn(delete, column, ts, true);
+    applyDeleteOptions(delete, options);
     table.delete(delete);
   }
 
@@ -422,6 +421,15 @@ public final class DefaultShellTable implements ShellTable {
       delete.addColumns(family, qualifier, timestamp);
     } else {
       delete.addColumn(family, qualifier, timestamp);
+    }
+  }
+
+  private static void applyDeleteOptions(Delete delete, Map<String, Object> options)
+    throws ShellCommandException {
+    applyAttributes(delete, options);
+    String visibility = optString(options, "VISIBILITY");
+    if (visibility != null) {
+      delete.setCellVisibility(new CellVisibility(visibility));
     }
   }
 

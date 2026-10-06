@@ -88,6 +88,18 @@ public class CountCommandTest {
   }
 
   @Test
+  public void legacyPositionalIntegerIsTheInterval() throws Exception {
+    command.execute(ShellLineParser.parse("count 't1', 500"), context);
+    assertEquals(500L, ((Number) table.lastOptions.get("INTERVAL")).longValue());
+  }
+
+  @Test
+  public void nonNumericSecondArgumentIsRejected() throws Exception {
+    ParsedCommand parsed = ShellLineParser.parse("count 't1', 'x'");
+    assertThrows(ShellCommandException.class, () -> command.execute(parsed, context));
+  }
+
+  @Test
   public void throwsWhenTableNameMissing() throws Exception {
     ParsedCommand parsed = ShellLineParser.parse("count");
     assertThrows(ShellCommandException.class, () -> command.execute(parsed, context));

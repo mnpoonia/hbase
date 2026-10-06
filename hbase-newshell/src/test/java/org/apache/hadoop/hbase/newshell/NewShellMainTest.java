@@ -367,6 +367,11 @@ public class NewShellMainTest {
       () -> LaunchArgs.parse(new String[] { "a.ns", "b.ns" }));
     org.junit.jupiter.api.Assertions.assertThrows(IllegalArgumentException.class,
       () -> LaunchArgs.parse(new String[] { "-Dnovalue" }));
+    // legacy no-op flag of the JRuby shell; deliberately rejected rather than silently ignored
+    org.junit.jupiter.api.Assertions.assertThrows(IllegalArgumentException.class,
+      () -> LaunchArgs.parse(new String[] { "-r" }));
+    org.junit.jupiter.api.Assertions.assertThrows(IllegalArgumentException.class,
+      () -> LaunchArgs.parse(new String[] { "--return-values" }));
   }
 
   @Test

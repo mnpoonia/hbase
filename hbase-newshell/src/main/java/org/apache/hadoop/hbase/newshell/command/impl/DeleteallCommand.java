@@ -18,6 +18,7 @@
 package org.apache.hadoop.hbase.newshell.command.impl;
 
 import java.io.IOException;
+import java.util.Map;
 import org.apache.hadoop.hbase.newshell.command.ArgParsing;
 import org.apache.hadoop.hbase.newshell.command.CommandResult;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
@@ -34,7 +35,7 @@ import org.apache.yetus.audience.InterfaceAudience;
  * optional timestamp - deletes all versions up to that timestamp, matching the ruby original's
  * {@code all_version=true}. {@code ROWPREFIXFILTER} plus optional {@code CACHE} (default 100)
  * batches a prefix-scan range delete, per {@code _deleterows_internal}. Meta-table guards,
- * ATTRIBUTES and VISIBILITY are not ported and are rejected as unsupported options.
+ * ATTRIBUTES and VISIBILITY are supported.
  */
 @InterfaceAudience.Private
 public final class DeleteallCommand implements ShellCommand {
@@ -53,7 +54,8 @@ public final class DeleteallCommand implements ShellCommand {
     throws ShellCommandException, IOException {
     String tableName =
       ArgParsing.requireArg(command, 0, "deleteall requires a table name argument");
-    boolean prefixMode = command.options().containsKey("ROWPREFIXFILTER");
+    Map<String, Object> options = ArgParsing.allOptions(command);
+    boolean prefixMode = options.containsKey("ROWPREFIXFILTER");
     int nextIndex = 1;
     String row = null;
     if (!prefixMode) {
@@ -71,7 +73,7 @@ public final class DeleteallCommand implements ShellCommand {
       }
       timestamp = ((Number) timestampArg).longValue();
     }
-    context.tables().forTable(tableName).deleteAll(row, column, timestamp, command.options());
+    context.tables().forTable(tableName).deleteAll(row, column, timestamp, options);
     return TextResult.of();
   }
 }

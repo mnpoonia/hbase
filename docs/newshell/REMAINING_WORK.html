@@ -327,7 +327,7 @@ const DATA = [
     ["cfg-update-rsgroup","`update_rsgroup_config`","Unit-tested (UpdateRsgroupConfigCommandTest); corpus smoke.",true, IMPL + "UpdateRsgroupConfigCommand.java"],
   ]},
   { id: "quotas", title: "CLUSTER QUOTAS TOOLS — quotas", badge: "0 remaining — commands ported", items: [
-    ["quota-set","`set_quota`","THROTTLE-only slice (TYPE => SPACE, SCOPE, GLOBAL_BYPASS not ported). Unit-tested and mini-cluster-verified; corpus row added (smoke — hbase.quota.enabled isn't set in this parity image, so both engines reject the command outright; real correctness verified by TestQuotaAgainstMiniCluster).",true, IMPL + "SetQuotaCommand.java"],
+    ["quota-set","`set_quota`","THROTTLE, SPACE and GLOBAL_BYPASS supported. Unit-tested and mini-cluster-verified; corpus row added (smoke — hbase.quota.enabled isn't set in this parity image, so both engines reject the command outright; real correctness verified by TestQuotaAgainstMiniCluster).",true, IMPL + "SetQuotaCommand.java"],
     ["quota-list","`list_quotas`","Unit-tested and mini-cluster-verified; corpus row added (smoke — same quota-disabled parity-image limitation).",true, IMPL + "ListQuotasCommand.java"],
     ["quota-list-table-sizes","`list_quota_table_sizes`","Unit-tested; corpus smoke.",true, IMPL + "ListQuotaTableSizesCommand.java"],
     ["quota-list-snapshots","`list_quota_snapshots`","Unit-tested; corpus smoke.",true, IMPL + "ListQuotaSnapshotsCommand.java"],

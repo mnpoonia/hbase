@@ -91,6 +91,29 @@ public class TestQuotaAgainstMiniCluster {
   }
 
   @Test
+  public void spaceQuotaOnATableSetsAndRemoves() throws Exception {
+    ShellAdmin admin = DefaultShellAdmin.create(connection.getAdmin());
+    String table = "newshell_space_quota_t";
+    admin.setQuota(mapOf("TYPE", "SPACE", "TABLE", table, "LIMIT", "1G", "POLICY", "NO_INSERTS"));
+    assertTrue(admin.listQuotas(Collections.singletonMap("TABLE", table)).stream()
+      .anyMatch(row -> row.get(0).contains(table)));
+
+    admin.setQuota(mapOf("TYPE", "SPACE", "TABLE", table, "LIMIT", "NONE"));
+    assertFalse(admin.listQuotas(Collections.singletonMap("TABLE", table)).stream()
+      .anyMatch(row -> row.get(0).contains(table)));
+  }
+
+  @Test
+  public void globalBypassSetsAndClears() throws Exception {
+    ShellAdmin admin = DefaultShellAdmin.create(connection.getAdmin());
+    String user = "newshell_bypass_user";
+    admin.setQuota(mapOf("USER", user, "GLOBAL_BYPASS", true));
+    assertTrue(admin.listQuotas(Collections.singletonMap("USER", user)).stream()
+      .anyMatch(row -> row.get(0).contains(user)));
+    admin.setQuota(mapOf("USER", user, "GLOBAL_BYPASS", false));
+  }
+
+  @Test
   public void rpcThrottleSwitchRoundTrips() throws Exception {
     ShellAdmin admin = DefaultShellAdmin.create(connection.getAdmin());
 

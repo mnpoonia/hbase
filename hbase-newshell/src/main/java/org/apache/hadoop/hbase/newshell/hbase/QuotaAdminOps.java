@@ -26,6 +26,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import org.apache.hadoop.hbase.ServerName;
 import org.apache.hadoop.hbase.TableName;
@@ -35,6 +36,7 @@ import org.apache.hadoop.hbase.quotas.QuotaSettings;
 import org.apache.hadoop.hbase.quotas.QuotaSettingsFactory;
 import org.apache.hadoop.hbase.quotas.QuotaTableUtil;
 import org.apache.hadoop.hbase.quotas.SpaceQuotaSnapshotView;
+import org.apache.hadoop.hbase.quotas.SpaceViolationPolicy;
 import org.apache.hadoop.hbase.quotas.ThrottleType;
 
 /** Package-private collaborator used by {@link DefaultShellAdmin}. */
@@ -48,9 +50,17 @@ final class QuotaAdminOps implements QuotaAdminContract {
   public void setQuota(Map<String, Object> args) throws IOException {
     Map<String, Object> spec = new LinkedHashMap<>(args);
     Object type = spec.remove("TYPE");
+    if (type == null && spec.containsKey("GLOBAL_BYPASS")) {
+      admin.setQuota(buildGlobalBypass(spec));
+      return;
+    }
+    if ("SPACE".equals(type)) {
+      admin.setQuota(buildSpaceQuota(spec));
+      return;
+    }
     if (!"THROTTLE".equals(type)) {
-      throw new ClientErrorException("Only TYPE => THROTTLE is supported by this newshell port; "
-        + "SPACE quotas and GLOBAL_BYPASS are not yet ported");
+      throw new ClientErrorException("set_quota requires TYPE => THROTTLE or TYPE => SPACE, "
+        + "or USER => '...', GLOBAL_BYPASS => true|false");
     }
     Object limit = spec.remove("LIMIT");
     QuotaSettings settings;
@@ -63,6 +73,82 @@ final class QuotaAdminOps implements QuotaAdminContract {
       settings = buildThrottle(spec, String.valueOf(limit));
     }
     admin.setQuota(settings);
+  }
+
+  private static QuotaSettings buildGlobalBypass(Map<String, Object> spec) throws IOException {
+    Object bypass = spec.remove("GLOBAL_BYPASS");
+    Object user = spec.remove("USER");
+    if (user == null) {
+      throw new ClientErrorException("Expected USER");
+    }
+    if (!spec.isEmpty()) {
+      throw new ClientErrorException("Unexpected arguments: " + spec);
+    }
+    String flag = String.valueOf(bypass);
+    if (!flag.equalsIgnoreCase("true") && !flag.equalsIgnoreCase("false")) {
+      throw new ClientErrorException("GLOBAL_BYPASS must be true or false, got: " + bypass);
+    }
+    return QuotaSettingsFactory.bypassGlobals(String.valueOf(user), Boolean.parseBoolean(flag));
+  }
+
+  /** {@code TYPE => SPACE}: limit (or, with {@code LIMIT => NONE}, remove) a table/namespace. */
+  private static QuotaSettings buildSpaceQuota(Map<String, Object> spec) throws IOException {
+    Object table = spec.remove("TABLE");
+    Object namespace = spec.remove("NAMESPACE");
+    if (table != null && namespace != null) {
+      throw new ClientErrorException("Only one of TABLE or NAMESPACE can be specified.");
+    }
+    if (table == null && namespace == null) {
+      throw new ClientErrorException("One of TABLE or NAMESPACE must be specified.");
+    }
+    Object limit = spec.remove("LIMIT");
+    Object policyName = spec.remove("POLICY");
+    if (!spec.isEmpty()) {
+      throw new ClientErrorException("Unexpected arguments: " + spec);
+    }
+    if (limit == null) {
+      throw new ClientErrorException("set_quota TYPE => SPACE requires a LIMIT (or NONE)");
+    }
+    if ("NONE".equals(limit)) {
+      return table != null
+        ? QuotaSettingsFactory.removeTableSpaceLimit(TableName.valueOf(String.valueOf(table)))
+        : QuotaSettingsFactory.removeNamespaceSpaceLimit(String.valueOf(namespace));
+    }
+    long bytes = parseSpaceLimit(limit);
+    if (policyName == null) {
+      throw new ClientErrorException("set_quota TYPE => SPACE requires a POLICY");
+    }
+    SpaceViolationPolicy policy;
+    try {
+      policy = SpaceViolationPolicy.valueOf(String.valueOf(policyName));
+    } catch (IllegalArgumentException e) {
+      throw new ClientErrorException("Invalid POLICY '" + policyName + "', expected one of "
+        + Arrays.toString(SpaceViolationPolicy.values()));
+    }
+    return table != null
+      ? QuotaSettingsFactory.limitTableSpace(TableName.valueOf(String.valueOf(table)), bytes,
+        policy)
+      : QuotaSettingsFactory.limitNamespaceSpace(String.valueOf(namespace), bytes, policy);
+  }
+
+  /** A raw byte count, or digits with a B/K/M/G/T/P suffix (1024-based), as in quotas.rb. */
+  static long parseSpaceLimit(Object limit) throws IOException {
+    long bytes;
+    if (limit instanceof Number) {
+      bytes = ((Number) limit).longValue();
+    } else {
+      Matcher match = Pattern.compile("^(\\d+)([bkmgtp]?)$")
+        .matcher(String.valueOf(limit).toLowerCase(java.util.Locale.ROOT));
+      if (!match.matches()) {
+        throw new ClientErrorException("Invalid size limit syntax: " + limit);
+      }
+      int shift = "bkmgtp".indexOf(match.group(2).isEmpty() ? 'b' : match.group(2).charAt(0)) * 10;
+      bytes = Long.parseLong(match.group(1)) << shift;
+    }
+    if (bytes <= 0) {
+      throw new ClientErrorException("Invalid space limit, must be greater than 0");
+    }
+    return bytes;
   }
 
   private static QuotaSettings buildThrottle(Map<String, Object> spec, String limitSpec)

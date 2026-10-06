@@ -19,6 +19,8 @@ package org.apache.hadoop.hbase.newshell.command.impl;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import org.apache.hadoop.hbase.newshell.command.ArgParsing;
 import org.apache.hadoop.hbase.newshell.command.CommandResult;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
@@ -34,8 +36,8 @@ import org.apache.yetus.audience.InterfaceAudience;
  * plus an optional {@code COLUMNS}/{@code STARTROW}/{@code STOPROW}/{@code VERSIONS}/
  * {@code FILTER}/{@code CACHE_BLOCKS}/{@code INTERVAL} hash literal, reusing {@link ScanCommand}'s
  * scan option support. The legacy "second positional arg is an Integer meaning INTERVAL" syntax
- * (e.g. {@code count 't1', 100000}) and table-reference chaining (e.g. {@code t.count}) are
- * explicitly not ported.
+ * (e.g. {@code count 't1', 100000}) is accepted. Table-reference chaining (e.g. {@code t.count}) is
+ * not ported.
  */
 @InterfaceAudience.Private
 public final class CountCommand implements ShellCommand {
@@ -47,19 +49,28 @@ public final class CountCommand implements ShellCommand {
   @Override
   public String help() {
     return "count 'table', {STARTROW => 'r1', FILTER => \"...\", CACHE_BLOCKS => true, "
-      + "INTERVAL => 100000} - count the rows in a table, reporting progress every INTERVAL rows "
+      + "INTERVAL => 100000} (or count 'table', 100000) - count the rows in a table, reporting progress every INTERVAL rows "
       + "(default 1000)";
   }
 
   @Override
   public CommandResult execute(ParsedCommand command, ExecutionContext context)
     throws ShellCommandException, IOException {
-    ArgParsing.requireMaxArgs(command, "count", 1);
+    ArgParsing.requireMaxArgs(command, "count", 2);
     String tableName = ArgParsing.requireArg(command, 0, "count requires a table name argument");
     PrintWriter out = context.out();
     // Progress lines are human-oriented; keep them out of json/csv output so it stays parseable.
     boolean showProgress = context.options().outputFormat() == OutputFormat.TEXT;
-    long count = context.tables().forTable(tableName).count(command.options(), (cnt, row) -> {
+    Map<String, Object> options = new LinkedHashMap<>(ArgParsing.allOptions(command));
+    if (command.positionalArgs().size() > 1) {
+      Object interval = command.positionalArgs().get(1);
+      if (!(interval instanceof Number)) {
+        throw new ShellCommandException("count: second argument must be a numeric INTERVAL or "
+          + "an options hash, got '" + interval + "'");
+      }
+      options.put("INTERVAL", interval);
+    }
+    long count = context.tables().forTable(tableName).count(options, (cnt, row) -> {
       if (showProgress) {
         out.println("Current count: " + cnt + ", row: " + row);
         out.flush();

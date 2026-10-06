@@ -18,9 +18,6 @@ its filesystem path.
 
 ## Known option gaps (commands exist, these options are rejected)
 
-- `deleteall`: `ATTRIBUTES`, `VISIBILITY` (`delete` supports both).
-- `set_quota`: `TYPE => SPACE`, `GLOBAL_BYPASS`.
-- `count`: legacy positional INTERVAL (`count 't', 100000`); use `INTERVAL => N`.
 - Ruby object syntax in options, e.g. `FILTER => SomeFilter.new(...)`; use the textual filter grammar.
 - Table-reference chaining (`t = get_table 't'; t.count`).
 - `status 'replication'` has unit tests only, no mini-cluster test.
@@ -753,7 +750,7 @@ at
 
 ### CLUSTER QUOTAS TOOLS — quotas (0 remaining — commands ported; see Known option gaps)
 
-- [x] <span style="color:#a5d6a7">`set_quota`</span> — `hbase-shell/src/main/ruby/shell/commands/set_quota.rb` — completed: true, THROTTLE-only (`SCOPE` supported; `TYPE => SPACE` and `GLOBAL_BYPASS` not ported, rejected). Unit-tested (`SetQuotaCommandTest`) and mini-cluster-verified (`hbase.quota.enabled=true`, `TestQuotaAgainstMiniCluster`); corpus row added (`smoke` — `hbase.quota.enabled` isn't set in the parity Docker image, so both engines reject the command outright there).
+- [x] <span style="color:#a5d6a7">`set_quota`</span> — `hbase-shell/src/main/ruby/shell/commands/set_quota.rb` — completed: true, `TYPE => THROTTLE`, `TYPE => SPACE` and `GLOBAL_BYPASS` supported. Unit-tested (`SetQuotaCommandTest`) and mini-cluster-verified (`hbase.quota.enabled=true`, `TestQuotaAgainstMiniCluster`); corpus row added (`smoke` — `hbase.quota.enabled` isn't set in the parity Docker image, so both engines reject the command outright there).
 - [x] <span style="color:#a5d6a7">`list_quotas`</span> — `hbase-shell/src/main/ruby/shell/commands/list_quotas.rb` — completed: true. Unit-tested (`ListQuotasCommandTest`) and mini-cluster-verified; corpus row added (`smoke` — same quota-disabled parity-image limitation as `set_quota`).
 - [x] <span style="color:#a5d6a7">`list_quota_table_sizes`</span> — `hbase-shell/src/main/ruby/shell/commands/list_quota_table_sizes.rb` — completed: true. Unit-tested (`ListQuotaTableSizesCommandTest`) and mini-cluster-verified (`listQuotaTableSizesSnapshotsAndSnapshotSizesDoNotThrow`); corpus row added (`smoke`).
 - [x] <span style="color:#a5d6a7">`list_quota_snapshots`</span> — `hbase-shell/src/main/ruby/shell/commands/list_quota_snapshots.rb` — completed: true. Unit-tested (`ListQuotaSnapshotsCommandTest`) and mini-cluster-verified; supports TABLE/NAMESPACE/REGIONSERVER filters; corpus row added (`smoke`).

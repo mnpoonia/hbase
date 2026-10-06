@@ -30,9 +30,9 @@ import org.apache.hadoop.hbase.newshell.parser.ParsedCommand;
 import org.apache.yetus.audience.InterfaceAudience;
 
 /**
- * Ported, THROTTLE-only, from hbase-shell's {@code shell/commands/set_quota.rb}: a single hash
- * literal, e.g. {@code TYPE => THROTTLE, USER => 'u1', LIMIT => '10req/sec'}. {@code SCOPE} is
- * supported; {@code TYPE => SPACE} and {@code GLOBAL_BYPASS} are not ported and are rejected.
+ * Ported from hbase-shell's {@code shell/commands/set_quota.rb}: a single hash literal, e.g.
+ * {@code TYPE => THROTTLE, USER => 'u1', LIMIT => '10req/sec'}. {@code TYPE => SPACE}
+ * (table/namespace space quotas) and {@code GLOBAL_BYPASS} are supported alongside throttles.
  */
 @InterfaceAudience.Private
 public final class SetQuotaCommand implements ShellCommand {
@@ -44,7 +44,9 @@ public final class SetQuotaCommand implements ShellCommand {
   @Override
   public String help() {
     return "set_quota TYPE => THROTTLE, USER|TABLE|NAMESPACE|REGIONSERVER => '...', "
-      + "LIMIT => '10req/sec' - set (or, with LIMIT => NONE, remove) a throttle quota";
+      + "LIMIT => '10req/sec' - set (or, with LIMIT => NONE, remove) a throttle quota; "
+      + "TYPE => SPACE, TABLE|NAMESPACE => '...', LIMIT => '1G', POLICY => NO_INSERTS - space "
+      + "quota; USER => 'u', GLOBAL_BYPASS => true|false - bypass global quotas";
   }
 
   @Override

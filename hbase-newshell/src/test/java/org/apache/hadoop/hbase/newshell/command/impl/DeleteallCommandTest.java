@@ -76,6 +76,14 @@ public class DeleteallCommandTest {
     new ExecutionContext(new StubShellAdmin(), tables, new PrintWriter(new StringWriter()));
 
   @Test
+  public void passesHashLiteralVisibilityAndAttributesThrough() throws Exception {
+    command.execute(ShellLineParser.parse(
+      "deleteall 't1', 'r1', {VISIBILITY => 'secret', ATTRIBUTES => {'k' => 'v'}}"), context);
+    assertEquals("secret", table.lastOptions.get("VISIBILITY"));
+    org.junit.jupiter.api.Assertions.assertTrue(table.lastOptions.containsKey("ATTRIBUTES"));
+  }
+
+  @Test
   public void deletesWholeRowWhenColumnOmitted() throws Exception {
     ParsedCommand parsed = ShellLineParser.parse("deleteall 't1', 'r1'");
     command.execute(parsed, context);
