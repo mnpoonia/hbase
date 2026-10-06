@@ -20,6 +20,7 @@ package org.apache.hadoop.hbase.newshell.command.impl;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import org.apache.hadoop.hbase.newshell.command.ArgParsing;
 import org.apache.hadoop.hbase.newshell.command.CommandResult;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
 import org.apache.hadoop.hbase.newshell.command.ShellCommand;
@@ -47,10 +48,9 @@ public final class ReopenRegionsCommand implements ShellCommand {
   @Override
   public CommandResult execute(ParsedCommand command, ExecutionContext context)
     throws ShellCommandException, IOException {
-    if (command.positionalArgs().isEmpty()) {
-      throw new ShellCommandException("reopen_regions requires a table name argument");
-    }
-    String tableName = String.valueOf(command.positionalArgs().get(0));
+    ArgParsing.requireMaxArgs(command, "reopen_regions", 2);
+    String tableName =
+      ArgParsing.requireArg(command, 0, "reopen_regions requires a table name argument");
     List<String> regions = new ArrayList<>();
     if (command.positionalArgs().size() > 1) {
       Object second = command.positionalArgs().get(1);

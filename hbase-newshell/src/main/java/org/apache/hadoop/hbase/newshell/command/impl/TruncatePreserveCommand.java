@@ -50,10 +50,8 @@ public final class TruncatePreserveCommand implements ShellCommand {
   public CommandResult execute(ParsedCommand command, ExecutionContext context)
     throws ShellCommandException, IOException {
     ArgParsing.requireMaxArgs(command, "truncate_preserve", 1);
-    if (command.positionalArgs().isEmpty()) {
-      throw new ShellCommandException("truncate_preserve requires a table name argument");
-    }
-    String tableName = String.valueOf(command.positionalArgs().get(0));
+    String tableName =
+      ArgParsing.requireArg(command, 0, "truncate_preserve requires a table name argument");
     List<String> lines = new ArrayList<>();
     lines.add("Truncating '" + tableName + "' table (it may take a while):");
     if (context.admin().isTableEnabled(tableName)) {

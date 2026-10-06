@@ -20,6 +20,7 @@ package org.apache.hadoop.hbase.newshell.command.impl;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import org.apache.hadoop.hbase.newshell.command.ArgParsing;
 import org.apache.hadoop.hbase.newshell.command.CommandResult;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
 import org.apache.hadoop.hbase.newshell.command.ShellCommand;
@@ -43,10 +44,8 @@ public final class RemovePeerNamespacesCommand implements ShellCommand {
   @Override
   public CommandResult execute(ParsedCommand command, ExecutionContext context)
     throws ShellCommandException, IOException {
-    if (command.positionalArgs().isEmpty()) {
-      throw new ShellCommandException("remove_peer_namespaces requires a peer id");
-    }
-    String peerId = String.valueOf(command.positionalArgs().get(0));
+    ArgParsing.requireMaxArgs(command, "remove_peer_namespaces", 2);
+    String peerId = ArgParsing.requireArg(command, 0, "remove_peer_namespaces requires a peer id");
     List<String> namespaces = new ArrayList<>();
     if (command.positionalArgs().size() > 1) {
       Object arg = command.positionalArgs().get(1);

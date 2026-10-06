@@ -17,9 +17,11 @@
  */
 package org.apache.hadoop.hbase.newshell.command.impl;
 
+import org.apache.hadoop.hbase.newshell.command.ArgParsing;
 import org.apache.hadoop.hbase.newshell.command.CommandResult;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
 import org.apache.hadoop.hbase.newshell.command.ShellCommand;
+import org.apache.hadoop.hbase.newshell.command.ShellCommandException;
 import org.apache.hadoop.hbase.newshell.command.TextResult;
 import org.apache.hadoop.hbase.newshell.parser.ParsedCommand;
 import org.apache.hadoop.hbase.util.VersionInfo;
@@ -42,7 +44,9 @@ public final class VersionCommand implements ShellCommand {
   }
 
   @Override
-  public CommandResult execute(ParsedCommand command, ExecutionContext context) {
+  public CommandResult execute(ParsedCommand command, ExecutionContext context)
+    throws ShellCommandException {
+    ArgParsing.requireMaxArgs(command, "version", 0);
     return TextResult.of(
       VersionInfo.getVersion() + ", r" + VersionInfo.getRevision() + ", " + VersionInfo.getDate());
   }

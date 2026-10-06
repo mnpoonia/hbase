@@ -20,6 +20,7 @@ package org.apache.hadoop.hbase.newshell.command.impl;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
+import org.apache.hadoop.hbase.newshell.command.ArgParsing;
 import org.apache.hadoop.hbase.newshell.command.CommandResult;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
 import org.apache.hadoop.hbase.newshell.command.ShellCommand;
@@ -43,11 +44,9 @@ public final class GetPeerConfigCommand implements ShellCommand {
   @Override
   public CommandResult execute(ParsedCommand command, ExecutionContext context)
     throws ShellCommandException, IOException {
-    if (command.positionalArgs().isEmpty()) {
-      throw new ShellCommandException("get_peer_config requires a peer id");
-    }
-    List<List<String>> rows =
-      context.admin().getPeerConfigRows(String.valueOf(command.positionalArgs().get(0)));
+    ArgParsing.requireMaxArgs(command, "get_peer_config", 1);
+    ArgParsing.requireArgs(command, 1, "get_peer_config requires a peer id");
+    List<List<String>> rows = context.admin().getPeerConfigRows(ArgParsing.string(command, 0));
     return new TabularResult(Collections.emptyList(), rows);
   }
 }

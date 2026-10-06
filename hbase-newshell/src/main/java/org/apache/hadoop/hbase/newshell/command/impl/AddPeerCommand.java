@@ -18,6 +18,7 @@
 package org.apache.hadoop.hbase.newshell.command.impl;
 
 import java.io.IOException;
+import org.apache.hadoop.hbase.newshell.command.ArgParsing;
 import org.apache.hadoop.hbase.newshell.command.CommandResult;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
 import org.apache.hadoop.hbase.newshell.command.ShellCommand;
@@ -48,10 +49,8 @@ public final class AddPeerCommand implements ShellCommand {
   @Override
   public CommandResult execute(ParsedCommand command, ExecutionContext context)
     throws ShellCommandException, IOException {
-    if (command.positionalArgs().isEmpty()) {
-      throw new ShellCommandException("add_peer requires a peer id argument");
-    }
-    String peerId = String.valueOf(command.positionalArgs().get(0));
+    ArgParsing.requireMaxArgs(command, "add_peer", 1);
+    String peerId = ArgParsing.requireArg(command, 0, "add_peer requires a peer id argument");
     context.admin().addPeer(peerId, command.options());
     return TextResult.of();
   }

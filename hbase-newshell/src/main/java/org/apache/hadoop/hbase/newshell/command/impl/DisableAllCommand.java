@@ -18,6 +18,7 @@
 package org.apache.hadoop.hbase.newshell.command.impl;
 
 import java.io.IOException;
+import org.apache.hadoop.hbase.newshell.command.ArgParsing;
 import org.apache.hadoop.hbase.newshell.command.BatchTableOp;
 import org.apache.hadoop.hbase.newshell.command.CommandResult;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
@@ -47,6 +48,7 @@ public final class DisableAllCommand implements ShellCommand {
   @Override
   public CommandResult execute(ParsedCommand command, ExecutionContext context)
     throws ShellCommandException, IOException {
+    ArgParsing.requireMaxArgs(command, "disable_all", 1);
     return BatchTableOp.run(command, context, "disable_all", "disabled",
       (admin, table) -> admin.disableTable(table));
   }

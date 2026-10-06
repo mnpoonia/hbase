@@ -18,6 +18,7 @@
 package org.apache.hadoop.hbase.newshell.command.impl;
 
 import java.io.IOException;
+import org.apache.hadoop.hbase.newshell.command.ArgParsing;
 import org.apache.hadoop.hbase.newshell.command.CommandResult;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
 import org.apache.hadoop.hbase.newshell.command.ShellCommand;
@@ -41,10 +42,9 @@ public final class EnableTableReplicationCommand implements ShellCommand {
   @Override
   public CommandResult execute(ParsedCommand command, ExecutionContext context)
     throws ShellCommandException, IOException {
-    if (command.positionalArgs().isEmpty()) {
-      throw new ShellCommandException("enable_table_replication requires a table name");
-    }
-    String table = String.valueOf(command.positionalArgs().get(0));
+    ArgParsing.requireMaxArgs(command, "enable_table_replication", 1);
+    String table =
+      ArgParsing.requireArg(command, 0, "enable_table_replication requires a table name");
     context.admin().enableTableReplication(table);
     return TextResult
       .of(String.format("The replication of table '%s' successfully enabled", table));

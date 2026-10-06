@@ -18,6 +18,7 @@
 package org.apache.hadoop.hbase.newshell.command.impl;
 
 import java.io.IOException;
+import org.apache.hadoop.hbase.newshell.command.ArgParsing;
 import org.apache.hadoop.hbase.newshell.command.CommandResult;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
 import org.apache.hadoop.hbase.newshell.command.ShellCommand;
@@ -45,6 +46,7 @@ public final class FlushMasterStoreCommand implements ShellCommand {
   @Override
   public CommandResult execute(ParsedCommand command, ExecutionContext context)
     throws ShellCommandException, IOException {
+    ArgParsing.requireMaxArgs(command, "flush_master_store", 0);
     context.admin().flushMasterStore();
     return TextResult.of();
   }

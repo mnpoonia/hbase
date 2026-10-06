@@ -18,6 +18,7 @@
 package org.apache.hadoop.hbase.newshell.command.impl;
 
 import java.io.IOException;
+import org.apache.hadoop.hbase.newshell.command.ArgParsing;
 import org.apache.hadoop.hbase.newshell.command.BatchTableOp;
 import org.apache.hadoop.hbase.newshell.command.CommandResult;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
@@ -45,6 +46,7 @@ public final class EnableAllCommand implements ShellCommand {
   @Override
   public CommandResult execute(ParsedCommand command, ExecutionContext context)
     throws ShellCommandException, IOException {
+    ArgParsing.requireMaxArgs(command, "enable_all", 1);
     return BatchTableOp.run(command, context, "enable_all", "enabled",
       (admin, table) -> admin.enableTable(table));
   }

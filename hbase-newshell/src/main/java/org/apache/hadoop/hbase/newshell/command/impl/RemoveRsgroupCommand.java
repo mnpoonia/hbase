@@ -19,6 +19,7 @@ package org.apache.hadoop.hbase.newshell.command.impl;
 
 import java.io.IOException;
 import org.apache.hadoop.hbase.newshell.command.*;
+import org.apache.hadoop.hbase.newshell.command.ArgParsing;
 import org.apache.hadoop.hbase.newshell.parser.ParsedCommand;
 import org.apache.yetus.audience.InterfaceAudience;
 
@@ -37,9 +38,9 @@ public final class RemoveRsgroupCommand implements ShellCommand {
   @Override
   public CommandResult execute(ParsedCommand command, ExecutionContext context)
     throws ShellCommandException, IOException {
-    if (command.positionalArgs().isEmpty())
-      throw new ShellCommandException("remove_rsgroup requires a group name");
-    context.admin().removeRsGroup(String.valueOf(command.positionalArgs().get(0)));
+    ArgParsing.requireMaxArgs(command, "remove_rsgroup", 1);
+    ArgParsing.requireArgs(command, 1, "remove_rsgroup requires a group name");
+    context.admin().removeRsGroup(ArgParsing.string(command, 0));
     return TextResult.of();
   }
 }

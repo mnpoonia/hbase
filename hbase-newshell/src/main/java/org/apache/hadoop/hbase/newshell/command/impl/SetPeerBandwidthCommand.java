@@ -18,6 +18,7 @@
 package org.apache.hadoop.hbase.newshell.command.impl;
 
 import java.io.IOException;
+import org.apache.hadoop.hbase.newshell.command.ArgParsing;
 import org.apache.hadoop.hbase.newshell.command.CommandResult;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
 import org.apache.hadoop.hbase.newshell.command.ShellCommand;
@@ -41,11 +42,10 @@ public final class SetPeerBandwidthCommand implements ShellCommand {
   @Override
   public CommandResult execute(ParsedCommand command, ExecutionContext context)
     throws ShellCommandException, IOException {
-    if (command.positionalArgs().size() < 2) {
-      throw new ShellCommandException("set_peer_bandwidth requires peer id and bandwidth");
-    }
-    String peerId = String.valueOf(command.positionalArgs().get(0));
-    String bandwidthArg = String.valueOf(command.positionalArgs().get(1));
+    ArgParsing.requireMaxArgs(command, "set_peer_bandwidth", 2);
+    ArgParsing.requireArgs(command, 2, "set_peer_bandwidth requires peer id and bandwidth");
+    String peerId = ArgParsing.string(command, 0);
+    String bandwidthArg = ArgParsing.string(command, 1);
     long bandwidth;
     try {
       bandwidth = Long.parseLong(bandwidthArg);

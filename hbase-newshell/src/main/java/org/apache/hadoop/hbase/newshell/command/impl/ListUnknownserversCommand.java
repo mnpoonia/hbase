@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import org.apache.hadoop.hbase.newshell.command.ArgParsing;
 import org.apache.hadoop.hbase.newshell.command.CommandResult;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
 import org.apache.hadoop.hbase.newshell.command.ShellCommand;
@@ -48,6 +49,7 @@ public final class ListUnknownserversCommand implements ShellCommand {
   @Override
   public CommandResult execute(ParsedCommand command, ExecutionContext context)
     throws ShellCommandException, IOException {
+    ArgParsing.requireMaxArgs(command, "list_unknownservers", 0);
     List<String> servers = context.admin().listUnknownServers();
     List<List<String>> rows = new ArrayList<>();
     for (String server : servers) {

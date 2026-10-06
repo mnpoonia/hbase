@@ -18,6 +18,7 @@
 package org.apache.hadoop.hbase.newshell.command.impl;
 
 import java.io.IOException;
+import org.apache.hadoop.hbase.newshell.command.ArgParsing;
 import org.apache.hadoop.hbase.newshell.command.CommandResult;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
 import org.apache.hadoop.hbase.newshell.command.ShellCommand;
@@ -46,14 +47,13 @@ public final class CloneTableSchemaCommand implements ShellCommand {
   @Override
   public CommandResult execute(ParsedCommand command, ExecutionContext context)
     throws ShellCommandException, IOException {
-    if (command.positionalArgs().size() < 2) {
-      throw new ShellCommandException(
-        "clone_table_schema requires a table name and a new table name");
-    }
-    String tableName = String.valueOf(command.positionalArgs().get(0));
-    String newTableName = String.valueOf(command.positionalArgs().get(1));
+    ArgParsing.requireMaxArgs(command, "clone_table_schema", 3);
+    ArgParsing.requireArgs(command, 2,
+      "clone_table_schema requires a table name and a new table name");
+    String tableName = ArgParsing.string(command, 0);
+    String newTableName = ArgParsing.string(command, 1);
     boolean preserveSplits = command.positionalArgs().size() < 3
-      || !"false".equalsIgnoreCase(String.valueOf(command.positionalArgs().get(2)));
+      || !"false".equalsIgnoreCase(ArgParsing.string(command, 2));
     context.admin().cloneTableSchema(tableName, newTableName, preserveSplits);
     return TextResult.of();
   }

@@ -18,6 +18,7 @@
 package org.apache.hadoop.hbase.newshell.command.impl;
 
 import java.io.IOException;
+import org.apache.hadoop.hbase.newshell.command.ArgParsing;
 import org.apache.hadoop.hbase.newshell.command.CommandResult;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
 import org.apache.hadoop.hbase.newshell.command.ShellCommand;
@@ -45,14 +46,11 @@ public final class CompactCommand implements ShellCommand {
   @Override
   public CommandResult execute(ParsedCommand command, ExecutionContext context)
     throws ShellCommandException, IOException {
-    if (command.positionalArgs().isEmpty()) {
-      throw new ShellCommandException("compact requires a table or region name argument");
-    }
-    String tableOrRegionName = String.valueOf(command.positionalArgs().get(0));
-    String family =
-      command.positionalArgs().size() > 1 ? String.valueOf(command.positionalArgs().get(1)) : null;
-    String type =
-      command.positionalArgs().size() > 2 ? String.valueOf(command.positionalArgs().get(2)) : null;
+    ArgParsing.requireMaxArgs(command, "compact", 3);
+    String tableOrRegionName =
+      ArgParsing.requireArg(command, 0, "compact requires a table or region name argument");
+    String family = command.positionalArgs().size() > 1 ? ArgParsing.string(command, 1) : null;
+    String type = command.positionalArgs().size() > 2 ? ArgParsing.string(command, 2) : null;
     context.admin().compact(tableOrRegionName, family, type);
     return TextResult.of(tableOrRegionName + " compaction requested");
   }

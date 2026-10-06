@@ -18,6 +18,7 @@
 package org.apache.hadoop.hbase.newshell.command.impl;
 
 import java.io.IOException;
+import org.apache.hadoop.hbase.newshell.command.ArgParsing;
 import org.apache.hadoop.hbase.newshell.command.CommandResult;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
 import org.apache.hadoop.hbase.newshell.command.ShellCommand;
@@ -48,10 +49,9 @@ public final class AlterStatusCommand implements ShellCommand {
   @Override
   public CommandResult execute(ParsedCommand command, ExecutionContext context)
     throws ShellCommandException, IOException {
-    if (command.positionalArgs().isEmpty()) {
-      throw new ShellCommandException("alter_status requires a table name argument");
-    }
-    String tableName = String.valueOf(command.positionalArgs().get(0));
+    ArgParsing.requireMaxArgs(command, "alter_status", 1);
+    String tableName =
+      ArgParsing.requireArg(command, 0, "alter_status requires a table name argument");
     AlterStatusView status = context.admin().alterStatus(tableName);
     // Ruby polls until RIT is empty then always prints "Done." — for a one-shot
     // piped invocation we report a single snapshot plus the same trailing Done.

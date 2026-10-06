@@ -18,10 +18,8 @@
 package org.apache.hadoop.hbase.newshell.command.impl;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 import org.apache.hadoop.hbase.newshell.command.*;
+import org.apache.hadoop.hbase.newshell.command.ArgParsing;
 import org.apache.hadoop.hbase.newshell.parser.ParsedCommand;
 import org.apache.yetus.audience.InterfaceAudience;
 
@@ -40,20 +38,11 @@ public final class RemoveServersRsgroupCommand implements ShellCommand {
   @Override
   public CommandResult execute(ParsedCommand command, ExecutionContext context)
     throws ShellCommandException, IOException {
-    if (command.positionalArgs().isEmpty())
-      throw new ShellCommandException("remove_servers_rsgroup requires servers");
-    context.admin().removeServersFromRsGroup(toStringList(command.positionalArgs().get(0)));
+    ArgParsing.requireMaxArgs(command, "remove_servers_rsgroup", 1);
+    ArgParsing.requireArgs(command, 1, "remove_servers_rsgroup requires servers");
+    context.admin()
+      .removeServersFromRsGroup(ArgParsing.stringList(command.positionalArgs().get(0)));
     return TextResult.of();
   }
 
-  private static List<String> toStringList(Object value) {
-    if (value instanceof List) {
-      List<String> result = new ArrayList<>();
-      for (Object element : (List<?>) value) {
-        result.add(String.valueOf(element));
-      }
-      return result;
-    }
-    return Arrays.asList(String.valueOf(value));
-  }
 }

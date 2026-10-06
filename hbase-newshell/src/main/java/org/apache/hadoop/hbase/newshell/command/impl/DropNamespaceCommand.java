@@ -18,6 +18,7 @@
 package org.apache.hadoop.hbase.newshell.command.impl;
 
 import java.io.IOException;
+import org.apache.hadoop.hbase.newshell.command.ArgParsing;
 import org.apache.hadoop.hbase.newshell.command.CommandResult;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
 import org.apache.hadoop.hbase.newshell.command.ShellCommand;
@@ -45,10 +46,9 @@ public final class DropNamespaceCommand implements ShellCommand {
   @Override
   public CommandResult execute(ParsedCommand command, ExecutionContext context)
     throws ShellCommandException, IOException {
-    if (command.positionalArgs().isEmpty()) {
-      throw new ShellCommandException("drop_namespace requires a namespace name argument");
-    }
-    String namespace = String.valueOf(command.positionalArgs().get(0));
+    ArgParsing.requireMaxArgs(command, "drop_namespace", 1);
+    String namespace =
+      ArgParsing.requireArg(command, 0, "drop_namespace requires a namespace name argument");
     context.admin().dropNamespace(namespace);
     return TextResult.of();
   }

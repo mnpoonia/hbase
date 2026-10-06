@@ -20,6 +20,7 @@ package org.apache.hadoop.hbase.newshell.command.impl;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
+import org.apache.hadoop.hbase.newshell.command.ArgParsing;
 import org.apache.hadoop.hbase.newshell.command.CommandResult;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
 import org.apache.hadoop.hbase.newshell.command.ShellCommand;
@@ -47,6 +48,7 @@ public final class ListProceduresCommand implements ShellCommand {
   @Override
   public CommandResult execute(ParsedCommand command, ExecutionContext context)
     throws ShellCommandException, IOException {
+    ArgParsing.requireMaxArgs(command, "list_procedures", 0);
     List<List<String>> rows = context.admin().listProcedures();
     return new TabularResult(
       Arrays.asList("PID", "Name", "State", "Submitted", "Last_Update", "Parameters"), rows);

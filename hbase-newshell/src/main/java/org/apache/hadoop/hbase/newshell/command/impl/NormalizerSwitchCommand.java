@@ -47,9 +47,8 @@ public final class NormalizerSwitchCommand implements ShellCommand {
   @Override
   public CommandResult execute(ParsedCommand command, ExecutionContext context)
     throws ShellCommandException, IOException {
-    if (command.positionalArgs().isEmpty()) {
-      throw new ShellCommandException("normalizer_switch requires a true|false argument");
-    }
+    ArgParsing.requireMaxArgs(command, "normalizer_switch", 1);
+    ArgParsing.requireArgs(command, 1, "normalizer_switch requires a true|false argument");
     boolean enabled = ArgParsing.parseBoolean(command.positionalArgs().get(0));
     boolean previousState = context.admin().normalizerSwitch(enabled);
     return TextResult.of(String.valueOf(previousState));

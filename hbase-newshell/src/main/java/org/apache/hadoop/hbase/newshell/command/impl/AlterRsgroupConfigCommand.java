@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import org.apache.hadoop.hbase.newshell.command.*;
+import org.apache.hadoop.hbase.newshell.command.ArgParsing;
 import org.apache.hadoop.hbase.newshell.parser.ParsedCommand;
 import org.apache.yetus.audience.InterfaceAudience;
 
@@ -39,9 +40,9 @@ public final class AlterRsgroupConfigCommand implements ShellCommand {
   @Override
   public CommandResult execute(ParsedCommand command, ExecutionContext context)
     throws ShellCommandException, IOException {
-    if (command.positionalArgs().isEmpty())
-      throw new ShellCommandException("alter_rsgroup_config requires a group name");
-    String group = String.valueOf(command.positionalArgs().get(0));
+    ArgParsing.requireMaxArgs(command, "alter_rsgroup_config", 2);
+    ArgParsing.requireArgs(command, 1, "alter_rsgroup_config requires a group name");
+    String group = ArgParsing.string(command, 0);
     Map<String, Object> args = new LinkedHashMap<>();
     if (command.positionalArgs().size() > 1 && command.positionalArgs().get(1) instanceof Map) {
       for (Map.Entry<?, ?> e : ((Map<?, ?>) command.positionalArgs().get(1)).entrySet()) {

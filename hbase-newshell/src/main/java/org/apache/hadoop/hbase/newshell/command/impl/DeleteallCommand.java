@@ -18,6 +18,7 @@
 package org.apache.hadoop.hbase.newshell.command.impl;
 
 import java.io.IOException;
+import org.apache.hadoop.hbase.newshell.command.ArgParsing;
 import org.apache.hadoop.hbase.newshell.command.CommandResult;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
 import org.apache.hadoop.hbase.newshell.command.ShellCommand;
@@ -50,17 +51,13 @@ public final class DeleteallCommand implements ShellCommand {
   @Override
   public CommandResult execute(ParsedCommand command, ExecutionContext context)
     throws ShellCommandException, IOException {
-    if (command.positionalArgs().isEmpty()) {
-      throw new ShellCommandException("deleteall requires a table name argument");
-    }
-    String tableName = String.valueOf(command.positionalArgs().get(0));
+    String tableName =
+      ArgParsing.requireArg(command, 0, "deleteall requires a table name argument");
     boolean prefixMode = command.options().containsKey("ROWPREFIXFILTER");
     int nextIndex = 1;
     String row = null;
     if (!prefixMode) {
-      if (command.positionalArgs().size() < 2) {
-        throw new ShellCommandException("deleteall requires a row key argument");
-      }
+      ArgParsing.requireArgs(command, 2, "deleteall requires a row key argument");
       row = String.valueOf(command.positionalArgs().get(nextIndex++));
     }
     String column = command.positionalArgs().size() > nextIndex

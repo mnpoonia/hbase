@@ -18,8 +18,8 @@
 package org.apache.hadoop.hbase.newshell.command.impl;
 
 import java.io.IOException;
-import java.util.LinkedHashMap;
 import java.util.Map;
+import org.apache.hadoop.hbase.newshell.command.ArgParsing;
 import org.apache.hadoop.hbase.newshell.command.CommandResult;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
 import org.apache.hadoop.hbase.newshell.command.ShellCommand;
@@ -43,11 +43,10 @@ public final class AppendPeerExcludeTableCFsCommand implements ShellCommand {
   @Override
   public CommandResult execute(ParsedCommand command, ExecutionContext context)
     throws ShellCommandException, IOException {
-    if (command.positionalArgs().isEmpty()) {
-      throw new ShellCommandException("append_peer_exclude_tableCFs requires a peer id");
-    }
-    String peerId = String.valueOf(command.positionalArgs().get(0));
-    Map<String, Object> tableCFs = tableCfsFrom(command);
+    ArgParsing.requireMaxArgs(command, "append_peer_exclude_tableCFs", 1);
+    String peerId =
+      ArgParsing.requireArg(command, 0, "append_peer_exclude_tableCFs requires a peer id");
+    Map<String, Object> tableCFs = ArgParsing.tableCfs(command);
     if (tableCFs == null) {
       throw new ShellCommandException("append_peer_exclude_tableCFs requires a table-cfs map");
     }
@@ -55,26 +54,4 @@ public final class AppendPeerExcludeTableCFsCommand implements ShellCommand {
     return TextResult.of();
   }
 
-  private static Map<String, Object> tableCfsFrom(ParsedCommand command)
-    throws ShellCommandException {
-    if (command.positionalArgs().size() > 1) {
-      Object arg = command.positionalArgs().get(1);
-      if (arg instanceof Map) {
-        return copyMap((Map<?, ?>) arg);
-      }
-      throw new ShellCommandException("table-cfs argument must be a Hash");
-    }
-    if (!command.hashLiterals().isEmpty()) {
-      return new LinkedHashMap<>(command.hashLiterals().get(0));
-    }
-    return null;
-  }
-
-  private static Map<String, Object> copyMap(Map<?, ?> src) {
-    Map<String, Object> out = new LinkedHashMap<>();
-    for (Map.Entry<?, ?> e : src.entrySet()) {
-      out.put(String.valueOf(e.getKey()), e.getValue());
-    }
-    return out;
-  }
 }

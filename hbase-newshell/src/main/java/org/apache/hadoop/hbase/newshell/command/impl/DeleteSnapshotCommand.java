@@ -18,6 +18,7 @@
 package org.apache.hadoop.hbase.newshell.command.impl;
 
 import java.io.IOException;
+import org.apache.hadoop.hbase.newshell.command.ArgParsing;
 import org.apache.hadoop.hbase.newshell.command.CommandResult;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
 import org.apache.hadoop.hbase.newshell.command.ShellCommand;
@@ -44,10 +45,9 @@ public final class DeleteSnapshotCommand implements ShellCommand {
   @Override
   public CommandResult execute(ParsedCommand command, ExecutionContext context)
     throws ShellCommandException, IOException {
-    if (command.positionalArgs().isEmpty()) {
-      throw new ShellCommandException("delete_snapshot requires a snapshot name argument");
-    }
-    String snapshotName = String.valueOf(command.positionalArgs().get(0));
+    ArgParsing.requireMaxArgs(command, "delete_snapshot", 1);
+    String snapshotName =
+      ArgParsing.requireArg(command, 0, "delete_snapshot requires a snapshot name argument");
     context.admin().deleteSnapshot(snapshotName);
     return TextResult.of();
   }

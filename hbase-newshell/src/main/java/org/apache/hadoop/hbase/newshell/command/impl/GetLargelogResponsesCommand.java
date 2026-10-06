@@ -19,10 +19,10 @@ package org.apache.hadoop.hbase.newshell.command.impl;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import org.apache.hadoop.hbase.newshell.command.ArgParsing;
 import org.apache.hadoop.hbase.newshell.command.CommandResult;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
 import org.apache.hadoop.hbase.newshell.command.ShellCommand;
@@ -49,10 +49,9 @@ public final class GetLargelogResponsesCommand implements ShellCommand {
   @Override
   public CommandResult execute(ParsedCommand command, ExecutionContext context)
     throws ShellCommandException, IOException {
-    if (command.positionalArgs().isEmpty()) {
-      throw new ShellCommandException("get_largelog_responses requires server name(s) or '*'");
-    }
-    List<String> servers = toServers(command.positionalArgs().get(0));
+    ArgParsing.requireMaxArgs(command, "get_largelog_responses", 2);
+    ArgParsing.requireArgs(command, 1, "get_largelog_responses requires server name(s) or '*'");
+    List<String> servers = ArgParsing.stringList(command.positionalArgs().get(0));
     Map<String, Object> args = new LinkedHashMap<>(command.options());
     for (Map<String, Object> hash : command.hashLiterals()) {
       args.putAll(hash);
@@ -71,14 +70,4 @@ public final class GetLargelogResponsesCommand implements ShellCommand {
     return new TextResult(lines);
   }
 
-  private static List<String> toServers(Object value) {
-    if (value instanceof List) {
-      List<String> result = new ArrayList<>();
-      for (Object element : (List<?>) value) {
-        result.add(String.valueOf(element));
-      }
-      return result;
-    }
-    return Arrays.asList(String.valueOf(value));
-  }
 }

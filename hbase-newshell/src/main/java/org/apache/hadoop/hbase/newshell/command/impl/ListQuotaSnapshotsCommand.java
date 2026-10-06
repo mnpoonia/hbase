@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import org.apache.hadoop.hbase.newshell.command.ArgParsing;
 import org.apache.hadoop.hbase.newshell.command.CommandResult;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
 import org.apache.hadoop.hbase.newshell.command.ShellCommand;
@@ -48,6 +49,7 @@ public final class ListQuotaSnapshotsCommand implements ShellCommand {
   @Override
   public CommandResult execute(ParsedCommand command, ExecutionContext context)
     throws ShellCommandException, IOException {
+    ArgParsing.requireMaxArgs(command, "list_quota_snapshots", 0);
     Map<String, Object> args =
       command.hashLiterals().isEmpty() ? command.options() : command.hashLiterals().get(0);
     List<List<String>> rows = context.admin().listQuotaSnapshots(args);

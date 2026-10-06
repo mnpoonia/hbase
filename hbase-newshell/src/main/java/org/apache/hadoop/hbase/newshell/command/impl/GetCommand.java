@@ -63,11 +63,9 @@ public final class GetCommand implements ShellCommand {
   @Override
   public CommandResult execute(ParsedCommand command, ExecutionContext context)
     throws ShellCommandException, IOException {
-    if (command.positionalArgs().size() < 2) {
-      throw new ShellCommandException("get requires a table name and a row key argument");
-    }
-    String tableName = String.valueOf(command.positionalArgs().get(0));
-    String row = String.valueOf(command.positionalArgs().get(1));
+    ArgParsing.requireArgs(command, 2, "get requires a table name and a row key argument");
+    String tableName = ArgParsing.string(command, 0);
+    String row = ArgParsing.string(command, 1);
     Map<String, Object> options = withColumns(command);
     int maxLength = ArgParsing.maxLength(options.remove("MAXLENGTH"));
     GetResult result = context.tables().forTable(tableName).get(row, options);

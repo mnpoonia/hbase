@@ -20,6 +20,7 @@ package org.apache.hadoop.hbase.newshell.command.impl;
 import java.io.IOException;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import org.apache.hadoop.hbase.newshell.command.ArgParsing;
 import org.apache.hadoop.hbase.newshell.command.CommandResult;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
 import org.apache.hadoop.hbase.newshell.command.ShellCommand;
@@ -46,6 +47,7 @@ public final class RefreshHfilesCommand implements ShellCommand {
   @Override
   public CommandResult execute(ParsedCommand command, ExecutionContext context)
     throws ShellCommandException, IOException {
+    ArgParsing.requireMaxArgs(command, "refresh_hfiles", 0);
     Map<String, Object> args = new LinkedHashMap<>(command.options());
     for (Map<String, Object> hash : command.hashLiterals()) {
       args.putAll(hash);

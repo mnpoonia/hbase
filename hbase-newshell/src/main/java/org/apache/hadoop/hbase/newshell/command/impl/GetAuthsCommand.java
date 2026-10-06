@@ -18,6 +18,7 @@
 package org.apache.hadoop.hbase.newshell.command.impl;
 
 import java.io.IOException;
+import org.apache.hadoop.hbase.newshell.command.ArgParsing;
 import org.apache.hadoop.hbase.newshell.command.CommandResult;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
 import org.apache.hadoop.hbase.newshell.command.ShellCommand;
@@ -44,10 +45,8 @@ public final class GetAuthsCommand implements ShellCommand {
   @Override
   public CommandResult execute(ParsedCommand command, ExecutionContext context)
     throws ShellCommandException, IOException {
-    if (command.positionalArgs().isEmpty()) {
-      throw new ShellCommandException("get_auths requires a user argument");
-    }
-    return new TextResult(
-      context.admin().getAuths(String.valueOf(command.positionalArgs().get(0))));
+    ArgParsing.requireMaxArgs(command, "get_auths", 1);
+    ArgParsing.requireArgs(command, 1, "get_auths requires a user argument");
+    return new TextResult(context.admin().getAuths(ArgParsing.string(command, 0)));
   }
 }

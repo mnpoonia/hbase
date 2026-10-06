@@ -49,12 +49,10 @@ public final class DeleteCommand implements ShellCommand {
   public CommandResult execute(ParsedCommand command, ExecutionContext context)
     throws ShellCommandException, IOException {
     ArgParsing.requireMaxArgs(command, "delete", 4);
-    if (command.positionalArgs().size() < 3) {
-      throw new ShellCommandException("delete requires a table name, row key and column argument");
-    }
-    String tableName = String.valueOf(command.positionalArgs().get(0));
-    String row = String.valueOf(command.positionalArgs().get(1));
-    String column = String.valueOf(command.positionalArgs().get(2));
+    ArgParsing.requireArgs(command, 3, "delete requires a table name, row key and column argument");
+    String tableName = ArgParsing.string(command, 0);
+    String row = ArgParsing.string(command, 1);
+    String column = ArgParsing.string(command, 2);
     Long timestamp = null;
     if (command.positionalArgs().size() > 3) {
       Object timestampArg = command.positionalArgs().get(3);

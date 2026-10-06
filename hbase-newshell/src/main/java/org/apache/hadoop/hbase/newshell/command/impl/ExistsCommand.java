@@ -18,6 +18,7 @@
 package org.apache.hadoop.hbase.newshell.command.impl;
 
 import java.io.IOException;
+import org.apache.hadoop.hbase.newshell.command.ArgParsing;
 import org.apache.hadoop.hbase.newshell.command.CommandResult;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
 import org.apache.hadoop.hbase.newshell.command.ShellCommand;
@@ -45,10 +46,8 @@ public final class ExistsCommand implements ShellCommand {
   @Override
   public CommandResult execute(ParsedCommand command, ExecutionContext context)
     throws ShellCommandException, IOException {
-    if (command.positionalArgs().isEmpty()) {
-      throw new ShellCommandException("exists requires a table name argument");
-    }
-    String tableName = String.valueOf(command.positionalArgs().get(0));
+    ArgParsing.requireMaxArgs(command, "exists", 1);
+    String tableName = ArgParsing.requireArg(command, 0, "exists requires a table name argument");
     boolean exists = context.admin().tableExists(tableName);
     return TextResult.of("Table " + tableName + " " + (exists ? "does exist" : "does not exist"));
   }

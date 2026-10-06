@@ -20,6 +20,7 @@ package org.apache.hadoop.hbase.newshell.command.impl;
 import java.io.IOException;
 import java.util.Arrays;
 import org.apache.hadoop.hbase.newshell.command.*;
+import org.apache.hadoop.hbase.newshell.command.ArgParsing;
 import org.apache.hadoop.hbase.newshell.hbase.BalanceResult;
 import org.apache.hadoop.hbase.newshell.parser.ParsedCommand;
 import org.apache.yetus.audience.InterfaceAudience;
@@ -39,9 +40,8 @@ public final class BalanceRsgroupCommand implements ShellCommand {
   @Override
   public CommandResult execute(ParsedCommand command, ExecutionContext context)
     throws ShellCommandException, IOException {
-    if (command.positionalArgs().isEmpty())
-      throw new ShellCommandException("balance_rsgroup requires a group name");
-    String group = String.valueOf(command.positionalArgs().get(0));
+    ArgParsing.requireArgs(command, 1, "balance_rsgroup requires a group name");
+    String group = ArgParsing.string(command, 0);
     boolean dryRun = false, ignoreRit = false;
     for (int i = 1; i < command.positionalArgs().size(); i++) {
       String v = String.valueOf(command.positionalArgs().get(i));

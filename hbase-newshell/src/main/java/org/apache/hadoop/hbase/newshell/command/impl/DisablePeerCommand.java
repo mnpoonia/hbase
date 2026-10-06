@@ -18,6 +18,7 @@
 package org.apache.hadoop.hbase.newshell.command.impl;
 
 import java.io.IOException;
+import org.apache.hadoop.hbase.newshell.command.ArgParsing;
 import org.apache.hadoop.hbase.newshell.command.CommandResult;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
 import org.apache.hadoop.hbase.newshell.command.ShellCommand;
@@ -42,10 +43,9 @@ public final class DisablePeerCommand implements ShellCommand {
   @Override
   public CommandResult execute(ParsedCommand command, ExecutionContext context)
     throws ShellCommandException, IOException {
-    if (command.positionalArgs().isEmpty()) {
-      throw new ShellCommandException("disable_peer requires a peer id argument");
-    }
-    context.admin().disablePeer(String.valueOf(command.positionalArgs().get(0)));
+    ArgParsing.requireMaxArgs(command, "disable_peer", 1);
+    ArgParsing.requireArgs(command, 1, "disable_peer requires a peer id argument");
+    context.admin().disablePeer(ArgParsing.string(command, 0));
     return TextResult.of();
   }
 }

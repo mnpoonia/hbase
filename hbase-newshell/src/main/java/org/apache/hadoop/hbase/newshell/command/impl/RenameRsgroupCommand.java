@@ -19,6 +19,7 @@ package org.apache.hadoop.hbase.newshell.command.impl;
 
 import java.io.IOException;
 import org.apache.hadoop.hbase.newshell.command.*;
+import org.apache.hadoop.hbase.newshell.command.ArgParsing;
 import org.apache.hadoop.hbase.newshell.parser.ParsedCommand;
 import org.apache.yetus.audience.InterfaceAudience;
 
@@ -37,10 +38,9 @@ public final class RenameRsgroupCommand implements ShellCommand {
   @Override
   public CommandResult execute(ParsedCommand command, ExecutionContext context)
     throws ShellCommandException, IOException {
-    if (command.positionalArgs().size() < 2)
-      throw new ShellCommandException("rename_rsgroup requires old and new names");
-    context.admin().renameRsGroup(String.valueOf(command.positionalArgs().get(0)),
-      String.valueOf(command.positionalArgs().get(1)));
+    ArgParsing.requireMaxArgs(command, "rename_rsgroup", 2);
+    ArgParsing.requireArgs(command, 2, "rename_rsgroup requires old and new names");
+    context.admin().renameRsGroup(ArgParsing.string(command, 0), ArgParsing.string(command, 1));
     return TextResult.of();
   }
 }

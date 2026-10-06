@@ -20,6 +20,7 @@ package org.apache.hadoop.hbase.newshell.command.impl;
 import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.context.Scope;
 import java.io.IOException;
+import org.apache.hadoop.hbase.newshell.command.ArgParsing;
 import org.apache.hadoop.hbase.newshell.command.CommandResult;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
 import org.apache.hadoop.hbase.newshell.command.ShellCommand;
@@ -51,12 +52,9 @@ public final class TraceCommand implements ShellCommand {
   @Override
   public CommandResult execute(ParsedCommand command, ExecutionContext context)
     throws ShellCommandException, IOException {
-    String action = command.positionalArgs().isEmpty()
-      ? "status"
-      : String.valueOf(command.positionalArgs().get(0));
-    String spanName = command.positionalArgs().size() > 1
-      ? String.valueOf(command.positionalArgs().get(1))
-      : "HBaseShell";
+    ArgParsing.requireMaxArgs(command, "trace", 2);
+    String action = ArgParsing.optionalArg(command, 0, "status");
+    String spanName = ArgParsing.optionalArg(command, 1, "HBaseShell");
     if ("start".equals(action)) {
       if (!tracing()) {
         span = TraceUtil.getGlobalTracer().spanBuilder(spanName).startSpan();

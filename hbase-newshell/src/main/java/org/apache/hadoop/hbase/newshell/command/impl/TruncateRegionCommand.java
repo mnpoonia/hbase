@@ -18,6 +18,7 @@
 package org.apache.hadoop.hbase.newshell.command.impl;
 
 import java.io.IOException;
+import org.apache.hadoop.hbase.newshell.command.ArgParsing;
 import org.apache.hadoop.hbase.newshell.command.CommandResult;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
 import org.apache.hadoop.hbase.newshell.command.ShellCommand;
@@ -44,10 +45,9 @@ public final class TruncateRegionCommand implements ShellCommand {
   @Override
   public CommandResult execute(ParsedCommand command, ExecutionContext context)
     throws ShellCommandException, IOException {
-    if (command.positionalArgs().isEmpty()) {
-      throw new ShellCommandException("truncate_region requires a region name argument");
-    }
-    context.admin().truncateRegion(String.valueOf(command.positionalArgs().get(0)));
+    ArgParsing.requireMaxArgs(command, "truncate_region", 1);
+    ArgParsing.requireArgs(command, 1, "truncate_region requires a region name argument");
+    context.admin().truncateRegion(ArgParsing.string(command, 0));
     return TextResult.of();
   }
 }

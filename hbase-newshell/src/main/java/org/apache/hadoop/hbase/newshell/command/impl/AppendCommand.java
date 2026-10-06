@@ -47,14 +47,12 @@ public final class AppendCommand implements ShellCommand {
   public CommandResult execute(ParsedCommand command, ExecutionContext context)
     throws ShellCommandException, IOException {
     ArgParsing.requireMaxArgs(command, "append", 4);
-    if (command.positionalArgs().size() < 4) {
-      throw new ShellCommandException(
-        "append requires a table name, row key, column and value argument");
-    }
-    String tableName = String.valueOf(command.positionalArgs().get(0));
-    String row = String.valueOf(command.positionalArgs().get(1));
-    String column = String.valueOf(command.positionalArgs().get(2));
-    String value = String.valueOf(command.positionalArgs().get(3));
+    ArgParsing.requireArgs(command, 4,
+      "append requires a table name, row key, column and value argument");
+    String tableName = ArgParsing.string(command, 0);
+    String row = ArgParsing.string(command, 1);
+    String column = ArgParsing.string(command, 2);
+    String value = ArgParsing.string(command, 3);
     String current = context.tables().forTable(tableName).append(row, column, value);
     if (current == null) {
       return TextResult.of();

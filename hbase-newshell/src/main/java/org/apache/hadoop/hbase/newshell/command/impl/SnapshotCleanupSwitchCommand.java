@@ -47,9 +47,8 @@ public final class SnapshotCleanupSwitchCommand implements ShellCommand {
   @Override
   public CommandResult execute(ParsedCommand command, ExecutionContext context)
     throws ShellCommandException, IOException {
-    if (command.positionalArgs().isEmpty()) {
-      throw new ShellCommandException("snapshot_cleanup_switch requires a true|false argument");
-    }
+    ArgParsing.requireMaxArgs(command, "snapshot_cleanup_switch", 1);
+    ArgParsing.requireArgs(command, 1, "snapshot_cleanup_switch requires a true|false argument");
     boolean enabled = ArgParsing.parseBoolean(command.positionalArgs().get(0));
     boolean previousState = context.admin().snapshotCleanupSwitch(enabled);
     return TextResult.of("Previous snapshot cleanup state : " + previousState);

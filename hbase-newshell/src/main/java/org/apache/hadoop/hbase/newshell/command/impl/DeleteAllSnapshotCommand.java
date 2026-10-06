@@ -19,18 +19,15 @@ package org.apache.hadoop.hbase.newshell.command.impl;
 
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.time.Instant;
-import java.time.ZoneOffset;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
+import org.apache.hadoop.hbase.newshell.command.ArgParsing;
 import org.apache.hadoop.hbase.newshell.command.CommandResult;
+import org.apache.hadoop.hbase.newshell.command.DestructiveBatchConfirm;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
 import org.apache.hadoop.hbase.newshell.command.ShellCommand;
 import org.apache.hadoop.hbase.newshell.command.ShellCommandException;
 import org.apache.hadoop.hbase.newshell.command.TextResult;
-import org.apache.hadoop.hbase.newshell.command.UserAbortException;
 import org.apache.hadoop.hbase.newshell.hbase.SnapshotInfo;
 import org.apache.hadoop.hbase.newshell.parser.ParsedCommand;
 import org.apache.yetus.audience.InterfaceAudience;
@@ -40,9 +37,6 @@ import org.apache.yetus.audience.InterfaceAudience;
  */
 @InterfaceAudience.Private
 public final class DeleteAllSnapshotCommand implements ShellCommand {
-  private static final DateTimeFormatter CREATION_TIME_FORMAT =
-    DateTimeFormatter.ofPattern("EEE MMM dd HH:mm:ss zzz yyyy");
-
   @Override
   public String name() {
     return "delete_all_snapshot";
@@ -56,21 +50,21 @@ public final class DeleteAllSnapshotCommand implements ShellCommand {
   @Override
   public CommandResult execute(ParsedCommand command, ExecutionContext context)
     throws ShellCommandException, IOException {
-    if (command.positionalArgs().isEmpty()) {
-      throw new ShellCommandException("delete_all_snapshot requires a snapshot regex argument");
-    }
-    String regex = String.valueOf(command.positionalArgs().get(0));
+    ArgParsing.requireMaxArgs(command, "delete_all_snapshot", 1);
+    String regex =
+      ArgParsing.requireArg(command, 0, "delete_all_snapshot requires a snapshot regex argument");
     List<SnapshotInfo> list = context.admin().listSnapshots(regex);
     PrintWriter out = context.out();
     out.println("SNAPSHOT  TABLE + CREATION TIME");
     for (SnapshotInfo snapshot : list) {
-      out.println(" " + snapshot.name() + " " + formatInfo(snapshot));
+      out.println(" " + snapshot.name() + " " + snapshot.describe());
     }
     out.flush();
     if (list.isEmpty()) {
       return TextResult.of("No snapshots matched the regex " + regex);
     }
-    confirm(context, command, list.size());
+    DestructiveBatchConfirm.confirmSnapshotDelete(context, command, "delete_all_snapshot",
+      list.size());
     context.admin().deleteAllSnapshots(regex);
     List<SnapshotInfo> leftover = context.admin().listSnapshots(regex);
     int deleted = list.size() - leftover.size();
@@ -83,47 +77,9 @@ public final class DeleteAllSnapshotCommand implements ShellCommand {
       lines.add("Failed to delete the below " + leftover.size() + " snapshots.");
       lines.add("SNAPSHOT  TABLE + CREATION TIME");
       for (SnapshotInfo snapshot : leftover) {
-        lines.add(" " + snapshot.name() + " " + formatInfo(snapshot));
+        lines.add(" " + snapshot.name() + " " + snapshot.describe());
       }
     }
     return new TextResult(lines);
-  }
-
-  private static String formatInfo(SnapshotInfo snapshot) {
-    String creationTime = CREATION_TIME_FORMAT
-      .format(Instant.ofEpochMilli(snapshot.creationTime()).atZone(ZoneOffset.systemDefault()));
-    return snapshot.tableName() + " (" + creationTime + ")";
-  }
-
-  private static void confirm(ExecutionContext context, ParsedCommand command, int count)
-    throws ShellCommandException, IOException {
-    if (context.options().forceYes() || isYesOption(command)) {
-      return;
-    }
-    PrintWriter out = context.out();
-    out.println();
-    out.flush();
-    if (context.options().interactive() && context.confirmationReader() != null) {
-      String answer =
-        context.confirmationReader().readLine("Delete the above " + count + " snapshots (y/n)? ");
-      if (answer != null && answer.trim().toLowerCase(Locale.ROOT).startsWith("y")) {
-        return;
-      }
-      throw new UserAbortException("delete_all_snapshot aborted");
-    }
-    throw new UserAbortException(
-      "Refusing delete_all_snapshot without confirmation; re-run with --yes "
-        + "(or in an interactive TTY)");
-  }
-
-  private static boolean isYesOption(ParsedCommand command) {
-    Object yes = command.options().get("YES");
-    if (yes == null) {
-      return false;
-    }
-    if (yes instanceof Boolean) {
-      return (Boolean) yes;
-    }
-    return Boolean.parseBoolean(String.valueOf(yes)) || "Y".equalsIgnoreCase(String.valueOf(yes));
   }
 }

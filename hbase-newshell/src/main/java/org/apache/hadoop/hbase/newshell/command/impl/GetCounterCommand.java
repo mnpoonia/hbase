@@ -18,6 +18,7 @@
 package org.apache.hadoop.hbase.newshell.command.impl;
 
 import java.io.IOException;
+import org.apache.hadoop.hbase.newshell.command.ArgParsing;
 import org.apache.hadoop.hbase.newshell.command.CommandResult;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
 import org.apache.hadoop.hbase.newshell.command.ShellCommand;
@@ -45,13 +46,12 @@ public final class GetCounterCommand implements ShellCommand {
   @Override
   public CommandResult execute(ParsedCommand command, ExecutionContext context)
     throws ShellCommandException, IOException {
-    if (command.positionalArgs().size() < 3) {
-      throw new ShellCommandException(
-        "get_counter requires a table name, row key and column argument");
-    }
-    String tableName = String.valueOf(command.positionalArgs().get(0));
-    String row = String.valueOf(command.positionalArgs().get(1));
-    String column = String.valueOf(command.positionalArgs().get(2));
+    ArgParsing.requireMaxArgs(command, "get_counter", 3);
+    ArgParsing.requireArgs(command, 3,
+      "get_counter requires a table name, row key and column argument");
+    String tableName = ArgParsing.string(command, 0);
+    String row = ArgParsing.string(command, 1);
+    String column = ArgParsing.string(command, 2);
     Long counter = context.tables().forTable(tableName).getCounter(row, column);
     if (counter == null) {
       return TextResult.of("No counter found at specified coordinates");

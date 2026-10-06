@@ -20,6 +20,7 @@ package org.apache.hadoop.hbase.newshell.command.impl;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
+import org.apache.hadoop.hbase.newshell.command.ArgParsing;
 import org.apache.hadoop.hbase.newshell.command.CommandResult;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
 import org.apache.hadoop.hbase.newshell.command.ShellCommand;
@@ -43,9 +44,10 @@ public final class ListReplicatedTablesCommand implements ShellCommand {
   @Override
   public CommandResult execute(ParsedCommand command, ExecutionContext context)
     throws ShellCommandException, IOException {
+    ArgParsing.requireMaxArgs(command, "list_replicated_tables", 1);
     String regex = ".*";
     if (!command.positionalArgs().isEmpty()) {
-      regex = String.valueOf(command.positionalArgs().get(0));
+      regex = ArgParsing.string(command, 0);
     }
     List<List<String>> rows = context.admin().listReplicatedTables(regex);
     return new TabularResult(Arrays.asList("TABLE:COLUMNFAMILY", "ReplicationType"), rows);

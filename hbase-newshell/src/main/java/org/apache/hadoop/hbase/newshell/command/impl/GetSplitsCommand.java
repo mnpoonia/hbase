@@ -20,6 +20,7 @@ package org.apache.hadoop.hbase.newshell.command.impl;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import org.apache.hadoop.hbase.newshell.command.ArgParsing;
 import org.apache.hadoop.hbase.newshell.command.CommandResult;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
 import org.apache.hadoop.hbase.newshell.command.ShellCommand;
@@ -48,10 +49,9 @@ public final class GetSplitsCommand implements ShellCommand {
   @Override
   public CommandResult execute(ParsedCommand command, ExecutionContext context)
     throws ShellCommandException, IOException {
-    if (command.positionalArgs().isEmpty()) {
-      throw new ShellCommandException("get_splits requires a table name argument");
-    }
-    String tableName = String.valueOf(command.positionalArgs().get(0));
+    ArgParsing.requireMaxArgs(command, "get_splits", 1);
+    String tableName =
+      ArgParsing.requireArg(command, 0, "get_splits requires a table name argument");
     List<String> splits = context.tables().forTable(tableName).getSplits();
     List<String> lines = new ArrayList<>();
     lines.add("Total number of splits = " + (splits.size() + 1));

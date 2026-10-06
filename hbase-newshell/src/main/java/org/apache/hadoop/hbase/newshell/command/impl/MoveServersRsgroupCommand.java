@@ -18,9 +18,8 @@
 package org.apache.hadoop.hbase.newshell.command.impl;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
+import org.apache.hadoop.hbase.newshell.command.ArgParsing;
 import org.apache.hadoop.hbase.newshell.command.CommandResult;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
 import org.apache.hadoop.hbase.newshell.command.ShellCommand;
@@ -56,20 +55,9 @@ public final class MoveServersRsgroupCommand implements ShellCommand {
           + "argument");
     }
     String groupName = String.valueOf(positionals.get(0));
-    List<String> hostPorts = toStringList(positionals.get(1));
+    List<String> hostPorts = ArgParsing.stringList(positionals.get(1));
     context.admin().moveServersToRsGroup(hostPorts, groupName);
     return TextResult.of();
   }
 
-  @SuppressWarnings("unchecked")
-  private static List<String> toStringList(Object value) {
-    if (value instanceof List) {
-      List<String> result = new ArrayList<>();
-      for (Object element : (List<Object>) value) {
-        result.add(String.valueOf(element));
-      }
-      return result;
-    }
-    return Arrays.asList(String.valueOf(value));
-  }
 }

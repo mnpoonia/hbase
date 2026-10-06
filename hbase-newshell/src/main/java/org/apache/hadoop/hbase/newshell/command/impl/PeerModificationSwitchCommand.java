@@ -42,9 +42,8 @@ public final class PeerModificationSwitchCommand implements ShellCommand {
   @Override
   public CommandResult execute(ParsedCommand command, ExecutionContext context)
     throws ShellCommandException, IOException {
-    if (command.positionalArgs().isEmpty()) {
-      throw new ShellCommandException("peer_modification_switch requires true|false");
-    }
+    ArgParsing.requireMaxArgs(command, "peer_modification_switch", 2);
+    ArgParsing.requireArgs(command, 1, "peer_modification_switch requires true|false");
     boolean enabled = ArgParsing.parseBoolean(command.positionalArgs().get(0));
     boolean drain = false;
     if (command.positionalArgs().size() > 1) {

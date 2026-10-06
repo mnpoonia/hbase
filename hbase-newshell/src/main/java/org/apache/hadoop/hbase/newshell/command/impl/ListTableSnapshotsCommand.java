@@ -24,6 +24,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import org.apache.hadoop.hbase.newshell.command.ArgParsing;
 import org.apache.hadoop.hbase.newshell.command.CommandResult;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
 import org.apache.hadoop.hbase.newshell.command.ShellCommand;
@@ -55,13 +56,10 @@ public final class ListTableSnapshotsCommand implements ShellCommand {
   @Override
   public CommandResult execute(ParsedCommand command, ExecutionContext context)
     throws ShellCommandException, IOException {
-    if (command.positionalArgs().isEmpty()) {
-      throw new ShellCommandException(
-        "list_table_snapshots requires a table name regular expression");
-    }
-    String tableRegex = String.valueOf(command.positionalArgs().get(0));
-    String snapshotRegex =
-      command.positionalArgs().size() > 1 ? String.valueOf(command.positionalArgs().get(1)) : ".*";
+    ArgParsing.requireMaxArgs(command, "list_table_snapshots", 2);
+    String tableRegex = ArgParsing.requireArg(command, 0,
+      "list_table_snapshots requires a table name regular expression");
+    String snapshotRegex = ArgParsing.optionalArg(command, 1, ".*");
     List<SnapshotInfo> snapshots = context.admin().listTableSnapshots(tableRegex, snapshotRegex);
     List<List<String>> rows = new ArrayList<>();
     for (SnapshotInfo snapshot : snapshots) {

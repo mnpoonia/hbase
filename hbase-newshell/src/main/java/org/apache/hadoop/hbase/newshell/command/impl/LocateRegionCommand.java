@@ -19,6 +19,7 @@ package org.apache.hadoop.hbase.newshell.command.impl;
 
 import java.io.IOException;
 import java.util.Arrays;
+import org.apache.hadoop.hbase.newshell.command.ArgParsing;
 import org.apache.hadoop.hbase.newshell.command.CommandResult;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
 import org.apache.hadoop.hbase.newshell.command.ShellCommand;
@@ -47,11 +48,10 @@ public final class LocateRegionCommand implements ShellCommand {
   @Override
   public CommandResult execute(ParsedCommand command, ExecutionContext context)
     throws ShellCommandException, IOException {
-    if (command.positionalArgs().size() < 2) {
-      throw new ShellCommandException("locate_region requires a table name and a row key");
-    }
-    String tableName = String.valueOf(command.positionalArgs().get(0));
-    String rowKey = String.valueOf(command.positionalArgs().get(1));
+    ArgParsing.requireMaxArgs(command, "locate_region", 2);
+    ArgParsing.requireArgs(command, 2, "locate_region requires a table name and a row key");
+    String tableName = ArgParsing.string(command, 0);
+    String rowKey = ArgParsing.string(command, 1);
     RegionLocationView location = context.admin().locateRegion(tableName, rowKey);
     return new TabularResult(Arrays.asList("HOST", "REGION"),
       Arrays.asList(Arrays.asList(location.hostnamePort(), location.regionName())));

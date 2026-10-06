@@ -20,6 +20,7 @@ package org.apache.hadoop.hbase.newshell.command.impl;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.Map;
+import org.apache.hadoop.hbase.newshell.command.ArgParsing;
 import org.apache.hadoop.hbase.newshell.command.CommandResult;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
 import org.apache.hadoop.hbase.newshell.command.ShellCommand;
@@ -47,10 +48,9 @@ public final class CreateNamespaceCommand implements ShellCommand {
   @Override
   public CommandResult execute(ParsedCommand command, ExecutionContext context)
     throws ShellCommandException, IOException {
-    if (command.positionalArgs().isEmpty()) {
-      throw new ShellCommandException("create_namespace requires a namespace name argument");
-    }
-    String namespace = String.valueOf(command.positionalArgs().get(0));
+    ArgParsing.requireMaxArgs(command, "create_namespace", 1);
+    String namespace =
+      ArgParsing.requireArg(command, 0, "create_namespace requires a namespace name argument");
     Map<String, Object> properties =
       command.hashLiterals().isEmpty() ? Collections.emptyMap() : command.hashLiterals().get(0);
     context.admin().createNamespace(namespace, properties);

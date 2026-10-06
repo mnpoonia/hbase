@@ -18,6 +18,7 @@
 package org.apache.hadoop.hbase.newshell.command.impl;
 
 import java.io.IOException;
+import org.apache.hadoop.hbase.newshell.command.ArgParsing;
 import org.apache.hadoop.hbase.newshell.command.CommandResult;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
 import org.apache.hadoop.hbase.newshell.command.ShellCommand;
@@ -44,10 +45,8 @@ public final class RemovePeerCommand implements ShellCommand {
   @Override
   public CommandResult execute(ParsedCommand command, ExecutionContext context)
     throws ShellCommandException, IOException {
-    if (command.positionalArgs().isEmpty()) {
-      throw new ShellCommandException("remove_peer requires a peer id argument");
-    }
-    String peerId = String.valueOf(command.positionalArgs().get(0));
+    ArgParsing.requireMaxArgs(command, "remove_peer", 1);
+    String peerId = ArgParsing.requireArg(command, 0, "remove_peer requires a peer id argument");
     context.admin().removePeer(peerId);
     return TextResult.of();
   }

@@ -18,6 +18,7 @@
 package org.apache.hadoop.hbase.newshell.command.impl;
 
 import java.io.IOException;
+import org.apache.hadoop.hbase.newshell.command.ArgParsing;
 import org.apache.hadoop.hbase.newshell.command.CommandResult;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
 import org.apache.hadoop.hbase.newshell.command.ShellCommand;
@@ -42,10 +43,9 @@ public final class AddRsgroupCommand implements ShellCommand {
   @Override
   public CommandResult execute(ParsedCommand command, ExecutionContext context)
     throws ShellCommandException, IOException {
-    if (command.positionalArgs().isEmpty()) {
-      throw new ShellCommandException("add_rsgroup requires a group name argument");
-    }
-    context.admin().addRsGroup(String.valueOf(command.positionalArgs().get(0)));
+    ArgParsing.requireMaxArgs(command, "add_rsgroup", 1);
+    ArgParsing.requireArgs(command, 1, "add_rsgroup requires a group name argument");
+    context.admin().addRsGroup(ArgParsing.string(command, 0));
     return TextResult.of();
   }
 }

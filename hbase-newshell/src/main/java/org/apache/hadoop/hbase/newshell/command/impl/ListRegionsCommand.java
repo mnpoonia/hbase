@@ -25,6 +25,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import org.apache.hadoop.hbase.newshell.command.ArgParsing;
 import org.apache.hadoop.hbase.newshell.command.CommandResult;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
 import org.apache.hadoop.hbase.newshell.command.ShellCommand;
@@ -59,10 +60,9 @@ public final class ListRegionsCommand implements ShellCommand {
   @Override
   public CommandResult execute(ParsedCommand command, ExecutionContext context)
     throws ShellCommandException, IOException {
-    if (command.positionalArgs().isEmpty()) {
-      throw new ShellCommandException("list_regions requires a table name argument");
-    }
-    String tableName = String.valueOf(command.positionalArgs().get(0));
+    ArgParsing.requireMaxArgs(command, "list_regions", 1);
+    String tableName =
+      ArgParsing.requireArg(command, 0, "list_regions requires a table name argument");
     ListRegionsView view = context.admin().listRegions(tableName);
     return new TextResult(format(view));
   }

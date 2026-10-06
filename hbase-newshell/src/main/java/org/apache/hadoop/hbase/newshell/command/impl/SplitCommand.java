@@ -18,6 +18,7 @@
 package org.apache.hadoop.hbase.newshell.command.impl;
 
 import java.io.IOException;
+import org.apache.hadoop.hbase.newshell.command.ArgParsing;
 import org.apache.hadoop.hbase.newshell.command.CommandResult;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
 import org.apache.hadoop.hbase.newshell.command.ShellCommand;
@@ -45,12 +46,10 @@ public final class SplitCommand implements ShellCommand {
   @Override
   public CommandResult execute(ParsedCommand command, ExecutionContext context)
     throws ShellCommandException, IOException {
-    if (command.positionalArgs().isEmpty()) {
-      throw new ShellCommandException("split requires a table or region name argument");
-    }
-    String tableOrRegionName = String.valueOf(command.positionalArgs().get(0));
-    String splitPoint =
-      command.positionalArgs().size() > 1 ? String.valueOf(command.positionalArgs().get(1)) : null;
+    ArgParsing.requireMaxArgs(command, "split", 2);
+    String tableOrRegionName =
+      ArgParsing.requireArg(command, 0, "split requires a table or region name argument");
+    String splitPoint = command.positionalArgs().size() > 1 ? ArgParsing.string(command, 1) : null;
     context.admin().split(tableOrRegionName, splitPoint);
     return TextResult.of(tableOrRegionName + " split requested");
   }

@@ -18,6 +18,7 @@
 package org.apache.hadoop.hbase.newshell.command.impl;
 
 import java.io.IOException;
+import org.apache.hadoop.hbase.newshell.command.ArgParsing;
 import org.apache.hadoop.hbase.newshell.command.CommandResult;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
 import org.apache.hadoop.hbase.newshell.command.ShellCommand;
@@ -41,10 +42,8 @@ public final class ShowPeerTableCFsCommand implements ShellCommand {
   @Override
   public CommandResult execute(ParsedCommand command, ExecutionContext context)
     throws ShellCommandException, IOException {
-    if (command.positionalArgs().isEmpty()) {
-      throw new ShellCommandException("show_peer_tableCFs requires a peer id");
-    }
-    return TextResult
-      .of(context.admin().showPeerTableCFs(String.valueOf(command.positionalArgs().get(0))));
+    ArgParsing.requireMaxArgs(command, "show_peer_tableCFs", 1);
+    ArgParsing.requireArgs(command, 1, "show_peer_tableCFs requires a peer id");
+    return TextResult.of(context.admin().showPeerTableCFs(ArgParsing.string(command, 0)));
   }
 }

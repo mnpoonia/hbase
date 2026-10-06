@@ -18,6 +18,7 @@
 package org.apache.hadoop.hbase.newshell.command.impl;
 
 import java.io.IOException;
+import org.apache.hadoop.hbase.newshell.command.ArgParsing;
 import org.apache.hadoop.hbase.newshell.command.CommandResult;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
 import org.apache.hadoop.hbase.newshell.command.ShellCommand;
@@ -45,10 +46,9 @@ public final class UpdateRsgroupConfigCommand implements ShellCommand {
   @Override
   public CommandResult execute(ParsedCommand command, ExecutionContext context)
     throws ShellCommandException, IOException {
-    if (command.positionalArgs().isEmpty()) {
-      throw new ShellCommandException("update_rsgroup_config requires a group name argument");
-    }
-    context.admin().updateRsGroupConfig(String.valueOf(command.positionalArgs().get(0)));
+    ArgParsing.requireMaxArgs(command, "update_rsgroup_config", 1);
+    ArgParsing.requireArgs(command, 1, "update_rsgroup_config requires a group name argument");
+    context.admin().updateRsGroupConfig(ArgParsing.string(command, 0));
     return TextResult.of();
   }
 }

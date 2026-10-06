@@ -20,6 +20,7 @@ package org.apache.hadoop.hbase.newshell.command.impl;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import org.apache.hadoop.hbase.newshell.command.ArgParsing;
 import org.apache.hadoop.hbase.newshell.command.CommandResult;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
 import org.apache.hadoop.hbase.newshell.command.ShellCommand;
@@ -48,10 +49,9 @@ public final class GetRsgroupCommand implements ShellCommand {
   @Override
   public CommandResult execute(ParsedCommand command, ExecutionContext context)
     throws ShellCommandException, IOException {
-    if (command.positionalArgs().isEmpty()) {
-      throw new ShellCommandException("get_rsgroup requires a group name argument");
-    }
-    String groupName = String.valueOf(command.positionalArgs().get(0));
+    ArgParsing.requireMaxArgs(command, "get_rsgroup", 1);
+    String groupName =
+      ArgParsing.requireArg(command, 0, "get_rsgroup requires a group name argument");
     RsGroupView group = context.admin().getRsGroup(groupName);
     List<String> lines = new ArrayList<>();
     lines.add("SERVERS");

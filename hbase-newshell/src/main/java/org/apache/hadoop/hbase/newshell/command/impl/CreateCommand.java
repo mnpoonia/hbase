@@ -23,6 +23,7 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import org.apache.hadoop.hbase.newshell.command.ArgParsing;
 import org.apache.hadoop.hbase.newshell.command.CommandResult;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
 import org.apache.hadoop.hbase.newshell.command.ShellCommand;
@@ -58,10 +59,7 @@ public final class CreateCommand implements ShellCommand {
   @Override
   public CommandResult execute(ParsedCommand command, ExecutionContext context)
     throws ShellCommandException, IOException {
-    if (command.positionalArgs().isEmpty()) {
-      throw new ShellCommandException("create requires a table name argument");
-    }
-    String tableName = String.valueOf(command.positionalArgs().get(0));
+    String tableName = ArgParsing.requireArg(command, 0, "create requires a table name argument");
 
     List<Map<String, Object>> familySpecs = new ArrayList<>();
     // Bareword family names, e.g. create 't1', 'f1', 'f2' - each becomes a family spec with

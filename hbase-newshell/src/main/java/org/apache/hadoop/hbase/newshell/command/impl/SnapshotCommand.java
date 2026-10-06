@@ -18,6 +18,7 @@
 package org.apache.hadoop.hbase.newshell.command.impl;
 
 import java.io.IOException;
+import org.apache.hadoop.hbase.newshell.command.ArgParsing;
 import org.apache.hadoop.hbase.newshell.command.CommandResult;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
 import org.apache.hadoop.hbase.newshell.command.ShellCommand;
@@ -46,11 +47,10 @@ public final class SnapshotCommand implements ShellCommand {
   @Override
   public CommandResult execute(ParsedCommand command, ExecutionContext context)
     throws ShellCommandException, IOException {
-    if (command.positionalArgs().size() < 2) {
-      throw new ShellCommandException("snapshot requires a table name and a snapshot name");
-    }
-    String tableName = String.valueOf(command.positionalArgs().get(0));
-    String snapshotName = String.valueOf(command.positionalArgs().get(1));
+    ArgParsing.requireMaxArgs(command, "snapshot", 2);
+    ArgParsing.requireArgs(command, 2, "snapshot requires a table name and a snapshot name");
+    String tableName = ArgParsing.string(command, 0);
+    String snapshotName = ArgParsing.string(command, 1);
     context.admin().snapshot(tableName, snapshotName);
     return TextResult.of();
   }

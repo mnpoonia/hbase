@@ -46,10 +46,9 @@ public final class CompactRsCommand implements ShellCommand {
   @Override
   public CommandResult execute(ParsedCommand command, ExecutionContext context)
     throws ShellCommandException, IOException {
-    if (command.positionalArgs().isEmpty()) {
-      throw new ShellCommandException("compact_rs requires a regionserver name argument");
-    }
-    String server = String.valueOf(command.positionalArgs().get(0));
+    ArgParsing.requireMaxArgs(command, "compact_rs", 2);
+    String server =
+      ArgParsing.requireArg(command, 0, "compact_rs requires a regionserver name argument");
     boolean major = command.positionalArgs().size() > 1
       && ArgParsing.parseBoolean(command.positionalArgs().get(1));
     context.admin().compactRegionServer(server, major);

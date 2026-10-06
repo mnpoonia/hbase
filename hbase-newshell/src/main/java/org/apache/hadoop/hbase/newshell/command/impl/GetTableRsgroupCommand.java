@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
 import org.apache.hadoop.hbase.newshell.command.*;
+import org.apache.hadoop.hbase.newshell.command.ArgParsing;
 import org.apache.hadoop.hbase.newshell.parser.ParsedCommand;
 import org.apache.yetus.audience.InterfaceAudience;
 
@@ -39,10 +40,9 @@ public final class GetTableRsgroupCommand implements ShellCommand {
   @Override
   public CommandResult execute(ParsedCommand command, ExecutionContext context)
     throws ShellCommandException, IOException {
-    if (command.positionalArgs().isEmpty())
-      throw new ShellCommandException("get_table_rsgroup requires an argument");
-    String group =
-      context.admin().getRsGroupOfTable(String.valueOf(command.positionalArgs().get(0)));
+    ArgParsing.requireMaxArgs(command, "get_table_rsgroup", 1);
+    ArgParsing.requireArgs(command, 1, "get_table_rsgroup requires an argument");
+    String group = context.admin().getRsGroupOfTable(ArgParsing.string(command, 0));
     return new TabularResult(Collections.emptyList(), Arrays.asList(Arrays.asList(group)));
   }
 }

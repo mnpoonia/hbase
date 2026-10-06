@@ -18,6 +18,7 @@
 package org.apache.hadoop.hbase.newshell.command.impl;
 
 import java.io.IOException;
+import org.apache.hadoop.hbase.newshell.command.ArgParsing;
 import org.apache.hadoop.hbase.newshell.command.CommandResult;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
 import org.apache.hadoop.hbase.newshell.command.ShellCommand;
@@ -46,8 +47,8 @@ public final class ListLabelsCommand implements ShellCommand {
   @Override
   public CommandResult execute(ParsedCommand command, ExecutionContext context)
     throws ShellCommandException, IOException {
-    String regex =
-      command.positionalArgs().isEmpty() ? ".*" : String.valueOf(command.positionalArgs().get(0));
+    ArgParsing.requireMaxArgs(command, "list_labels", 1);
+    String regex = ArgParsing.optionalArg(command, 0, ".*");
     return new TextResult(context.admin().listLabels(regex));
   }
 }

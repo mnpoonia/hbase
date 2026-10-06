@@ -51,14 +51,12 @@ public final class PutCommand implements ShellCommand {
   public CommandResult execute(ParsedCommand command, ExecutionContext context)
     throws ShellCommandException, IOException {
     ArgParsing.requireMaxArgs(command, "put", 5);
-    if (command.positionalArgs().size() < 4) {
-      throw new ShellCommandException(
-        "put requires a table name, row key, column and value argument");
-    }
-    String tableName = String.valueOf(command.positionalArgs().get(0));
-    String row = String.valueOf(command.positionalArgs().get(1));
-    String column = String.valueOf(command.positionalArgs().get(2));
-    String value = String.valueOf(command.positionalArgs().get(3));
+    ArgParsing.requireArgs(command, 4,
+      "put requires a table name, row key, column and value argument");
+    String tableName = ArgParsing.string(command, 0);
+    String row = ArgParsing.string(command, 1);
+    String column = ArgParsing.string(command, 2);
+    String value = ArgParsing.string(command, 3);
     Map<String, Object> options = command.options();
     if (command.positionalArgs().size() == 5) {
       // Legacy shell form: put 't', 'r', 'cf:c', 'v', <timestamp>

@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import org.apache.hadoop.hbase.newshell.command.ArgParsing;
 import org.apache.hadoop.hbase.newshell.command.CommandResult;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
 import org.apache.hadoop.hbase.newshell.command.ShellCommand;
@@ -49,8 +50,8 @@ public final class ListCommand implements ShellCommand {
   @Override
   public CommandResult execute(ParsedCommand command, ExecutionContext context)
     throws ShellCommandException, IOException {
-    String regex =
-      command.positionalArgs().isEmpty() ? ".*" : String.valueOf(command.positionalArgs().get(0));
+    ArgParsing.requireMaxArgs(command, "list", 1);
+    String regex = ArgParsing.optionalArg(command, 0, ".*");
     List<String> tableNames = context.admin().listTables(regex);
     List<List<String>> rows = new ArrayList<>();
     for (String tableName : tableNames) {

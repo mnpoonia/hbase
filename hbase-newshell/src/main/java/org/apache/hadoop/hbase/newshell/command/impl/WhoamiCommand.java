@@ -20,9 +20,11 @@ package org.apache.hadoop.hbase.newshell.command.impl;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import org.apache.hadoop.hbase.newshell.command.ArgParsing;
 import org.apache.hadoop.hbase.newshell.command.CommandResult;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
 import org.apache.hadoop.hbase.newshell.command.ShellCommand;
+import org.apache.hadoop.hbase.newshell.command.ShellCommandException;
 import org.apache.hadoop.hbase.newshell.command.TextResult;
 import org.apache.hadoop.hbase.newshell.parser.ParsedCommand;
 import org.apache.hadoop.hbase.security.User;
@@ -45,7 +47,9 @@ public final class WhoamiCommand implements ShellCommand {
   }
 
   @Override
-  public CommandResult execute(ParsedCommand command, ExecutionContext context) throws IOException {
+  public CommandResult execute(ParsedCommand command, ExecutionContext context)
+    throws ShellCommandException, IOException {
+    ArgParsing.requireMaxArgs(command, "whoami", 0);
     User user = User.getCurrent();
     List<String> lines = new ArrayList<>();
     lines.add(user.toString());

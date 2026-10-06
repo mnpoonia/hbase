@@ -55,10 +55,7 @@ public final class CountCommand implements ShellCommand {
   public CommandResult execute(ParsedCommand command, ExecutionContext context)
     throws ShellCommandException, IOException {
     ArgParsing.requireMaxArgs(command, "count", 1);
-    if (command.positionalArgs().isEmpty()) {
-      throw new ShellCommandException("count requires a table name argument");
-    }
-    String tableName = String.valueOf(command.positionalArgs().get(0));
+    String tableName = ArgParsing.requireArg(command, 0, "count requires a table name argument");
     PrintWriter out = context.out();
     // Progress lines are human-oriented; keep them out of json/csv output so it stays parseable.
     boolean showProgress = context.options().outputFormat() == OutputFormat.TEXT;

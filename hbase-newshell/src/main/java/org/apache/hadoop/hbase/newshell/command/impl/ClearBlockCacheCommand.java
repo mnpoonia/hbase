@@ -18,6 +18,7 @@
 package org.apache.hadoop.hbase.newshell.command.impl;
 
 import java.io.IOException;
+import org.apache.hadoop.hbase.newshell.command.ArgParsing;
 import org.apache.hadoop.hbase.newshell.command.CommandResult;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
 import org.apache.hadoop.hbase.newshell.command.ShellCommand;
@@ -44,10 +45,8 @@ public final class ClearBlockCacheCommand implements ShellCommand {
   @Override
   public CommandResult execute(ParsedCommand command, ExecutionContext context)
     throws ShellCommandException, IOException {
-    if (command.positionalArgs().isEmpty()) {
-      throw new ShellCommandException("clear_block_cache requires a table name argument");
-    }
-    return TextResult
-      .of(context.admin().clearBlockCache(String.valueOf(command.positionalArgs().get(0))));
+    ArgParsing.requireMaxArgs(command, "clear_block_cache", 1);
+    ArgParsing.requireArgs(command, 1, "clear_block_cache requires a table name argument");
+    return TextResult.of(context.admin().clearBlockCache(ArgParsing.string(command, 0)));
   }
 }

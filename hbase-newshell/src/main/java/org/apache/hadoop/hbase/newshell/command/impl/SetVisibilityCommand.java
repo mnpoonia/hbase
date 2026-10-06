@@ -19,6 +19,7 @@ package org.apache.hadoop.hbase.newshell.command.impl;
 
 import java.io.IOException;
 import java.util.Map;
+import org.apache.hadoop.hbase.newshell.command.ArgParsing;
 import org.apache.hadoop.hbase.newshell.command.CommandResult;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
 import org.apache.hadoop.hbase.newshell.command.ShellCommand;
@@ -46,12 +47,11 @@ public final class SetVisibilityCommand implements ShellCommand {
   @Override
   public CommandResult execute(ParsedCommand command, ExecutionContext context)
     throws ShellCommandException, IOException {
-    if (command.positionalArgs().size() < 2) {
-      throw new ShellCommandException(
-        "set_visibility requires a table name and visibility expression");
-    }
-    String tableName = String.valueOf(command.positionalArgs().get(0));
-    String visibility = String.valueOf(command.positionalArgs().get(1));
+    ArgParsing.requireMaxArgs(command, "set_visibility", 2);
+    ArgParsing.requireArgs(command, 2,
+      "set_visibility requires a table name and visibility expression");
+    String tableName = ArgParsing.string(command, 0);
+    String visibility = ArgParsing.string(command, 1);
     Map<String, Object> options =
       command.hashLiterals().isEmpty() ? command.options() : command.hashLiterals().get(0);
     long count = context.admin().setVisibility(tableName, visibility, options);

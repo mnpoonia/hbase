@@ -20,6 +20,7 @@ package org.apache.hadoop.hbase.newshell.command.impl;
 import java.io.IOException;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import org.apache.hadoop.hbase.newshell.command.ArgParsing;
 import org.apache.hadoop.hbase.newshell.command.CommandResult;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
 import org.apache.hadoop.hbase.newshell.command.ShellCommand;
@@ -43,10 +44,8 @@ public final class UpdatePeerConfigCommand implements ShellCommand {
   @Override
   public CommandResult execute(ParsedCommand command, ExecutionContext context)
     throws ShellCommandException, IOException {
-    if (command.positionalArgs().isEmpty()) {
-      throw new ShellCommandException("update_peer_config requires a peer id");
-    }
-    String peerId = String.valueOf(command.positionalArgs().get(0));
+    ArgParsing.requireMaxArgs(command, "update_peer_config", 1);
+    String peerId = ArgParsing.requireArg(command, 0, "update_peer_config requires a peer id");
     Map<String, Object> args = new LinkedHashMap<>(command.options());
     for (Map<String, Object> hash : command.hashLiterals()) {
       args.putAll(hash);

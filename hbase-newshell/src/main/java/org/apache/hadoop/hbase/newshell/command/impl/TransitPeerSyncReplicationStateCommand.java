@@ -18,6 +18,7 @@
 package org.apache.hadoop.hbase.newshell.command.impl;
 
 import java.io.IOException;
+import org.apache.hadoop.hbase.newshell.command.ArgParsing;
 import org.apache.hadoop.hbase.newshell.command.CommandResult;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
 import org.apache.hadoop.hbase.newshell.command.ShellCommand;
@@ -41,12 +42,11 @@ public final class TransitPeerSyncReplicationStateCommand implements ShellComman
   @Override
   public CommandResult execute(ParsedCommand command, ExecutionContext context)
     throws ShellCommandException, IOException {
-    if (command.positionalArgs().size() < 2) {
-      throw new ShellCommandException(
-        "transit_peer_sync_replication_state requires peer id and state");
-    }
-    context.admin().transitPeerSyncReplicationState(String.valueOf(command.positionalArgs().get(0)),
-      String.valueOf(command.positionalArgs().get(1)));
+    ArgParsing.requireMaxArgs(command, "transit_peer_sync_replication_state", 2);
+    ArgParsing.requireArgs(command, 2,
+      "transit_peer_sync_replication_state requires peer id and state");
+    context.admin().transitPeerSyncReplicationState(ArgParsing.string(command, 0),
+      ArgParsing.string(command, 1));
     return TextResult.of();
   }
 }

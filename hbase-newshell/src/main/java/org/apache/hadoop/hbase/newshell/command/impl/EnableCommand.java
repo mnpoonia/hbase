@@ -47,10 +47,7 @@ public final class EnableCommand implements ShellCommand {
   public CommandResult execute(ParsedCommand command, ExecutionContext context)
     throws ShellCommandException, IOException {
     ArgParsing.requireMaxArgs(command, "enable", 1);
-    if (command.positionalArgs().isEmpty()) {
-      throw new ShellCommandException("enable requires a table name argument");
-    }
-    String tableName = String.valueOf(command.positionalArgs().get(0));
+    String tableName = ArgParsing.requireArg(command, 0, "enable requires a table name argument");
     context.admin().enableTable(tableName);
     return TextResult.of();
   }

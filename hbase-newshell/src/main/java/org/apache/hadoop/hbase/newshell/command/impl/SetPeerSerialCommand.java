@@ -42,10 +42,9 @@ public final class SetPeerSerialCommand implements ShellCommand {
   @Override
   public CommandResult execute(ParsedCommand command, ExecutionContext context)
     throws ShellCommandException, IOException {
-    if (command.positionalArgs().size() < 2) {
-      throw new ShellCommandException("set_peer_serial requires a peer id and true|false");
-    }
-    String peerId = String.valueOf(command.positionalArgs().get(0));
+    ArgParsing.requireMaxArgs(command, "set_peer_serial", 2);
+    ArgParsing.requireArgs(command, 2, "set_peer_serial requires a peer id and true|false");
+    String peerId = ArgParsing.string(command, 0);
     boolean value = ArgParsing.parseBoolean(command.positionalArgs().get(1));
     context.admin().setPeerSerial(peerId, value);
     return TextResult.of();

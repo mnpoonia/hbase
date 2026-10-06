@@ -47,10 +47,7 @@ public final class DisableCommand implements ShellCommand {
   public CommandResult execute(ParsedCommand command, ExecutionContext context)
     throws ShellCommandException, IOException {
     ArgParsing.requireMaxArgs(command, "disable", 1);
-    if (command.positionalArgs().isEmpty()) {
-      throw new ShellCommandException("disable requires a table name argument");
-    }
-    String tableName = String.valueOf(command.positionalArgs().get(0));
+    String tableName = ArgParsing.requireArg(command, 0, "disable requires a table name argument");
     context.admin().disableTable(tableName);
     return TextResult.of();
   }
