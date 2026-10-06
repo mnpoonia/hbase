@@ -60,17 +60,37 @@ public final class CreateCommand implements ShellCommand {
   public CommandResult execute(ParsedCommand command, ExecutionContext context)
     throws ShellCommandException, IOException {
     String tableName = ArgParsing.requireArg(command, 0, "create requires a table name argument");
+    List<Map<String, Object>> familySpecs = barewordFamilies(command);
+    Map<String, Object> tableAttributes = new LinkedHashMap<>();
+    splitHashLiterals(command, familySpecs, tableAttributes);
+    mergeFlagOptions(flagOnlyOptions(command), familySpecs);
+    if (familySpecs.isEmpty()) {
+      throw new ShellCommandException(
+        "create requires a column family spec, e.g. 'f1' or {NAME => 'f1'}");
+    }
+    context.tableAdmin().createTable(tableName, familySpecs, tableAttributes);
+    return TextResult.of("Created table " + tableName);
+  }
 
+  /**
+   * Bareword family names, e.g. create 't1', 'f1', 'f2' - each becomes a family spec with just a
+   * NAME, mirroring hbase-shell's admin.rb#create treating a String arg as a family.
+   */
+  private static List<Map<String, Object>> barewordFamilies(ParsedCommand command) {
     List<Map<String, Object>> familySpecs = new ArrayList<>();
-    // Bareword family names, e.g. create 't1', 'f1', 'f2' - each becomes a family spec with
-    // just a NAME, mirroring hbase-shell's admin.rb#create treating a String arg as a family.
     for (Object extraPositional : command.positionalArgs().subList(1,
       command.positionalArgs().size())) {
       familySpecs.add(Collections.singletonMap("NAME", String.valueOf(extraPositional)));
     }
-    // Only hash literals with a NAME are families; a hash literal without one (e.g.
-    // SPLITS => [...]) is a table-level attribute (mirrors admin.rb#create's NAME check).
-    Map<String, Object> tableAttributes = new LinkedHashMap<>();
+    return familySpecs;
+  }
+
+  /**
+   * Only hash literals with a NAME are families; a hash literal without one (e.g. SPLITS => [...])
+   * is a table-level attribute (mirrors admin.rb#create's NAME check).
+   */
+  private static void splitHashLiterals(ParsedCommand command,
+    List<Map<String, Object>> familySpecs, Map<String, Object> tableAttributes) {
     for (Map<String, Object> hashLiteral : command.hashLiterals()) {
       if (hashLiteral.containsKey("NAME")) {
         familySpecs.add(hashLiteral);
@@ -78,42 +98,47 @@ public final class CreateCommand implements ShellCommand {
         tableAttributes.putAll(hashLiteral);
       }
     }
-    // options() also contains a flattened copy of every hash literal, so strip those keys out
-    // first - what remains is native --flag input that hash literals didn't already contribute,
-    // which must still be merged in rather than silently dropped.
-    Map<String, Object> flagOnlyOptions = new LinkedHashMap<>(command.options());
+  }
+
+  /**
+   * options() also contains a flattened copy of every hash literal, so strip those keys out - what
+   * remains is native --flag input that hash literals didn't already contribute, which must still
+   * be merged in rather than silently dropped.
+   */
+  private static Map<String, Object> flagOnlyOptions(ParsedCommand command) {
+    Map<String, Object> flagOnly = new LinkedHashMap<>(command.options());
     for (Map<String, Object> hashLiteral : command.hashLiterals()) {
-      flagOnlyOptions.keySet().removeAll(hashLiteral.keySet());
+      flagOnly.keySet().removeAll(hashLiteral.keySet());
     }
-    if (!flagOnlyOptions.isEmpty()) {
-      if (familySpecs.isEmpty()) {
-        // Native flag syntax (--name=f1 --versions=3) has no hash literal or bareword family at
-        // all, but still describes exactly one family via the flat options map.
-        familySpecs.add(new LinkedHashMap<>(flagOnlyOptions));
-      } else {
-        // create 't1', 'f1' --versions=3: merge flags onto exactly one family - the last
-        // bareword NAME-only one, if any, else the last family overall - so --flag attributes
-        // are not silently dropped, and not silently applied to every family either (there is
-        // no hbase-shell syntax to compare against here; --flag is a newshell-only addition, so
-        // "apply to the single most-recently-named family" is the least surprising choice).
-        int targetIndex = familySpecs.size() - 1;
-        for (int i = familySpecs.size() - 1; i >= 0; i--) {
-          Map<String, Object> fam = familySpecs.get(i);
-          if (fam.size() == 1 && fam.containsKey("NAME")) {
-            targetIndex = i;
-            break;
-          }
-        }
-        Map<String, Object> enriched = new LinkedHashMap<>(familySpecs.get(targetIndex));
-        enriched.putAll(flagOnlyOptions);
-        familySpecs.set(targetIndex, enriched);
-      }
+    return flagOnly;
+  }
+
+  private static void mergeFlagOptions(Map<String, Object> flagOnly,
+    List<Map<String, Object>> familySpecs) {
+    if (flagOnly.isEmpty()) {
+      return;
     }
     if (familySpecs.isEmpty()) {
-      throw new ShellCommandException(
-        "create requires a column family spec, e.g. 'f1' or {NAME => 'f1'}");
+      // Native flag syntax (--name=f1 --versions=3) has no hash literal or bareword family at
+      // all, but still describes exactly one family via the flat options map.
+      familySpecs.add(new LinkedHashMap<>(flagOnly));
+      return;
     }
-    context.tableAdmin().createTable(tableName, familySpecs, tableAttributes);
-    return TextResult.of("Created table " + tableName);
+    // create 't1', 'f1' --versions=3: merge flags onto exactly one family - the last bareword
+    // NAME-only one, if any, else the last family overall - so --flag attributes are not silently
+    // dropped, and not silently applied to every family either (there is no hbase-shell syntax to
+    // compare against here; --flag is a newshell-only addition, so "apply to the single
+    // most-recently-named family" is the least surprising choice).
+    int targetIndex = familySpecs.size() - 1;
+    for (int i = familySpecs.size() - 1; i >= 0; i--) {
+      Map<String, Object> fam = familySpecs.get(i);
+      if (fam.size() == 1 && fam.containsKey("NAME")) {
+        targetIndex = i;
+        break;
+      }
+    }
+    Map<String, Object> enriched = new LinkedHashMap<>(familySpecs.get(targetIndex));
+    enriched.putAll(flagOnly);
+    familySpecs.set(targetIndex, enriched);
   }
 }
