@@ -56,15 +56,8 @@ public final class DecommissionRegionServersCommand implements ShellCommand {
         "decommission_regionservers requires a server name (or array of server names) argument");
     }
     List<String> hostOrServers = ArgParsing.stringList(positionals.get(0));
-    boolean offload = positionals.size() > 1 && parseBoolean(positionals.get(1));
+    boolean offload = positionals.size() > 1 && ArgParsing.parseBoolean(positionals.get(1));
     context.serverLifecycle().decommissionRegionServers(hostOrServers, offload);
     return TextResult.of();
-  }
-
-  private static boolean parseBoolean(Object value) {
-    if (value instanceof Boolean) {
-      return (Boolean) value;
-    }
-    return Boolean.parseBoolean(String.valueOf(value));
   }
 }

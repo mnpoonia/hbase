@@ -66,4 +66,13 @@ public class BalanceSwitchCommandTest {
     ParsedCommand parsed = ShellLineParser.parse("balance_switch");
     assertThrows(ShellCommandException.class, () -> command.execute(parsed, context));
   }
+
+  @Test
+  public void rejectsNonBooleanInsteadOfDisabling() throws Exception {
+    for (String bad : new String[] { "ture", "1", "yes" }) {
+      ParsedCommand parsed = ShellLineParser.parse("balance_switch " + bad);
+      assertThrows(ShellCommandException.class, () -> command.execute(parsed, context));
+    }
+    assertEquals(null, admin.lastEnabled);
+  }
 }

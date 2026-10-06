@@ -20,6 +20,7 @@ package org.apache.hadoop.hbase.newshell.command.impl;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import org.apache.hadoop.hbase.newshell.command.ArgParsing;
 import org.apache.hadoop.hbase.newshell.command.CommandResult;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
 import org.apache.hadoop.hbase.newshell.command.ShellCommand;
@@ -55,8 +56,7 @@ public final class RestoreSnapshotCommand implements ShellCommand {
     String snapshotName = String.valueOf(positionals.get(0));
     Map<String, Object> args =
       command.hashLiterals().isEmpty() ? command.options() : command.hashLiterals().get(0);
-    boolean restoreAcl =
-      Boolean.parseBoolean(String.valueOf(args.getOrDefault("RESTORE_ACL", false)));
+    boolean restoreAcl = ArgParsing.parseBoolean(args.getOrDefault("RESTORE_ACL", false));
     context.snapshotAdmin().restoreSnapshot(snapshotName, restoreAcl);
     return TextResult.of();
   }

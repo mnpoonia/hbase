@@ -78,4 +78,13 @@ public class ArgParsingTest {
       ArgParsing.tableCfs(ShellLineParser.parse("set_peer_tableCFs '1', { 't1' => ['cf'] }"))
         .containsKey("t1"));
   }
+
+  @Test
+  public void parseBooleanIsStrict() throws Exception {
+    org.junit.jupiter.api.Assertions.assertTrue(ArgParsing.parseBoolean("TRUE"));
+    org.junit.jupiter.api.Assertions.assertFalse(ArgParsing.parseBoolean("false"));
+    org.junit.jupiter.api.Assertions.assertTrue(ArgParsing.parseBoolean(Boolean.TRUE));
+    org.junit.jupiter.api.Assertions.assertThrows(ShellCommandException.class,
+      () -> ArgParsing.parseBoolean("ture"));
+  }
 }

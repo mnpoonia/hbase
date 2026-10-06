@@ -31,12 +31,23 @@ public final class ArgParsing {
   private ArgParsing() {
   }
 
-  /** Accepts a Boolean object or a string {@code true}/{@code false} (case-insensitive). */
-  public static boolean parseBoolean(Object value) {
+  /**
+   * Accepts a Boolean object or a string {@code true}/{@code false} (case-insensitive); anything
+   * else is rejected rather than read as {@code false}, so a typo can't flip a state-changing
+   * switch off.
+   */
+  public static boolean parseBoolean(Object value) throws ShellCommandException {
     if (value instanceof Boolean) {
       return (Boolean) value;
     }
-    return Boolean.parseBoolean(String.valueOf(value));
+    String text = String.valueOf(value);
+    if ("true".equalsIgnoreCase(text)) {
+      return true;
+    }
+    if ("false".equalsIgnoreCase(text)) {
+      return false;
+    }
+    throw new ShellCommandException("Expected true or false but got '" + text + "'");
   }
 
   /**
@@ -136,6 +147,8 @@ public final class ArgParsing {
     if (yes instanceof Boolean) {
       return (Boolean) yes;
     }
-    return parseBoolean(yes) || "Y".equalsIgnoreCase(String.valueOf(yes));
+    String text = String.valueOf(yes);
+    return "true".equalsIgnoreCase(text) || "y".equalsIgnoreCase(text)
+      || "yes".equalsIgnoreCase(text);
   }
 }
