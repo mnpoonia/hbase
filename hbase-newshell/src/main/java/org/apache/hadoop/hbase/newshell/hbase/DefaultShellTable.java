@@ -17,10 +17,13 @@
  */
 package org.apache.hadoop.hbase.newshell.hbase;
 
-import static org.apache.hadoop.hbase.newshell.hbase.OptionValues.enumValue;
+import static org.apache.hadoop.hbase.newshell.hbase.OptionValues.optBoolean;
+import static org.apache.hadoop.hbase.newshell.hbase.OptionValues.optEnum;
+import static org.apache.hadoop.hbase.newshell.hbase.OptionValues.optHash;
+import static org.apache.hadoop.hbase.newshell.hbase.OptionValues.optInt;
+import static org.apache.hadoop.hbase.newshell.hbase.OptionValues.optLong;
 import static org.apache.hadoop.hbase.newshell.hbase.OptionValues.optString;
-import static org.apache.hadoop.hbase.newshell.hbase.OptionValues.requireBoolean;
-import static org.apache.hadoop.hbase.newshell.hbase.OptionValues.requireNumber;
+import static org.apache.hadoop.hbase.newshell.hbase.OptionValues.optStringList;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -131,10 +134,9 @@ public final class DefaultShellTable implements ShellTable {
     byte[] qualifier = BinaryStrings.toBytes(column.substring(colonIndex + 1));
     Put put = new Put(BinaryStrings.toBytes(row));
     applyPutOptions(put, options);
-    Object timestamp = options.get("TIMESTAMP");
+    Long timestamp = optLong(options, "TIMESTAMP");
     if (timestamp != null) {
-      put.addColumn(family, qualifier, requireNumber(timestamp, "TIMESTAMP").longValue(),
-        BinaryStrings.toBytes(value));
+      put.addColumn(family, qualifier, timestamp, BinaryStrings.toBytes(value));
     } else {
       put.addColumn(family, qualifier, BinaryStrings.toBytes(value));
     }
@@ -184,18 +186,12 @@ public final class DefaultShellTable implements ShellTable {
   private static Set<String> applyMetricsOptions(Scan scan, Map<String, Object> options)
     throws ShellCommandException {
     Set<String> names = new HashSet<>();
-    Object metrics = options.get("METRICS");
+    List<String> metrics = optStringList(options, "METRICS");
     if (metrics != null) {
-      if (!(metrics instanceof List)) {
-        throw new ShellCommandException("METRICS must be a list of metric names");
-      }
-      for (Object name : (List<?>) metrics) {
-        names.add(String.valueOf(name));
-      }
+      names.addAll(metrics);
     }
-    boolean all = options.get("ALL_METRICS") != null
-      && requireBoolean(options.get("ALL_METRICS"), "ALL_METRICS");
-    if (all || metrics != null) {
+    Boolean all = optBoolean(options, "ALL_METRICS");
+    if (Boolean.TRUE.equals(all) || metrics != null) {
       scan.setScanMetricsEnabled(true);
     }
     return names;
@@ -211,7 +207,7 @@ public final class DefaultShellTable implements ShellTable {
       // count reads every row once; do not churn the block cache unless asked to.
       scan.setCacheBlocks(false);
     }
-    long interval = resolveInterval(options.get("INTERVAL"));
+    long interval = resolveInterval(options);
     long count = 0;
     try (ResultScanner scanner = table.getScanner(scan)) {
       for (Result result : scanner) {
@@ -224,11 +220,12 @@ public final class DefaultShellTable implements ShellTable {
     return count;
   }
 
-  private static long resolveInterval(Object intervalOption) throws ShellCommandException {
-    if (intervalOption == null) {
+  private static long resolveInterval(Map<String, Object> options) throws ShellCommandException {
+    Long configured = optLong(options, "INTERVAL");
+    if (configured == null) {
       return 1000L;
     }
-    long interval = requireNumber(intervalOption, "INTERVAL").longValue();
+    long interval = configured;
     if (interval <= 0) {
       throw new ShellCommandException("INTERVAL must be a positive number: " + interval);
     }
@@ -250,8 +247,8 @@ public final class DefaultShellTable implements ShellTable {
     long ts = timestamp == null ? HConstants.LATEST_TIMESTAMP : timestamp;
     Object prefix = options.get("ROWPREFIXFILTER");
     if (prefix != null) {
-      Object cacheOption = options.get("CACHE");
-      int cache = cacheOption == null ? 100 : requireNumber(cacheOption, "CACHE").intValue();
+      Integer cacheOption = optInt(options, "CACHE");
+      int cache = cacheOption == null ? 100 : cacheOption;
       byte[] prefixBytes = BinaryStrings.toBytes(prefix.toString());
       Scan scan = new Scan().setStartStopRowForPrefixScan(prefixBytes);
       List<Delete> batch = new ArrayList<>();
@@ -367,14 +364,14 @@ public final class DefaultShellTable implements ShellTable {
 
   private static void applyPutOptions(Put put, Map<String, Object> options)
     throws ShellCommandException {
-    applyAttributes(put, options.get("ATTRIBUTES"));
-    Object visibility = options.get("VISIBILITY");
+    applyAttributes(put, options);
+    String visibility = optString(options, "VISIBILITY");
     if (visibility != null) {
-      put.setCellVisibility(new CellVisibility(visibility.toString()));
+      put.setCellVisibility(new CellVisibility(visibility));
     }
-    Object ttl = options.get("TTL");
+    Long ttl = optLong(options, "TTL");
     if (ttl != null) {
-      put.setTTL(requireNumber(ttl, "TTL").longValue());
+      put.setTTL(ttl);
     }
   }
 
@@ -449,16 +446,13 @@ public final class DefaultShellTable implements ShellTable {
     return value == null ? null : value.toString();
   }
 
-  @SuppressWarnings("unchecked")
-  private static void applyAttributes(OperationWithAttributes op, Object attributes)
+  private static void applyAttributes(OperationWithAttributes op, Map<String, Object> options)
     throws ShellCommandException {
+    Map<String, Object> attributes = optHash(options, "ATTRIBUTES");
     if (attributes == null) {
       return;
     }
-    if (!(attributes instanceof Map)) {
-      throw new ShellCommandException("ATTRIBUTES must be a hash such as {'k' => 'v'}");
-    }
-    for (Map.Entry<String, Object> e : ((Map<String, Object>) attributes).entrySet()) {
+    for (Map.Entry<String, Object> e : attributes.entrySet()) {
       op.setAttribute(e.getKey(),
         e.getValue() == null ? null : Bytes.toBytes(e.getValue().toString()));
     }
@@ -468,27 +462,20 @@ public final class DefaultShellTable implements ShellTable {
    * Options shared by {@code get} and {@code scan}: ATTRIBUTES, AUTHORIZATIONS, CONSISTENCY,
    * replica.
    */
-  @SuppressWarnings("unchecked")
   private static void applyQueryOptions(Query query, Map<String, Object> options)
     throws ShellCommandException {
-    applyAttributes(query, options.get("ATTRIBUTES"));
-    Object authorizations = options.get("AUTHORIZATIONS");
+    applyAttributes(query, options);
+    List<String> authorizations = optStringList(options, "AUTHORIZATIONS");
     if (authorizations != null) {
-      if (!(authorizations instanceof List)) {
-        throw new ShellCommandException("AUTHORIZATIONS must be an array such as ['SECRET']");
-      }
-      List<String> auths = new ArrayList<>();
-      for (Object auth : (List<Object>) authorizations) {
-        auths.add(auth.toString());
-      }
-      query.setAuthorizations(new Authorizations(auths));
+      query.setAuthorizations(new Authorizations(authorizations));
     }
-    if (options.get("CONSISTENCY") != null) {
-      query.setConsistency(enumValue(Consistency.class, options.get("CONSISTENCY"), "CONSISTENCY"));
+    Consistency consistency = optEnum(options, "CONSISTENCY", Consistency.class);
+    if (consistency != null) {
+      query.setConsistency(consistency);
     }
-    Object replicaId = options.get("REGION_REPLICA_ID");
+    Integer replicaId = optInt(options, "REGION_REPLICA_ID");
     if (replicaId != null) {
-      query.setReplicaId(requireNumber(replicaId, "REGION_REPLICA_ID").intValue());
+      query.setReplicaId(replicaId);
     }
   }
 }

@@ -18,7 +18,9 @@
 package org.apache.hadoop.hbase.newshell.hbase;
 
 import java.nio.charset.CharacterCodingException;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import org.apache.hadoop.hbase.filter.Filter;
@@ -147,5 +149,39 @@ final class OptionValues {
       return (List<Object>) value;
     }
     return Arrays.asList(value);
+  }
+
+  /** A list of strings, e.g. {@code AUTHORIZATIONS => ['SECRET']}; absent yields {@code null}. */
+  static List<String> optStringList(Map<String, Object> options, String name)
+    throws ShellCommandException {
+    Object value = options.get(name);
+    if (value == null) {
+      return null;
+    }
+    if (!(value instanceof List)) {
+      throw new ShellCommandException(name + " must be an array such as ['SECRET']");
+    }
+    List<String> out = new ArrayList<>();
+    for (Object element : (List<?>) value) {
+      out.add(String.valueOf(element));
+    }
+    return out;
+  }
+
+  /** A hash of attribute names to values, e.g. {@code ATTRIBUTES => {'k' => 'v'}}. */
+  static Map<String, Object> optHash(Map<String, Object> options, String name)
+    throws ShellCommandException {
+    Object value = options.get(name);
+    if (value == null) {
+      return null;
+    }
+    if (!(value instanceof Map)) {
+      throw new ShellCommandException(name + " must be a hash such as {'k' => 'v'}");
+    }
+    Map<String, Object> out = new LinkedHashMap<>();
+    for (Map.Entry<?, ?> e : ((Map<?, ?>) value).entrySet()) {
+      out.put(String.valueOf(e.getKey()), e.getValue());
+    }
+    return out;
   }
 }
