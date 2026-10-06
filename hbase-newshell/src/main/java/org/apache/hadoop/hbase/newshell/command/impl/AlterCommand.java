@@ -32,11 +32,11 @@ import org.apache.hadoop.hbase.newshell.parser.ParsedCommand;
 import org.apache.yetus.audience.InterfaceAudience;
 
 /**
- * Ported, minimal slice, from hbase-shell's {@code shell/commands/alter.rb}: one table name plus
- * one or more column family attribute hash literals, each requiring {@code NAME} to identify an
- * existing column family on the table (e.g. {@code alter 't1', {NAME => 'f1', TTL => 100}}).
- * {@code METHOD => 'delete'} drops the named family. Adding column families, table-scope attributes
- * (MAX_FILESIZE, etc.), and coprocessors are explicitly not ported for this slice.
+ * Ported from hbase-shell's {@code shell/commands/alter.rb}: one table name plus one or more change
+ * specs - column family attribute hashes ({@code alter 't1', {NAME => 'f1', TTL => 100}}, which add
+ * the family if missing), {@code METHOD => 'delete'} to drop a family, table-scope attributes
+ * (MAX_FILESIZE, etc.), and the {@code table_att_unset}/{@code table_conf_unset}/ coprocessor
+ * methods. See {@link #help()} for the full list.
  */
 @InterfaceAudience.Private
 public final class AlterCommand implements ShellCommand {

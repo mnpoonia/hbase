@@ -220,7 +220,7 @@ const DATA = [
     ["dml-append","`append`",null,true, IMPL + "AppendCommand.java"],
     ["dml-get-splits","`get_splits`",null,true, IMPL + "GetSplitsCommand.java"],
   ] },
-  { id: "tools", title: "HBASE SURGERY TOOLS — tools", badge: "0 remaining — fully ported", items: [
+  { id: "tools", title: "HBASE SURGERY TOOLS — tools", badge: "0 remaining — commands ported", items: [
     ["tools-assign","`assign`","Unit-tested (AssignCommandTest) and mini-cluster-verified (assignReassignsARegionByEncodedName); no corpus row — no mechanism to script the dynamically-generated encoded region name as literal input, so real correctness verification lives solely in the mini-cluster test.",true, IMPL + "AssignCommand.java"],
     ["tools-balancer","`balancer`","Unit-tested (BalancerCommandTest); ShellAdmin.balance / DefaultShellAdmin / StubShellAdmin wired; ServiceLoader entry. No mini-cluster test and no parity-corpus row yet — stdout embeds live move counts.",true, IMPL + "BalancerCommand.java"],
     ["tools-normalize","`normalize`","Unit-tested; ShellAdmin wired; ServiceLoader entry.",true, RUBY + "normalize.rb"],
@@ -279,7 +279,7 @@ const DATA = [
     ["tools-decommission","`decommission_regionservers`","Unit-tested; ShellAdmin wired; ServiceLoader entry.",true, IMPL + "DecommissionRegionServersCommand.java"],
     ["tools-recommission","`recommission_regionserver`","Unit-tested; ShellAdmin wired; ServiceLoader entry.",true, IMPL + "RecommissionRegionServerCommand.java"],
   ] },
-  { id: "replication", title: "CLUSTER REPLICATION TOOLS — replication", badge: "0 remaining — fully ported", items: [
+  { id: "replication", title: "CLUSTER REPLICATION TOOLS — replication", badge: "0 remaining — commands ported", items: [
     ["rep-enable-peer","`enable_peer`","Unit-tested and mini-cluster-verified (enablePeerThenDisablePeerRoundTrips); corpus row added (exact).",true, IMPL + "EnablePeerCommand.java"],
     ["rep-disable-peer","`disable_peer`","Unit-tested and mini-cluster-verified (enablePeerThenDisablePeerRoundTrips); corpus row added (exact).",true, IMPL + "DisablePeerCommand.java"],
     ["rep-set-replicate-all","`set_peer_replicate_all`","Unit-tested; ReplicationAdminOps wired.",true, RUBY + "set_peer_replicate_all.rb"],
@@ -311,7 +311,7 @@ const DATA = [
     ["rep-remove-peer","`remove_peer`","Unit-tested; ReplicationAdminOps wired.",true, IMPL + "RemovePeerCommand.java"],
     ["rep-list-peers","`list_peers`","Unit-tested; ReplicationAdminOps wired.",true, IMPL + "ListPeersCommand.java"],
   ] },
-  { id: "snapshots", title: "CLUSTER SNAPSHOT TOOLS — snapshots", badge: "0 remaining — fully ported", items: [
+  { id: "snapshots", title: "CLUSTER SNAPSHOT TOOLS — snapshots", badge: "0 remaining — commands ported", items: [
     ["snap-clone","`clone_snapshot`","Unit-tested and mini-cluster-verified (cloneSnapshotThenRestoreSnapshotRoundTrip); corpus row added (exact).",true, IMPL + "CloneSnapshotCommand.java"],
     ["snap-restore","`restore_snapshot`","Unit-tested and mini-cluster-verified (cloneSnapshotThenRestoreSnapshotRoundTrip); corpus row added (exact).",true, IMPL + "RestoreSnapshotCommand.java"],
     ["snap-delete-all","`delete_all_snapshot`","Unit-tested (DeleteAllSnapshotCommandTest); --yes confirmation; corpus smoke.",true, IMPL + "DeleteAllSnapshotCommand.java"],
@@ -321,12 +321,12 @@ const DATA = [
     ["snap-delete-snapshot","`delete_snapshot`",null,true, IMPL + "DeleteSnapshotCommand.java"],
     ["snap-list-snapshots","`list_snapshots`",null,true, IMPL + "ListSnapshotsCommand.java"],
   ] },
-  { id: "configuration", title: "ONLINE CONFIGURATION TOOLS — configuration", badge: "0 remaining — fully ported", items: [
+  { id: "configuration", title: "ONLINE CONFIGURATION TOOLS — configuration", badge: "0 remaining — commands ported", items: [
     ["cfg-update","`update_config`","Unit-tested; no corpus row — the target server's host,port,startcode triple embeds a live regionserver startcode the harness has no mechanism to script as literal input.",true, IMPL + "UpdateConfigCommand.java"],
     ["cfg-update-all","`update_all_config`","Unit-tested; corpus row added (exact).",true, IMPL + "UpdateAllConfigCommand.java"],
     ["cfg-update-rsgroup","`update_rsgroup_config`","Unit-tested (UpdateRsgroupConfigCommandTest); corpus smoke.",true, IMPL + "UpdateRsgroupConfigCommand.java"],
   ]},
-  { id: "quotas", title: "CLUSTER QUOTAS TOOLS — quotas", badge: "0 remaining — fully ported", items: [
+  { id: "quotas", title: "CLUSTER QUOTAS TOOLS — quotas", badge: "0 remaining — commands ported", items: [
     ["quota-set","`set_quota`","THROTTLE-only slice (TYPE => SPACE, SCOPE, GLOBAL_BYPASS not ported). Unit-tested and mini-cluster-verified; corpus row added (smoke — hbase.quota.enabled isn't set in this parity image, so both engines reject the command outright; real correctness verified by TestQuotaAgainstMiniCluster).",true, IMPL + "SetQuotaCommand.java"],
     ["quota-list","`list_quotas`","Unit-tested and mini-cluster-verified; corpus row added (smoke — same quota-disabled parity-image limitation).",true, IMPL + "ListQuotasCommand.java"],
     ["quota-list-table-sizes","`list_quota_table_sizes`","Unit-tested; corpus smoke.",true, IMPL + "ListQuotaTableSizesCommand.java"],
@@ -338,17 +338,17 @@ const DATA = [
     ["quota-enable-exceed-throttle","`enable_exceed_throttle_quota`","Unit-tested; corpus smoke.",true, IMPL + "EnableExceedThrottleQuotaCommand.java"],
     ["quota-disable-exceed-throttle","`disable_exceed_throttle_quota`","Unit-tested; corpus smoke.",true, IMPL + "DisableExceedThrottleQuotaCommand.java"],
   ]},
-  { id: "security", title: "SECURITY TOOLS — security", badge: "0 remaining — fully ported", items: [
+  { id: "security", title: "SECURITY TOOLS — security", badge: "0 remaining — commands ported", items: [
     ["sec-list-capabilities","`list_security_capabilities`","Unit-tested; corpus smoke.",true, IMPL + "ListSecurityCapabilitiesCommand.java"],
     ["sec-grant","`grant`",null,true, RUBY + "grant.rb"],
     ["sec-revoke","`revoke`","Unit-tested and mini-cluster-verified (mirrors TestGrantAgainstMiniCluster's AccessController handling); corpus row added (smoke — AccessController coprocessor not configured in this parity image).",true, IMPL + "RevokeCommand.java"],
     ["sec-user-permission","`user_permission`","Unit-tested and mini-cluster-verified; corpus row added (smoke — same AccessController-unavailable limitation).",true, IMPL + "UserPermissionCommand.java"],
   ], portedNote: "Only applicable with the AccessController coprocessor." },
-  { id: "procedures", title: "PROCEDURES & LOCKS MANAGEMENT — procedures", badge: "0 remaining — fully ported", items: [
+  { id: "procedures", title: "PROCEDURES & LOCKS MANAGEMENT — procedures", badge: "0 remaining — commands ported", items: [
     ["proc-list-procedures","`list_procedures`","Unit-tested and mini-cluster-verified; corpus row added (smoke — procedure ids/timestamps are run-specific).",true, IMPL + "ListProceduresCommand.java"],
     ["proc-list-locks","`list_locks`","Unit-tested and mini-cluster-verified; corpus row added (smoke — same run-specific-output reasoning).",true, IMPL + "ListLocksCommand.java"],
   ]},
-  { id: "visibility-labels", title: "VISIBILITY LABEL TOOLS — visibility labels", badge: "0 remaining — fully ported", items: [
+  { id: "visibility-labels", title: "VISIBILITY LABEL TOOLS — visibility labels", badge: "0 remaining — commands ported", items: [
     ["vis-add-labels","`add_labels`","Unit-tested and mini-cluster-verified; corpus row added (smoke — VisibilityController coprocessor not configured in this parity image).",true, IMPL + "AddLabelsCommand.java"],
     ["vis-list-labels","`list_labels`","Unit-tested and mini-cluster-verified; corpus row added (smoke — same VisibilityController-unavailable limitation).",true, IMPL + "ListLabelsCommand.java"],
     ["vis-set-auths","`set_auths`","Unit-tested; corpus smoke.",true, IMPL + "SetAuthsCommand.java"],
@@ -356,7 +356,7 @@ const DATA = [
     ["vis-clear-auths","`clear_auths`","Unit-tested; corpus smoke.",true, IMPL + "ClearAuthsCommand.java"],
     ["vis-set-visibility","`set_visibility`","Unit-tested; corpus smoke.",true, IMPL + "SetVisibilityCommand.java"],
   ], portedNote: "Only applicable with the VisibilityController coprocessor." },
-  { id: "rsgroup", title: "RSGroups — rsgroup", badge: "0 remaining — fully ported", items: [
+  { id: "rsgroup", title: "RSGroups — rsgroup", badge: "0 remaining — commands ported", items: [
     ["rsg-list","`list_rsgroups`","Unit-tested and mini-cluster-verified (TestRsGroupAgainstMiniCluster); corpus row added (smoke — RSGroup feature disabled in this parity image, both engines reject the command outright).",true, IMPL + "ListRsgroupsCommand.java"],
     ["rsg-get","`get_rsgroup`","Unit-tested; ShellAdmin wired.",true, RUBY + "get_rsgroup.rb"],
     ["rsg-add","`add_rsgroup`","Unit-tested and mini-cluster-verified (TestRsGroupAgainstMiniCluster); corpus row added (smoke — same RSGroup-disabled parity-image limitation).",true, IMPL + "AddRsgroupCommand.java"],
@@ -375,7 +375,7 @@ const DATA = [
     ["rsg-show-config","`show_rsgroup_config`","Unit-tested; ShellAdmin wired.",true, RUBY + "show_rsgroup_config.rb"],
     ["rsg-get-namespace","`get_namespace_rsgroup`","Unit-tested; ShellAdmin wired.",true, RUBY + "get_namespace_rsgroup.rb"],
   ]},
-  { id: "storefiletracker", title: "StoreFileTracker", badge: "0 remaining — fully ported", items: [
+  { id: "storefiletracker", title: "StoreFileTracker", badge: "0 remaining — commands ported", items: [
     ["sft-change","`change_sft`","Unit-tested; corpus row added (exact).",true, IMPL + "ChangeSftCommand.java"],
     ["sft-change-all","`change_sft_all`","Unit-tested; corpus row added (smoke — legacy shell crashes with NoMethodError reading its y/n confirmation from exhausted piped stdin, same disable_all precedent; newshell's one-shot port intentionally skips the prompt).",true, IMPL + "ChangeSftAllCommand.java"],
   ]},

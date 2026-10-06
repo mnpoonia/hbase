@@ -42,7 +42,7 @@ import org.apache.yetus.audience.InterfaceAudience;
  * {@code AUTHORIZATIONS}/{@code CONSISTENCY}/{@code REGION_REPLICA_ID} hash literal or bare column
  * arguments ({@code get 't', 'r', 'c1',
  * 'c2'} / {@code get 't', 'r', ['c1', 'c2']}), as in the legacy shell. ATTRIBUTES, AUTHORIZATIONS
- * and CONSISTENCY are explicitly not ported for this pilot slice.
+ * and CONSISTENCY are applied to the underlying {@code Get}.
  */
 @InterfaceAudience.Private
 public final class GetCommand implements ShellCommand {

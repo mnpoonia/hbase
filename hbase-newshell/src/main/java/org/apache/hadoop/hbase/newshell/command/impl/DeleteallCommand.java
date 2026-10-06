@@ -34,7 +34,7 @@ import org.apache.yetus.audience.InterfaceAudience;
  * optional timestamp - deletes all versions up to that timestamp, matching the ruby original's
  * {@code all_version=true}. {@code ROWPREFIXFILTER} plus optional {@code CACHE} (default 100)
  * batches a prefix-scan range delete, per {@code _deleterows_internal}. Meta-table guards,
- * ATTRIBUTES and VISIBILITY are explicitly not ported.
+ * ATTRIBUTES and VISIBILITY are not ported and are rejected as unsupported options.
  */
 @InterfaceAudience.Private
 public final class DeleteallCommand implements ShellCommand {

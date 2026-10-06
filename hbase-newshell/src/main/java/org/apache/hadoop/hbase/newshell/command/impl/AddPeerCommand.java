@@ -31,8 +31,8 @@ import org.apache.yetus.audience.InterfaceAudience;
  * Ported, minimal slice, from hbase-shell's {@code shell/commands/add_peer.rb}: a peer id plus a
  * single args hash supporting {@code CLUSTER_KEY}, {@code ENDPOINT_CLASSNAME}, {@code STATE},
  * {@code TABLE_CFS}, and {@code NAMESPACES} (e.g.
- * {@code add_peer '1', CLUSTER_KEY => 'zk1,zk2:2181:/hbase'}). SERIAL/REMOTE_WAL_DIR/DATA/CONFIG
- * (sync replication) are explicitly not ported for this slice.
+ * {@code add_peer '1', CLUSTER_KEY => 'zk1,zk2:2181:/hbase'}). Also supports SERIAL,
+ * REMOTE_WAL_DIR, DATA and CONFIG; unknown keys are rejected.
  */
 @InterfaceAudience.Private
 public final class AddPeerCommand implements ShellCommand {

@@ -78,10 +78,10 @@ import org.apache.yetus.audience.InterfaceAudience;
  * all-versions column delete, plus {@code ROWPREFIXFILTER}/{@code CACHE} batched range delete);
  * {@code _get_counter_internal}/{@code _incr_internal}/ {@code _append_internal}; and
  * {@code _get_splits_internal}. {@code FILTER} (via {@link ParseFilter}'s textual filter grammar)
- * and {@code TIMERANGE} are supported for {@code get} and {@code scan}; ATTRIBUTES/
- * ATTRIBUTES/VISIBILITY/TTL (for {@code put}) are supported, as are the scan options in
- * {@code SCAN_OPTIONS} and the {@code get}/{@code scan} FORMATTER/FORMATTER_CLASS plus per-column
- * {@code cf:qualifier:CONVERTER}. Scan metrics (ALL_METRICS/METRICS) are not ported.
+ * and {@code TIMERANGE} are supported for {@code get} and {@code scan}; ATTRIBUTES/VISIBILITY/TTL
+ * (for {@code put}) and ATTRIBUTES/VISIBILITY (for {@code delete}) are supported, as are the scan
+ * options in {@code SCAN_OPTIONS} and the {@code get}/{@code scan} FORMATTER/FORMATTER_CLASS plus
+ * per-column {@code cf:qualifier:CONVERTER}, and scan metrics (ALL_METRICS/METRICS).
  */
 @InterfaceAudience.Private
 public final class DefaultShellTable implements ShellTable {
