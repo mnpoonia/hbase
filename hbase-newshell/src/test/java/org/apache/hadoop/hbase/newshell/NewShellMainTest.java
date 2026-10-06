@@ -117,6 +117,24 @@ public class NewShellMainTest {
     }
   }
 
+  /** Throws an unchecked wrapper around an IOException, as streaming output does. */
+  private static final class WrappedIoCommand implements ShellCommand {
+    @Override
+    public String name() {
+      return "wrapped";
+    }
+
+    @Override
+    public String help() {
+      return "wrapped";
+    }
+
+    @Override
+    public CommandResult execute(ParsedCommand command, ExecutionContext context) {
+      throw new IllegalStateException("stream failed", new IOException("rpc down"));
+    }
+  }
+
   /**
    * Throws an unchecked exception, to verify the dispatch loop's RuntimeException trust boundary.
    */
@@ -260,6 +278,18 @@ public class NewShellMainTest {
     String output = terminal.output();
     assertTrue(output.contains("unchecked boom"));
     assertTrue(output.contains("hello world"));
+  }
+
+  @Test
+  public void uncheckedWrapperAroundIoFailureMapsToServerError() throws IOException {
+    FakeShellTerminal terminal = new FakeShellTerminal("wrapped", "hello", "exit");
+    CommandRegistry registry =
+      new CommandRegistry(java.util.Arrays.asList(new SucceedingCommand(), new WrappedIoCommand()));
+    int code = ShellRepl.run(terminal, newContext(terminal.writer()), registry,
+      new DefaultFormatter(), true);
+    assertEquals(ExitCodes.SERVER_ERROR, code);
+    assertTrue(terminal.output().contains("stream failed"));
+    assertFalse(terminal.output().contains("hello world"));
   }
 
   @Test
