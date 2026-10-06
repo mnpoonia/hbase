@@ -44,10 +44,13 @@ for the JRuby shell.
   patterns: `echo 'balance_switch false' | hbase shell -n | grep 'Previous
   balancer state' | awk -F": " '{print $2}'` yields `true` on both engines;
   plain `echo 'balance_switch true' | hbase shell` (no `-n`, output
-  discarded) exits 0 and takes effect on both. Known differences, neither a
-  regression: (1) newshell writes its `newshell> ` prompt to stdout when
-  stdin is piped (legacy writes none), harmless to the `grep`/`awk` above;
-  (2) `rolling-restart.sh:205`'s `| tail -1` returns the prompt text, not the
+  discarded) exits 0 and takes effect on both. That container run had no
+  controlling tty. With one (e.g. `graceful_drain.sh` run from a terminal),
+  JLine's system terminal ignored the pipe and read/wrote the tty instead,
+  so the capture was empty or the process hung; fixed by reading `System.in`
+  directly whenever the session is not interactive (`NewShellMain
+  .openTerminal`), which also drops the stdout prompt. Known difference, not
+  a regression: `rolling-restart.sh:205`'s `| tail -1` does not return the
   balancer state, on BOTH engines, so that script line is already broken on
   the legacy shell — separate fix to the script. Default engine is still
   legacy until `bin/hbase shell` is repointed (next item).

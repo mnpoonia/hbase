@@ -86,13 +86,13 @@ public final class NewShellMain {
     }
     launch.properties.forEach(conf::set);
 
-    boolean interactive = isInteractive(launch, System.console() != null);
+    boolean interactive = isInteractive(launch, hasTerminal());
     SessionOptions options = new SessionOptions(launch.outputFormat, launch.verbose,
       launch.forceYes, launch.quiet, interactive);
     Formatter formatter = Formatters.forFormat(options.outputFormat());
 
     int exitCode = ExitCodes.SUCCESS;
-    try (ShellTerminal terminal = openTerminal(launch.scriptFile);
+    try (ShellTerminal terminal = openTerminal(launch.scriptFile, interactive);
       Connection connection = ConnectionFactory.createConnection(conf);
       DefaultShellTableFactory tables = new DefaultShellTableFactory(connection)) {
       ShellAdmin admin = DefaultShellAdmin.create(connection.getAdmin());
@@ -109,6 +109,25 @@ public final class NewShellMain {
   }
 
   /**
+   * True when stdin and stdout are both attached to a terminal. {@code System.console() != null} is
+   * enough on Java 8, but since Java 22 a console can exist for redirected streams, so also ask
+   * {@code Console.isTerminal()} (reflectively: it does not exist on Java 8-21).
+   */
+  static boolean hasTerminal() {
+    java.io.Console console = System.console();
+    if (console == null) {
+      return false;
+    }
+    try {
+      return (Boolean) java.io.Console.class.getMethod("isTerminal").invoke(console);
+    } catch (NoSuchMethodException e) {
+      return true;
+    } catch (ReflectiveOperationException | RuntimeException e) {
+      return true;
+    }
+  }
+
+  /**
    * A session is interactive only on a real terminal: piped stdin (as used by graceful_stop.sh and
    * rolling-restart.sh) must not have its following lines consumed as y/N answers or be preceded by
    * a prompt on stdout.
@@ -117,9 +136,15 @@ public final class NewShellMain {
     return launch.scriptFile == null && !launch.exitOnFirstError && hasConsole;
   }
 
-  private static ShellTerminal openTerminal(String scriptFile) throws IOException {
+  private static ShellTerminal openTerminal(String scriptFile, boolean interactive)
+    throws IOException {
     if (scriptFile != null) {
       return new FileScriptTerminal(scriptFile);
+    }
+    if (!interactive) {
+      // Piped stdin or -n: read System.in directly. JLine's system terminal binds to the
+      // controlling tty when there is one, ignoring the pipe and writing its output to the tty.
+      return new FileScriptTerminal(System.in);
     }
     TerminalProvider provider = new TerminalProviderRegistry().resolve();
     TerminalConfig config =

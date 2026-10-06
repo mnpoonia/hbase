@@ -19,6 +19,7 @@ package org.apache.hadoop.hbase.newshell;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
@@ -406,6 +407,22 @@ public class NewShellMainTest {
       new CommandRegistry(java.util.Arrays.asList(new SucceedingCommand()));
     ShellRepl.run(terminal, newContext(terminal.writer()), registry, new DefaultFormatter());
     assertFalse(terminal.output().contains("ERROR"));
+  }
+
+  @Test
+  public void streamTerminalReadsLinesFromTheGivenStreamWithoutPrompting() throws IOException {
+    try (FileScriptTerminal terminal = new FileScriptTerminal(new java.io.ByteArrayInputStream(
+      "one\ntwo\n".getBytes(java.nio.charset.StandardCharsets.UTF_8)))) {
+      assertEquals("one", terminal.readLine("ignored> "));
+      assertEquals("two", terminal.readLine("ignored> "));
+      assertNull(terminal.readLine("ignored> "));
+    }
+  }
+
+  @Test
+  public void hasTerminalIsFalseWithoutAConsole() {
+    // Surefire runs with redirected stdin/stdout, so there is no terminal on any Java version.
+    assertFalse(NewShellMain.hasTerminal());
   }
 
   @Test

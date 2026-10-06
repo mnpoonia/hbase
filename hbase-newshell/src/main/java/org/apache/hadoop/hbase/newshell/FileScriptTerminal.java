@@ -20,6 +20,7 @@ package org.apache.hadoop.hbase.newshell;
 import java.io.BufferedReader;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
@@ -41,8 +42,15 @@ final class FileScriptTerminal implements ShellTerminal {
     new PrintWriter(new OutputStreamWriter(System.out, StandardCharsets.UTF_8), true);
 
   FileScriptTerminal(String path) throws IOException {
-    this.reader =
-      new BufferedReader(new InputStreamReader(new FileInputStream(path), StandardCharsets.UTF_8));
+    this(new FileInputStream(path));
+  }
+
+  /**
+   * Reads commands from {@code in}. Used for piped stdin: JLine's system terminal would bind to the
+   * controlling tty instead of the pipe and read and write there, not on stdin/stdout.
+   */
+  FileScriptTerminal(InputStream in) {
+    this.reader = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8));
   }
 
   @Override

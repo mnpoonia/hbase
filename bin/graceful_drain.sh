@@ -69,10 +69,7 @@ function log {
 }
 
 log "Disabling load balancer"
-# Force the legacy shell engine for this internal pipe: newshell's terminal
-# binds directly to the tty (system(true)) and never writes to the pipe, so
-# this capture comes back empty under HBASE_SHELL_ENGINE=newshell.
-HBASE_BALANCER_STATE=$(echo 'balance_switch false' | HBASE_SHELL_ENGINE=jruby "$bin"/hbase --config "${HBASE_CONF_DIR}" shell -n | grep 'Previous balancer state' | awk -F": " '{print $2}')
+HBASE_BALANCER_STATE=$(echo 'balance_switch false' | "$bin"/hbase --config "${HBASE_CONF_DIR}" shell -n | grep 'Previous balancer state' | awk -F": " '{print $2}')
 log "Previous balancer state was $HBASE_BALANCER_STATE"
 
 log "Adding $hostname to draining servers"
@@ -85,7 +82,7 @@ log "Unloaded $hostname region(s)"
 
 if [ "$HBASE_BALANCER_STATE" != "false" ]; then
   log "Restoring balancer state to $HBASE_BALANCER_STATE"
-  echo "balance_switch $HBASE_BALANCER_STATE" | HBASE_SHELL_ENGINE=jruby "$bin"/hbase --config "${HBASE_CONF_DIR}" shell &> /dev/null
+  echo "balance_switch $HBASE_BALANCER_STATE" | "$bin"/hbase --config "${HBASE_CONF_DIR}" shell &> /dev/null
 else
   log "Balancer was already off, leaving it off"
 fi
