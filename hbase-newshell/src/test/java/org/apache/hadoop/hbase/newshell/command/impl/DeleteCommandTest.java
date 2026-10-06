@@ -73,6 +73,13 @@ public class DeleteCommandTest {
     new ExecutionContext(new StubShellAdmin(), tables, new PrintWriter(new StringWriter()));
 
   @Test
+  public void rejectsOptionsInsteadOfDroppingThem() throws Exception {
+    ParsedCommand parsed =
+      ShellLineParser.parse("delete 't1', 'r1', 'f:q', {VISIBILITY => 'secret'}");
+    assertThrows(ShellCommandException.class, () -> command.execute(parsed, context));
+  }
+
+  @Test
   public void deletesSingleCellVersion() throws Exception {
     ParsedCommand parsed = ShellLineParser.parse("delete 't1', 'r1', 'f1:c1'");
     command.execute(parsed, context);

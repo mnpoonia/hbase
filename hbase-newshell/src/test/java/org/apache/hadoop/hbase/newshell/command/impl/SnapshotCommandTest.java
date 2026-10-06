@@ -41,6 +41,15 @@ public class SnapshotCommandTest {
     private String lastTableName;
     private String lastSnapshotName;
 
+    private java.util.Map<String, Object> lastOptions;
+
+    @Override
+    public void snapshot(String tableName, String snapshotName, java.util.Map<String, Object> o) {
+      this.lastTableName = tableName;
+      this.lastSnapshotName = snapshotName;
+      this.lastOptions = o;
+    }
+
     @Override
     public void snapshot(String tableName, String snapshotName) {
       this.lastTableName = tableName;
@@ -61,6 +70,16 @@ public class SnapshotCommandTest {
     assertEquals("t1", admin.lastTableName);
     assertEquals("snap1", admin.lastSnapshotName);
     assertEquals(Collections.emptyList(), result.lines());
+  }
+
+  @Test
+  public void passesOptionsHash() throws Exception {
+    command.execute(
+      ShellLineParser.parse("snapshot 't1', 'snap1', {TTL => 3600, SKIP_FLUSH => true}"), context);
+
+    assertEquals("snap1", admin.lastSnapshotName);
+    assertEquals(3600L, ((Number) admin.lastOptions.get("TTL")).longValue());
+    assertEquals("true", String.valueOf(admin.lastOptions.get("SKIP_FLUSH")));
   }
 
   @Test

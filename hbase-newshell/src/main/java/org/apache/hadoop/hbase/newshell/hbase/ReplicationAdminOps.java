@@ -42,6 +42,10 @@ import org.apache.hadoop.hbase.util.Bytes;
 
 /** Package-private collaborator used by {@link DefaultShellAdmin}. */
 final class ReplicationAdminOps {
+  private static final Set<String> ADD_PEER_OPTIONS =
+    new java.util.TreeSet<>(Arrays.asList("CLUSTER_KEY", "ENDPOINT_CLASSNAME", "CONFIG", "DATA",
+      "TABLE_CFS", "NAMESPACES", "STATE", "REMOTE_WAL_DIR", "SERIAL"));
+
   private final org.apache.hadoop.hbase.client.Admin admin;
 
   ReplicationAdminOps(org.apache.hadoop.hbase.client.Admin admin) {
@@ -49,6 +53,12 @@ final class ReplicationAdminOps {
   }
 
   void addPeer(String peerId, Map<String, Object> peerConfigSpec) throws IOException {
+    for (String key : peerConfigSpec.keySet()) {
+      if (!ADD_PEER_OPTIONS.contains(key)) {
+        throw new ClientErrorException(
+          "add_peer: unknown option '" + key + "'; supported: " + ADD_PEER_OPTIONS);
+      }
+    }
     Object clusterKey = peerConfigSpec.get("CLUSTER_KEY");
     Object endpointClassname = peerConfigSpec.get("ENDPOINT_CLASSNAME");
     if (clusterKey == null && endpointClassname == null) {
@@ -60,6 +70,31 @@ final class ReplicationAdminOps {
     }
     if (endpointClassname != null) {
       builder.setReplicationEndpointImpl(String.valueOf(endpointClassname));
+    }
+    Object remoteWalDir = peerConfigSpec.get("REMOTE_WAL_DIR");
+    if (remoteWalDir != null) {
+      builder.setRemoteWALDir(String.valueOf(remoteWalDir));
+    }
+    Object serial = peerConfigSpec.get("SERIAL");
+    if (serial != null) {
+      String text = String.valueOf(serial);
+      if (!"true".equalsIgnoreCase(text) && !"false".equalsIgnoreCase(text)) {
+        throw new ClientErrorException("SERIAL must be true or false: " + text);
+      }
+      builder.setSerial(Boolean.parseBoolean(text));
+    }
+    Object config = peerConfigSpec.get("CONFIG");
+    if (config instanceof Map) {
+      for (Map.Entry<?, ?> entry : ((Map<?, ?>) config).entrySet()) {
+        builder.putConfiguration(String.valueOf(entry.getKey()), String.valueOf(entry.getValue()));
+      }
+    }
+    Object data = peerConfigSpec.get("DATA");
+    if (data instanceof Map) {
+      for (Map.Entry<?, ?> entry : ((Map<?, ?>) data).entrySet()) {
+        builder.putPeerData(Bytes.toBytes(String.valueOf(entry.getKey())),
+          Bytes.toBytes(String.valueOf(entry.getValue())));
+      }
     }
     Object tableCfs = peerConfigSpec.get("TABLE_CFS");
     if (tableCfs instanceof Map) {

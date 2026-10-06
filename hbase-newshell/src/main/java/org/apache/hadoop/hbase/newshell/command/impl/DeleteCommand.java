@@ -48,6 +48,10 @@ public final class DeleteCommand implements ShellCommand {
   @Override
   public CommandResult execute(ParsedCommand command, ExecutionContext context)
     throws ShellCommandException, IOException {
+    if (!ArgParsing.allOptions(command).isEmpty()) {
+      throw new ShellCommandException("delete: options are not supported: "
+        + ArgParsing.allOptions(command).keySet() + " (ATTRIBUTES/VISIBILITY are not ported)");
+    }
     ArgParsing.requireMaxArgs(command, "delete", 4);
     ArgParsing.requireArgs(command, 3, "delete requires a table name, row key and column argument");
     String tableName = ArgParsing.string(command, 0);

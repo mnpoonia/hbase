@@ -41,6 +41,8 @@ public final class StreamingTabularResult implements CommandResult {
   private final List<String> header;
   private final RowProducer rowProducer;
   private final Supplier<Map<String, String>> trailer;
+  private boolean groupedByFirstColumn;
+  private long rowCount;
 
   public StreamingTabularResult(List<String> header, RowProducer rowProducer) {
     this(header, rowProducer, Collections::emptyMap);
@@ -65,8 +67,30 @@ public final class StreamingTabularResult implements CommandResult {
     return header;
   }
 
+  /**
+   * Counts a run of emitted lines sharing the same first column as one logical row, as {@code scan}
+   * emits one line per cell but reports {@code N row(s)} per row key.
+   */
+  public StreamingTabularResult groupedByFirstColumn() {
+    this.groupedByFirstColumn = true;
+    return this;
+  }
+
+  /** Logical rows seen by the last {@link #forEachRow} call; valid once it has returned. */
+  public long rowCount() {
+    return rowCount;
+  }
+
   public void forEachRow(Consumer<List<String>> rowConsumer) throws IOException {
-    rowProducer.produce(rowConsumer);
+    rowCount = 0;
+    String[] previousKey = { null };
+    rowProducer.produce(row -> {
+      if (!groupedByFirstColumn || previousKey[0] == null || !previousKey[0].equals(row.get(0))) {
+        rowCount++;
+      }
+      previousKey[0] = row.isEmpty() ? null : row.get(0);
+      rowConsumer.accept(row);
+    });
   }
 
   @Override

@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import org.apache.hadoop.hbase.client.Admin;
+import org.apache.hadoop.hbase.newshell.command.ShellCommandException;
 import org.apache.yetus.audience.InterfaceAudience;
 
 /**
@@ -353,6 +354,12 @@ public final class DefaultShellAdmin implements ShellAdmin {
   @Override
   public void snapshot(String tableName, String snapshotName) throws IOException {
     snapshotAdminOps.snapshot(tableName, snapshotName);
+  }
+
+  @Override
+  public void snapshot(String tableName, String snapshotName, Map<String, Object> options)
+    throws ShellCommandException, IOException {
+    snapshotAdminOps.snapshot(tableName, snapshotName, options);
   }
 
   @Override

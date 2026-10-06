@@ -19,12 +19,18 @@ package org.apache.hadoop.hbase.newshell.hbase;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
+import org.apache.hadoop.hbase.newshell.command.ShellCommandException;
 import org.apache.yetus.audience.InterfaceAudience;
 
 /** Snapshot create/delete/list/clone/restore operations. */
 @InterfaceAudience.Private
 public interface SnapshotAdminContract {
   void snapshot(String tableName, String snapshotName) throws IOException;
+
+  /** Snapshot with the {@code TTL}, {@code MAX_FILESIZE} and {@code SKIP_FLUSH} options. */
+  void snapshot(String tableName, String snapshotName, Map<String, Object> options)
+    throws ShellCommandException, IOException;
 
   void deleteSnapshot(String snapshotName) throws IOException;
 

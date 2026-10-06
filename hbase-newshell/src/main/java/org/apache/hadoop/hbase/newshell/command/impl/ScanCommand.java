@@ -72,6 +72,6 @@ public final class ScanCommand implements ShellCommand {
       Map<String, String> metrics = new LinkedHashMap<>();
       result.metrics().forEach((name, value) -> metrics.put(name, String.valueOf(value)));
       return metrics;
-    });
+    }).groupedByFirstColumn();
   }
 }

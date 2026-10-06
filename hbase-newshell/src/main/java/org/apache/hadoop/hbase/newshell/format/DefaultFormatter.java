@@ -64,16 +64,12 @@ public final class DefaultFormatter implements Formatter {
 
   private void formatStreamingTabular(StreamingTabularResult result, PrintWriter out) {
     out.println(formatRow(result.header(), true));
-    long[] count = { 0 };
     try {
-      result.forEachRow(row -> {
-        out.println(formatRow(row, false));
-        count[0]++;
-      });
+      result.forEachRow(row -> out.println(formatRow(row, false)));
     } catch (IOException e) {
       throw new IllegalStateException("Failed to stream scan result", e);
     }
-    out.println(count[0] + " row(s)");
+    out.println(result.rowCount() + " row(s)");
     Map<String, String> trailer = result.trailer();
     if (!trailer.isEmpty()) {
       out.println();

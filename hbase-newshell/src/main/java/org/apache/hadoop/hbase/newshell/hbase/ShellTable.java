@@ -56,6 +56,14 @@ public interface ShellTable {
 
   void delete(String row, String column, Long timestamp) throws IOException;
 
+  /**
+   * Rewrites every cell matched by the {@code scanSpec} (the options {@link #scan} accepts) with
+   * the cell ACL {@code permissions} (user or {@code @group} to action string); returns the number
+   * of rows touched. Mirrors the cell-ACL form of hbase-shell's {@code grant}.
+   */
+  long setCellPermissions(Map<String, String> permissions, Map<String, Object> scanSpec)
+    throws ShellCommandException, IOException;
+
   void deleteAll(String row, String column, Long timestamp, Map<String, Object> options)
     throws ShellCommandException, IOException;
 

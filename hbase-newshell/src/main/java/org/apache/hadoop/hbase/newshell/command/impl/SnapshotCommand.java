@@ -18,6 +18,7 @@
 package org.apache.hadoop.hbase.newshell.command.impl;
 
 import java.io.IOException;
+import java.util.Map;
 import org.apache.hadoop.hbase.newshell.command.ArgParsing;
 import org.apache.hadoop.hbase.newshell.command.CommandResult;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
@@ -28,9 +29,8 @@ import org.apache.hadoop.hbase.newshell.parser.ParsedCommand;
 import org.apache.yetus.audience.InterfaceAudience;
 
 /**
- * Ported, minimal slice, from hbase-shell's {@code shell/commands/snapshot.rb}: a table name plus a
- * snapshot name, taking a default FLUSH-type snapshot. The {@code TTL}/{@code MAX_FILESIZE}/
- * {@code SKIP_FLUSH} options hash is explicitly not ported for this slice.
+ * Ported from hbase-shell's {@code shell/commands/snapshot.rb}: a table name, a snapshot name and
+ * an optional {@code TTL}/{@code MAX_FILESIZE}/{@code SKIP_FLUSH} options hash.
  */
 @InterfaceAudience.Private
 public final class SnapshotCommand implements ShellCommand {
@@ -41,7 +41,7 @@ public final class SnapshotCommand implements ShellCommand {
 
   @Override
   public String help() {
-    return "snapshot 'table', 'snapshotName' - take a snapshot of the named table";
+    return "snapshot 'table', 'snapshotName' [, {TTL => secs, MAX_FILESIZE => bytes, SKIP_FLUSH => true}]";
   }
 
   @Override
@@ -51,7 +51,12 @@ public final class SnapshotCommand implements ShellCommand {
     ArgParsing.requireArgs(command, 2, "snapshot requires a table name and a snapshot name");
     String tableName = ArgParsing.string(command, 0);
     String snapshotName = ArgParsing.string(command, 1);
-    context.snapshotAdmin().snapshot(tableName, snapshotName);
+    Map<String, Object> options = ArgParsing.allOptions(command);
+    if (options.isEmpty()) {
+      context.snapshotAdmin().snapshot(tableName, snapshotName);
+    } else {
+      context.snapshotAdmin().snapshot(tableName, snapshotName, options);
+    }
     return TextResult.of();
   }
 }

@@ -52,6 +52,19 @@ public class DefaultFormatterTest {
   }
 
   @Test
+  public void groupedStreamingResultCountsRowKeysNotCells() {
+    StringWriter buf = new StringWriter();
+    StreamingTabularResult result =
+      new StreamingTabularResult(Arrays.asList("ROW", "COLUMN+CELL"), rowConsumer -> {
+        rowConsumer.accept(Arrays.asList("r1", "f:a"));
+        rowConsumer.accept(Arrays.asList("r1", "f:b"));
+        rowConsumer.accept(Arrays.asList("r2", "f:a"));
+      }).groupedByFirstColumn();
+    new DefaultFormatter().format("scan", result, new PrintWriter(buf));
+    assertEquals("ROW  COLUMN+CELL\n r1 f:a\n r1 f:b\n r2 f:a\n2 row(s)\n", buf.toString());
+  }
+
+  @Test
   public void streamingTabularResultPrintsMetricsTrailer() {
     StringWriter buf = new StringWriter();
     StreamingTabularResult result = new StreamingTabularResult(Arrays.asList("ROW", "COLUMN+CELL"),

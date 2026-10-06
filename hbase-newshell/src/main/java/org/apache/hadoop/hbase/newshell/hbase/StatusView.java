@@ -54,6 +54,71 @@ public final class StatusView {
       String.format("              %.4f average load", metrics.getAverageLoad()));
   }
 
+  public List<String> simpleLines() {
+    List<String> lines = new ArrayList<>();
+    ServerName master = metrics.getMasterName();
+    lines.add(String.format("active master:  %s:%d %d", master.getHostname(), master.getPort(),
+      master.getStartcode()));
+    List<ServerName> backupMasters = metrics.getBackupMasterNames();
+    lines.add(String.format("%d backup masters", backupMasters.size()));
+    for (ServerName server : backupMasters) {
+      lines.add(String.format("    %s:%d %d", server.getHostname(), server.getPort(),
+        server.getStartcode()));
+    }
+    Map<ServerName, ServerMetrics> liveServers = metrics.getLiveServerMetrics();
+    lines.add(String.format("%d live servers", liveServers.size()));
+    long load = 0;
+    long regions = 0;
+    for (Map.Entry<ServerName, ServerMetrics> entry : liveServers.entrySet()) {
+      ServerName server = entry.getKey();
+      lines.add(String.format("    %s:%d %d", server.getHostname(), server.getPort(),
+        server.getStartcode()));
+      lines.add(String.format("        %s", entry.getValue()));
+      load += entry.getValue().getRequestCountPerSecond();
+      regions += entry.getValue().getRegionMetrics().size();
+    }
+    List<ServerName> deadServers = metrics.getDeadServerNames();
+    lines.add(String.format("%d dead servers", deadServers.size()));
+    for (ServerName server : deadServers) {
+      lines.add(String.format("    %s", server));
+    }
+    lines.add(String.format("Aggregate load: %d, regions: %d", load, regions));
+    return lines;
+  }
+
+  public List<String> tasksLines() {
+    List<String> lines = new ArrayList<>();
+    ServerName master = metrics.getMasterName();
+    if (master != null) {
+      lines.add(String.format("active master:  %s:%d %d", master.getHostname(), master.getPort(),
+        master.getStartcode()));
+      appendRunningTasks(lines, metrics.getMasterTasks(), "    ");
+    }
+    Map<ServerName, ServerMetrics> liveServers = metrics.getLiveServerMetrics();
+    lines.add(String.format("%d live servers", liveServers.size()));
+    for (Map.Entry<ServerName, ServerMetrics> entry : liveServers.entrySet()) {
+      ServerName server = entry.getKey();
+      lines.add(String.format("    %s:%d %d", server.getHostname(), server.getPort(),
+        server.getStartcode()));
+      appendRunningTasks(lines, entry.getValue().getTasks(), "        ");
+    }
+    return lines;
+  }
+
+  private static void appendRunningTasks(List<String> lines, List<ServerTask> tasks,
+    String indent) {
+    boolean printed = false;
+    for (ServerTask task : tasks) {
+      if (task.getState() == ServerTask.State.RUNNING) {
+        lines.add(indent + task);
+        printed = true;
+      }
+    }
+    if (!printed) {
+      lines.add(indent + "no active tasks");
+    }
+  }
+
   public List<String> detailedLines() {
     List<String> lines = new ArrayList<>();
     lines.add(String.format("version %s", metrics.getHBaseVersion()));

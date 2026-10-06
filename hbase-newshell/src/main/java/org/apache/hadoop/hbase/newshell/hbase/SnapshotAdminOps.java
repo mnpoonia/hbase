@@ -19,11 +19,18 @@ package org.apache.hadoop.hbase.newshell.hbase;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.regex.Pattern;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Admin;
 import org.apache.hadoop.hbase.client.SnapshotDescription;
+import org.apache.hadoop.hbase.client.SnapshotType;
+import org.apache.hadoop.hbase.newshell.command.ShellCommandException;
 import org.apache.yetus.audience.InterfaceAudience;
 
 /**
@@ -32,6 +39,9 @@ import org.apache.yetus.audience.InterfaceAudience;
  */
 @InterfaceAudience.Private
 final class SnapshotAdminOps implements SnapshotAdminContract {
+  private static final Set<String> SNAPSHOT_OPTIONS =
+    new TreeSet<>(Arrays.asList("TTL", "MAX_FILESIZE", "SKIP_FLUSH"));
+
   private final Admin admin;
 
   SnapshotAdminOps(Admin admin) {
@@ -41,6 +51,29 @@ final class SnapshotAdminOps implements SnapshotAdminContract {
   @Override
   public void snapshot(String tableName, String snapshotName) throws IOException {
     admin.snapshot(snapshotName, TableName.valueOf(tableName));
+  }
+
+  @Override
+  public void snapshot(String tableName, String snapshotName, Map<String, Object> options)
+    throws ShellCommandException, IOException {
+    for (String key : options.keySet()) {
+      if (!SNAPSHOT_OPTIONS.contains(key)) {
+        throw new ShellCommandException(
+          "snapshot: unknown option '" + key + "'; supported: " + SNAPSHOT_OPTIONS);
+      }
+    }
+    Long ttl = OptionValues.optLong(options, "TTL");
+    Long maxFileSize = OptionValues.optLong(options, "MAX_FILESIZE");
+    Boolean skipFlush = OptionValues.optBoolean(options, "SKIP_FLUSH");
+    Map<String, Object> props = new HashMap<>();
+    props.put("TTL", ttl == null ? -1L : ttl);
+    props.put("MAX_FILESIZE", maxFileSize == null ? -1L : maxFileSize);
+    TableName table = TableName.valueOf(tableName);
+    if (Boolean.TRUE.equals(skipFlush)) {
+      admin.snapshot(snapshotName, table, SnapshotType.SKIPFLUSH, props);
+    } else {
+      admin.snapshot(snapshotName, table, props);
+    }
   }
 
   @Override

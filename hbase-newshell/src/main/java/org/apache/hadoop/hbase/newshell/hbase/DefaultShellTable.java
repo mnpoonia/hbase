@@ -56,6 +56,10 @@ import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.client.Table;
+import org.apache.hadoop.hbase.filter.Filter;
+import org.apache.hadoop.hbase.filter.FilterList;
+import org.apache.hadoop.hbase.filter.FirstKeyOnlyFilter;
+import org.apache.hadoop.hbase.filter.KeyOnlyFilter;
 import org.apache.hadoop.hbase.filter.ParseFilter;
 import org.apache.hadoop.hbase.newshell.command.ShellCommandException;
 import org.apache.hadoop.hbase.security.visibility.Authorizations;
@@ -208,6 +212,21 @@ public final class DefaultShellTable implements ShellTable {
       // count reads every row once; do not churn the block cache unless asked to.
       scan.setCacheBlocks(false);
     }
+    // As in hbase-shell: only the first cell of each row is needed, and only its key.
+    List<Filter> filters = new ArrayList<>();
+    Filter userFilter = scan.getFilter();
+    if (userFilter != null) {
+      filters.add(userFilter);
+    }
+    Filter firstKeyOnly = new FirstKeyOnlyFilter();
+    Filter keyOnly = new KeyOnlyFilter();
+    if (userFilter != null) {
+      firstKeyOnly.setReversed(userFilter.isReversed());
+      keyOnly.setReversed(userFilter.isReversed());
+    }
+    filters.add(firstKeyOnly);
+    filters.add(keyOnly);
+    scan.setFilter(new FilterList(filters));
     long interval = resolveInterval(options);
     long count = 0;
     try (ResultScanner scanner = table.getScanner(scan)) {
@@ -231,6 +250,35 @@ public final class DefaultShellTable implements ShellTable {
       throw new ShellCommandException("INTERVAL must be a positive number: " + interval);
     }
     return interval;
+  }
+
+  @Override
+  public long setCellPermissions(Map<String, String> permissions, Map<String, Object> scanSpec)
+    throws ShellCommandException, IOException {
+    rejectUnsupportedOptions("grant", scanSpec, SCAN_OPTIONS);
+    Map<String, org.apache.hadoop.hbase.security.access.Permission> acl = new HashMap<>();
+    for (Map.Entry<String, String> entry : permissions.entrySet()) {
+      acl.put(entry.getKey(),
+        new org.apache.hadoop.hbase.security.access.Permission(Bytes.toBytes(entry.getValue())));
+    }
+    Scan scan = ReadOptions.parse(scanSpec).newScan(new HashMap<>());
+    applyQueryOptions(scan, scanSpec);
+    long rows = 0;
+    try (ResultScanner scanner = table.getScanner(scan)) {
+      for (Result result : scanner) {
+        List<Cell> cells = result.listCells();
+        if (cells != null) {
+          for (Cell cell : cells) {
+            Put put = new Put(result.getRow());
+            put.add(cell);
+            put.setACL(acl);
+            table.put(put);
+          }
+        }
+        rows++;
+      }
+    }
+    return rows;
   }
 
   @Override

@@ -138,6 +138,15 @@ public final class ArgParsing {
     return null;
   }
 
+  /** Bareword options merged with every hash literal; later entries win. */
+  public static Map<String, Object> allOptions(ParsedCommand command) {
+    Map<String, Object> merged = new LinkedHashMap<>(command.options());
+    for (Map<String, Object> hashLiteral : command.hashLiterals()) {
+      merged.putAll(hashLiteral);
+    }
+    return merged;
+  }
+
   /** True when the {@code YES} option (flag or {@code Y}/{@code true} value) was given. */
   public static boolean isYes(ParsedCommand command) {
     Object yes = command.options().get("YES");

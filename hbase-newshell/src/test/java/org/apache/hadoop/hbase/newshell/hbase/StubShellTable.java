@@ -56,6 +56,11 @@ public class StubShellTable implements ShellTable {
   }
 
   @Override
+  public long setCellPermissions(Map<String, String> permissions, Map<String, Object> scanSpec) {
+    throw notNeeded();
+  }
+
+  @Override
   public void deleteAll(String row, String column, Long timestamp, Map<String, Object> options) {
     throw notNeeded();
   }

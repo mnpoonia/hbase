@@ -18,7 +18,9 @@
 package org.apache.hadoop.hbase.newshell.command.impl;
 
 import java.io.IOException;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import org.apache.hadoop.hbase.newshell.command.CommandResult;
 import org.apache.hadoop.hbase.newshell.command.ExecutionContext;
 import org.apache.hadoop.hbase.newshell.command.ShellCommand;
@@ -29,8 +31,8 @@ import org.apache.yetus.audience.InterfaceAudience;
 
 /**
  * Ported, original form only, from hbase-shell's {@code shell/commands/grant.rb}: user (or
- * {@code @group}), permissions, and an optional table (or {@code @namespace})/family/qualifier. The
- * cell-ACL-update form (a permissions hash plus a scanner spec) is explicitly not ported.
+ * {@code @group}), permissions, and an optional table (or {@code @namespace})/family/qualifier; or
+ * the cell-ACL form: table, a user-to-permissions hash, and a scanner spec hash.
  */
 @InterfaceAudience.Private
 public final class GrantCommand implements ShellCommand {
@@ -49,9 +51,15 @@ public final class GrantCommand implements ShellCommand {
   public CommandResult execute(ParsedCommand command, ExecutionContext context)
     throws ShellCommandException, IOException {
     List<Object> positionals = command.positionalArgs();
+    if (positionals.size() == 1 && !command.hashLiterals().isEmpty()) {
+      return grantCellAcl(command, context);
+    }
     if (positionals.size() < 2) {
       throw new ShellCommandException(
         "grant requires a user (or group) and a permissions " + "argument");
+    }
+    if (!(positionals.get(1) instanceof String)) {
+      throw new ShellCommandException("grant: second argument should be a String or Hash");
     }
     String userOrGroup = String.valueOf(positionals.get(0));
     String actions = String.valueOf(positionals.get(1));
@@ -67,5 +75,22 @@ public final class GrantCommand implements ShellCommand {
     }
     context.securityAdmin().grant(userOrGroup, actions, tableName, family, qualifier, namespace);
     return TextResult.of();
+  }
+
+  /** {@code grant 'table', {'user' => 'RW'}, {scan spec}}: update the ACL of every matched cell. */
+  private static CommandResult grantCellAcl(ParsedCommand command, ExecutionContext context)
+    throws ShellCommandException, IOException {
+    List<Map<String, Object>> hashes = command.hashLiterals();
+    if (hashes.size() != 2) {
+      throw new ShellCommandException(
+        "grant: cell ACL form is grant 'table', {'user' => 'perms'}, {scan spec}");
+    }
+    Map<String, String> permissions = new LinkedHashMap<>();
+    for (Map.Entry<String, Object> entry : hashes.get(0).entrySet()) {
+      permissions.put(entry.getKey(), String.valueOf(entry.getValue()));
+    }
+    long rows = context.tables().forTable(String.valueOf(command.positionalArgs().get(0)))
+      .setCellPermissions(permissions, hashes.get(1));
+    return new TextResult(java.util.Collections.singletonList(rows + " row(s)"));
   }
 }

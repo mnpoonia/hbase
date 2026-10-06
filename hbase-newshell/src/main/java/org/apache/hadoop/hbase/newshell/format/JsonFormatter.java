@@ -91,7 +91,6 @@ public final class JsonFormatter implements Formatter {
         @Override
         public void visit(StreamingTabularResult streaming) throws java.io.IOException {
           List<String> header = streaming.header();
-          int[] count = { 0 };
           streaming.forEachRow(row -> {
             Map<String, Object> obj = new LinkedHashMap<>();
             for (int i = 0; i < header.size(); i++) {
@@ -99,7 +98,6 @@ public final class JsonFormatter implements Formatter {
               String value = i < row.size() ? row.get(i) : "";
               obj.put(key, value);
             }
-            count[0]++;
             try {
               out.println(JsonMapper.writeObjectAsString(obj));
             } catch (java.io.IOException e) {
@@ -111,7 +109,7 @@ public final class JsonFormatter implements Formatter {
           if (commandName != null) {
             trailer.put("command", commandName);
           }
-          trailer.put("rows", count[0]);
+          trailer.put("rows", (int) streaming.rowCount());
           if (!streaming.trailer().isEmpty()) {
             trailer.put("metrics", streaming.trailer());
           }

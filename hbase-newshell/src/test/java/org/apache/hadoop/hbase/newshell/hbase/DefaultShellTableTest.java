@@ -42,6 +42,9 @@ import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.client.Table;
+import org.apache.hadoop.hbase.filter.FilterList;
+import org.apache.hadoop.hbase.filter.FirstKeyOnlyFilter;
+import org.apache.hadoop.hbase.filter.KeyOnlyFilter;
 import org.apache.hadoop.hbase.filter.PrefixFilter;
 import org.apache.hadoop.hbase.filter.ValueFilter;
 import org.apache.hadoop.hbase.newshell.command.ShellCommandException;
@@ -341,7 +344,27 @@ public class DefaultShellTableTest {
 
     ArgumentCaptor<Scan> captor = ArgumentCaptor.forClass(Scan.class);
     verify(table).getScanner(captor.capture());
-    assertInstanceOf(PrefixFilter.class, captor.getValue().getFilter());
+    FilterList list = assertInstanceOf(FilterList.class, captor.getValue().getFilter());
+    assertInstanceOf(PrefixFilter.class, list.getFilters().get(0));
+    assertInstanceOf(FirstKeyOnlyFilter.class, list.getFilters().get(1));
+    assertInstanceOf(KeyOnlyFilter.class, list.getFilters().get(2));
+  }
+
+  @Test
+  public void countWithoutFilterStillAddsFirstKeyOnlyAndKeyOnly()
+    throws IOException, ShellCommandException {
+    Table table = mock(Table.class);
+    ResultScanner scanner = mock(ResultScanner.class);
+    when(scanner.iterator()).thenReturn(Collections.emptyIterator());
+    when(table.getScanner(any(Scan.class))).thenReturn(scanner);
+    new DefaultShellTable(table).count(new HashMap<>(), (count, row) -> {
+    });
+
+    ArgumentCaptor<Scan> captor = ArgumentCaptor.forClass(Scan.class);
+    verify(table).getScanner(captor.capture());
+    FilterList list = assertInstanceOf(FilterList.class, captor.getValue().getFilter());
+    assertInstanceOf(FirstKeyOnlyFilter.class, list.getFilters().get(0));
+    assertInstanceOf(KeyOnlyFilter.class, list.getFilters().get(1));
   }
 
   @Test

@@ -32,6 +32,12 @@ public interface StubSnapshotAdminContract extends SnapshotAdminContract {
   }
 
   @Override
+  default void snapshot(String tableName, String snapshotName,
+    java.util.Map<String, Object> options) throws IOException {
+    throw StubContractSupport.notNeeded();
+  }
+
+  @Override
   default void deleteSnapshot(String snapshotName) throws IOException {
     throw StubContractSupport.notNeeded();
   }

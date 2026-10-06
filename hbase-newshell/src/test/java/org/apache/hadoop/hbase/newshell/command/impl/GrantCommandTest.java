@@ -76,6 +76,40 @@ public class GrantCommandTest {
   }
 
   @Test
+  public void cellAclFormPassesPermissionsAndScanSpecToTable() throws Exception {
+    java.util.Map<String, String>[] seenPerms = new java.util.Map[1];
+    java.util.Map<String, Object>[] seenScan = new java.util.Map[1];
+    org.apache.hadoop.hbase.newshell.hbase.StubShellTable table =
+      new org.apache.hadoop.hbase.newshell.hbase.StubShellTable() {
+        @Override
+        public long setCellPermissions(java.util.Map<String, String> permissions,
+          java.util.Map<String, Object> scanSpec) {
+          seenPerms[0] = permissions;
+          seenScan[0] = scanSpec;
+          return 2;
+        }
+      };
+    ExecutionContext cellContext = new ExecutionContext(admin, name -> {
+      assertEquals("t1", name);
+      return table;
+    }, new PrintWriter(new StringWriter()));
+
+    ParsedCommand parsed =
+      ShellLineParser.parse("grant 't1', {'bob' => 'RW'}, {COLUMNS => ['f:q'], LIMIT => 5}");
+    TextResult result = (TextResult) command.execute(parsed, cellContext);
+
+    assertEquals(Collections.singletonList("2 row(s)"), result.lines());
+    assertEquals("RW", seenPerms[0].get("bob"));
+    assertEquals(5L, ((Number) seenScan[0].get("LIMIT")).longValue());
+  }
+
+  @Test
+  public void cellAclFormRequiresScanSpec() throws Exception {
+    ParsedCommand parsed = ShellLineParser.parse("grant 't1', {'bob' => 'RW'}");
+    assertThrows(ShellCommandException.class, () -> command.execute(parsed, context));
+  }
+
+  @Test
   public void grantsNamespacePermissions() throws Exception {
     ParsedCommand parsed = ShellLineParser.parse("grant 'bobsmith', 'RWXCA', '@ns1'");
     command.execute(parsed, context);
