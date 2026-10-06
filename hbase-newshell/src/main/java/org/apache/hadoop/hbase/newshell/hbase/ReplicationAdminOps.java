@@ -52,7 +52,7 @@ final class ReplicationAdminOps {
     Object clusterKey = peerConfigSpec.get("CLUSTER_KEY");
     Object endpointClassname = peerConfigSpec.get("ENDPOINT_CLASSNAME");
     if (clusterKey == null && endpointClassname == null) {
-      throw new IOException("add_peer requires CLUSTER_KEY or ENDPOINT_CLASSNAME");
+      throw new ClientErrorException("add_peer requires CLUSTER_KEY or ENDPOINT_CLASSNAME");
     }
     ReplicationPeerConfigBuilder builder = ReplicationPeerConfig.newBuilder();
     if (clusterKey != null) {
@@ -346,7 +346,7 @@ final class ReplicationAdminOps {
     } else if ("STANDBY".equalsIgnoreCase(state)) {
       syncState = SyncReplicationState.STANDBY;
     } else {
-      throw new IOException(
+      throw new ClientErrorException(
         "synchronous replication state must be ACTIVE, DOWNGRADE_ACTIVE or STANDBY");
     }
     admin.transitReplicationPeerSyncReplicationState(peerId, syncState);

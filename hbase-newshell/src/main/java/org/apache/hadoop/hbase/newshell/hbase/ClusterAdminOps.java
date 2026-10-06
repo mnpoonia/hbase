@@ -76,7 +76,7 @@ final class ClusterAdminOps implements ClusterOpsContract {
     } else if ("MERGE".equals(switchType)) {
       return admin.mergeSwitch(enabled, false);
     }
-    throw new IOException("only SPLIT or MERGE accepted for type!");
+    throw new ClientErrorException("only SPLIT or MERGE accepted for type!");
   }
 
   @Override
@@ -101,7 +101,7 @@ final class ClusterAdminOps implements ClusterOpsContract {
     } else if ("MERGE".equals(switchType)) {
       return admin.isMergeEnabled();
     }
-    throw new IOException("only SPLIT or MERGE accepted for type!");
+    throw new ClientErrorException("only SPLIT or MERGE accepted for type!");
   }
 
   @Override
@@ -136,7 +136,7 @@ final class ClusterAdminOps implements ClusterOpsContract {
       } else if (filterArgs.containsKey("TABLE_NAMES")) {
         Object tableNames = filterArgs.get("TABLE_NAMES");
         if (!(tableNames instanceof List)) {
-          throw new IOException("TABLE_NAMES must be of type Array");
+          throw new ClientErrorException("TABLE_NAMES must be of type Array");
         }
         List<TableName> names = new ArrayList<>();
         for (Object tn : (List<?>) tableNames) {
@@ -195,7 +195,7 @@ final class ClusterAdminOps implements ClusterOpsContract {
   public void walRoll(String serverName) throws IOException {
     Collection<ServerName> liveServers = admin.getClusterMetrics().getLiveServerMetrics().keySet();
     ServerName resolved = ServerNames.resolve(serverName, liveServers).orElseThrow(
-      () -> new IOException("Could not find server with specified name: " + serverName));
+      () -> new ClientErrorException("Could not find server with specified name: " + serverName));
     admin.rollWALWriter(resolved);
   }
 

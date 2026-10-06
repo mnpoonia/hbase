@@ -128,7 +128,8 @@ public final class DefaultShellTable implements ShellTable {
     rejectUnsupportedOptions("put", options, PUT_OPTIONS);
     int colonIndex = column.indexOf(':');
     if (colonIndex < 0 || colonIndex == column.length() - 1) {
-      throw new IOException("Column '" + column + "' must be of the form 'family:qualifier'");
+      throw new ClientErrorException(
+        "Column '" + column + "' must be of the form 'family:qualifier'");
     }
     byte[] family = BinaryStrings.toBytes(column.substring(0, colonIndex));
     byte[] qualifier = BinaryStrings.toBytes(column.substring(colonIndex + 1));
@@ -174,7 +175,7 @@ public final class DefaultShellTable implements ShellTable {
           }
         }
       } catch (ShellCommandException e) {
-        throw new IOException(e.getMessage(), e);
+        throw new ClientErrorException(e.getMessage(), e);
       }
     }, metrics);
   }
@@ -331,7 +332,8 @@ public final class DefaultShellTable implements ShellTable {
   private static String[] requireFamilyAndQualifier(String column) throws IOException {
     int colonIndex = column.indexOf(':');
     if (colonIndex < 0 || colonIndex == column.length() - 1) {
-      throw new IOException("Column '" + column + "' must be of the form 'family:qualifier'");
+      throw new ClientErrorException(
+        "Column '" + column + "' must be of the form 'family:qualifier'");
     }
     return new String[] { column.substring(0, colonIndex), column.substring(colonIndex + 1) };
   }

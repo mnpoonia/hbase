@@ -135,7 +135,7 @@ final class SecurityAdminOps implements SecurityAdminContract {
       case 'A':
         return Permission.Action.ADMIN;
       default:
-        throw new IOException("Unknown permission action: " + c);
+        throw new ClientErrorException("Unknown permission action: " + c);
     }
   }
 }

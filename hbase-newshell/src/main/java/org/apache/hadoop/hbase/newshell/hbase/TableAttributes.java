@@ -111,12 +111,12 @@ final class TableAttributes {
     for (Map.Entry<String, Object> entry : remaining.entrySet()) {
       BiConsumer<TableDescriptorBuilder, Object> setter = SETTERS.get(entry.getKey());
       if (setter == null) {
-        throw new IOException("Unknown table attribute '" + entry.getKey() + "'");
+        throw new ClientErrorException("Unknown table attribute '" + entry.getKey() + "'");
       }
       try {
         setter.accept(builder, entry.getValue());
       } catch (IllegalArgumentException | ClassCastException e) {
-        throw new IOException(
+        throw new ClientErrorException(
           "Invalid value for table attribute '" + entry.getKey() + "': " + entry.getValue(), e);
       }
     }
@@ -141,7 +141,7 @@ final class TableAttributes {
         "SPLITS".equals(key) || "SPLITS_FILE".equals(key) || "NUMREGIONS".equals(key)
           || "SPLITALGO".equals(key)
       ) {
-        throw new IOException("Table attribute '" + key + "' is only valid in create");
+        throw new ClientErrorException("Table attribute '" + key + "' is only valid in create");
       } else {
         remaining.put(key, entry.getValue());
       }
@@ -155,7 +155,7 @@ final class TableAttributes {
         Map<?, ?> spec = (Map<?, ?>) value;
         Object className = spec.get("CLASSNAME");
         if (className == null) {
-          throw new IOException("CLASSNAME must be provided in the COPROCESSOR spec");
+          throw new ClientErrorException("CLASSNAME must be provided in the COPROCESSOR spec");
         }
         CoprocessorDescriptorBuilder cp =
           CoprocessorDescriptorBuilder.newBuilder(className.toString());
@@ -176,16 +176,16 @@ final class TableAttributes {
         return fromSpecString(((String) value).trim());
       }
     } catch (IllegalArgumentException | ClassCastException e) {
-      throw new IOException("Invalid COPROCESSOR value: " + value, e);
+      throw new ClientErrorException("Invalid COPROCESSOR value: " + value, e);
     }
-    throw new IOException("COPROCESSOR must be provided as a String or Hash");
+    throw new ClientErrorException("COPROCESSOR must be provided as a String or Hash");
   }
 
   /** Parses the legacy {@code [jar path]|class|[priority]|[k=v,k=v]} coprocessor spec. */
   private static CoprocessorDescriptor fromSpecString(String spec) throws IOException {
     String[] parts = spec.split("\\|", -1);
     if (parts.length < 2 || parts.length > 4 || parts[1].trim().isEmpty()) {
-      throw new IOException("Invalid COPROCESSOR spec '" + spec
+      throw new ClientErrorException("Invalid COPROCESSOR spec '" + spec
         + "', expected '[jar path]|class name|[priority]|[key=value,...]'");
     }
     CoprocessorDescriptorBuilder cp = CoprocessorDescriptorBuilder.newBuilder(parts[1].trim());
@@ -226,26 +226,28 @@ final class TableAttributes {
       try {
         return toSplits(rawSplits);
       } catch (ClassCastException | IllegalArgumentException e) {
-        throw new IOException("Invalid value for table attribute 'SPLITS': " + rawSplits, e);
+        throw new ClientErrorException("Invalid value for table attribute 'SPLITS': " + rawSplits,
+          e);
       }
     }
     if (numRegions == null && splitAlgo == null) {
       return null;
     }
     if (numRegions == null) {
-      throw new IOException("Number of regions must be specified via NUMREGIONS");
+      throw new ClientErrorException("Number of regions must be specified via NUMREGIONS");
     }
     if (splitAlgo == null) {
-      throw new IOException("Split algorithm must be specified via SPLITALGO");
+      throw new ClientErrorException("Split algorithm must be specified via SPLITALGO");
     }
     int numRegionsValue;
     try {
       numRegionsValue = AttributeCoercion.toInt(numRegions);
     } catch (IllegalArgumentException | ClassCastException e) {
-      throw new IOException("Invalid value for table attribute 'NUMREGIONS': " + numRegions, e);
+      throw new ClientErrorException(
+        "Invalid value for table attribute 'NUMREGIONS': " + numRegions, e);
     }
     if (numRegionsValue <= 1) {
-      throw new IOException("NUMREGIONS must be greater than 1");
+      throw new ClientErrorException("NUMREGIONS must be greater than 1");
     }
     RegionSplitter.SplitAlgorithm algorithm =
       RegionSplitter.newSplitAlgoInstance(conf, splitAlgo.toString());
@@ -259,7 +261,8 @@ final class TableAttributes {
       return;
     }
     if (!(rawMap instanceof Map)) {
-      throw new IOException("Table attribute '" + key + "' must be a map, but was: " + rawMap);
+      throw new ClientErrorException(
+        "Table attribute '" + key + "' must be a map, but was: " + rawMap);
     }
     for (Map.Entry<?, ?> entry : ((Map<?, ?>) rawMap).entrySet()) {
       Object value = entry.getValue();
@@ -270,7 +273,7 @@ final class TableAttributes {
   private static List<String> readSplitsFile(String path) throws IOException {
     File file = new File(path);
     if (!file.exists()) {
-      throw new IOException("Splits file " + path + " doesn't exist");
+      throw new ClientErrorException("Splits file " + path + " doesn't exist");
     }
     List<String> lines = new ArrayList<>();
     try (BufferedReader reader = new BufferedReader(new FileReader(file))) {

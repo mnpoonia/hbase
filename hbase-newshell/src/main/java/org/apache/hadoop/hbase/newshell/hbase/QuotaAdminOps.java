@@ -49,7 +49,7 @@ final class QuotaAdminOps {
     Map<String, Object> spec = new LinkedHashMap<>(args);
     Object type = spec.remove("TYPE");
     if (!"THROTTLE".equals(type)) {
-      throw new IOException("Only TYPE => THROTTLE is supported by this newshell port; "
+      throw new ClientErrorException("Only TYPE => THROTTLE is supported by this newshell port; "
         + "SPACE quotas and GLOBAL_BYPASS are not yet ported");
     }
     Object limit = spec.remove("LIMIT");
@@ -58,7 +58,7 @@ final class QuotaAdminOps {
       settings = buildUnthrottle(spec);
     } else {
       if (limit == null) {
-        throw new IOException("set_quota requires a LIMIT");
+        throw new ClientErrorException("set_quota requires a LIMIT");
       }
       settings = buildThrottle(spec, String.valueOf(limit));
     }
@@ -93,11 +93,12 @@ final class QuotaAdminOps {
         throttleType, limit, timeUnit, scope);
     } else if (spec.containsKey("REGIONSERVER")) {
       if (scope == QuotaScope.CLUSTER) {
-        throw new IOException("Invalid region server throttle scope, must be MACHINE");
+        throw new ClientErrorException("Invalid region server throttle scope, must be MACHINE");
       }
       return QuotaSettingsFactory.throttleRegionServer("all", throttleType, limit, timeUnit);
     }
-    throw new IOException("One of USER, TABLE, NAMESPACE or REGIONSERVER must be specified");
+    throw new ClientErrorException(
+      "One of USER, TABLE, NAMESPACE or REGIONSERVER must be specified");
   }
 
   private static QuotaSettings buildUnthrottle(Map<String, Object> spec) throws IOException {
@@ -118,7 +119,8 @@ final class QuotaAdminOps {
     } else if (spec.containsKey("REGIONSERVER")) {
       return QuotaSettingsFactory.unthrottleRegionServer("all");
     }
-    throw new IOException("One of USER, TABLE, NAMESPACE or REGIONSERVER must be specified");
+    throw new ClientErrorException(
+      "One of USER, TABLE, NAMESPACE or REGIONSERVER must be specified");
   }
 
   private static final java.util.regex.Pattern LIMIT_PATTERN =
@@ -128,7 +130,7 @@ final class QuotaAdminOps {
     throws IOException {
     Matcher matcher = LIMIT_PATTERN.matcher(limitSpec.toLowerCase(java.util.Locale.ROOT));
     if (!matcher.matches()) {
-      throw new IOException("Invalid limit syntax: " + limitSpec);
+      throw new ClientErrorException("Invalid limit syntax: " + limitSpec);
     }
     long limit = Long.parseLong(matcher.group(1));
     String unit = matcher.group(2);
@@ -157,7 +159,7 @@ final class QuotaAdminOps {
         timeUnit = TimeUnit.DAYS;
         break;
       default:
-        throw new IOException("Invalid time unit in limit: " + limitSpec);
+        throw new ClientErrorException("Invalid time unit in limit: " + limitSpec);
     }
     return new Object[] { type, limit, timeUnit };
   }
@@ -177,7 +179,7 @@ final class QuotaAdminOps {
       case "p":
         return value * 1024L * 1024L * 1024L * 1024L * 1024L;
       default:
-        throw new IOException("Invalid size unit: " + unit);
+        throw new ClientErrorException("Invalid size unit: " + unit);
     }
   }
 

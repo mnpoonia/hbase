@@ -61,4 +61,22 @@ public class ErrorMapperTest {
     assertEquals(ExitCodes.CLIENT_ERROR,
       ErrorMapper.exitCodeFor(new IllegalArgumentException("x")));
   }
+
+  @Test
+  public void mapsClientErrorExceptionAsClient() {
+    assertEquals(ExitCodes.CLIENT_ERROR, ErrorMapper
+      .exitCodeFor(new org.apache.hadoop.hbase.newshell.hbase.ClientErrorException("no table")));
+  }
+
+  @Test
+  public void shellExceptionTakesExitCodeOfWrappedCause() {
+    assertEquals(ExitCodes.AUTH_ERROR, ErrorMapper
+      .exitCodeFor(new ShellCommandException("batch failed", new AccessDeniedException("no"))));
+    assertEquals(ExitCodes.SERVER_ERROR,
+      ErrorMapper.exitCodeFor(new ShellCommandException("batch failed", new IOException("rpc"))));
+    assertEquals(ExitCodes.CLIENT_ERROR,
+      ErrorMapper.exitCodeFor(new ShellCommandException("batch failed",
+        new org.apache.hadoop.hbase.newshell.hbase.ClientErrorException("gone"))));
+    assertEquals(ExitCodes.CLIENT_ERROR, ErrorMapper.exitCodeFor(new ShellCommandException("bad")));
+  }
 }

@@ -48,7 +48,7 @@ final class ServerLifecycleOps implements ServerLifecycleContract {
       ServerNames.resolve(hostOrServer, liveServers).ifPresent(servers::add);
     }
     if (servers.isEmpty()) {
-      throw new IOException(
+      throw new ClientErrorException(
         "Could not find any server(s) with specified name(s): " + hostOrServers);
     }
     admin.decommissionRegionServers(servers, offload);
@@ -58,8 +58,9 @@ final class ServerLifecycleOps implements ServerLifecycleContract {
   public void recommissionRegionServer(String hostOrServer, List<String> encodedRegionNames)
     throws IOException {
     Collection<ServerName> liveServers = admin.getClusterMetrics().getLiveServerMetrics().keySet();
-    ServerName serverName = ServerNames.resolve(hostOrServer, liveServers).orElseThrow(
-      () -> new IOException("Could not find any server with specified name: " + hostOrServer));
+    ServerName serverName =
+      ServerNames.resolve(hostOrServer, liveServers).orElseThrow(() -> new ClientErrorException(
+        "Could not find any server with specified name: " + hostOrServer));
     List<byte[]> regionNameBytes =
       encodedRegionNames.stream().map(Bytes::toBytes).collect(Collectors.toList());
     admin.recommissionRegionServer(serverName, regionNameBytes);

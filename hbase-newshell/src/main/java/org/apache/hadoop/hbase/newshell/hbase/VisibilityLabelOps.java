@@ -70,7 +70,7 @@ final class VisibilityLabelOps implements VisibilityLabelContract {
       throw new IOException(t);
     }
     if (response == null) {
-      throw new IOException("DISABLED: Visibility labels feature is not available");
+      throw new ClientErrorException("DISABLED: Visibility labels feature is not available");
     }
     List<String> labels = new ArrayList<>();
     for (ByteString label : response.getLabelList()) {
@@ -106,7 +106,7 @@ final class VisibilityLabelOps implements VisibilityLabelContract {
       throw new IOException(t);
     }
     if (response == null) {
-      throw new IOException("DISABLED: Visibility labels feature is not available");
+      throw new ClientErrorException("DISABLED: Visibility labels feature is not available");
     }
     List<String> labels = new ArrayList<>();
     for (ByteString auth : response.getAuthList()) {
@@ -139,7 +139,7 @@ final class VisibilityLabelOps implements VisibilityLabelContract {
   private static void throwIfVisibilityFailures(VisibilityLabelsResponse response)
     throws IOException {
     if (response == null) {
-      throw new IOException("DISABLED: Visibility labels feature is not available");
+      throw new ClientErrorException("DISABLED: Visibility labels feature is not available");
     }
     StringBuilder failures = new StringBuilder();
     for (RegionActionResult result : response.getResultList()) {
@@ -148,7 +148,7 @@ final class VisibilityLabelOps implements VisibilityLabelContract {
       }
     }
     if (failures.length() > 0) {
-      throw new IOException(failures.toString());
+      throw new ClientErrorException(failures.toString());
     }
   }
 }

@@ -54,7 +54,7 @@ final class RsGroupAdminOps implements RsGroupAdminContract {
   public RsGroupView getRsGroup(String groupName) throws IOException {
     RSGroupInfo groupInfo = admin.getRSGroup(groupName);
     if (groupInfo == null) {
-      throw new IOException("RSGroup '" + groupName + "' does not exist");
+      throw new ClientErrorException("RSGroup '" + groupName + "' does not exist");
     }
     List<String> servers =
       groupInfo.getServers().stream().map(Address::toString).collect(Collectors.toList());
@@ -118,7 +118,7 @@ final class RsGroupAdminOps implements RsGroupAdminContract {
       try {
         admin.getNamespaceDescriptor(ns);
       } catch (org.apache.hadoop.hbase.NamespaceNotFoundException e) {
-        throw new IOException("Can't find a namespace: " + ns, e);
+        throw new ClientErrorException("Can't find a namespace: " + ns, e);
       }
       for (TableName table : admin.listTableNamesByNamespace(ns)) {
         tables.add(table);
@@ -153,7 +153,7 @@ final class RsGroupAdminOps implements RsGroupAdminContract {
   public String getRsGroupOfServer(String hostPort) throws IOException {
     RSGroupInfo group = admin.getRSGroup(Address.fromString(hostPort));
     if (group == null) {
-      throw new IOException("Server has no group: " + hostPort);
+      throw new ClientErrorException("Server has no group: " + hostPort);
     }
     return group.getName();
   }
@@ -162,7 +162,7 @@ final class RsGroupAdminOps implements RsGroupAdminContract {
   public String getRsGroupOfTable(String tableName) throws IOException {
     RSGroupInfo group = admin.getRSGroup(TableName.valueOf(tableName));
     if (group == null) {
-      throw new IOException("Table has no group: " + tableName);
+      throw new ClientErrorException("Table has no group: " + tableName);
     }
     return group.getName();
   }
@@ -183,7 +183,7 @@ final class RsGroupAdminOps implements RsGroupAdminContract {
   public void alterRsGroupConfig(String groupName, Map<String, Object> args) throws IOException {
     RSGroupInfo group = admin.getRSGroup(groupName);
     if (group == null) {
-      throw new IOException("RSGroup does not exist");
+      throw new ClientErrorException("RSGroup does not exist");
     }
     Map<String, String> configuration = new HashMap<>(group.getConfiguration());
     Object method = args.get("METHOD");
@@ -204,7 +204,7 @@ final class RsGroupAdminOps implements RsGroupAdminContract {
   public List<List<String>> showRsGroupConfig(String groupName) throws IOException {
     RSGroupInfo group = admin.getRSGroup(groupName);
     if (group == null) {
-      throw new IOException("RSGroup does not exist");
+      throw new ClientErrorException("RSGroup does not exist");
     }
     List<List<String>> rows = new ArrayList<>();
     for (Map.Entry<String, String> e : group.getConfiguration().entrySet()) {

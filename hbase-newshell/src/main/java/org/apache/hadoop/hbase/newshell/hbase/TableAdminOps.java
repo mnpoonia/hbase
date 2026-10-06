@@ -76,7 +76,8 @@ final class TableAdminOps implements TableAdminContract {
     try {
       table = TableName.valueOf(tableName);
     } catch (IllegalArgumentException e) {
-      throw new IOException("Invalid table name '" + tableName + "': " + e.getMessage(), e);
+      throw new ClientErrorException("Invalid table name '" + tableName + "': " + e.getMessage(),
+        e);
     }
     TableDescriptorBuilder tableBuilder = TableDescriptorBuilder.newBuilder(table);
     for (Map<String, Object> familySpec : familySpecs) {
@@ -96,10 +97,10 @@ final class TableAdminOps implements TableAdminContract {
   public void disableTable(String tableName) throws IOException {
     TableName table = TableName.valueOf(tableName);
     if (!admin.tableExists(table)) {
-      throw new IOException("Table '" + tableName + "' does not exist");
+      throw new ClientErrorException("Table '" + tableName + "' does not exist");
     }
     if (admin.isTableDisabled(table)) {
-      throw new IOException("Table '" + tableName + "' is already disabled");
+      throw new ClientErrorException("Table '" + tableName + "' is already disabled");
     }
     admin.disableTable(table);
   }
@@ -108,10 +109,10 @@ final class TableAdminOps implements TableAdminContract {
   public void enableTable(String tableName) throws IOException {
     TableName table = TableName.valueOf(tableName);
     if (!admin.tableExists(table)) {
-      throw new IOException("Table '" + tableName + "' does not exist");
+      throw new ClientErrorException("Table '" + tableName + "' does not exist");
     }
     if (admin.isTableEnabled(table)) {
-      throw new IOException("Table '" + tableName + "' is already enabled");
+      throw new ClientErrorException("Table '" + tableName + "' is already enabled");
     }
     admin.enableTable(table);
   }
@@ -120,10 +121,10 @@ final class TableAdminOps implements TableAdminContract {
   public void dropTable(String tableName) throws IOException {
     TableName table = TableName.valueOf(tableName);
     if (!admin.tableExists(table)) {
-      throw new IOException("Table '" + tableName + "' does not exist");
+      throw new ClientErrorException("Table '" + tableName + "' does not exist");
     }
     if (admin.isTableEnabled(table)) {
-      throw new IOException("Table '" + tableName + "' is enabled. Disable it first.");
+      throw new ClientErrorException("Table '" + tableName + "' is enabled. Disable it first.");
     }
     admin.deleteTable(table);
   }
@@ -138,7 +139,7 @@ final class TableAdminOps implements TableAdminContract {
   public TableDescription describeTable(String tableName) throws IOException {
     TableName table = TableName.valueOf(tableName);
     if (!admin.tableExists(table)) {
-      throw new IOException("Table '" + tableName + "' does not exist");
+      throw new ClientErrorException("Table '" + tableName + "' does not exist");
     }
     TableDescriptor descriptor = admin.getDescriptor(table);
     List<String> columnFamilies = Arrays.stream(descriptor.getColumnFamilies())
@@ -166,7 +167,7 @@ final class TableAdminOps implements TableAdminContract {
   public void alterTable(String tableName, List<Map<String, Object>> specs) throws IOException {
     TableName table = TableName.valueOf(tableName);
     if (!admin.tableExists(table)) {
-      throw new IOException("Table '" + tableName + "' does not exist");
+      throw new ClientErrorException("Table '" + tableName + "' does not exist");
     }
     TableDescriptorBuilder tableBuilder =
       TableDescriptorBuilder.newBuilder(admin.getDescriptor(table));
@@ -183,7 +184,8 @@ final class TableAdminOps implements TableAdminContract {
       if (reopen != null) {
         String text = reopen.toString().toLowerCase(Locale.ROOT);
         if (!"true".equals(text) && !"false".equals(text)) {
-          throw new IOException("Invalid 'REOPEN_REGIONS' for non-boolean value: " + reopen);
+          throw new ClientErrorException(
+            "Invalid 'REOPEN_REGIONS' for non-boolean value: " + reopen);
         }
         reopenRegions = Boolean.parseBoolean(text);
       }
@@ -206,7 +208,7 @@ final class TableAdminOps implements TableAdminContract {
         Thread.currentThread().interrupt();
         throw new IOException("Interrupted while modifying table " + tableName, e);
       } catch (ExecutionException e) {
-        throw new IOException("Failed to modify table " + tableName, e.getCause());
+        throw new ClientErrorException("Failed to modify table " + tableName, e.getCause());
       }
     }
   }
@@ -233,11 +235,12 @@ final class TableAdminOps implements TableAdminContract {
       case "delete": {
         Object name = requireSpecValue(spec, "NAME", method);
         if (spec.size() > 1) {
-          throw new IOException("METHOD => 'delete' takes only NAME, got: " + spec.keySet());
+          throw new ClientErrorException(
+            "METHOD => 'delete' takes only NAME, got: " + spec.keySet());
         }
         byte[] familyName = Bytes.toBytes(name.toString());
         if (!tableBuilder.build().hasColumnFamily(familyName)) {
-          throw new IOException(
+          throw new ClientErrorException(
             "Column family '" + name + "' does not exist on table '" + tableName + "'");
         }
         tableBuilder.removeColumnFamily(familyName);
@@ -248,7 +251,7 @@ final class TableAdminOps implements TableAdminContract {
         String what = "table_att_unset".equals(method) ? "attribute" : "configuration";
         for (String key : asStrings(requireSpecValue(spec, "NAME", method))) {
           if (tableBuilder.build().getValue(key) == null) {
-            throw new IOException("Could not find " + what + ": " + key);
+            throw new ClientErrorException("Could not find " + what + ": " + key);
           }
           tableBuilder.removeValue(key);
         }
@@ -260,7 +263,7 @@ final class TableAdminOps implements TableAdminContract {
         }
         break;
       default:
-        throw new IOException("Unknown method: " + method);
+        throw new ClientErrorException("Unknown method: " + method);
     }
   }
 
@@ -268,7 +271,7 @@ final class TableAdminOps implements TableAdminContract {
     throws IOException {
     Object value = spec.get(key);
     if (value == null) {
-      throw new IOException(key + " parameter missing for " + method + " method");
+      throw new ClientErrorException(key + " parameter missing for " + method + " method");
     }
     return value;
   }
@@ -367,7 +370,7 @@ final class TableAdminOps implements TableAdminContract {
     if (type.equalsIgnoreCase("MOB")) {
       return CompactType.MOB;
     }
-    throw new IOException("only NORMAL or MOB accepted for type!");
+    throw new ClientErrorException("only NORMAL or MOB accepted for type!");
   }
 
   @Override
@@ -402,7 +405,7 @@ final class TableAdminOps implements TableAdminContract {
   public AlterStatusView alterStatus(String tableName) throws IOException {
     TableName table = TableName.valueOf(tableName);
     if (!admin.tableExists(table)) {
-      throw new IOException("Table '" + tableName + "' does not exist");
+      throw new ClientErrorException("Table '" + tableName + "' does not exist");
     }
     RegionStatesCount regionStatus =
       admin.getClusterMetrics().getTableRegionStatesCount().get(table);
@@ -434,7 +437,7 @@ final class TableAdminOps implements TableAdminContract {
   public ListRegionsView listRegions(String tableName) throws IOException {
     TableName table = TableName.valueOf(tableName);
     if (!admin.isTableEnabled(table)) {
-      throw new IOException("Table " + tableName + " must be enabled.");
+      throw new ClientErrorException("Table " + tableName + " must be enabled.");
     }
     ClusterMetrics clusterMetrics = admin.getClusterMetrics();
     List<String> warnings = new ArrayList<>();
@@ -542,7 +545,7 @@ final class TableAdminOps implements TableAdminContract {
         }
       }
       if (found == null) {
-        throw new IOException("Region " + region + " not found in table " + tableName);
+        throw new ClientErrorException("Region " + region + " not found in table " + tableName);
       }
       targetRegions.add(found);
     }
@@ -552,7 +555,7 @@ final class TableAdminOps implements TableAdminContract {
   @Override
   public void mergeRegion(List<String> regionNames, boolean force) throws IOException {
     if (regionNames == null || regionNames.size() < 2) {
-      throw new IOException("Must pass at least 2 regions to merge");
+      throw new ClientErrorException("Must pass at least 2 regions to merge");
     }
     byte[][] regions = new byte[regionNames.size()][];
     for (int i = 0; i < regionNames.size(); i++) {
@@ -585,7 +588,7 @@ final class TableAdminOps implements TableAdminContract {
     } else {
       for (String queue : queueNames) {
         if (!"long".equals(queue) && !"short".equals(queue)) {
-          throw new IOException("Unknown queue name " + queue);
+          throw new ClientErrorException("Unknown queue name " + queue);
         }
         queues.add(queue);
       }
@@ -654,13 +657,14 @@ final class TableAdminOps implements TableAdminContract {
     Object tableName = args == null ? null : args.get("TABLE_NAME");
     Object namespace = args == null ? null : args.get("NAMESPACE");
     if (namespace != null && tableName != null) {
-      throw new IOException("Specify either a TABLE_NAME or a NAMESPACE, not both");
+      throw new ClientErrorException("Specify either a TABLE_NAME or a NAMESPACE, not both");
     }
     if ("".equals(namespace) || "".equals(tableName)) {
-      throw new IOException("TABLE_NAME or NAMESPACE cannot be empty string");
+      throw new ClientErrorException("TABLE_NAME or NAMESPACE cannot be empty string");
     }
     if (namespace instanceof List || tableName instanceof List) {
-      throw new IOException("TABLE_NAME or NAMESPACE must be a single string, not an array");
+      throw new ClientErrorException(
+        "TABLE_NAME or NAMESPACE must be a single string, not an array");
     }
     if (namespace != null) {
       return admin.refreshHFiles(String.valueOf(namespace));

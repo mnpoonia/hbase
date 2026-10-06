@@ -23,6 +23,7 @@ import java.util.concurrent.TimeoutException;
 import org.apache.hadoop.hbase.DoNotRetryIOException;
 import org.apache.hadoop.hbase.TableExistsException;
 import org.apache.hadoop.hbase.TableNotFoundException;
+import org.apache.hadoop.hbase.newshell.hbase.ClientErrorException;
 import org.apache.hadoop.hbase.security.AccessDeniedException;
 import org.apache.yetus.audience.InterfaceAudience;
 
@@ -36,14 +37,19 @@ public final class ErrorMapper {
     if (thrown == null) {
       return ExitCodes.CLIENT_ERROR;
     }
-    if (thrown instanceof ShellCommandException) {
-      return ((ShellCommandException) thrown).exitCode();
-    }
     Throwable cursor = thrown;
     boolean ioInChain = false;
     while (cursor != null) {
       if (cursor instanceof ShellCommandException) {
-        return ((ShellCommandException) cursor).exitCode();
+        ShellCommandException shellFailure = (ShellCommandException) cursor;
+        // A specific code (e.g. user abort) wins; a plain client error wrapping an HBase failure
+        // takes the exit code of that underlying failure (access denied, timeout, ...).
+        if (shellFailure.exitCode() != ExitCodes.CLIENT_ERROR || shellFailure.getCause() == null) {
+          return shellFailure.exitCode();
+        }
+      }
+      if (cursor instanceof ClientErrorException) {
+        return ExitCodes.CLIENT_ERROR;
       }
       ioInChain |= cursor instanceof IOException;
       if (cursor instanceof AccessDeniedException) {

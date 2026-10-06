@@ -123,7 +123,7 @@ final class ColumnFamilyAttributes {
     throws IOException {
     Object name = familySpec.get("NAME");
     if (name == null) {
-      throw new IOException("Column family spec requires a NAME");
+      throw new ClientErrorException("Column family spec requires a NAME");
     }
     try {
       ColumnFamilyDescriptorBuilder builder =
@@ -131,7 +131,8 @@ final class ColumnFamilyAttributes {
       applyAttributes(builder, familySpec, conf);
       return builder.build();
     } catch (IllegalArgumentException e) {
-      throw new IOException("Invalid column family name or attribute: " + e.getMessage(), e);
+      throw new ClientErrorException("Invalid column family name or attribute: " + e.getMessage(),
+        e);
     }
   }
 
@@ -155,12 +156,12 @@ final class ColumnFamilyAttributes {
     for (Map.Entry<String, Object> entry : remaining.entrySet()) {
       BiConsumer<ColumnFamilyDescriptorBuilder, Object> setter = SETTERS.get(entry.getKey());
       if (setter == null) {
-        throw new IOException("Unknown column family attribute '" + entry.getKey() + "'");
+        throw new ClientErrorException("Unknown column family attribute '" + entry.getKey() + "'");
       }
       try {
         setter.accept(builder, entry.getValue());
       } catch (IllegalArgumentException | ClassCastException e) {
-        throw new IOException(
+        throw new ClientErrorException(
           "Invalid value for column family attribute '" + entry.getKey() + "': " + entry.getValue(),
           e);
       }
@@ -179,7 +180,8 @@ final class ColumnFamilyAttributes {
     Object keyNamespace = remaining.remove("ENCRYPTION_KEY_NAMESPACE");
     if (algorithm == null) {
       if (keyPassphrase != null || keyNamespace != null) {
-        throw new IOException("ENCRYPTION_KEY and ENCRYPTION_KEY_NAMESPACE require ENCRYPTION");
+        throw new ClientErrorException(
+          "ENCRYPTION_KEY and ENCRYPTION_KEY_NAMESPACE require ENCRYPTION");
       }
       return;
     }
@@ -202,7 +204,7 @@ final class ColumnFamilyAttributes {
       return;
     }
     if (!(rawMap instanceof Map)) {
-      throw new IOException(
+      throw new ClientErrorException(
         "Column family attribute '" + key + "' must be a map, but was: " + rawMap);
     }
     for (Map.Entry<?, ?> entry : ((Map<?, ?>) rawMap).entrySet()) {

@@ -63,7 +63,7 @@ final class NamespaceAdminOps implements NamespaceAdminContract {
     if ("unset".equalsIgnoreCase(method)) {
       Object name = properties.get("NAME");
       if (name == null) {
-        throw new IOException("alter_namespace unset requires NAME");
+        throw new ClientErrorException("alter_namespace unset requires NAME");
       }
       builder.removeConfiguration(String.valueOf(name));
     } else {
