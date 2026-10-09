@@ -72,12 +72,14 @@ public class StubShellTable implements ShellTable {
   }
 
   @Override
-  public Long increment(String row, String column, long amount) {
+  public Long increment(String row, String column, long amount,
+    java.util.Map<String, Object> options) {
     throw notNeeded();
   }
 
   @Override
-  public String append(String row, String column, String value) {
+  public String append(String row, String column, String value,
+    java.util.Map<String, Object> options) {
     throw notNeeded();
   }
 

@@ -113,12 +113,8 @@ final class VisibilityOps {
       return;
     }
     byte[] family = columnSpec.substring(0, colonIndex).getBytes(StandardCharsets.UTF_8);
-    String qualifierPart = columnSpec.substring(colonIndex + 1);
-    if (qualifierPart.isEmpty()) {
-      scan.addFamily(family);
-    } else {
-      scan.addColumn(family, qualifierPart.getBytes(StandardCharsets.UTF_8));
-    }
+    // 'cf:' names the empty qualifier, only 'cf' means the whole family.
+    scan.addColumn(family, columnSpec.substring(colonIndex + 1).getBytes(StandardCharsets.UTF_8));
   }
 
   @SuppressWarnings("unchecked")

@@ -219,7 +219,7 @@ final class ReadOptions {
       qualifierPart = qualifierOnly;
     }
     byte[] family = BinaryStrings.toBytes(familyPart);
-    return new byte[][] { family,
-      qualifierPart.isEmpty() ? null : BinaryStrings.toBytes(qualifierPart) };
+    // 'cf:' means the empty qualifier (CellUtil.parseColumn semantics); only 'cf' means the family.
+    return new byte[][] { family, BinaryStrings.toBytes(qualifierPart) };
   }
 }

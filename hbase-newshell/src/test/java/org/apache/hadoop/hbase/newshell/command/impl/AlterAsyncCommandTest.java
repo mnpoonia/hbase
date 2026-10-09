@@ -40,7 +40,7 @@ public class AlterAsyncCommandTest {
     private List<Map<String, Object>> lastFamilySpecs;
 
     @Override
-    public void alterTable(String tableName, List<Map<String, Object>> familySpecs) {
+    public void alterTableNoWait(String tableName, List<Map<String, Object>> familySpecs) {
       this.lastTableName = tableName;
       this.lastFamilySpecs = familySpecs;
     }

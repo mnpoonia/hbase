@@ -70,6 +70,12 @@ public interface StubTableAdminContract extends TableAdminContract {
   }
 
   @Override
+  default void alterTableNoWait(String tableName, List<Map<String, Object>> familySpecs)
+    throws IOException {
+    throw StubContractSupport.notNeeded();
+  }
+
+  @Override
   default boolean tableExists(String tableName) throws IOException {
     throw StubContractSupport.notNeeded();
   }

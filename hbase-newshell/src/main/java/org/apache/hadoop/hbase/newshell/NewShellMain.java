@@ -23,6 +23,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
+import org.apache.hadoop.hbase.client.Admin;
 import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.client.ConnectionFactory;
 import org.apache.hadoop.hbase.newshell.command.CommandNameCompleter;
@@ -94,14 +95,18 @@ public final class NewShellMain {
     int exitCode = ExitCodes.SUCCESS;
     try (ShellTerminal terminal = openTerminal(launch.scriptFile, interactive);
       Connection connection = ConnectionFactory.createConnection(conf);
-      DefaultShellTableFactory tables = new DefaultShellTableFactory(connection)) {
-      ShellAdmin admin = DefaultShellAdmin.create(connection.getAdmin());
+      DefaultShellTableFactory tables = new DefaultShellTableFactory(connection);
+      Admin rawAdmin = connection.getAdmin()) {
+      ShellAdmin admin = DefaultShellAdmin.create(rawAdmin);
       ExecutionContext context = new ExecutionContext(admin, tables, terminal.writer(), options,
         options.interactive() ? terminal::readLine : null);
       CommandRegistry registry = new CommandRegistry();
       terminal.setCompleter(new CommandNameCompleter(registry));
-      exitCode = ShellRepl.run(terminal, context, registry, formatter, launch.exitOnFirstError);
-      saveHistoryQuietly(terminal, context.out());
+      try {
+        exitCode = ShellRepl.run(terminal, context, registry, formatter, launch.exitOnFirstError);
+      } finally {
+        saveHistoryQuietly(terminal, context.out());
+      }
     }
     if (exitCode != ExitCodes.SUCCESS) {
       System.exit(exitCode);

@@ -29,6 +29,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import org.apache.hadoop.hbase.ClusterMetrics;
@@ -101,7 +102,9 @@ final class TableAdminOps implements TableAdminContract {
       throw new ClientErrorException("Table '" + tableName + "' does not exist");
     }
     if (admin.isTableDisabled(table)) {
-      throw new ClientErrorException("Table '" + tableName + "' is already disabled");
+      // Matches the legacy shell: disabling a disabled table is a no-op, so scripts stay
+      // re-runnable.
+      return;
     }
     admin.disableTable(table);
   }
@@ -113,7 +116,8 @@ final class TableAdminOps implements TableAdminContract {
       throw new ClientErrorException("Table '" + tableName + "' does not exist");
     }
     if (admin.isTableEnabled(table)) {
-      throw new ClientErrorException("Table '" + tableName + "' is already enabled");
+      // Matches the legacy shell: enabling an enabled table is a no-op.
+      return;
     }
     admin.enableTable(table);
   }
@@ -166,6 +170,17 @@ final class TableAdminOps implements TableAdminContract {
 
   @Override
   public void alterTable(String tableName, List<Map<String, Object>> specs) throws IOException {
+    alterTable(tableName, specs, true);
+  }
+
+  @Override
+  public void alterTableNoWait(String tableName, List<Map<String, Object>> specs)
+    throws IOException {
+    alterTable(tableName, specs, false);
+  }
+
+  private void alterTable(String tableName, List<Map<String, Object>> specs, boolean wait)
+    throws IOException {
     TableName table = TableName.valueOf(tableName);
     if (!admin.tableExists(table)) {
       throw new ClientErrorException("Table '" + tableName + "' does not exist");
@@ -200,11 +215,14 @@ final class TableAdminOps implements TableAdminContract {
         applyAlterMethod(tableBuilder, method.toString(), spec, tableName);
       }
     }
-    if (reopenRegions) {
+    if (wait && reopenRegions) {
       admin.modifyTable(tableBuilder.build());
-    } else {
+      return;
+    }
+    Future<Void> future = admin.modifyTableAsync(tableBuilder.build(), reopenRegions);
+    if (wait) {
       try {
-        admin.modifyTableAsync(tableBuilder.build(), false).get();
+        future.get();
       } catch (InterruptedException e) {
         Thread.currentThread().interrupt();
         throw new IOException("Interrupted while modifying table " + tableName, e);
@@ -300,9 +318,9 @@ final class TableAdminOps implements TableAdminContract {
     byte[] familyBytes = family == null ? null : Bytes.toBytes(family);
     try {
       if (familyBytes == null) {
-        admin.compactRegion(Bytes.toBytes(tableOrRegionName));
+        admin.compactRegion(BinaryStrings.toBytes(tableOrRegionName));
       } else {
-        admin.compactRegion(Bytes.toBytes(tableOrRegionName), familyBytes);
+        admin.compactRegion(BinaryStrings.toBytes(tableOrRegionName), familyBytes);
       }
     } catch (IllegalArgumentException | UnknownRegionException e) {
       TableName table = TableName.valueOf(tableOrRegionName);
@@ -326,9 +344,9 @@ final class TableAdminOps implements TableAdminContract {
     byte[] familyBytes = family == null ? null : Bytes.toBytes(family);
     try {
       if (familyBytes == null) {
-        admin.majorCompactRegion(Bytes.toBytes(tableOrRegionName));
+        admin.majorCompactRegion(BinaryStrings.toBytes(tableOrRegionName));
       } else {
-        admin.majorCompactRegion(Bytes.toBytes(tableOrRegionName), familyBytes);
+        admin.majorCompactRegion(BinaryStrings.toBytes(tableOrRegionName), familyBytes);
       }
     } catch (IllegalArgumentException | UnknownRegionException e) {
       TableName table = TableName.valueOf(tableOrRegionName);
@@ -347,12 +365,13 @@ final class TableAdminOps implements TableAdminContract {
 
   @Override
   public void split(String tableOrRegionName, String splitPoint) throws IOException {
-    byte[] splitPointBytes = splitPoint == null ? null : Bytes.toBytes(splitPoint);
+    byte[] splitPointBytes = splitPoint == null ? null : BinaryStrings.toBytes(splitPoint);
     try {
       if (splitPointBytes == null) {
-        FutureUtils.get(admin.splitRegionAsync(Bytes.toBytes(tableOrRegionName)));
+        FutureUtils.get(admin.splitRegionAsync(BinaryStrings.toBytes(tableOrRegionName)));
       } else {
-        FutureUtils.get(admin.splitRegionAsync(Bytes.toBytes(tableOrRegionName), splitPointBytes));
+        FutureUtils
+          .get(admin.splitRegionAsync(BinaryStrings.toBytes(tableOrRegionName), splitPointBytes));
       }
     } catch (IllegalArgumentException | UnknownRegionException e) {
       TableName table = TableName.valueOf(tableOrRegionName);
@@ -479,9 +498,9 @@ final class TableAdminOps implements TableAdminContract {
     byte[] familyBytes = family == null ? null : Bytes.toBytes(family);
     try {
       if (familyBytes == null) {
-        admin.flushRegion(Bytes.toBytes(tableOrRegionOrServerName));
+        admin.flushRegion(BinaryStrings.toBytes(tableOrRegionOrServerName));
       } else {
-        admin.flushRegion(Bytes.toBytes(tableOrRegionOrServerName), familyBytes);
+        admin.flushRegion(BinaryStrings.toBytes(tableOrRegionOrServerName), familyBytes);
       }
     } catch (IllegalArgumentException | UnknownRegionException e) {
       try {
@@ -499,12 +518,12 @@ final class TableAdminOps implements TableAdminContract {
 
   @Override
   public void assign(String regionName) throws IOException {
-    admin.assign(Bytes.toBytes(regionName));
+    admin.assign(BinaryStrings.toBytes(regionName));
   }
 
   @Override
   public void move(String encodedRegionName, String destServerName) throws IOException {
-    byte[] encoded = Bytes.toBytes(encodedRegionName);
+    byte[] encoded = BinaryStrings.toBytes(encodedRegionName);
     if (destServerName == null) {
       admin.move(encoded);
     } else {
@@ -531,7 +550,7 @@ final class TableAdminOps implements TableAdminContract {
 
   @Override
   public void unassign(String regionName) throws IOException {
-    admin.unassign(Bytes.toBytes(regionName));
+    admin.unassign(BinaryStrings.toBytes(regionName));
   }
 
   @Override
@@ -566,7 +585,7 @@ final class TableAdminOps implements TableAdminContract {
     }
     byte[][] regions = new byte[regionNames.size()][];
     for (int i = 0; i < regionNames.size(); i++) {
-      regions[i] = Bytes.toBytes(regionNames.get(i));
+      regions[i] = BinaryStrings.toBytes(regionNames.get(i));
     }
     FutureUtils.get(admin.mergeRegionsAsync(regions, force));
   }
@@ -616,7 +635,7 @@ final class TableAdminOps implements TableAdminContract {
   @Override
   public String regionInfo(String regionName) throws IOException {
     Pair<RegionInfo, ServerName> fromMeta =
-      MetaTableAccessor.getRegion(admin.getConnection(), Bytes.toBytes(regionName));
+      MetaTableAccessor.getRegion(admin.getConnection(), BinaryStrings.toBytes(regionName));
     if (fromMeta != null) {
       return fromMeta.getFirst().toString();
     }

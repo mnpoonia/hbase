@@ -71,9 +71,11 @@ public interface ShellTable {
 
   Long getCounter(String row, String column) throws IOException;
 
-  Long increment(String row, String column, long amount) throws IOException;
+  Long increment(String row, String column, long amount, Map<String, Object> options)
+    throws ShellCommandException, IOException;
 
-  String append(String row, String column, String value) throws IOException;
+  String append(String row, String column, String value, Map<String, Object> options)
+    throws ShellCommandException, IOException;
 
   List<String> getSplits() throws IOException;
 }

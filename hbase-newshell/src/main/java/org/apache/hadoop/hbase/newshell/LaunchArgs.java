@@ -87,6 +87,12 @@ final class LaunchArgs {
         outputFormat = OutputFormat.parse(arg.substring("--output=".length()));
       } else if (arg.startsWith("-o=") || arg.startsWith("--o=")) {
         outputFormat = OutputFormat.parse(arg.substring(arg.indexOf('=') + 1));
+      } else if (
+        arg.equals("-c") || arg.equals("--colorize") || arg.equals("-a")
+          || arg.equals("--autocomplete") || arg.equals("--top-level-defs")
+      ) {
+        // Legacy shell spellings for IRB cosmetics; accepted so existing launch scripts keep
+        // working.
       } else if (arg.equals("-h") || arg.equals("--help")) {
         help = true;
       } else if (arg.startsWith("-D")) {

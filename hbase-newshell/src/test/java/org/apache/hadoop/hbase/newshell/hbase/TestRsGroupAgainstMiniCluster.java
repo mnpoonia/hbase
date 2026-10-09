@@ -19,9 +19,11 @@ package org.apache.hadoop.hbase.newshell.hbase;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Arrays;
+import java.util.LinkedHashMap;
 import java.util.List;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
@@ -125,5 +127,19 @@ public class TestRsGroupAgainstMiniCluster {
   public void updateRsGroupConfigDoesNotThrowForDefaultGroup() throws Exception {
     ShellAdmin admin = DefaultShellAdmin.create(connection.getAdmin());
     assertDoesNotThrow(() -> admin.updateRsGroupConfig(RSGroupInfo.DEFAULT_GROUP));
+  }
+
+  @Test
+  public void alterRsGroupConfigRejectsUnknownMethodAndLeavesConfigUnchanged() throws Exception {
+    ShellAdmin admin = DefaultShellAdmin.create(connection.getAdmin());
+    String groupName = "newshell_alter_config_group";
+    admin.addRsGroup(groupName);
+    java.util.Map<String, Object> args = new LinkedHashMap<>();
+    args.put("METHOD", "bogus");
+    args.put("newshell.test.key", "v");
+    assertThrows(ClientErrorException.class, () -> admin.alterRsGroupConfig(groupName, args));
+    Admin realAdmin = connection.getAdmin();
+    assertTrue(realAdmin.getRSGroup(groupName).getConfiguration().isEmpty());
+    realAdmin.removeRSGroup(groupName);
   }
 }

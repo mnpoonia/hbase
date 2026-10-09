@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import org.apache.hadoop.hbase.NamespaceNotFoundException;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Admin;
 import org.apache.hadoop.hbase.security.access.AccessControlClient;
@@ -45,6 +46,7 @@ final class SecurityAdminOps implements SecurityAdminContract {
   public void grant(String userOrGroup, String actions, String tableName, String family,
     String qualifier, String namespace) throws IOException {
     Permission.Action[] permActions = parseActions(actions);
+    requireTarget(tableName, family, namespace);
     try {
       if (namespace != null) {
         AccessControlClient.grant(admin.getConnection(), namespace, userOrGroup, permActions);
@@ -64,6 +66,25 @@ final class SecurityAdminOps implements SecurityAdminContract {
     }
   }
 
+  /** Fails fast, as the legacy shell does, when the namespace, table or family does not exist. */
+  private void requireTarget(String tableName, String family, String namespace) throws IOException {
+    if (namespace != null) {
+      try {
+        admin.getNamespaceDescriptor(namespace);
+      } catch (NamespaceNotFoundException e) {
+        throw new ClientErrorException("Can't find a namespace: " + namespace, e);
+      }
+    } else if (tableName != null) {
+      TableName table = TableName.valueOf(tableName);
+      if (!admin.tableExists(table)) {
+        throw new ClientErrorException("Can't find a table: " + tableName);
+      }
+      if (family != null && !admin.getDescriptor(table).hasColumnFamily(Bytes.toBytes(family))) {
+        throw new ClientErrorException("Can't find a family: " + family);
+      }
+    }
+  }
+
   private static Permission.Action[] parseActions(String actions) throws IOException {
     Permission.Action[] result = new Permission.Action[actions.length()];
     for (int i = 0; i < actions.length(); i++) {
@@ -75,6 +96,7 @@ final class SecurityAdminOps implements SecurityAdminContract {
   @Override
   public void revoke(String userOrGroup, String tableName, String family, String qualifier,
     String namespace) throws IOException {
+    requireTarget(tableName, family, namespace);
     try {
       if (namespace != null) {
         AccessControlClient.revoke(admin.getConnection(), namespace, userOrGroup);

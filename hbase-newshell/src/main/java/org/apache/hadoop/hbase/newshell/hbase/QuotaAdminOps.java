@@ -23,6 +23,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
@@ -159,25 +160,46 @@ final class QuotaAdminOps implements QuotaAdminContract {
     ThrottleType throttleType = (ThrottleType) parsed[0];
     long limit = (Long) parsed[1];
     TimeUnit timeUnit = (TimeUnit) parsed[2];
-    QuotaScope scope = QuotaScope.valueOf(String.valueOf(spec.getOrDefault("SCOPE", "MACHINE")));
-    if (spec.containsKey("USER")) {
-      String user = String.valueOf(spec.get("USER"));
-      if (spec.containsKey("TABLE")) {
-        return QuotaSettingsFactory.throttleUser(user,
-          TableName.valueOf(String.valueOf(spec.get("TABLE"))), throttleType, limit, timeUnit,
-          scope);
-      } else if (spec.containsKey("NAMESPACE")) {
-        return QuotaSettingsFactory.throttleUser(user, String.valueOf(spec.get("NAMESPACE")),
+    if (limit <= 0) {
+      throw new ClientErrorException(
+        "Invalid throttle limit, must be greater than 0: " + limitSpec);
+    }
+    Object scopeName = spec.remove("SCOPE");
+    QuotaScope scope;
+    try {
+      scope = QuotaScope.valueOf(
+        scopeName == null ? "MACHINE" : String.valueOf(scopeName).toUpperCase(Locale.ROOT));
+    } catch (IllegalArgumentException e) {
+      throw new ClientErrorException("Invalid SCOPE, expected MACHINE or CLUSTER", e);
+    }
+    Object user = spec.remove("USER");
+    Object table = spec.remove("TABLE");
+    Object namespace = spec.remove("NAMESPACE");
+    boolean regionServer = spec.containsKey("REGIONSERVER");
+    spec.remove("REGIONSERVER");
+    if (!spec.isEmpty()) {
+      throw new ClientErrorException("Unexpected arguments: " + spec);
+    }
+    if (user == null && table != null && namespace != null) {
+      throw new ClientErrorException("Only one of TABLE or NAMESPACE can be specified.");
+    }
+    if (user != null) {
+      String userName = String.valueOf(user);
+      if (table != null) {
+        return QuotaSettingsFactory.throttleUser(userName, TableName.valueOf(String.valueOf(table)),
           throttleType, limit, timeUnit, scope);
+      } else if (namespace != null) {
+        return QuotaSettingsFactory.throttleUser(userName, String.valueOf(namespace), throttleType,
+          limit, timeUnit, scope);
       }
-      return QuotaSettingsFactory.throttleUser(user, throttleType, limit, timeUnit, scope);
-    } else if (spec.containsKey("TABLE")) {
-      return QuotaSettingsFactory.throttleTable(
-        TableName.valueOf(String.valueOf(spec.get("TABLE"))), throttleType, limit, timeUnit, scope);
-    } else if (spec.containsKey("NAMESPACE")) {
-      return QuotaSettingsFactory.throttleNamespace(String.valueOf(spec.get("NAMESPACE")),
+      return QuotaSettingsFactory.throttleUser(userName, throttleType, limit, timeUnit, scope);
+    } else if (table != null) {
+      return QuotaSettingsFactory.throttleTable(TableName.valueOf(String.valueOf(table)),
         throttleType, limit, timeUnit, scope);
-    } else if (spec.containsKey("REGIONSERVER")) {
+    } else if (namespace != null) {
+      return QuotaSettingsFactory.throttleNamespace(String.valueOf(namespace), throttleType, limit,
+        timeUnit, scope);
+    } else if (regionServer) {
       if (scope == QuotaScope.CLUSTER) {
         throw new ClientErrorException("Invalid region server throttle scope, must be MACHINE");
       }
@@ -188,22 +210,57 @@ final class QuotaAdminOps implements QuotaAdminContract {
   }
 
   private static QuotaSettings buildUnthrottle(Map<String, Object> spec) throws IOException {
-    if (spec.containsKey("USER")) {
-      String user = String.valueOf(spec.get("USER"));
-      if (spec.containsKey("TABLE")) {
-        return QuotaSettingsFactory.unthrottleUser(user,
-          TableName.valueOf(String.valueOf(spec.get("TABLE"))));
-      } else if (spec.containsKey("NAMESPACE")) {
-        return QuotaSettingsFactory.unthrottleUser(user, String.valueOf(spec.get("NAMESPACE")));
+    Object typeName = spec.remove("THROTTLE_TYPE");
+    ThrottleType type = null;
+    if (typeName != null) {
+      try {
+        type = ThrottleType.valueOf(String.valueOf(typeName));
+      } catch (IllegalArgumentException e) {
+        throw new ClientErrorException("Invalid THROTTLE_TYPE '" + typeName + "', expected one of "
+          + java.util.Arrays.toString(ThrottleType.values()), e);
       }
-      return QuotaSettingsFactory.unthrottleUser(user);
-    } else if (spec.containsKey("TABLE")) {
-      return QuotaSettingsFactory
-        .unthrottleTable(TableName.valueOf(String.valueOf(spec.get("TABLE"))));
-    } else if (spec.containsKey("NAMESPACE")) {
-      return QuotaSettingsFactory.unthrottleNamespace(String.valueOf(spec.get("NAMESPACE")));
-    } else if (spec.containsKey("REGIONSERVER")) {
-      return QuotaSettingsFactory.unthrottleRegionServer("all");
+    }
+    Object user = spec.remove("USER");
+    Object table = spec.remove("TABLE");
+    Object namespace = spec.remove("NAMESPACE");
+    boolean regionServer = spec.containsKey("REGIONSERVER");
+    spec.remove("REGIONSERVER");
+    if (!spec.isEmpty()) {
+      throw new ClientErrorException("Unexpected arguments: " + spec);
+    }
+    if (user == null && table != null && namespace != null) {
+      throw new ClientErrorException("Only one of TABLE or NAMESPACE can be specified.");
+    }
+    if (user != null) {
+      String userName = String.valueOf(user);
+      if (table != null) {
+        TableName tableName = TableName.valueOf(String.valueOf(table));
+        return type == null
+          ? QuotaSettingsFactory.unthrottleUser(userName, tableName)
+          : QuotaSettingsFactory.unthrottleUserByThrottleType(userName, tableName, type);
+      } else if (namespace != null) {
+        String ns = String.valueOf(namespace);
+        return type == null
+          ? QuotaSettingsFactory.unthrottleUser(userName, ns)
+          : QuotaSettingsFactory.unthrottleUserByThrottleType(userName, ns, type);
+      }
+      return type == null
+        ? QuotaSettingsFactory.unthrottleUser(userName)
+        : QuotaSettingsFactory.unthrottleUserByThrottleType(userName, type);
+    } else if (table != null) {
+      TableName tableName = TableName.valueOf(String.valueOf(table));
+      return type == null
+        ? QuotaSettingsFactory.unthrottleTable(tableName)
+        : QuotaSettingsFactory.unthrottleTableByThrottleType(tableName, type);
+    } else if (namespace != null) {
+      String ns = String.valueOf(namespace);
+      return type == null
+        ? QuotaSettingsFactory.unthrottleNamespace(ns)
+        : QuotaSettingsFactory.unthrottleNamespaceByThrottleType(ns, type);
+    } else if (regionServer) {
+      return type == null
+        ? QuotaSettingsFactory.unthrottleRegionServer("all")
+        : QuotaSettingsFactory.unthrottleRegionServerByThrottleType("all", type);
     }
     throw new ClientErrorException(
       "One of USER, TABLE, NAMESPACE or REGIONSERVER must be specified");
@@ -220,15 +277,23 @@ final class QuotaAdminOps implements QuotaAdminContract {
     }
     long limit = Long.parseLong(matcher.group(1));
     String unit = matcher.group(2);
-    ThrottleType type;
+    String suffix;
     if ("req".equals(unit)) {
-      type = ThrottleType.valueOf(throttleTypePrefix + "_NUMBER");
+      suffix = "_NUMBER";
     } else if ("cu".equals(unit)) {
-      type = ThrottleType.valueOf(throttleTypePrefix + "_CAPACITY_UNIT");
-      limit = limit; // capacity units are unit-less counts
+      suffix = "_CAPACITY_UNIT"; // capacity units are unit-less counts
     } else {
-      type = ThrottleType.valueOf(throttleTypePrefix + "_SIZE");
+      suffix = "_SIZE";
       limit = sizeFromUnit(limit, unit);
+    }
+    ThrottleType type;
+    try {
+      type = ThrottleType.valueOf(throttleTypePrefix + suffix);
+    } catch (IllegalArgumentException e) {
+      throw new ClientErrorException(
+        "Invalid THROTTLE_TYPE '" + throttleTypePrefix + "' for limit '" + limitSpec
+          + "', expected one of " + Arrays.toString(ThrottleType.values()),
+        e);
     }
     TimeUnit timeUnit;
     switch (matcher.group(3)) {

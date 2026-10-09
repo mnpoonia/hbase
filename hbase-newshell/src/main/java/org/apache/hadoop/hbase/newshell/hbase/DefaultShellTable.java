@@ -46,6 +46,7 @@ import org.apache.hadoop.hbase.client.Consistency;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.Increment;
+import org.apache.hadoop.hbase.client.Mutation;
 import org.apache.hadoop.hbase.client.OperationWithAttributes;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Query;
@@ -95,8 +96,12 @@ public final class DefaultShellTable implements ShellTable {
     "CACHE", "CACHE_BLOCKS", "REVERSED", "RAW", "ATTRIBUTES", "AUTHORIZATIONS", "CONSISTENCY",
     "REGION_REPLICA_ID", "ISOLATION_LEVEL", "READ_TYPE", "ALLOW_PARTIAL_RESULTS", "BATCH",
     "MAX_RESULT_SIZE", "ALL_METRICS", "METRICS", "FORMATTER", "FORMATTER_CLASS");
-  private static final Set<String> COUNT_OPTIONS = optionSet("COLUMN", "COLUMNS", "LIMIT",
-    "STARTROW", "STOPROW", "ROWPREFIXFILTER", "VERSIONS", "FILTER", "CACHE_BLOCKS", "INTERVAL");
+  private static final Set<String> COUNT_OPTIONS =
+    optionSet("COLUMN", "COLUMNS", "LIMIT", "STARTROW", "STOPROW", "ROWPREFIXFILTER", "TIMESTAMP",
+      "VERSIONS", "TIMERANGE", "FILTER", "CACHE", "CACHE_BLOCKS", "RAW", "ATTRIBUTES",
+      "AUTHORIZATIONS", "CONSISTENCY", "REGION_REPLICA_ID", "ISOLATION_LEVEL", "READ_TYPE",
+      "ALLOW_PARTIAL_RESULTS", "BATCH", "MAX_RESULT_SIZE", "INTERVAL");
+  private static final Set<String> MUTATION_OPTIONS = optionSet("ATTRIBUTES", "VISIBILITY", "TTL");
   private static final Set<String> DELETE_OPTIONS = optionSet("ATTRIBUTES", "VISIBILITY");
   private static final Set<String> DELETEALL_OPTIONS =
     optionSet("ROWPREFIXFILTER", "CACHE", "ATTRIBUTES", "VISIBILITY");
@@ -133,7 +138,7 @@ public final class DefaultShellTable implements ShellTable {
     throws ShellCommandException, IOException {
     rejectUnsupportedOptions("put", options, PUT_OPTIONS);
     int colonIndex = column.indexOf(':');
-    if (colonIndex < 0 || colonIndex == column.length() - 1) {
+    if (colonIndex < 0) {
       throw new ClientErrorException(
         "Column '" + column + "' must be of the form 'family:qualifier'");
     }
@@ -210,6 +215,7 @@ public final class DefaultShellTable implements ShellTable {
     rejectUnsupportedOptions("count", options, COUNT_OPTIONS);
     ReadOptions readOptions = ReadOptions.parse(options);
     Scan scan = readOptions.newScan(new HashMap<>());
+    applyQueryOptions(scan, options);
     if (!readOptions.hasCacheBlocks()) {
       // count reads every row once; do not churn the block cache unless asked to.
       scan.setCacheBlocks(false);
@@ -288,6 +294,7 @@ public final class DefaultShellTable implements ShellTable {
     throws ShellCommandException, IOException {
     rejectUnsupportedOptions("delete", options, DELETE_OPTIONS);
     long ts = timestamp == null ? HConstants.LATEST_TIMESTAMP : timestamp;
+    guardMetaDelete(row, null);
     Delete delete = new Delete(BinaryStrings.toBytes(row), ts);
     addDeleteColumn(delete, column, ts, false);
     applyDeleteOptions(delete, options);
@@ -300,6 +307,7 @@ public final class DefaultShellTable implements ShellTable {
     rejectUnsupportedOptions("deleteall", options, DELETEALL_OPTIONS);
     long ts = timestamp == null ? HConstants.LATEST_TIMESTAMP : timestamp;
     Object prefix = options.get("ROWPREFIXFILTER");
+    guardMetaDelete(row, prefix);
     if (prefix != null) {
       Integer cacheOption = optInt(options, "CACHE");
       int cache = cacheOption == null ? 100 : cacheOption;
@@ -340,18 +348,24 @@ public final class DefaultShellTable implements ShellTable {
   }
 
   @Override
-  public Long increment(String row, String column, long amount) throws IOException {
+  public Long increment(String row, String column, long amount, Map<String, Object> options)
+    throws ShellCommandException, IOException {
+    rejectUnsupportedOptions("incr", options, MUTATION_OPTIONS);
     String[] parts = requireFamilyAndQualifier(column);
     Increment increment = new Increment(BinaryStrings.toBytes(row));
+    applyMutationOptions(increment, options);
     increment.addColumn(BinaryStrings.toBytes(parts[0]), BinaryStrings.toBytes(parts[1]), amount);
     Result result = table.increment(increment);
     return decodeLong(result);
   }
 
   @Override
-  public String append(String row, String column, String value) throws IOException {
+  public String append(String row, String column, String value, Map<String, Object> options)
+    throws ShellCommandException, IOException {
+    rejectUnsupportedOptions("append", options, MUTATION_OPTIONS);
     String[] parts = requireFamilyAndQualifier(column);
     Append append = new Append(BinaryStrings.toBytes(row));
+    applyMutationOptions(append, options);
     append.addColumn(BinaryStrings.toBytes(parts[0]), BinaryStrings.toBytes(parts[1]),
       BinaryStrings.toBytes(value));
     Result result = table.append(append);
@@ -391,11 +405,29 @@ public final class DefaultShellTable implements ShellTable {
 
   private static String[] requireFamilyAndQualifier(String column) throws IOException {
     int colonIndex = column.indexOf(':');
-    if (colonIndex < 0 || colonIndex == column.length() - 1) {
+    if (colonIndex < 0) {
       throw new ClientErrorException(
         "Column '" + column + "' must be of the form 'family:qualifier'");
     }
     return new String[] { column.substring(0, colonIndex), column.substring(colonIndex + 1) };
+  }
+
+  /**
+   * Deletes in hbase:meta are dangerous (they drop region rows): like the legacy shell, refuse
+   * prefix deletes there and require the target row to exist.
+   */
+  private void guardMetaDelete(String row, Object prefix)
+    throws ShellCommandException, IOException {
+    if (!TableName.META_TABLE_NAME.equals(table.getName())) {
+      return;
+    }
+    if (prefix != null) {
+      throw new ClientErrorException(
+        "deleteall with ROWPREFIXFILTER in hbase:meta is not allowed.");
+    }
+    if (table.get(new Get(BinaryStrings.toBytes(row))).isEmpty()) {
+      throw new ClientErrorException("Row Not Found");
+    }
   }
 
   private static void addDeleteColumn(Delete delete, String column, long timestamp,
@@ -410,13 +442,15 @@ public final class DefaultShellTable implements ShellTable {
       family = BinaryStrings.toBytes(column);
     } else {
       family = BinaryStrings.toBytes(column.substring(0, colonIndex));
-      String qualifierPart = column.substring(colonIndex + 1);
-      if (!qualifierPart.isEmpty()) {
-        qualifier = BinaryStrings.toBytes(qualifierPart);
-      }
+      // 'cf:' names the empty qualifier (CellUtil.parseColumn semantics), not the whole family.
+      qualifier = BinaryStrings.toBytes(column.substring(colonIndex + 1));
     }
     if (qualifier == null) {
-      delete.addFamily(family, timestamp);
+      if (allVersions) {
+        delete.addFamily(family, timestamp);
+      } else {
+        delete.addFamilyVersion(family, timestamp);
+      }
     } else if (allVersions) {
       delete.addColumns(family, qualifier, timestamp);
     } else {
@@ -435,14 +469,20 @@ public final class DefaultShellTable implements ShellTable {
 
   private static void applyPutOptions(Put put, Map<String, Object> options)
     throws ShellCommandException {
-    applyAttributes(put, options);
+    applyMutationOptions(put, options);
+  }
+
+  /** ATTRIBUTES, VISIBILITY and TTL, shared by put, incr and append as in the legacy shell. */
+  private static void applyMutationOptions(Mutation mutation, Map<String, Object> options)
+    throws ShellCommandException {
+    applyAttributes(mutation, options);
     String visibility = optString(options, "VISIBILITY");
     if (visibility != null) {
-      put.setCellVisibility(new CellVisibility(visibility));
+      mutation.setCellVisibility(new CellVisibility(visibility));
     }
     Long ttl = optLong(options, "TTL");
     if (ttl != null) {
-      put.setTTL(ttl);
+      mutation.setTTL(ttl);
     }
   }
 

@@ -39,6 +39,7 @@ import org.apache.hadoop.hbase.replication.ReplicationPeerConfigBuilder;
 import org.apache.hadoop.hbase.replication.ReplicationPeerDescription;
 import org.apache.hadoop.hbase.replication.SyncReplicationState;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.apache.hadoop.hbase.zookeeper.ZKConfig;
 
 /** Package-private collaborator used by {@link DefaultShellAdmin}. */
 final class ReplicationAdminOps implements ReplicationPeerContract {
@@ -70,6 +71,10 @@ final class ReplicationAdminOps implements ReplicationPeerContract {
     }
     if (endpointClassname != null) {
       builder.setReplicationEndpointImpl(String.valueOf(endpointClassname));
+      if (clusterKey == null) {
+        // Like the legacy shell: an endpoint peer without CLUSTER_KEY gets the local cluster's key.
+        builder.setClusterKey(ZKConfig.getZooKeeperClusterKey(admin.getConfiguration()));
+      }
     }
     Object remoteWalDir = peerConfigSpec.get("REMOTE_WAL_DIR");
     if (remoteWalDir != null) {
@@ -84,24 +89,30 @@ final class ReplicationAdminOps implements ReplicationPeerContract {
       builder.setSerial(Boolean.parseBoolean(text));
     }
     Object config = peerConfigSpec.get("CONFIG");
-    if (config instanceof Map) {
+    if (config != null) {
+      requireType(config, Map.class, "CONFIG", "a hash");
       for (Map.Entry<?, ?> entry : ((Map<?, ?>) config).entrySet()) {
         builder.putConfiguration(String.valueOf(entry.getKey()), String.valueOf(entry.getValue()));
       }
     }
     Object data = peerConfigSpec.get("DATA");
-    if (data instanceof Map) {
+    if (data != null) {
+      requireType(data, Map.class, "DATA", "a hash");
       for (Map.Entry<?, ?> entry : ((Map<?, ?>) data).entrySet()) {
         builder.putPeerData(Bytes.toBytes(String.valueOf(entry.getKey())),
           Bytes.toBytes(String.valueOf(entry.getValue())));
       }
     }
     Object tableCfs = peerConfigSpec.get("TABLE_CFS");
-    if (tableCfs instanceof Map) {
+    if (tableCfs != null) {
+      requireType(tableCfs, Map.class, "TABLE_CFS", "a hash of table => [families]");
+      builder.setReplicateAllUserTables(false);
       builder.setTableCFsMap(toTableCfsMap((Map<?, ?>) tableCfs));
     }
     Object namespaces = peerConfigSpec.get("NAMESPACES");
-    if (namespaces instanceof List) {
+    if (namespaces != null) {
+      requireType(namespaces, List.class, "NAMESPACES", "a list");
+      builder.setReplicateAllUserTables(false);
       builder.setNamespaces(
         ((List<?>) namespaces).stream().map(String::valueOf).collect(Collectors.toSet()));
     }
@@ -160,11 +171,12 @@ final class ReplicationAdminOps implements ReplicationPeerContract {
   }
 
   public void setPeerNamespaces(String peerId, List<String> namespaces) throws IOException {
+    if (namespaces == null) {
+      return;
+    }
     ReplicationPeerConfig rpc = admin.getReplicationPeerConfig(peerId);
     admin.updateReplicationPeerConfig(peerId,
-      ReplicationPeerConfig.newBuilder(rpc)
-        .setNamespaces(namespaces == null ? Collections.emptySet() : new HashSet<>(namespaces))
-        .build());
+      ReplicationPeerConfig.newBuilder(rpc).setNamespaces(new HashSet<>(namespaces)).build());
   }
 
   public void appendPeerNamespaces(String peerId, List<String> namespaces) throws IOException {
@@ -237,9 +249,11 @@ final class ReplicationAdminOps implements ReplicationPeerContract {
   }
 
   public void setPeerTableCFs(String peerId, Map<String, Object> tableCFs) throws IOException {
+    if (tableCFs == null) {
+      return;
+    }
     ReplicationPeerConfig rpc = admin.getReplicationPeerConfig(peerId);
-    Map<TableName, List<String>> map =
-      tableCFs == null ? Collections.emptyMap() : toTableCfsMap(tableCFs);
+    Map<TableName, List<String>> map = toTableCfsMap(tableCFs);
     admin.updateReplicationPeerConfig(peerId,
       ReplicationPeerConfig.newBuilder(rpc).setTableCFsMap(map).build());
   }
@@ -368,7 +382,8 @@ final class ReplicationAdminOps implements ReplicationPeerContract {
       builder.putAllConfiguration(conf);
     }
     Object data = args == null ? null : args.get("DATA");
-    if (data instanceof Map) {
+    if (data != null) {
+      requireType(data, Map.class, "DATA", "a hash");
       for (Map.Entry<?, ?> e : ((Map<?, ?>) data).entrySet()) {
         builder.putPeerData(Bytes.toBytes(String.valueOf(e.getKey())),
           Bytes.toBytes(String.valueOf(e.getValue())));
@@ -425,6 +440,14 @@ final class ReplicationAdminOps implements ReplicationPeerContract {
       map.put(TableName.valueOf(String.valueOf(entry.getKey())), cfs);
     }
     return map;
+  }
+
+  private static void requireType(Object value, Class<?> type, String key, String expected)
+    throws ClientErrorException {
+    if (!type.isInstance(value)) {
+      throw new ClientErrorException(
+        "add_peer " + key + " must be " + expected + ", got: " + value);
+    }
   }
 
   private static String orNil(String value) {

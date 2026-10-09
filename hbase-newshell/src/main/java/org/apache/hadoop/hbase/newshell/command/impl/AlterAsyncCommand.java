@@ -31,10 +31,9 @@ import org.apache.yetus.audience.InterfaceAudience;
 
 /**
  * Ported from hbase-shell's {@code shell/commands/alter_async.rb}: identical column family spec as
- * {@link AlterCommand}, but does not wait for all regions to receive the schema change - this
- * matches {@link org.apache.hadoop.hbase.newshell.hbase.ShellAdmin#alterTable}, which already does
- * not block on region propagation, so {@code alter} and {@code alter_async} share the same
- * wrapper-layer call. Use {@link AlterStatusCommand} to check propagation progress.
+ * {@link AlterCommand}, but returns once the modify procedure is submitted instead of waiting for
+ * it (and the region reopen) to finish. Use {@link AlterStatusCommand} to check propagation
+ * progress.
  */
 @InterfaceAudience.Private
 public final class AlterAsyncCommand implements ShellCommand {
@@ -52,7 +51,6 @@ public final class AlterAsyncCommand implements ShellCommand {
   @Override
   public CommandResult execute(ParsedCommand command, ExecutionContext context)
     throws ShellCommandException, IOException {
-    ArgParsing.requireMaxArgs(command, "alter_async", 1);
     String tableName =
       ArgParsing.requireArg(command, 0, "alter_async requires a table name argument");
     List<Map<String, Object>> specs = AlterCommand.alterSpecs(command);
@@ -60,7 +58,7 @@ public final class AlterAsyncCommand implements ShellCommand {
       throw new ShellCommandException(
         "alter_async requires at least one change, e.g. {NAME => 'f1', TTL => 100}");
     }
-    context.tableAdmin().alterTable(tableName, specs);
+    context.tableAdmin().alterTableNoWait(tableName, specs);
     return TextResult.of();
   }
 }

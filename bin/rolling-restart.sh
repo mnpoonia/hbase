@@ -202,7 +202,7 @@ else
     zkrs="$zparent/$zkrs"
     online_regionservers=`$bin/hbase zkcli ls $zkrs 2>&1 | tail -1 | sed "s/\[//" | sed "s/\]//"`
     echo "Disabling load balancer"
-    HBASE_BALANCER_STATE=$(echo 'balance_switch false' | "$bin"/hbase --config "${HBASE_CONF_DIR}" shell -n | tail -1)
+    HBASE_BALANCER_STATE=$(echo 'balance_switch false' | "$bin"/hbase --config "${HBASE_CONF_DIR}" shell -n | grep 'Previous balancer state' | awk -F": " '{print $2}')
     echo "Previous balancer state was $HBASE_BALANCER_STATE"
 
     for rs in $online_regionservers

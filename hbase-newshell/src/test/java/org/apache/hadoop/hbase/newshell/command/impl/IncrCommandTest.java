@@ -41,10 +41,13 @@ public class IncrCommandTest {
 
   private static final class RecordingShellTable extends StubShellTable {
     private long lastAmount;
+    private java.util.Map<String, Object> lastOptions;
 
     @Override
-    public Long increment(String row, String column, long amount) {
+    public Long increment(String row, String column, long amount,
+      java.util.Map<String, Object> options) {
       this.lastAmount = amount;
+      this.lastOptions = options;
       return amount;
     }
   }
@@ -94,5 +97,16 @@ public class IncrCommandTest {
   public void throwsWhenAmountNotNumeric() throws Exception {
     ParsedCommand parsed = ShellLineParser.parse("incr 't1', 'r1', 'f1:c1', 'notanumber'");
     assertThrows(ShellCommandException.class, () -> command.execute(parsed, context));
+  }
+
+  @Test
+  public void passesOptionsHashToTable() throws Exception {
+    ParsedCommand parsed =
+      ShellLineParser.parse("incr 't1', 'r1', 'f1:c1', 2, { 'TTL' => 5000, 'VISIBILITY' => 'A' }");
+    command.execute(parsed, context);
+
+    assertEquals(2L, table.lastAmount);
+    assertEquals(5000L, ((Number) table.lastOptions.get("TTL")).longValue());
+    assertEquals("A", table.lastOptions.get("VISIBILITY"));
   }
 }

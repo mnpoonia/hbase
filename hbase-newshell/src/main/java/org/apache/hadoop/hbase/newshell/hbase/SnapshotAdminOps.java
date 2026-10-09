@@ -119,7 +119,9 @@ final class SnapshotAdminOps implements SnapshotAdminContract {
 
   @Override
   public void restoreSnapshot(String snapshotName, boolean restoreAcl) throws IOException {
-    admin.restoreSnapshot(snapshotName, false, restoreAcl);
+    boolean takeFailSafe =
+      admin.getConfiguration().getBoolean("hbase.snapshot.restore.take.failsafe.snapshot", false);
+    admin.restoreSnapshot(snapshotName, takeFailSafe, restoreAcl);
   }
 
   @Override

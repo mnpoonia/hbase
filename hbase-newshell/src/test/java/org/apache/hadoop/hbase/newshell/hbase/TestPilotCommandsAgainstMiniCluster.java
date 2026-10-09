@@ -546,7 +546,8 @@ public class TestPilotCommandsAgainstMiniCluster {
     TEST_UTIL.createTable(TableName.valueOf(tableName), Bytes.toBytes("f1"));
 
     ShellTableFactory factory = new DefaultShellTableFactory(connection);
-    assertEquals(3L, factory.forTable(tableName).increment("r1", "f1:c1", 3L));
+    assertEquals(3L,
+      factory.forTable(tableName).increment("r1", "f1:c1", 3L, java.util.Collections.emptyMap()));
     assertEquals(3L, factory.forTable(tableName).getCounter("r1", "f1:c1"));
   }
 
@@ -565,8 +566,9 @@ public class TestPilotCommandsAgainstMiniCluster {
     TEST_UTIL.createTable(TableName.valueOf(tableName), Bytes.toBytes("f1"));
 
     ShellTableFactory factory = new DefaultShellTableFactory(connection);
-    factory.forTable(tableName).increment("r1", "f1:c1", 5L);
-    assertEquals(8L, factory.forTable(tableName).increment("r1", "f1:c1", 3L));
+    factory.forTable(tableName).increment("r1", "f1:c1", 5L, java.util.Collections.emptyMap());
+    assertEquals(8L,
+      factory.forTable(tableName).increment("r1", "f1:c1", 3L, java.util.Collections.emptyMap()));
   }
 
   @Test
@@ -575,8 +577,9 @@ public class TestPilotCommandsAgainstMiniCluster {
     TEST_UTIL.createTable(TableName.valueOf(tableName), Bytes.toBytes("f1"));
 
     ShellTableFactory factory = new DefaultShellTableFactory(connection);
-    factory.forTable(tableName).append("r1", "f1:c1", "a");
-    assertEquals("ab", factory.forTable(tableName).append("r1", "f1:c1", "b"));
+    factory.forTable(tableName).append("r1", "f1:c1", "a", java.util.Collections.emptyMap());
+    assertEquals("ab",
+      factory.forTable(tableName).append("r1", "f1:c1", "b", java.util.Collections.emptyMap()));
   }
 
   @Test

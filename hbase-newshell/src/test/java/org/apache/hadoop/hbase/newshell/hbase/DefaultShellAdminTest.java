@@ -21,20 +21,26 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Admin;
 import org.apache.hadoop.hbase.client.ColumnFamilyDescriptorBuilder;
 import org.apache.hadoop.hbase.client.TableDescriptor;
 import org.apache.hadoop.hbase.client.TableDescriptorBuilder;
+import org.apache.hadoop.hbase.replication.ReplicationPeerConfig;
 import org.apache.hadoop.hbase.testclassification.SmallTests;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.jupiter.api.BeforeEach;
@@ -239,5 +245,37 @@ public class DefaultShellAdminTest {
     assertEquals(2, cf.getDFSReplication());
     assertTrue(cf.isPrefetchBlocksOnOpen());
     assertTrue(cf.isEvictBlocksOnClose());
+  }
+
+  @Test
+  public void setPeerNamespacesWithoutListLeavesPeerUntouched() throws IOException {
+    ReplicationPeerConfig existing = ReplicationPeerConfig.newBuilder().setClusterKey("zk:2181:/h")
+      .setReplicateAllUserTables(false).setNamespaces(new HashSet<>(Collections.singleton("ns1")))
+      .build();
+    when(admin.getReplicationPeerConfig("1")).thenReturn(existing);
+    shellAdmin.setPeerNamespaces("1", null);
+    verify(admin, never()).updateReplicationPeerConfig(anyString(),
+      any(ReplicationPeerConfig.class));
+  }
+
+  @Test
+  public void setPeerTableCFsWithoutMapLeavesPeerUntouched() throws IOException {
+    ReplicationPeerConfig existing = ReplicationPeerConfig.newBuilder().setClusterKey("zk:2181:/h")
+      .setReplicateAllUserTables(false)
+      .setTableCFsMap(Collections.singletonMap(TableName.valueOf("t1"), (List<String>) null))
+      .build();
+    when(admin.getReplicationPeerConfig("1")).thenReturn(existing);
+    shellAdmin.setPeerTableCFs("1", null);
+    verify(admin, never()).updateReplicationPeerConfig(anyString(),
+      any(ReplicationPeerConfig.class));
+  }
+
+  @Test
+  public void restoreSnapshotHonorsFailsafeConfig() throws IOException {
+    Configuration conf = HBaseConfiguration.create();
+    conf.setBoolean("hbase.snapshot.restore.take.failsafe.snapshot", true);
+    when(admin.getConfiguration()).thenReturn(conf);
+    shellAdmin.restoreSnapshot("snap", false);
+    verify(admin).restoreSnapshot("snap", true, false);
   }
 }

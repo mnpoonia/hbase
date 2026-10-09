@@ -53,7 +53,8 @@ public final class AppendCommand implements ShellCommand {
     String row = ArgParsing.string(command, 1);
     String column = ArgParsing.string(command, 2);
     String value = ArgParsing.string(command, 3);
-    String current = context.tables().forTable(tableName).append(row, column, value);
+    String current =
+      context.tables().forTable(tableName).append(row, column, value, command.options());
     if (current == null) {
       return TextResult.of();
     }

@@ -42,6 +42,9 @@ public interface TableAdminContract {
 
   void alterTable(String tableName, List<Map<String, Object>> familySpecs) throws IOException;
 
+  /** Like {@link #alterTable} but returns once the modify procedure is submitted. */
+  void alterTableNoWait(String tableName, List<Map<String, Object>> familySpecs) throws IOException;
+
   boolean tableExists(String tableName) throws IOException;
 
   void compact(String tableOrRegionName, String family, String type) throws IOException;

@@ -137,7 +137,11 @@ final class ShellRepl {
         continue;
       }
       if (c == '#') {
-        break;
+        // Comment runs to the end of this line; later lines of a multi-line command still count.
+        while (i + 1 < line.length() && line.charAt(i + 1) != '\n') {
+          i++;
+        }
+        continue;
       }
       if (c == '\'' || c == '"') {
         state.quote = c;

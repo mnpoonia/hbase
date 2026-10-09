@@ -76,8 +76,10 @@ final class Lexer {
       } else if (isIdentStart(c)) {
         tokens.add(readIdent(start));
       } else if (c == '#') {
-        // Trailing comment: the rest of the line is ignored (quoted '#' is consumed by readString).
-        pos = input.length();
+        // Comment: runs to the end of the line only (quoted '#' is consumed by readString).
+        while (pos < input.length() && input.charAt(pos) != '\n') {
+          pos++;
+        }
       } else {
         throw new ShellParseException("Unexpected character '" + c + "' at position " + pos);
       }

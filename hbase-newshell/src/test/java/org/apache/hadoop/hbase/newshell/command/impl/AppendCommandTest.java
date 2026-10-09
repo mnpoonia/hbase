@@ -42,11 +42,14 @@ public class AppendCommandTest {
 
   private static final class RecordingShellTable extends StubShellTable {
     private String lastValue;
+    private java.util.Map<String, Object> lastOptions;
     private String result;
 
     @Override
-    public String append(String row, String column, String value) {
+    public String append(String row, String column, String value,
+      java.util.Map<String, Object> options) {
       this.lastValue = value;
+      this.lastOptions = options;
       return result;
     }
   }
@@ -92,5 +95,15 @@ public class AppendCommandTest {
   public void throwsWhenValueMissing() throws Exception {
     ParsedCommand parsed = ShellLineParser.parse("append 't1', 'r1', 'f1:c1'");
     assertThrows(ShellCommandException.class, () -> command.execute(parsed, context));
+  }
+
+  @Test
+  public void passesOptionsHashToTable() throws Exception {
+    ParsedCommand parsed =
+      ShellLineParser.parse("append 't1', 'r1', 'f1:c1', 'v', { 'TTL' => 5000 }");
+    command.execute(parsed, context);
+
+    assertEquals("v", table.lastValue);
+    assertEquals(5000L, ((Number) table.lastOptions.get("TTL")).longValue());
   }
 }

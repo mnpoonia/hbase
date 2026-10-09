@@ -17,6 +17,7 @@
  */
 package org.apache.hadoop.hbase.newshell.hbase;
 
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
@@ -165,5 +166,35 @@ public class TestGrantAgainstMiniCluster {
 
     List<List<String>> rows = admin.userPermission(tableName);
     assertTrue(rows.stream().anyMatch(row -> row.get(0).equals("newshell_user_permission_user")));
+  }
+
+  @Test
+  public void grantOnMissingTableIsAClientError() throws Exception {
+    ShellAdmin admin = DefaultShellAdmin.create(connection.getAdmin());
+    assertThrows(ClientErrorException.class,
+      () -> admin.grant("newshell_missing_user", "R", "newshell_no_such_table", null, null, null));
+  }
+
+  @Test
+  public void grantOnMissingFamilyIsAClientError() throws Exception {
+    String tableName = "newshell_grant_missing_family_table";
+    TEST_UTIL.createTable(TableName.valueOf(tableName), Bytes.toBytes("f1"));
+    ShellAdmin admin = DefaultShellAdmin.create(connection.getAdmin());
+    assertThrows(ClientErrorException.class,
+      () -> admin.grant("newshell_missing_user", "R", tableName, "nofamily", null, null));
+  }
+
+  @Test
+  public void grantOnMissingNamespaceIsAClientError() throws Exception {
+    ShellAdmin admin = DefaultShellAdmin.create(connection.getAdmin());
+    assertThrows(ClientErrorException.class,
+      () -> admin.grant("newshell_missing_user", "R", null, null, null, "newshell_no_such_ns"));
+  }
+
+  @Test
+  public void revokeOnMissingTableIsAClientError() throws Exception {
+    ShellAdmin admin = DefaultShellAdmin.create(connection.getAdmin());
+    assertThrows(ClientErrorException.class,
+      () -> admin.revoke("newshell_missing_user", "newshell_no_such_table", null, null, null));
   }
 }

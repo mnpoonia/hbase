@@ -439,4 +439,13 @@ public class NewShellMainTest {
     assertFalse(NewShellMain.isInteractive(LaunchArgs.parse(new String[] { "-n" }), true));
     assertFalse(NewShellMain.isInteractive(LaunchArgs.parse(new String[] { "f.ns" }), true));
   }
+
+  @Test
+  public void launchArgsAcceptsLegacyCosmeticFlags() {
+    LaunchArgs.parse(new String[] { "-c" });
+    LaunchArgs.parse(new String[] { "--colorize" });
+    LaunchArgs.parse(new String[] { "-a" });
+    LaunchArgs.parse(new String[] { "--autocomplete" });
+    LaunchArgs.parse(new String[] { "--top-level-defs" });
+  }
 }

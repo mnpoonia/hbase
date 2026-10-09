@@ -46,10 +46,6 @@ final class RsGroupAdminOps implements RsGroupAdminContract {
     this.admin = admin;
   }
 
-  private NamespaceAdminOps namespaces() {
-    return new NamespaceAdminOps(admin);
-  }
-
   @Override
   public RsGroupView getRsGroup(String groupName) throws IOException {
     RSGroupInfo groupInfo = admin.getRSGroup(groupName);
@@ -127,12 +123,6 @@ final class RsGroupAdminOps implements RsGroupAdminContract {
     if (!tables.isEmpty()) {
       admin.setRSGroup(tables, groupName);
     }
-    for (String ns : namespaces) {
-      Map<String, Object> props = new HashMap<>();
-      props.put("METHOD", "set");
-      props.put("hbase.rsgroup.name", groupName);
-      namespaces().alterNamespace(ns, props);
-    }
   }
 
   @Override
@@ -187,8 +177,10 @@ final class RsGroupAdminOps implements RsGroupAdminContract {
     }
     Map<String, String> configuration = new HashMap<>(group.getConfiguration());
     Object method = args.get("METHOD");
-    if ("unset".equals(String.valueOf(method))) {
+    if ("unset".equals(method)) {
       configuration.remove(String.valueOf(args.get("NAME")));
+    } else if (!"set".equals(method)) {
+      throw new ClientErrorException("Unknown method " + method + ", expected set or unset");
     } else {
       for (Map.Entry<String, Object> e : args.entrySet()) {
         if ("METHOD".equals(e.getKey())) {

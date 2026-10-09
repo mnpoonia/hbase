@@ -59,7 +59,8 @@ public final class IncrCommand implements ShellCommand {
       }
       amount = ((Number) amountArg).longValue();
     }
-    Long counter = context.tables().forTable(tableName).increment(row, column, amount);
+    Long counter =
+      context.tables().forTable(tableName).increment(row, column, amount, command.options());
     if (counter == null) {
       return TextResult.of("No counter found at specified coordinates");
     }

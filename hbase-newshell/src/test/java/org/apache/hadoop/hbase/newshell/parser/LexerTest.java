@@ -52,6 +52,13 @@ public class LexerTest {
     assertEquals(TokenType.EOF, tokens.get(4).type());
   }
 
+  @Test
+  public void commentEndsAtNewlineSoLaterLinesAreKept() throws ShellParseException {
+    List<Token> tokens = new Lexer("create 't', {NAME => 'f', # main\n  VERSIONS => 1}").tokenize();
+    assertEquals("VERSIONS", tokens.get(tokens.size() - 5).text());
+    assertEquals(TokenType.RBRACE, tokens.get(tokens.size() - 2).type());
+  }
+
   private static String lex(String input) throws ShellParseException {
     return new Lexer(input).tokenize().get(0).text();
   }

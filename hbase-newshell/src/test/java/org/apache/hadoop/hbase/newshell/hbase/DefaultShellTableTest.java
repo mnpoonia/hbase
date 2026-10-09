@@ -36,7 +36,10 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.NavigableSet;
+import org.apache.hadoop.hbase.client.Append;
 import org.apache.hadoop.hbase.client.Get;
+import org.apache.hadoop.hbase.client.Increment;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
@@ -690,5 +693,73 @@ public class DefaultShellTableTest {
 
     assertEquals("1234", rows.get(0).cells().get(0).value());
     assertEquals("", rows.get(0).cells().get(1).value());
+  }
+
+  @Test
+  public void getWithEmptyQualifierColumnRequestsEmptyQualifierOnly() throws Exception {
+    Table table = mock(Table.class);
+    when(table.get(any(Get.class))).thenReturn(Result.EMPTY_RESULT);
+    new DefaultShellTable(table).get("r", Collections.singletonMap("COLUMN", "cf:"));
+    ArgumentCaptor<Get> captor = ArgumentCaptor.forClass(Get.class);
+    verify(table).get(captor.capture());
+    NavigableSet<byte[]> qualifiers = captor.getValue().getFamilyMap().get(Bytes.toBytes("cf"));
+    assertEquals(1, qualifiers == null ? -1 : qualifiers.size(),
+      "cf: is the empty qualifier, not the whole family");
+  }
+
+  @Test
+  public void scanWithEmptyQualifierColumnRequestsEmptyQualifierOnly() throws Exception {
+    Table table = mock(Table.class);
+    ResultScanner scanner = mock(ResultScanner.class);
+    when(scanner.iterator()).thenReturn(Collections.<Result> emptyList().iterator());
+    when(table.getScanner(any(Scan.class))).thenReturn(scanner);
+    new DefaultShellTable(table).scan(Collections.singletonMap("COLUMNS", "cf:"))
+      .forEachRow(row -> {
+      });
+    ArgumentCaptor<Scan> captor = ArgumentCaptor.forClass(Scan.class);
+    verify(table).getScanner(captor.capture());
+    NavigableSet<byte[]> qualifiers = captor.getValue().getFamilyMap().get(Bytes.toBytes("cf"));
+    assertEquals(1, qualifiers == null ? -1 : qualifiers.size());
+  }
+
+  @Test
+  public void incrementAppliesAttributesVisibilityAndTtl() throws Exception {
+    Table table = mock(Table.class);
+    when(table.increment(any(Increment.class))).thenReturn(Result.EMPTY_RESULT);
+    Map<String, Object> options = new HashMap<>();
+    options.put("ATTRIBUTES", Collections.singletonMap("k", "v"));
+    options.put("VISIBILITY", "A");
+    options.put("TTL", 5000L);
+    new DefaultShellTable(table).increment("r", "cf:q", 2L, options);
+    ArgumentCaptor<Increment> captor = ArgumentCaptor.forClass(Increment.class);
+    verify(table).increment(captor.capture());
+    Increment increment = captor.getValue();
+    assertEquals("v", Bytes.toString(increment.getAttribute("k")));
+    assertEquals("A", increment.getCellVisibility().getExpression());
+    assertEquals(5000L, increment.getTTL());
+  }
+
+  @Test
+  public void appendAppliesAttributesVisibilityAndTtl() throws Exception {
+    Table table = mock(Table.class);
+    when(table.append(any(Append.class))).thenReturn(Result.EMPTY_RESULT);
+    Map<String, Object> options = new HashMap<>();
+    options.put("ATTRIBUTES", Collections.singletonMap("k", "v"));
+    options.put("VISIBILITY", "A");
+    options.put("TTL", 5000L);
+    new DefaultShellTable(table).append("r", "cf:q", "x", options);
+    ArgumentCaptor<Append> captor = ArgumentCaptor.forClass(Append.class);
+    verify(table).append(captor.capture());
+    Append append = captor.getValue();
+    assertEquals("v", Bytes.toString(append.getAttribute("k")));
+    assertEquals("A", append.getCellVisibility().getExpression());
+    assertEquals(5000L, append.getTTL());
+  }
+
+  @Test
+  public void incrementRejectsUnsupportedOptions() {
+    Table table = mock(Table.class);
+    assertThrows(ShellCommandException.class, () -> new DefaultShellTable(table).increment("r",
+      "cf:q", 1L, Collections.singletonMap("TIMESTAMP", 1L)));
   }
 }
